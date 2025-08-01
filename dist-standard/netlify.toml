@@ -1,0 +1,47 @@
+[build]
+  command = "npm run build:standard"
+  publish = "dist-standard"
+  functions = "dist-standard/netlify/functions"
+
+# 标准版本重定向
+[[redirects]]
+  from = "/giffgaff"
+  to = "/src/giffgaff/giffgaff_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  from = "/simyo"
+  to = "/src/simyo/simyo_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# API代理重定向
+[[redirects]]
+  from = "/api/simyo/*"
+  to = "https://appapi.simyo.nl/simyoapi/api/v1/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/giffgaff-id/*"
+  to = "https://id.giffgaff.com/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/giffgaff-public/*"
+  to = "https://publicapi.giffgaff.com/:splat"
+  status = 200
+  force = true
+
+# 基础安全头部
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

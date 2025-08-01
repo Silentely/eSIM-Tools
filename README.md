@@ -69,57 +69,88 @@
 
 > 📋 **详细安全文档**: [查看完整安全实施方案](docs/SECURITY_IMPLEMENTATION.md)
 
-## 🚀 安全部署指南
+## 🚀 双版本部署指南
 
-### 🔒 安全部署流程
+本项目提供两个独立版本，您可以根据需求选择部署：
 
-1. **克隆仓库**
-   ```bash
-   git clone https://github.com/Silentely/esim-tools.git
-   cd esim-tools
-   ```
+### 📋 版本选择
 
-2. **配置环境变量**
-   ```bash
-   cp env.example .env
-   # 编辑 .env 文件，填入真实的密钥和配置
-   ```
+| 版本 | 适用场景 | 特点 |
+|------|----------|------|
+| **标准版本** | 开发学习、功能演示 | 🔓 代码开源、功能完整、易于理解 |
+| **安全版本** | 生产环境、企业使用 | 🔒 企业级安全、防逆向、零信息暴露 |
 
-3. **安装依赖**
-   ```bash
-   npm install
-   ```
+### 🔧 快速部署
 
-4. **安全检查**
-   ```bash
-   npm run security:check
-   ```
+#### 标准版本部署
+```bash
+# 克隆仓库
+git clone https://github.com/Silentely/esim-tools.git
+cd esim-tools
 
-5. **安全部署**
-   ```bash
-   # 使用安全部署脚本
-   ./scripts/deploy-secure.sh
-   
-   # 或手动部署
-   npm run deploy:secure
-   ```
+# 安装依赖
+npm install
 
-### 🔧 开发环境设置
+# 构建标准版本
+npm run build:standard
 
-1. **启动本地服务器**
-   ```bash
-   npm run dev
-   ```
+# 部署到Netlify
+npm run deploy:standard
+```
 
-2. **访问应用**
-   ```
-   http://localhost:3000
-   ```
+#### 安全版本部署
+```bash
+# 克隆仓库（同上）
+git clone https://github.com/Silentely/esim-tools.git
+cd esim-tools
 
-3. **测试安全功能**
-   ```bash
-   npm run test:security
-   ```
+# 配置环境变量
+cp env.example .env
+# 编辑 .env 文件，填入真实的密钥和配置
+
+# 安装依赖
+npm install
+
+# 构建安全版本
+npm run build:secure
+
+# 部署到Netlify
+npm run deploy:secure
+```
+
+### 🔧 高级部署选项
+
+#### 使用不同的Netlify配置
+```bash
+# 标准版本配置
+netlify deploy --prod --config netlify-standard.toml
+
+# 安全版本配置
+netlify deploy --prod --config netlify-secure.toml
+```
+
+#### 预览部署
+```bash
+# 预览标准版本
+npm run preview:standard
+
+# 预览安全版本
+npm run preview:secure
+```
+
+#### 开发环境设置
+```bash
+# 启动本地服务器
+npm run dev
+
+# 访问应用
+http://localhost:3000
+
+# 测试构建
+npm run build:standard  # 或 npm run build:secure
+```
+
+> 📖 **详细部署文档**: [查看完整部署指南](docs/DEPLOYMENT_GUIDE.md)
 
 ### 环境要求
 

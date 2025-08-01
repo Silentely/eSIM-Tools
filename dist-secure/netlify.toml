@@ -1,0 +1,49 @@
+[build]
+  command = "npm run build:secure"
+  publish = "dist-secure"
+  functions = "dist-secure/netlify/functions"
+
+# 安全版本重定向
+[[redirects]]
+  from = "/giffgaff"
+  to = "/src/giffgaff-secured.html"
+  status = 200
+
+[[redirects]]
+  from = "/simyo"
+  to = "/src/simyo/simyo_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# 企业级安全头部
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self';"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# 安全页面额外保护
+[[headers]]
+  for = "/src/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet"
+    Cache-Control = "no-cache, no-store, must-revalidate, private"
+
+# API端点安全头部
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, X-Session-ID, X-Timestamp, X-Signature"
+    Cache-Control = "no-cache, no-store, must-revalidate"

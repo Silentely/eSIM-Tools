@@ -1,0 +1,13 @@
+{
+  "version": "standard",
+  "buildTime": "2025-08-01T14:23:46.030Z",
+  "description": "标准版本 - 原始功能，无安全加固",
+  "security": false,
+  "features": [
+    "OAuth 2.0 PKCE认证",
+    "MFA多因子验证",
+    "GraphQL API集成",
+    "eSIM二维码生成",
+    "Simyo设备更换流程"
+  ]
+}

@@ -1,0 +1,72 @@
+# Netlify配置 - 标准版本
+# 使用方法: netlify deploy --config netlify-standard.toml
+
+[build]
+  command = "npm run build:standard"
+  publish = "dist-standard"
+  functions = "dist-standard/netlify/functions"
+
+[build.environment]
+  NODE_ENV = "production"
+  BUILD_VERSION = "standard"
+
+# 标准版本重定向
+[[redirects]]
+  from = "/giffgaff"
+  to = "/src/giffgaff/giffgaff_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  from = "/simyo"
+  to = "/src/simyo/simyo_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# API代理重定向（解决CORS问题）
+[[redirects]]
+  from = "/api/simyo/*"
+  to = "https://appapi.simyo.nl/simyoapi/api/v1/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "appapi.simyo.nl"}
+
+[[redirects]]
+  from = "/api/giffgaff-id/*"
+  to = "https://id.giffgaff.com/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "id.giffgaff.com"}
+
+[[redirects]]
+  from = "/api/giffgaff-public/*"
+  to = "https://publicapi.giffgaff.com/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "publicapi.giffgaff.com"}
+
+# 处理SPA路由
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 404
+
+# 基础安全头部
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https: http:; connect-src 'self' https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;"
+
+# 版本标识头部
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Build-Version = "standard"
+    X-Security-Level = "basic"

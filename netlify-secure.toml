@@ -1,0 +1,86 @@
+# Netlify配置 - 企业级安全版本
+# 使用方法: netlify deploy --config netlify-secure.toml
+
+[build]
+  command = "npm run build:secure"
+  publish = "dist-secure"
+  functions = "dist-secure/netlify/functions"
+
+[build.environment]
+  NODE_ENV = "production"
+  BUILD_VERSION = "secure"
+  SECURITY_LEVEL = "enterprise"
+
+# 安全版本重定向
+[[redirects]]
+  from = "/giffgaff"
+  to = "/src/giffgaff-secured.html"
+  status = 200
+
+[[redirects]]
+  from = "/simyo"
+  to = "/src/simyo/simyo_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# 处理SPA路由
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 404
+
+# 企业级安全头部
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # 基础安全头部
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # 强化的内容安全策略
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+    
+    # HSTS强制HTTPS
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    
+    # 权限策略
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+    
+    # 防止MIME类型嗅探
+    X-Download-Options = "noopen"
+    X-Permitted-Cross-Domain-Policies = "none"
+    
+    # 缓存控制
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+    
+    # 版本标识
+    X-Build-Version = "secure"
+    X-Security-Level = "enterprise"
+
+# 静态资源安全头部
+[[headers]]
+  for = "/src/*"
+  [headers.values]
+    # 额外的安全措施用于敏感页面
+    X-Robots-Tag = "noindex, nofollow, noarchive, nosnippet, noimageindex"
+    X-Frame-Options = "DENY"
+    Cache-Control = "no-cache, no-store, must-revalidate, private"
+    
+# API端点安全头部
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, X-Session-ID, X-Timestamp, X-Signature"
