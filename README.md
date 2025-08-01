@@ -476,10 +476,6 @@ open tests/test_simyo_esim.html
 - 遵循现有的代码风格
 - 添加必要的注释和文档
 
-## 📄 许可证
-
-本项目采用 [MIT License](LICENSE) 许可证。
-
 ## 🙏 致谢
 
 - 感谢Giffgaff和Simyo提供的API服务
@@ -493,6 +489,25 @@ open tests/test_simyo_esim.html
 - 查看 [常见问题解答](./docs/guides/DEPLOYMENT_GUIDE.md#故障排除)
 - 参考详细文档和使用指南
 
----
+## 免责声明
 
-**免责声明**: 本工具仅供个人使用，请遵守相关服务条款。使用本工具所产生的任何问题，作者不承担责任。
+本工具仅供个人使用，请遵守相关服务条款。使用本工具所产生的任何问题，作者不承担责任。
+
+## 许可证
+
+- 本项目的所有代码除另有说明外,均按照 [MIT License](LICENSE) 发布。
+- 本项目的README.MD，wiki等资源基于 [CC BY-NC-SA 4.0][CC-NC-SA-4.0] 这意味着你可以拷贝、并再发行本项目的内容，<br/>
+  但是你将必须同样**提供原作者信息以及协议声明**。同时你也**不能将本项目用于商业用途**，按照我们狭义的理解<br/>
+  (增加附属条款)，凡是**任何盈利的活动皆属于商业用途**。
+- 请在遵守当地相关法律法规的前提下使用本项目。
+
+<p align="center">
+  <img src="https://github.com/docker/dockercraft/raw/master/docs/img/contribute.png?raw=true" alt="贡献图示">
+</p>
+
+[github-hosts]: https://raw.githubusercontent.com/racaljk/hosts/master/hosts "hosts on Github"
+[CC-NC-SA-4.0]: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh
+
+<div align="center">
+  <sub>Made with ❤️ by <a href="https://github.com/Silentely">Silentely</a></sub>
+</div>
