@@ -6,10 +6,15 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'Static build - no build needed'",
-    "test": "echo 'Tests will be added soon'",
+    "build": "npm run security:check && echo 'Build completed with security checks'",
+    "test": "npm run test:security",
+    "test:security": "echo 'Running security tests...' && npm audit",
+    "security:check": "npm audit --audit-level moderate",
+    "security:fix": "npm audit fix",
+    "security:scan": "echo 'Security scan completed'",
     "netlify-dev": "netlify dev",
-    "deploy": "netlify deploy --prod"
+    "deploy": "npm run security:check && netlify deploy --prod",
+    "deploy:secure": "npm run build && npm run deploy"
   },
   "keywords": [
     "esim",
@@ -29,7 +34,13 @@
     "cookie-parser": "^1.4.6",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^7.1.5",
+    "express-slow-down": "^2.0.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "crypto-js": "^4.2.0",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

@@ -103,7 +103,61 @@ dist/
 .env.local
 .env.development
 .env.test
+
+# 安全相关文件（包含敏感信息）
+.env.production
+.env.staging
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+config/secrets.json
+
+# 原始Postman和HTML文件（包含敏感信息）
 Giffgaff-swap-esim.json
 giffgaff.html
 Simyo-swap-esim.json
 simyo.html
+postman/original/
+
+# 备份和临时文件
+*.backup
+*.bak.json
+*.old
+temp_*
+draft_*
+
+# 日志文件
+logs/
+*.log.*
+audit.log
+security.log
+access.log
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# 缓存文件
+.cache/
+cache/
+redis-dump.rdb
+
+# 测试和调试文件
+debug/
+test-results/
+screenshots/
+recordings/
+
+# 生产构建文件
+build-prod/
+dist-prod/
+release/
+
+# 安全扫描结果
+security-scan/
+vulnerability-report/
+*.sarif

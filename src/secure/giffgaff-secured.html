@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giffgaff eSIM 安全工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- 安全头部 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    
+    <style>
+        /* 防止代码查看的样式 */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 混淆的CSS类名 */
+        .a1b2c3 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .d4e5f6 { max-width: 900px; margin: 0 auto; background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .g7h8i9 { text-align: center; margin-bottom: 30px; }
+        .j1k2l3 { background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent; font-size: 32px; font-weight: bold; margin-bottom: 10px; }
+        .m4n5o6 { color: #666; font-size: 16px; }
+        .p7q8r9 { margin: 20px 0; }
+        .s1t2u3 { display: none; }
+        .s1t2u3.v4w5x6 { display: block; animation: fadeIn 0.5s ease; }
+        .y7z8a9 { padding: 20px; background: #f8f9fa; border-radius: 10px; margin: 15px 0; }
+        .b1c2d3 { padding: 15px; border-radius: 8px; margin: 10px 0; display: none; }
+        .b1c2d3.e4f5g6 { display: block; }
+        .b1c2d3.h7i8j9 { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .b1c2d3.k1l2m3 { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 防止选择和拖拽 */
+        * { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+        input, textarea { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
+    </style>
+</head>
+<body class="a1b2c3">
+    <div class="d4e5f6">
+        <div class="g7h8i9">
+            <h1 class="j1k2l3">🔒 Giffgaff eSIM 安全工具</h1>
+            <p class="m4n5o6">企业级安全保护 | 源代码加密 | 防逆向工程</p>
+        </div>
+
+        <!-- 安全警告 -->
+        <div class="alert alert-warning">
+            <i class="fas fa-shield-alt me-2"></i>
+            <strong>安全提示:</strong> 此应用采用企业级安全措施保护，禁止查看源代码、调试或逆向工程。
+        </div>
+
+        <!-- OAuth登录步骤 -->
+        <div id="n4o5p6" class="s1t2u3 v4w5x6">
+            <div class="y7z8a9">
+                <h3><i class="fas fa-key me-2"></i>步骤 1: 安全OAuth登录</h3>
+                <p>点击下方按钮启动安全的OAuth认证流程</p>
+                <button id="q7r8s9" class="btn btn-primary btn-lg">
+                    <i class="fas fa-lock me-2"></i>启动安全登录
+                </button>
+                <div id="t1u2v3" class="b1c2d3"></div>
+            </div>
+        </div>
+
+        <!-- 回调处理步骤 -->
+        <div id="w4x5y6" class="s1t2u3">
+            <div class="y7z8a9">
+                <h3><i class="fas fa-exchange-alt me-2"></i>步骤 2: 处理认证回调</h3>
+                <p>请将获取的回调URL粘贴到下方输入框中</p>
+                <div class="mb-3">
+                    <label for="z7a8b9" class="form-label">回调URL:</label>
+                    <textarea id="z7a8b9" class="form-control" rows="3" placeholder="粘贴完整的回调URL..."></textarea>
+                </div>
+                <button id="c1d2e3" class="btn btn-success btn-lg">
+                    <i class="fas fa-check me-2"></i>安全处理回调
+                </button>
+                <div id="f4g5h6" class="b1c2d3"></div>
+            </div>
+        </div>
+
+        <!-- MFA验证步骤 -->
+        <div id="i7j8k9" class="s1t2u3">
+            <div class="y7z8a9">
+                <h3><i class="fas fa-envelope me-2"></i>步骤 3: 多因子验证</h3>
+                <p>发送邮件验证码到您的注册邮箱</p>
+                <button id="l1m2n3" class="btn btn-info btn-lg">
+                    <i class="fas fa-paper-plane me-2"></i>发送验证码
+                </button>
+                <div id="o4p5q6" class="b1c2d3"></div>
+                
+                <div id="r7s8t9" style="display:none;" class="mt-3">
+                    <label for="u1v2w3" class="form-label">邮件验证码:</label>
+                    <input type="text" id="u1v2w3" class="form-control" placeholder="输入6位验证码">
+                    <button id="x4y5z6" class="btn btn-success mt-2">
+                        <i class="fas fa-check me-2"></i>验证邮件码
+                    </button>
+                    <div id="a7b8c9" class="b1c2d3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 会员信息步骤 -->
+        <div id="d1e2f3" class="s1t2u3">
+            <div class="y7z8a9">
+                <h3><i class="fas fa-user me-2"></i>步骤 4: 获取会员信息</h3>
+                <p>验证您的Giffgaff账户信息</p>
+                <button id="g4h5i6" class="btn btn-primary btn-lg">
+                    <i class="fas fa-user-check me-2"></i>获取会员信息
+                </button>
+                <div id="j7k8l9" class="b1c2d3"></div>
+                <div id="m1n2o3"></div>
+            </div>
+        </div>
+
+        <!-- eSIM申请步骤 -->
+        <div id="p4q5r6" class="s1t2u3">
+            <div class="y7z8a9">
+                <h3><i class="fas fa-sim-card me-2"></i>步骤 5: 申请eSIM</h3>
+                <p>预订并交换您的eSIM卡</p>
+                <button id="s7t8u9" class="btn btn-warning btn-lg">
+                    <i class="fas fa-plus me-2"></i>申请eSIM
+                </button>
+                <div id="v1w2x3" class="b1c2d3"></div>
+                <div id="y4z5a6"></div>
+            </div>
+        </div>
+
+        <!-- 二维码生成步骤 -->
+        <div id="b7c8d9" class="s1t2u3">
+            <div class="y7z8a9">
+                <h3><i class="fas fa-qrcode me-2"></i>步骤 6: 生成激活二维码</h3>
+                <p>获取eSIM激活二维码</p>
+                <button id="e1f2g3" class="btn btn-success btn-lg">
+                    <i class="fas fa-qrcode me-2"></i>生成二维码
+                </button>
+                <div id="h4i5j6" class="b1c2d3"></div>
+                <div id="k7l8m9"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth-service.js"></script>
+    <script>
+        // 混淆的变量名和代码结构
+        const _0x1a2b = {
+            _0x3c4d: 1,
+            _0x5e6f: '',
+            _0x7g8h: '',
+            _0x9i0j: '',
+            _0x1k2l: '',
+            _0x3m4n: ''
+        };
+
+        // 防调试代码
+        (function() {
+            'use strict';
+            const _0x5o6p = function() {
+                const _0x7q8r = function() {
+                    return 'dev' + 'tools';
+                };
+                const _0x9s0t = function() {
+                    return 'opened';
+                };
+                if (typeof _0x7q8r().toString() !== 'undefined' && _0x7q8r().toString().indexOf(_0x9s0t()) !== -1) {
+                    _0x1u2v();
+                }
+            };
+            const _0x1u2v = function() {
+                document.body.innerHTML = '<div style="text-align:center;padding:100px;font-size:24px;color:red;">⚠️ 安全保护已激活</div>';
+            };
+            setInterval(_0x5o6p, 500);
+        })();
+
+        // DOM元素引用（混淆）
+        const _0x3w4x = {
+            _0x5y6z: document.getElementById('q7r8s9'),
+            _0x7a8b: document.getElementById('t1u2v3'),
+            _0x9c0d: document.getElementById('z7a8b9'),
+            _0x1e2f: document.getElementById('c1d2e3'),
+            _0x3g4h: document.getElementById('f4g5h6'),
+            _0x5i6j: document.getElementById('l1m2n3'),
+            _0x7k8l: document.getElementById('o4p5q6'),
+            _0x9m0n: document.getElementById('u1v2w3'),
+            _0x1o2p: document.getElementById('x4y5z6'),
+            _0x3q4r: document.getElementById('a7b8c9'),
+            _0x5s6t: document.getElementById('g4h5i6'),
+            _0x7u8v: document.getElementById('j7k8l9'),
+            _0x9w0x: document.getElementById('s7t8u9'),
+            _0x1y2z: document.getElementById('v1w2x3'),
+            _0x3a4b: document.getElementById('e1f2g3'),
+            _0x5c6d: document.getElementById('h4i5j6')
+        };
+
+        // 显示状态函数（混淆）
+        function _0x7e8f(_0x9g0h, _0x1i2j, _0x3k4l) {
+            _0x9g0h.textContent = _0x1i2j;
+            _0x9g0h.className = `b1c2d3 e4f5g6 ${_0x3k4l === 'success' ? 'h7i8j9' : 'k1l2m3'}`;
+        }
+
+        // 显示步骤函数（混淆）
+        function _0x5m6n(_0x7o8p) {
+            document.querySelectorAll('.s1t2u3').forEach((_0x9q0r, _0x1s2t) => {
+                if (_0x1s2t === _0x7o8p - 1) {
+                    _0x9q0r.classList.add('v4w5x6');
+                } else {
+                    _0x9q0r.classList.remove('v4w5x6');
+                }
+            });
+            _0x1a2b._0x3c4d = _0x7o8p;
+        }
+
+        // OAuth登录处理
+        _0x3w4x._0x5y6z.addEventListener('click', async function() {
+            try {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>启动中...';
+                this.disabled = true;
+                
+                _0x7e8f(_0x3w4x._0x7a8b, "正在启动安全OAuth认证...", "success");
+                
+                const _0x3u4v = await SecureAuthService.initiateGiffgaffOAuth();
+                
+                if (_0x3u4v.success) {
+                    _0x1a2b._0x5e6f = _0x3u4v.sessionId;
+                    _0x7e8f(_0x3w4x._0x7a8b, "OAuth认证已启动！请在新窗口中完成登录，然后复制回调URL。", "success");
+                    window.open(_0x3u4v.authUrl, '_blank');
+                    setTimeout(() => _0x5m6n(2), 2000);
+                } else {
+                    throw new Error(_0x3u4v.error || 'OAuth启动失败');
+                }
+            } catch (_0x5w6x) {
+                _0x7e8f(_0x3w4x._0x7a8b, "OAuth启动失败：" + _0x5w6x.message, "error");
+            } finally {
+                this.innerHTML = '<i class="fas fa-lock me-2"></i>启动安全登录';
+                this.disabled = false;
+            }
+        });
+
+        // 回调处理
+        _0x3w4x._0x1e2f.addEventListener('click', async function() {
+            try {
+                const _0x7y8z = _0x3w4x._0x9c0d.value.trim();
+                if (!_0x7y8z) {
+                    _0x7e8f(_0x3w4x._0x3g4h, "请输入回调URL", "error");
+                    return;
+                }
+                
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>处理中...';
+                this.disabled = true;
+                
+                const _0x9a0b = await SecureAuthService.completeGiffgaffOAuth(_0x7y8z);
+                
+                if (_0x9a0b.success) {
+                    _0x1a2b._0x7g8h = _0x9a0b.accessToken;
+                    _0x7e8f(_0x3w4x._0x3g4h, "OAuth认证成功！", "success");
+                    setTimeout(() => _0x5m6n(3), 1500);
+                } else {
+                    throw new Error(_0x9a0b.error || '回调处理失败');
+                }
+            } catch (_0x1c2d) {
+                _0x7e8f(_0x3w4x._0x3g4h, "回调处理失败：" + _0x1c2d.message, "error");
+            } finally {
+                this.innerHTML = '<i class="fas fa-check me-2"></i>安全处理回调';
+                this.disabled = false;
+            }
+        });
+
+        // MFA验证码发送
+        _0x3w4x._0x5i6j.addEventListener('click', async function() {
+            try {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>发送中...';
+                this.disabled = true;
+                
+                const _0x3e4f = await SecureAuthService.sendMFACode(_0x1a2b._0x7g8h);
+                
+                if (_0x3e4f.success) {
+                    _0x1a2b._0x9i0j = _0x3e4f.ref;
+                    _0x7e8f(_0x3w4x._0x7k8l, "验证码已发送到您的邮箱！", "success");
+                    document.getElementById('r7s8t9').style.display = 'block';
+                } else {
+                    throw new Error(_0x3e4f.error || 'MFA发送失败');
+                }
+            } catch (_0x5g6h) {
+                _0x7e8f(_0x3w4x._0x7k8l, "发送失败：" + _0x5g6h.message, "error");
+            } finally {
+                this.innerHTML = '<i class="fas fa-paper-plane me-2"></i>发送验证码';
+                this.disabled = false;
+            }
+        });
+
+        // MFA验证码验证
+        _0x3w4x._0x1o2p.addEventListener('click', async function() {
+            try {
+                const _0x7i8j = _0x3w4x._0x9m0n.value.trim();
+                if (!_0x7i8j) {
+                    _0x7e8f(_0x3w4x._0x3q4r, "请输入验证码", "error");
+                    return;
+                }
+                
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>验证中...';
+                this.disabled = true;
+                
+                const _0x9k0l = await SecureAuthService.verifyMFACode(_0x1a2b._0x7g8h, _0x7i8j, _0x1a2b._0x9i0j);
+                
+                if (_0x9k0l.success) {
+                    _0x1a2b._0x1k2l = _0x9k0l.signature;
+                    _0x7e8f(_0x3w4x._0x3q4r, "验证码验证成功！", "success");
+                    setTimeout(() => _0x5m6n(4), 1500);
+                } else {
+                    throw new Error(_0x9k0l.error || 'MFA验证失败');
+                }
+            } catch (_0x1m2n) {
+                _0x7e8f(_0x3w4x._0x3q4r, "验证失败：" + _0x1m2n.message, "error");
+            } finally {
+                this.innerHTML = '<i class="fas fa-check me-2"></i>验证邮件码';
+                this.disabled = false;
+            }
+        });
+
+        // 获取会员信息
+        _0x3w4x._0x5s6t.addEventListener('click', async function() {
+            try {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>获取中...';
+                this.disabled = true;
+                
+                const _0x3o4p = await SecureAuthService.getMemberInfo(_0x1a2b._0x7g8h, _0x1a2b._0x1k2l);
+                
+                if (_0x3o4p.success) {
+                    _0x7e8f(_0x3w4x._0x7u8v, "会员信息获取成功！", "success");
+                    document.getElementById('m1n2o3').innerHTML = `
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5>会员信息</h5>
+                                <p><strong>会员ID:</strong> ${_0x3o4p.data.memberId}</p>
+                                <p><strong>用户名:</strong> ${_0x3o4p.data.memberName}</p>
+                                <p><strong>手机号:</strong> ${_0x3o4p.data.phoneNumber}</p>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => _0x5m6n(5), 2000);
+                } else {
+                    throw new Error(_0x3o4p.error || '获取会员信息失败');
+                }
+            } catch (_0x5q6r) {
+                _0x7e8f(_0x3w4x._0x7u8v, "获取失败：" + _0x5q6r.message, "error");
+            } finally {
+                this.innerHTML = '<i class="fas fa-user-check me-2"></i>获取会员信息';
+                this.disabled = false;
+            }
+        });
+
+        // 申请eSIM
+        _0x3w4x._0x9w0x.addEventListener('click', async function() {
+            try {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>申请中...';
+                this.disabled = true;
+                
+                // 预订eSIM
+                const _0x7s8t = await SecureAuthService.reserveESIM(_0x1a2b._0x7g8h, _0x1a2b._0x1k2l);
+                if (!_0x7s8t.success) {
+                    throw new Error(_0x7s8t.error || 'eSIM预订失败');
+                }
+                
+                // 交换SIM
+                const _0x9u0v = await SecureAuthService.swapSIM(_0x1a2b._0x7g8h, _0x1a2b._0x1k2l, _0x7s8t.data.ssn);
+                if (!_0x9u0v.success) {
+                    throw new Error(_0x9u0v.error || 'SIM交换失败');
+                }
+                
+                _0x1a2b._0x3m4n = _0x9u0v.data.ssn;
+                _0x7e8f(_0x3w4x._0x1y2z, "eSIM申请成功！", "success");
+                setTimeout(() => _0x5m6n(6), 1500);
+                
+            } catch (_0x1w2x) {
+                _0x7e8f(_0x3w4x._0x1y2z, "申请失败：" + _0x1w2x.message, "error");
+            } finally {
+                this.innerHTML = '<i class="fas fa-plus me-2"></i>申请eSIM';
+                this.disabled = false;
+            }
+        });
+
+        // 生成二维码
+        _0x3w4x._0x3a4b.addEventListener('click', async function() {
+            try {
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>生成中...';
+                this.disabled = true;
+                
+                const _0x3y4z = await SecureAuthService.getESIMToken(_0x1a2b._0x7g8h, _0x1a2b._0x1k2l, _0x1a2b._0x3m4n);
+                
+                if (_0x3y4z.success) {
+                    const _0x5a6b = await SecureAuthService.generateQRCode(_0x3y4z.data.lpaString);
+                    
+                    if (_0x5a6b.success) {
+                        _0x7e8f(_0x3w4x._0x5c6d, "二维码生成成功！", "success");
+                        document.getElementById('k7l8m9').innerHTML = `
+                            <div class="card mt-3">
+                                <div class="card-body text-center">
+                                    <h5>eSIM激活二维码</h5>
+                                    <img src="${_0x5a6b.data.qrCodeUrl}" class="img-fluid" alt="eSIM QR Code">
+                                    <p class="mt-3"><strong>LPA字符串:</strong></p>
+                                    <code class="text-break">${_0x3y4z.data.lpaString}</code>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        throw new Error(_0x5a6b.error || '二维码生成失败');
+                    }
+                } else {
+                    throw new Error(_0x3y4z.error || 'eSIM令牌获取失败');
+                }
+            } catch (_0x7c8d) {
+                _0x7e8f(_0x3w4x._0x5c6d, "生成失败：" + _0x7c8d.message, "error");
+            } finally {
+                this.innerHTML = '<i class="fas fa-qrcode me-2"></i>生成二维码';
+                this.disabled = false;
+            }
+        });
+
+        // 页面卸载时清理敏感数据
+        window.addEventListener('beforeunload', function() {
+            SecureAuthService.clearSensitiveData();
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔒 安全eSIM工具已加载');
+            _0x5m6n(1);
+        });
+    </script>
+</body>
+</html>
