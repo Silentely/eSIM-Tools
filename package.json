@@ -1,0 +1,42 @@
+{
+  "name": "esim-tools",
+  "version": "1.0.0",
+  "description": "专为Giffgaff和Simyo用户设计的eSIM管理工具集，支持完整的eSIM申请、设备更换和二维码生成流程",
+  "main": "simyo_proxy_server.js",
+  "scripts": {
+    "start": "node simyo_proxy_server.js",
+    "dev": "nodemon simyo_proxy_server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "esim",
+    "giffgaff",
+    "simyo",
+    "proxy",
+    "cors",
+    "api",
+    "mobile",
+    "telecom"
+  ],
+  "author": "Silentely",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Silentely/esim-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Silentely/esim-tools/issues"
+  },
+  "homepage": "https://github.com/Silentely/esim-tools#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

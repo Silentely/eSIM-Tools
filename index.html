@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eSIM工具 - Giffgaff & Simyo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 0;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary-color);
+        }
+
+        .giffgaff-card {
+            --primary-color: #ff6b00;
+            --secondary-color: #ff8c42;
+        }
+
+        .simyo-card {
+            --primary-color: #e74c3c;
+            --secondary-color: #c0392b;
+        }
+
+        .tool-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .tool-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .tool-description {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .tool-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .tool-features li {
+            padding: 5px 0;
+            color: #5a6c7d;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .tool-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .tool-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #ecf0f1;
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .tool-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-sim-card me-3"></i>eSIM工具集</h1>
+            <p>轻松管理您的Giffgaff和Simyo eSIM配置</p>
+        </div>
+
+        <div class="tools-grid">
+            <!-- Giffgaff工具卡片 -->
+            <div class="tool-card giffgaff-card">
+                <div class="tool-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h2 class="tool-title">Giffgaff eSIM工具</h2>
+                <p class="tool-description">
+                    完整的Giffgaff eSIM申请和管理工具，支持OAuth认证、MFA验证和GraphQL API调用
+                </p>
+                <ul class="tool-features">
+                    <li>OAuth 2.0 PKCE认证</li>
+                    <li>邮件验证和MFA支持</li>
+                    <li>GraphQL API集成</li>
+                    <li>自动生成eSIM二维码</li>
+                    <li>完整的错误处理</li>
+                </ul>
+                <a href="/giffgaff" class="tool-btn">
+                    <i class="fas fa-arrow-right me-2"></i>使用Giffgaff工具
+                </a>
+            </div>
+
+            <!-- Simyo工具卡片 -->
+            <div class="tool-card simyo-card">
+                <div class="tool-icon">
+                    <i class="fas fa-sim-card"></i>
+                </div>
+                <h2 class="tool-title">Simyo eSIM工具</h2>
+                <p class="tool-description">
+                    专为Simyo NL用户设计的eSIM管理工具，支持设备更换和验证码处理
+                </p>
+                <ul class="tool-features">
+                    <li>简单的登录验证</li>
+                    <li>设备更换流程</li>
+                    <li>短信验证码支持</li>
+                    <li>一键生成二维码</li>
+                    <li>安装确认功能</li>
+                </ul>
+                <a href="/simyo" class="tool-btn">
+                    <i class="fas fa-arrow-right me-2"></i>使用Simyo工具
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                <i class="fas fa-info-circle me-2"></i>
+                这些工具仅供个人使用，请遵守相关服务条款。
+                <br>
+                <i class="fas fa-shield-alt me-2"></i>
+                所有数据处理均在本地进行，确保您的隐私安全。
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.tool-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(30px)';
+                    card.style.transition = 'all 0.6s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 200);
+            });
+        });
+
+        // 添加点击跟踪（可选）
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const toolName = this.textContent.includes('Giffgaff') ? 'Giffgaff' : 'Simyo';
+                console.log(`用户选择了 ${toolName} 工具`);
+                
+                // 这里可以添加分析代码，如Google Analytics
+                // gtag('event', 'tool_selection', {
+                //     'tool_name': toolName
+                // });
+            });
+        });
+    </script>
+</body>
+</html>

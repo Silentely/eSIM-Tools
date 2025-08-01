@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simyo NL eSIM 申请工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff6b00;        /* Simyo橙色 */
+            --secondary: #ffffff;      /* 白色 */
+            --success: #28a745;        /* 绿色 */
+            --warning: #dc3545;        /* 红色 */
+            --light: #f8f9fa;          /* 浅灰色 */
+            --dark: #212529;           /* 深色 */
+            --gray: #6c757d;           /* 中等灰色 */
+            --simyo-blue: #0056b3;     /* Simyo蓝色 */
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ece9e6, #ffffff);
+            color: #212529;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .app-icon {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #ff6b00;
+        }
+        
+        .app-title {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(to right, #ff6b00, #0056b3);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        
+        .help-btn {
+            background: linear-gradient(to right, #ff6b00, #ffffff);
+            border: none;
+            font-size: 16px;
+            color: #212529;
+            cursor: pointer;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+            transition: all 0.3s;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            border: 1px solid rgba(255, 107, 0, 0.3);
+        }
+        
+        .help-btn:hover {
+            background: linear-gradient(to right, #ffffff, #ff6b00);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 107, 0, 0.5);
+        }
+
+        /* 推广横幅样式 */
+        .promo-banner {
+            background: linear-gradient(135deg, #ff6b00, #ff8c42);
+            border-radius: 12px;
+            margin: 20px 0;
+            padding: 16px 20px;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+            animation: subtle-pulse 3s ease-in-out infinite;
+        }
+
+        .promo-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .promo-icon {
+            color: white;
+            font-size: 20px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        .promo-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .promo-link {
+            color: white;
+            text-decoration: underline;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .promo-link:hover {
+            color: #fff3e0;
+            text-decoration: none;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes subtle-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-5px); }
+            60% { transform: translateY(-3px); }
+        }
+        
+        .page-title {
+            text-align: center;
+            margin: 30px 0 40px;
+        }
+        
+        .page-title h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+            color: #212529;
+        }
+        
+        .page-title p {
+            color: rgba(33, 37, 41, 0.7);
+            font-size: 18px;
+            margin-top: 8px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 0 auto 40px;
+            position: relative;
+            max-width: 600px;
+            counter-reset: step;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            width: 120px;
+            position: relative;
+        }
+        
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 20px;
+            color: #212529;
+            border: 2px solid rgba(255, 107, 0, 0.5);
+        }
+        
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 107, 0, 0.6);
+        }
+        
+        .step-text {
+            font-size: 14px;
+            text-align: center;
+            color: #212529;
+            font-weight: 500;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 107, 0, 0.3);
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 107, 0, 0.5);
+        }
+        
+        .card-header {
+            background: rgba(255, 107, 0, 0.1);
+            padding: 20px 25px;
+            font-size: 22px;
+            font-weight: 600;
+            color: #212529;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 107, 0, 0.2);
+        }
+        
+        .card-header i {
+            margin-right: 12px;
+            font-size: 28px;
+            color: #ff6b00;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 17px;
+            color: #212529;
+        }
+        
+        textarea, input {
+            width: 100%;
+            padding: 16px 18px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 107, 0, 0.3);
+            background: rgba(255, 255, 255, 0.9);
+            color: #212529;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.2);
+            background: rgba(255, 255, 255, 1);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            padding: 16px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #ff6b00, #ffffff);
+            color: #212529;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(to right, #ffffff, #ff6b00);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .status {
+            margin-top: 25px;
+            padding: 18px 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            font-size: 16px;
+            border-left: 4px solid transparent;
+            color: #212529;
+        }
+        
+        .status.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .status.success {
+            border-left: 4px solid var(--success);
+        }
+        
+        .status.error {
+            border-left: 4px solid var(--warning);
+        }
+        
+        .section {
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        #resultContainer {
+            display: none;
+        }
+        
+        #resultContainer.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            border-top-color: #ff6b00;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #ff6b00, #ffffff);
+            color: #212529;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 107, 0, 0.3);
+        }
+        
+        .info-card h6 {
+            margin: 0 0 10px 0;
+            font-weight: bold;
+        }
+        
+        .info-card p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 20px;
+            }
+            
+            .page-title h1 {
+                font-size: 26px;
+            }
+            
+            .step {
+                width: 80px;
+            }
+            
+            .step-number {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .step-text {
+                font-size: 13px;
+            }
+            
+            .card-header {
+                padding: 15px;
+                font-size: 19px;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+            
+            textarea, input {
+                padding: 14px;
+                font-size: 15px;
+            }
+            
+            .btn {
+                padding: 14px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 应用头部 -->
+        <div class="app-header">
+            <div class="logo-container">
+                <i class="fas fa-sim-card app-icon"></i>
+                <div class="app-title">Simyo eSIM工具</div>
+            </div>
+            <button class="help-btn" onclick="openHelp()">
+                <i class="fas fa-question-circle"></i> 使用帮助
+            </button>
+        </div>
+
+        <!-- 开卡推广 -->
+        <div class="promo-banner">
+            <div class="promo-content">
+                <i class="fas fa-gift promo-icon"></i>
+                <span class="promo-text">
+                    如果您还没有开卡，可以<a href="https://vriendendeal.simyo.nl/prepaid/AZzwPzb" target="_blank" class="promo-link">点击这里开卡</a>，享受额外5欧元话费赠送！
+                </span>
+            </div>
+        </div>
+        
+        <!-- 页面标题 -->
+        <div class="page-title">
+            <h1>Simyo NL eSIM 申请工具</h1>
+            <p>轻松管理您的Simyo eSIM配置</p>
+        </div>
+        
+        <!-- 使用说明 -->
+        <div class="info-card">
+            <h6><i class="fas fa-info-circle"></i> 使用说明</h6>
+            <p><strong>初次注册并安装：</strong>直接使用步骤1-3即可完成</p>
+            <p><strong>更换设备：</strong>在APP中申请更换设备后，使用本工具生成二维码，新设备扫码安装</p>
+            <p><strong>保号服务：</strong>向IBAN NL19INGB0007811670转账0.01欧元，备注您的Simyo号码</p>
+        </div>
+        
+        <!-- 步骤指示器 -->
+        <div class="step-indicator">
+            <div class="step active">
+                <div class="step-number">1</div>
+                <div class="step-text">账户登录</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-text">获取eSIM</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-text">生成二维码</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-text">确认安装</div>
+            </div>
+        </div>
+        
+        <!-- 步骤1: 账户登录 -->
+        <div id="step1" class="section active">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-sign-in-alt"></i> 第一步：登录Simyo账户
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        请输入您的Simyo账户信息进行登录：
+                    </p>
+                    
+                    <div class="mb-4">
+                        <label for="phoneNumber" class="form-label">手机号码：</label>
+                        <input type="text" id="phoneNumber" class="form-control" placeholder="例如: 0613715742" maxlength="15">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">密码：</label>
+                        <input type="password" id="password" class="form-control" placeholder="输入您的Simyo密码">
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="loginBtn" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i> 登录账户
+                        </button>
+                    </div>
+                    
+                    <div id="loginStatus" class="status"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 设备更换选项 -->
+        <div id="deviceChangeOption" class="section" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-mobile-alt"></i> 设备更换选项
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle me-2"></i>选择操作类型</h5>
+                        <p>请选择您的需求：</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exchange-alt fa-3x text-warning mb-3"></i>
+                                    <h5>更换设备</h5>
+                                    <p class="text-muted">将eSIM转移到新设备</p>
+                                    <button class="btn btn-warning w-100" onclick="startDeviceChange()">
+                                        选择此选项
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-sim-card fa-3x text-success mb-3"></i>
+                                    <h5>直接获取eSIM</h5>
+                                    <p class="text-muted">首次申请或当前设备使用</p>
+                                    <button class="btn btn-success w-100" onclick="skipDeviceChange()">
+                                        选择此选项
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设备更换流程 -->
+        <div id="deviceChangeSteps" class="section" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-exchange-alt"></i> 设备更换流程
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>重要提示</h5>
+                        <ul class="mb-0">
+                            <li><strong>如果您的现有eSIM能接收短信：</strong>请按顺序执行申请新eSIM，然后发送验证码到短信</li>
+                            <li><strong>如果您的现有eSIM无法接收短信：</strong>只执行申请新eSIM，然后联系Simyo客服索要验证码</li>
+                        </ul>
+                    </div>
+
+                    <!-- Step 2.1: 申请新eSIM -->
+                    <div class="mb-4">
+                        <h5>2.1 申请新eSIM</h5>
+                        <p>此步骤会通知Simyo系统您要更换eSIM设备</p>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="applyNewEsimBtn">
+                                <i class="fas fa-plus me-2"></i>申请新eSIM
+                            </button>
+                        </div>
+                        <div id="applyNewEsimStatus" class="status"></div>
+                    </div>
+
+                    <!-- Step 2.2: 发送验证码 -->
+                    <div class="mb-4">
+                        <h5>2.2 发送验证码到短信（可选）</h5>
+                        <p>如果您能接收短信，在执行完2.1成功后，立即执行此步骤</p>
+                        <div class="btn-group">
+                            <button class="btn btn-info" id="sendSmsBtn" disabled>
+                                <i class="fas fa-sms me-2"></i>发送验证码到短信
+                            </button>
+                        </div>
+                        <div id="sendSmsStatus" class="status"></div>
+                    </div>
+
+                    <!-- Step 2.3: 验证验证码 -->
+                    <div class="mb-4">
+                        <h5>2.3 确认验证码</h5>
+                        <p>无论您是通过短信收到验证码还是从客服处获取，请在此处填写验证码并确认</p>
+                        <div class="mb-3">
+                            <label for="validationCodeInput" class="form-label">验证码：</label>
+                            <input type="text" class="form-control" id="validationCodeInput" 
+                                   placeholder="输入6位数字验证码" maxlength="6" pattern="^\d{6}$">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-success" id="verifyCodeBtn" disabled>
+                                <i class="fas fa-check me-2"></i>确认验证码
+                            </button>
+                        </div>
+                        <div id="verifyCodeStatus" class="status"></div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-outline-secondary" onclick="skipDeviceChange()">
+                            <i class="fas fa-skip-forward me-2"></i>跳过设备更换，直接获取eSIM
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤2: 获取eSIM -->
+        <div id="step2" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-download"></i> 第二步：获取eSIM信息
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        获取您的eSIM配置信息：
+                    </p>
+                    
+                    <div class="btn-group">
+                        <button id="getEsimBtn" class="btn btn-primary">
+                            <i class="fas fa-sim-card me-2"></i> 获取eSIM
+                        </button>
+                    </div>
+                    
+                    <div id="esimStatus" class="status"></div>
+                    <div id="esimInfo" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤3: 生成二维码 -->
+        <div id="step3" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-qrcode"></i> 第三步：生成eSIM二维码
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        生成eSIM二维码供设备扫描安装：
+                    </p>
+                    
+                    <div class="btn-group">
+                        <button id="generateQrBtn" class="btn btn-primary">
+                            <i class="fas fa-qrcode me-2"></i> 生成二维码
+                        </button>
+                    </div>
+                    
+                    <div id="qrStatus" class="status"></div>
+                    
+                    <!-- eSIM二维码显示 -->
+                    <div id="resultContainer" class="mt-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-qrcode me-2"></i> 您的eSIM二维码
+                            </div>
+                            <div class="card-body text-center">
+                                <div id="qrcode" class="mt-4"></div>
+                                <div id="activationInfo" class="mt-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤4: 确认安装 -->
+        <div id="step4" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-check-circle"></i> 第四步：确认安装（可选）
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        如果APP无法登录或更换设备，请执行此步骤确认安装：
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>说明：</strong>此步骤适用于更换设备或APP登录异常的情况
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="confirmInstallBtn" class="btn btn-primary">
+                            <i class="fas fa-check me-2"></i> 确认安装
+                        </button>
+                    </div>
+                    
+                    <div id="confirmStatus" class="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局状态管理
+        const appState = {
+            sessionToken: "",
+            activationCode: "",
+            phoneNumber: "",
+            password: "",
+            validationCode: "",
+            isDeviceChange: false,
+            currentStep: 1
+        };
+
+        // Simyo API配置
+        const simyoConfig = {
+            clientToken: "e77b7e2f43db41bb95b17a2a11581a38",
+            clientPlatform: "ios",
+            clientVersion: "4.8.0",
+            userAgent: "MijnSimyo/4.8.0 (iPhone; iOS 17.5.1; Scale/3.00)"
+        };
+
+        // API端点 - 自动检测环境（本地代理服务器 vs Netlify代理）
+        const isNetlify = window.location.hostname.includes('netlify') || window.location.hostname.includes('yyxx.com');
+        const apiEndpoints = {
+            login: isNetlify ? "/api/simyo/sessions" : "/api/simyo/login",
+            getEsim: isNetlify ? "/api/simyo/esim/get-by-customer" : "/api/simyo/esim",
+            applyNewEsim: isNetlify ? "/api/simyo/apply-new-esim" : "/api/simyo/apply-new-esim",
+            sendSmsCode: isNetlify ? "/api/simyo/send-sms-code" : "/api/simyo/send-sms-code", 
+            verifyCode: isNetlify ? "/api/simyo/verify-code" : "/api/simyo/verify-code",
+            confirmInstall: isNetlify ? "/api/simyo/esim/reorder-profile-installed" : "/api/simyo/confirm-install",
+            qrcode: "https://api.qrserver.com/v1/create-qr-code/"
+        };
+
+        // DOM元素
+        const elements = {
+            steps: document.querySelectorAll('.step'),
+            sections: document.querySelectorAll('.section'),
+            
+            // Step 1 - Login
+            phoneNumber: document.getElementById('phoneNumber'),
+            password: document.getElementById('password'),
+            loginBtn: document.getElementById('loginBtn'),
+            loginStatus: document.getElementById('loginStatus'),
+            
+            // Step 2 - Get eSIM
+            getEsimBtn: document.getElementById('getEsimBtn'),
+            esimStatus: document.getElementById('esimStatus'),
+            esimInfo: document.getElementById('esimInfo'),
+            
+            // Step 3 - Generate QR
+            generateQrBtn: document.getElementById('generateQrBtn'),
+            qrStatus: document.getElementById('qrStatus'),
+            resultContainer: document.getElementById('resultContainer'),
+            qrcode: document.getElementById('qrcode'),
+            activationInfo: document.getElementById('activationInfo'),
+            
+            // Step 4 - Confirm Install
+            confirmInstallBtn: document.getElementById('confirmInstallBtn'),
+            confirmStatus: document.getElementById('confirmStatus')
+        };
+
+        // 工具函数
+        function showStatus(element, message, type) {
+            element.textContent = message;
+            element.className = `status active ${type}`;
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function updateSteps(currentStep) {
+            elements.steps.forEach((step, index) => {
+                if (index < currentStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        }
+
+        function showSection(stepNumber) {
+            elements.sections.forEach((section, index) => {
+                if (index === stepNumber - 1) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+            appState.currentStep = stepNumber;
+            updateSteps(stepNumber);
+        }
+
+        // 创建API请求头 - 适配不同环境
+        function createHeaders(includeSession = false) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (isNetlify) {
+                // Netlify环境：添加Simyo API所需的原始头部
+                headers['X-Client-Token'] = simyoConfig.clientToken;
+                headers['X-Client-Platform'] = simyoConfig.clientPlatform;
+                headers['X-Client-Version'] = simyoConfig.clientVersion;
+                headers['User-Agent'] = simyoConfig.userAgent;
+                headers['Connection'] = 'keep-alive';
+                headers['Accept-Encoding'] = 'gzip, deflate, br';
+                
+                if (includeSession && appState.sessionToken) {
+                    headers['X-Session-Token'] = appState.sessionToken;
+                } else if (includeSession) {
+                    headers['X-Session-Token'] = '';
+                }
+            } else {
+                // 本地代理服务器环境：简化头部
+                if (includeSession && appState.sessionToken) {
+                    headers['X-Session-Token'] = appState.sessionToken;
+                }
+            }
+
+            return headers;
+        }
+
+        // Step 1: 登录Simyo账户
+        elements.loginBtn.addEventListener('click', async function() {
+            const phoneNumber = elements.phoneNumber.value.trim();
+            const password = elements.password.value.trim();
+            
+            if (!phoneNumber || !password) {
+                showStatus(elements.loginStatus, "请输入完整的登录信息", "error");
+                return;
+            }
+            
+            // 验证手机号格式（荷兰手机号）
+            if (!/^06\d{8}$/.test(phoneNumber)) {
+                showStatus(elements.loginStatus, "请输入有效的荷兰手机号（06开头，10位数字）", "error");
+                return;
+            }
+            
+            try {
+                elements.loginBtn.innerHTML = '<span class="loading"></span> 登录中...';
+                elements.loginBtn.disabled = true;
+                
+                showStatus(elements.loginStatus, "正在验证账户信息...", "success");
+                
+                const response = await fetch(apiEndpoints.login, {
+                    method: 'POST',
+                    headers: createHeaders(false),
+                    body: JSON.stringify({
+                        phoneNumber: phoneNumber,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // 适配不同环境的响应格式
+                let sessionToken = null;
+                if (isNetlify) {
+                    // Netlify环境：直接从Simyo API响应获取
+                    sessionToken = data.result?.sessionToken;
+                } else {
+                    // 本地代理环境：从包装的响应获取
+                    sessionToken = data.success && data.result ? data.result.sessionToken : null;
+                }
+                
+                if (sessionToken) {
+                    appState.sessionToken = sessionToken;
+                    appState.phoneNumber = phoneNumber;
+                    appState.password = password;
+                    
+                    showStatus(elements.loginStatus, "登录成功！", "success");
+                    
+                    // 显示设备更换选项
+                    showDeviceChangeOption();
+                    
+                    // 不自动进入下一步，而是显示设备更换选项
+                    // showSection(2) 将由用户选择后调用
+                } else {
+                    const errorMsg = data.message || data.error || "登录失败";
+                    throw new Error(errorMsg);
+                }
+                
+            } catch (error) {
+                showStatus(elements.loginStatus, "登录失败：" + error.message, "error");
+            } finally {
+                elements.loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i> 登录账户';
+                elements.loginBtn.disabled = false;
+            }
+        });
+
+        // Step 2: 获取eSIM信息
+        elements.getEsimBtn.addEventListener('click', async function() {
+            try {
+                elements.getEsimBtn.innerHTML = '<span class="loading"></span> 获取中...';
+                elements.getEsimBtn.disabled = true;
+                
+                showStatus(elements.esimStatus, "正在获取eSIM信息...", "success");
+                
+                const response = await fetch(apiEndpoints.getEsim, {
+                    method: 'GET',
+                    headers: createHeaders(true)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.result && data.result.activationCode) {
+                    appState.activationCode = data.result.activationCode;
+                    
+                    showStatus(elements.esimStatus, "eSIM信息获取成功！", "success");
+                    
+                    // 显示eSIM信息
+                    elements.esimInfo.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">eSIM信息</h5>
+                                <p><strong>激活码:</strong> <span class="text-break">${appState.activationCode}</span></p>
+                                <p><strong>状态:</strong> ${data.result.status || '准备就绪'}</p>
+                                ${data.result.phoneNumber ? `<p><strong>关联号码:</strong> ${data.result.phoneNumber}</p>` : ''}
+                                ${data.result.iccid ? `<p><strong>ICCID:</strong> ${data.result.iccid}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 进入下一步
+                    setTimeout(() => {
+                        showSection(3);
+                    }, 2000);
+                    
+                } else {
+                    throw new Error(data.message || "未找到有效的eSIM信息");
+                }
+                
+            } catch (error) {
+                showStatus(elements.esimStatus, "获取eSIM信息失败：" + error.message, "error");
+            } finally {
+                elements.getEsimBtn.innerHTML = '<i class="fas fa-sim-card me-2"></i> 获取eSIM';
+                elements.getEsimBtn.disabled = false;
+            }
+        });
+
+        // Step 3: 生成eSIM二维码
+        elements.generateQrBtn.addEventListener('click', async function() {
+            if (!appState.activationCode) {
+                showStatus(elements.qrStatus, "请先获取eSIM信息", "error");
+                return;
+            }
+            
+            try {
+                elements.generateQrBtn.innerHTML = '<span class="loading"></span> 生成中...';
+                elements.generateQrBtn.disabled = true;
+                
+                showStatus(elements.qrStatus, "正在生成eSIM二维码...", "success");
+                
+                // 构造LPA字符串
+                const lpaString = `LPA:${appState.activationCode}`;
+                
+                // 生成二维码
+                generateQRCode(lpaString);
+                
+                // 显示激活信息
+                elements.activationInfo.innerHTML = `
+                    <div class="mb-3">
+                        <h5 class="text-primary">LPA激活码</h5>
+                        <p class="text-break"><small>${lpaString}</small></p>
+                    </div>
+                    <div class="btn-group mt-3 w-100">
+                        <button id="copyLpaBtn" class="btn btn-outline-dark">
+                            <i class="fas fa-copy me-2"></i>复制激活码
+                        </button>
+                        <button id="downloadQrBtn" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>下载二维码
+                        </button>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        <strong>使用说明：</strong>在支持eSIM的设备上扫描此二维码进行安装，或手动输入LPA激活码
+                    </div>
+                `;
+                
+                // 显示结果容器
+                elements.resultContainer.classList.add('active');
+                
+                // 添加复制和下载功能
+                document.getElementById('copyLpaBtn').addEventListener('click', () => {
+                    copyToClipboard(lpaString);
+                    showToast('LPA激活码已复制到剪贴板');
+                });
+                
+                document.getElementById('downloadQrBtn').addEventListener('click', () => {
+                    downloadQRCode();
+                });
+                
+                showStatus(elements.qrStatus, "eSIM二维码生成成功！", "success");
+                
+                // 进入下一步
+                setTimeout(() => {
+                    showSection(4);
+                }, 2000);
+                
+            } catch (error) {
+                showStatus(elements.qrStatus, "二维码生成失败：" + error.message, "error");
+            } finally {
+                elements.generateQrBtn.innerHTML = '<i class="fas fa-qrcode me-2"></i> 生成二维码';
+                elements.generateQrBtn.disabled = false;
+            }
+        });
+
+        // Step 4: 确认安装
+        elements.confirmInstallBtn.addEventListener('click', async function() {
+            try {
+                elements.confirmInstallBtn.innerHTML = '<span class="loading"></span> 确认中...';
+                elements.confirmInstallBtn.disabled = true;
+                
+                showStatus(elements.confirmStatus, "正在确认eSIM安装状态...", "success");
+                
+                const response = await fetch(apiEndpoints.confirmInstall, {
+                    method: 'POST',
+                    headers: createHeaders(true)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.result) {
+                    if (data.result.success) {
+                        showStatus(elements.confirmStatus, "eSIM安装确认成功！设备应该很快恢复信号", "success");
+                    } else {
+                        showStatus(elements.confirmStatus, data.result.message || "安装确认完成，请检查设备eSIM状态", "success");
+                    }
+                } else {
+                    throw new Error(data.message || "安装确认失败");
+                }
+                
+            } catch (error) {
+                showStatus(elements.confirmStatus, "确认安装失败：" + error.message, "error");
+            } finally {
+                elements.confirmInstallBtn.innerHTML = '<i class="fas fa-check me-2"></i> 确认安装';
+                elements.confirmInstallBtn.disabled = false;
+            }
+        });
+
+        // 生成二维码
+        function generateQRCode(data) {
+            const qrSize = 300;
+            const qrUrl = `${apiEndpoints.qrcode}?data=${encodeURIComponent(data)}&size=${qrSize}x${qrSize}`;
+            
+            const img = document.createElement('img');
+            img.src = qrUrl;
+            img.alt = "eSIM二维码";
+            img.className = 'img-fluid';
+            img.style.border = '5px solid white';
+            img.style.borderRadius = '12px';
+            img.style.maxWidth = '300px';
+            
+            elements.qrcode.innerHTML = '';
+            elements.qrcode.appendChild(img);
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        // 下载二维码
+        function downloadQRCode() {
+            const img = elements.qrcode.querySelector('img');
+            if (!img) return;
+            
+            const link = document.createElement('a');
+            link.href = img.src;
+            link.download = 'simyo_esim_qrcode.png';
+            link.click();
+        }
+
+        // 显示Toast通知
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${message}
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // 打开帮助
+        function openHelp() {
+            const helpContent = `
+                <div style="max-width: 600px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <h3 style="color: #ff6b00; margin-bottom: 20px;"><i class="fas fa-question-circle"></i> Simyo eSIM 使用帮助</h3>
+                    
+                    <h5>📱 初次注册并安装</h5>
+                    <p>1. 输入您的Simyo账户信息登录<br>
+                    2. 获取eSIM配置信息<br>
+                    3. 生成二维码并在设备上扫描安装<br>
+                    4. （可选）确认安装状态</p>
+                    
+                    <h5>🔄 更换设备</h5>
+                    <p>1. 在Simyo APP中申请更换设备/eSIM<br>
+                    2. 填写验证码后停留在界面上<br>
+                    3. 使用本工具生成新二维码<br>
+                    4. 新设备扫码安装并启用<br>
+                    5. 使用第4步确认安装</p>
+                    
+                    <h5>💰 保号服务</h5>
+                    <p>账户持有人: ING BANK N.V.<br>
+                    IBAN: NL19INGB0007811670<br>
+                    金额: 0.01欧元<br>
+                    备注: 您的Simyo号码（06开头）</p>
+                    
+                    <button onclick="this.parentElement.remove()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        关闭帮助
+                    </button>
+                </div>
+            `;
+            
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.7); z-index: 1000; display: flex;
+                align-items: center; justify-content: center; padding: 20px;
+            `;
+            overlay.innerHTML = helpContent;
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+            document.body.appendChild(overlay);
+        }
+
+        // 添加Toast样式
+        const toastStyle = document.createElement('style');
+        toastStyle.textContent = `
+            .toast-notification {
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 50px;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                z-index: 1000;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+            
+            .toast-notification.show {
+                opacity: 1;
+            }
+            
+            .toast-content {
+                display: flex;
+                align-items: center;
+            }
+            
+            .toast-content i {
+                color: #ff6b00;
+                font-size: 18px;
+            }
+        `;
+        document.head.appendChild(toastStyle);
+
+        // 显示设备更换选项
+        function showDeviceChangeOption() {
+            const deviceChangeOption = document.getElementById('deviceChangeOption');
+            if (deviceChangeOption) {
+                deviceChangeOption.style.display = 'block';
+            }
+        }
+
+        // 开始设备更换流程
+        function startDeviceChange() {
+            appState.isDeviceChange = true;
+            
+            // 隐藏选项，显示设备更换步骤
+            document.getElementById('deviceChangeOption').style.display = 'none';
+            document.getElementById('deviceChangeSteps').style.display = 'block';
+            
+            // 绑定设备更换相关的事件监听器
+            bindDeviceChangeEvents();
+        }
+
+        // 跳过设备更换，直接获取eSIM
+        function skipDeviceChange() {
+            appState.isDeviceChange = false;
+            
+            // 隐藏选项和设备更换步骤
+            document.getElementById('deviceChangeOption').style.display = 'none';
+            document.getElementById('deviceChangeSteps').style.display = 'none';
+            
+            // 显示获取eSIM步骤
+            showSection(2);
+        }
+
+        // 绑定设备更换相关的事件监听器
+        function bindDeviceChangeEvents() {
+            // 申请新eSIM
+            const applyNewEsimBtn = document.getElementById('applyNewEsimBtn');
+            if (applyNewEsimBtn && !applyNewEsimBtn.hasEventListener) {
+                applyNewEsimBtn.hasEventListener = true;
+                applyNewEsimBtn.addEventListener('click', handleApplyNewEsim);
+            }
+
+            // 发送验证码到短信
+            const sendSmsBtn = document.getElementById('sendSmsBtn');
+            if (sendSmsBtn && !sendSmsBtn.hasEventListener) {
+                sendSmsBtn.hasEventListener = true;
+                sendSmsBtn.addEventListener('click', handleSendSmsCode);
+            }
+
+            // 验证验证码
+            const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+            if (verifyCodeBtn && !verifyCodeBtn.hasEventListener) {
+                verifyCodeBtn.hasEventListener = true;
+                verifyCodeBtn.addEventListener('click', handleVerifyCode);
+            }
+
+            // 验证码输入框变化
+            const validationCodeInput = document.getElementById('validationCodeInput');
+            if (validationCodeInput && !validationCodeInput.hasEventListener) {
+                validationCodeInput.hasEventListener = true;
+                validationCodeInput.addEventListener('input', function() {
+                    const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+                    verifyCodeBtn.disabled = this.value.length !== 6 || !/^\d{6}$/.test(this.value);
+                });
+            }
+        }
+
+        // 处理申请新eSIM
+        async function handleApplyNewEsim() {
+            const applyNewEsimBtn = document.getElementById('applyNewEsimBtn');
+            const applyNewEsimStatus = document.getElementById('applyNewEsimStatus');
+            
+            try {
+                applyNewEsimBtn.innerHTML = '<span class="loading"></span> 申请中...';
+                applyNewEsimBtn.disabled = true;
+                
+                showStatus(applyNewEsimStatus, "正在申请新eSIM...", "success");
+                
+                const response = await fetch(apiEndpoints.applyNewEsim, {
+                    method: 'POST',
+                    headers: createHeaders(true)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.result) {
+                    showStatus(applyNewEsimStatus, data.result.message, "success");
+                    
+                    // 启用发送短信按钮
+                    document.getElementById('sendSmsBtn').disabled = false;
+                    
+                    // 显示下一步提示
+                    if (data.result.nextStep) {
+                        setTimeout(() => {
+                            showStatus(applyNewEsimStatus, data.result.nextStep, "info");
+                        }, 3000);
+                    }
+                } else {
+                    throw new Error(data.message || "申请新eSIM失败");
+                }
+                
+            } catch (error) {
+                showStatus(applyNewEsimStatus, "申请新eSIM失败：" + error.message, "error");
+            } finally {
+                applyNewEsimBtn.innerHTML = '<i class="fas fa-plus me-2"></i>申请新eSIM';
+                applyNewEsimBtn.disabled = false;
+            }
+        }
+
+        // 处理发送验证码到短信
+        async function handleSendSmsCode() {
+            const sendSmsBtn = document.getElementById('sendSmsBtn');
+            const sendSmsStatus = document.getElementById('sendSmsStatus');
+            
+            try {
+                sendSmsBtn.innerHTML = '<span class="loading"></span> 发送中...';
+                sendSmsBtn.disabled = true;
+                
+                showStatus(sendSmsStatus, "正在发送验证码到短信...", "success");
+                
+                const response = await fetch(apiEndpoints.sendSmsCode, {
+                    method: 'POST',
+                    headers: createHeaders(true)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.result) {
+                    showStatus(sendSmsStatus, data.result.message, "success");
+                    
+                    // 启用验证码输入
+                    document.getElementById('validationCodeInput').disabled = false;
+                    
+                    // 显示下一步提示
+                    if (data.result.nextStep) {
+                        setTimeout(() => {
+                            showStatus(sendSmsStatus, data.result.nextStep, "info");
+                        }, 3000);
+                    }
+                } else {
+                    throw new Error(data.message || "发送验证码失败");
+                }
+                
+            } catch (error) {
+                showStatus(sendSmsStatus, "发送验证码失败：" + error.message, "error");
+            } finally {
+                sendSmsBtn.innerHTML = '<i class="fas fa-sms me-2"></i>发送验证码到短信';
+                sendSmsBtn.disabled = false;
+            }
+        }
+
+        // 处理验证验证码
+        async function handleVerifyCode() {
+            const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+            const verifyCodeStatus = document.getElementById('verifyCodeStatus');
+            const validationCodeInput = document.getElementById('validationCodeInput');
+            
+            const validationCode = validationCodeInput.value.trim();
+            
+            if (!validationCode || !/^\d{6}$/.test(validationCode)) {
+                showStatus(verifyCodeStatus, "请输入6位数字验证码", "error");
+                return;
+            }
+            
+            try {
+                verifyCodeBtn.innerHTML = '<span class="loading"></span> 验证中...';
+                verifyCodeBtn.disabled = true;
+                
+                showStatus(verifyCodeStatus, "正在验证验证码...", "success");
+                
+                const response = await fetch(apiEndpoints.verifyCode, {
+                    method: 'POST',
+                    headers: createHeaders(true),
+                    body: JSON.stringify({
+                        validationCode: validationCode
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.result) {
+                    appState.validationCode = validationCode;
+                    showStatus(verifyCodeStatus, data.result.message, "success");
+                    
+                    // 显示下一步提示并自动进入获取eSIM步骤
+                    if (data.result.nextStep) {
+                        setTimeout(() => {
+                            showStatus(verifyCodeStatus, data.result.nextStep, "info");
+                            setTimeout(() => {
+                                skipDeviceChange(); // 进入获取eSIM步骤
+                            }, 2000);
+                        }, 2000);
+                    }
+                } else {
+                    throw new Error(data.message || "验证码验证失败");
+                }
+                
+            } catch (error) {
+                showStatus(verifyCodeStatus, "验证码验证失败：" + error.message, "error");
+            } finally {
+                verifyCodeBtn.innerHTML = '<i class="fas fa-check me-2"></i>确认验证码';
+                verifyCodeBtn.disabled = true; // 保持禁用状态，需要重新输入
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Simyo eSIM申请工具已加载');
+            showSection(1);
+        });
+    </script>
+</body>
+</html>

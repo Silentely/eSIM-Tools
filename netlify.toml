@@ -1,0 +1,55 @@
+[build]
+  # 构建命令（对于静态文件不需要）
+  command = "echo 'No build needed for static files'"
+  # 发布目录
+  publish = "."
+  
+# 重定向和重写规则
+[[redirects]]
+  # Giffgaff eSIM页面
+  from = "/giffgaff"
+  to = "/giffgaff_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  # Simyo eSIM页面  
+  from = "/simyo"
+  to = "/simyo_complete_esim.html"
+  status = 200
+
+[[redirects]]
+  # 根路径重定向到选择页面
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# API代理重定向（用于解决CORS问题）
+[[redirects]]
+  from = "/api/simyo/*"
+  to = "https://appapi.simyo.nl/simyoapi/api/v1/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "appapi.simyo.nl"}
+
+[[redirects]]
+  from = "/api/giffgaff/*"
+  to = "https://api.giffgaff.com/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "api.giffgaff.com"}
+
+# 处理SPA路由（如果需要）
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 404
+
+# 安全头部
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https: http:; connect-src 'self' https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;"
