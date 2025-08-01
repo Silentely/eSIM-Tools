@@ -42,7 +42,7 @@ npm run deploy:secure
 
 ## 🌐 Netlify部署
 
-### 方法一：使用不同的构建命令
+### 方法一：CLI命令行部署
 
 #### 标准版本部署
 ```bash
@@ -61,6 +61,125 @@ netlify deploy --prod --config netlify-secure.toml
 # 或使用构建脚本
 npm run deploy:secure
 ```
+
+### 方法二：Netlify控制台手动部署
+
+#### 🔓 标准版本手动部署
+
+**步骤详解**：
+
+1. **Fork仓库**
+   - 访问 [GitHub仓库](https://github.com/Silentely/esim-tools)
+   - 点击右上角 "Fork" 按钮
+   - Fork到您的GitHub账户
+
+2. **创建Netlify站点**
+   - 登录 [Netlify控制台](https://app.netlify.com)
+   - 点击 "New site from Git"
+   - 选择 "GitHub" 并授权连接
+   - 选择您Fork的 `esim-tools` 仓库
+
+3. **配置构建设置**
+   ```
+   Repository: your-username/esim-tools
+   Branch: main
+   Build command: npm run build:standard
+   Publish directory: dist-standard
+   Functions directory: dist-standard/netlify/functions
+   ```
+
+4. **环境变量配置（可选）**
+   ```
+   NODE_ENV=production
+   BUILD_VERSION=standard
+   SECURITY_LEVEL=basic
+   ```
+
+5. **部署**
+   - 点击 "Deploy site"
+   - 等待构建完成
+   - 获得类似 `https://amazing-site-123456.netlify.app` 的URL
+
+#### 🔒 安全版本手动部署
+
+**步骤详解**：
+
+1. **Fork仓库**（同标准版本）
+
+2. **创建Netlify站点**（同标准版本）
+
+3. **配置构建设置**
+   ```
+   Repository: your-username/esim-tools
+   Branch: main
+   Build command: npm run build:secure
+   Publish directory: dist-secure
+   Functions directory: dist-secure/netlify/functions
+   ```
+
+4. **⚠️ 重要：环境变量配置**
+   
+   在 "Site settings" → "Environment variables" 中添加：
+   
+   **必需变量**：
+   ```
+   NODE_ENV=production
+   BUILD_VERSION=secure
+   SECURITY_LEVEL=enterprise
+   SESSION_SECRET=your_32_character_secret_key_here
+   ```
+   
+   **推荐变量**（提高安全性）：
+   ```
+   GIFFGAFF_CLIENT_SECRET=your_giffgaff_client_secret
+   SIMYO_CLIENT_TOKEN=your_simyo_client_token
+   GIFFGAFF_CLIENT_ID=your_giffgaff_client_id
+   ```
+
+5. **部署**
+   - 点击 "Deploy site"
+   - 等待构建完成
+   - 验证安全功能正常工作
+
+#### 📋 构建配置对比表
+
+| 配置项 | 标准版本 | 安全版本 |
+|--------|----------|----------|
+| **Build command** | `npm run build:standard` | `npm run build:secure` |
+| **Publish directory** | `dist-standard` | `dist-secure` |
+| **Functions directory** | `dist-standard/netlify/functions` | `dist-secure/netlify/functions` |
+| **环境变量** | 可选 | 必需 |
+| **构建时间** | ~2分钟 | ~3分钟 |
+| **构建大小** | ~15MB | ~18MB |
+
+#### 🔧 高级手动配置
+
+**使用自定义netlify.toml**：
+
+如果您想使用项目中预设的配置文件：
+
+1. **标准版本**：
+   ```
+   Build command: cp netlify-standard.toml netlify.toml && npm run build:standard
+   Publish directory: dist-standard
+   ```
+
+2. **安全版本**：
+   ```
+   Build command: cp netlify-secure.toml netlify.toml && npm run build:secure
+   Publish directory: dist-secure
+   ```
+
+**自定义域名配置**：
+
+1. 在Netlify控制台进入 "Site settings" → "Domain management"
+2. 点击 "Add custom domain"
+3. 输入您的域名（如 `esim.yourdomain.com`）
+4. 按照提示配置DNS记录
+
+**SSL证书**：
+- Netlify自动提供Let's Encrypt SSL证书
+- 自定义域名会自动配置HTTPS
 
 ### 方法二：使用环境变量
 

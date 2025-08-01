@@ -27,18 +27,162 @@
 ## 🌐 在线使用
 
 ### 🚀 公共服务（推荐）
-- **完整功能版本**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
-  - 无CORS限制，完整API功能
-  - 支持所有eSIM操作
-  - 定期更新维护
+- **安全版本**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org) 🔒
+  - 企业级安全保护
+  - 防逆向工程
+  - 生产环境推荐
+- **标准版本**: [https://esim-standard.cosr.eu.org](https://esim-standard.cosr.eu.org) 🔓
+  - 开源透明
+  - 开发学习友好
+  - 功能演示
 
-### 📱 静态部署版本
-- **工具选择页面**: [https://esim.cosr.eu.org/](https://esim.cosr.eu.org/)
-- **Giffgaff工具**: [https://esim.cosr.eu.org/giffgaff](https://esim.cosr.eu.org/giffgaff)
-- **Simyo工具**: [https://esim.cosr.eu.org/simyo](https://esim.cosr.eu.org/simyo)
+### 📱 快速访问
+- **Giffgaff工具**: 
+  - 安全版本: [esim.cosr.eu.org/giffgaff](https://esim.cosr.eu.org/giffgaff) 🔒
+  - 标准版本: [esim-standard.cosr.eu.org/giffgaff](https://esim-standard.cosr.eu.org/giffgaff) 🔓
+- **Simyo工具**: 
+  - 安全版本: [esim.cosr.eu.org/simyo](https://esim.cosr.eu.org/simyo) 🔒
+  - 标准版本: [esim-standard.cosr.eu.org/simyo](https://esim-standard.cosr.eu.org/simyo) 🔓
 
 ### 💰 优惠信息
 新用户开卡可享受**额外5欧元话费赠送**！[立即开卡](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
+
+## 🌐 Netlify手动部署指南
+
+### 📋 部署前准备
+
+1. **Fork此仓库** 到您的GitHub账户
+2. **登录Netlify** 并连接GitHub账户
+3. **选择部署版本** - 根据需求选择标准版本或安全版本
+
+### 🔧 Netlify部署配置
+
+#### 🔓 标准版本部署
+
+**适用场景**: 开发学习、功能演示、开源项目
+
+| 配置项 | 值 |
+|--------|-----|
+| **Build command** | `npm run build:standard` |
+| **Publish directory** | `dist-standard` |
+| **Functions directory** | `dist-standard/netlify/functions` |
+
+**详细步骤**:
+1. 在Netlify中点击 "New site from Git"
+2. 选择您Fork的仓库
+3. 配置构建设置：
+   ```
+   Build command: npm run build:standard
+   Publish directory: dist-standard
+   ```
+4. 点击 "Deploy site"
+
+#### 🔒 安全版本部署
+
+**适用场景**: 生产环境、企业使用、商业项目
+
+| 配置项 | 值 |
+|--------|-----|
+| **Build command** | `npm run build:secure` |
+| **Publish directory** | `dist-secure` |
+| **Functions directory** | `dist-secure/netlify/functions` |
+
+**详细步骤**:
+1. 在Netlify中点击 "New site from Git"
+2. 选择您Fork的仓库
+3. 配置构建设置：
+   ```
+   Build command: npm run build:secure
+   Publish directory: dist-secure
+   ```
+4. **重要**: 配置环境变量（安全版本必需）：
+   - `GIFFGAFF_CLIENT_SECRET`: 您的Giffgaff客户端密钥
+   - `SIMYO_CLIENT_TOKEN`: 您的Simyo客户端令牌
+   - `SESSION_SECRET`: 会话加密密钥（至少32字符）
+5. 点击 "Deploy site"
+
+### ⚙️ 高级配置选项
+
+#### 使用配置文件部署
+
+如果您想使用预设的配置文件：
+
+**标准版本**:
+```
+Build command: cp netlify-standard.toml netlify.toml && npm run build:standard
+Publish directory: dist-standard
+```
+
+**安全版本**:
+```
+Build command: cp netlify-secure.toml netlify.toml && npm run build:secure
+Publish directory: dist-secure
+```
+
+#### 环境变量配置
+
+在Netlify控制台的 "Site settings" → "Environment variables" 中添加：
+
+**标准版本环境变量**:
+```
+NODE_ENV=production
+BUILD_VERSION=standard
+SECURITY_LEVEL=basic
+```
+
+**安全版本环境变量**:
+```
+NODE_ENV=production
+BUILD_VERSION=secure
+SECURITY_LEVEL=enterprise
+GIFFGAFF_CLIENT_SECRET=your_secret_here
+SIMYO_CLIENT_TOKEN=your_token_here
+SESSION_SECRET=your_32_char_secret_here
+```
+
+### 🚀 部署验证
+
+部署完成后，您可以通过以下方式验证：
+
+#### 检查版本信息
+```bash
+# 检查HTTP头部
+curl -I https://your-site.netlify.app | grep X-Build-Version
+
+# 标准版本返回: X-Build-Version: standard
+# 安全版本返回: X-Build-Version: secure
+```
+
+#### 检查构建信息
+访问 `https://your-site.netlify.app/build-info.json` 查看详细构建信息
+
+### 🔄 更新部署
+
+当您更新代码后：
+
+1. **推送到GitHub** - Netlify会自动检测更改
+2. **自动重新构建** - 使用相同的构建配置
+3. **部署完成** - 新版本自动上线
+
+### ❓ 常见问题
+
+#### Q: 构建失败怎么办？
+A: 检查Netlify的构建日志，通常是环境变量配置问题
+
+#### Q: 安全版本需要哪些环境变量？
+A: 至少需要 `SESSION_SECRET`，建议配置完整的密钥信息
+
+#### Q: 可以同时部署两个版本吗？
+A: 可以！创建两个不同的Netlify站点，分别使用不同的构建配置
+
+#### Q: 如何切换版本？
+A: 修改构建命令和发布目录，然后重新部署
+
+### 📋 快速参考
+
+- **[Netlify部署快速参考](docs/NETLIFY_QUICK_REFERENCE.md)** - 配置表和常见问题
+- **[完整部署指南](docs/DEPLOYMENT_GUIDE.md)** - 详细的部署说明
+- **[安全实施方案](docs/SECURITY_IMPLEMENTATION.md)** - 安全版本技术细节
 
 ## 🔒 企业级安全特性
 
