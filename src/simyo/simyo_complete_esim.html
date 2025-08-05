@@ -5,6 +5,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    
+    <!-- PWA支持 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4cc9f0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Simyo eSIM工具">
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <title>Simyo NL eSIM 申请工具</title>
@@ -13,6 +22,8 @@
     <!-- 共享设计系统：预加载并在加载完成后切换为样式表，noscript 提供回退 -->
     <link rel="preload" href="/src/styles/design-system.css" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="/src/styles/design-system.css"></noscript>
+    <!-- 增强动画CSS -->
+    <link rel="stylesheet" href="/src/styles/enhanced-animations.css">
     <style>
         :root {
             --primary: #ff6b00;        /* Simyo橙色 */
@@ -1995,6 +2006,104 @@
             
             // 初始化状态显示
             updateStatus();
+            
+            // 增强按钮交互
+            enhanceButtonInteractions();
+        });
+
+        // 增强按钮交互功能
+        function enhanceButtonInteractions() {
+            // 为所有按钮添加点击反馈
+            const buttons = document.querySelectorAll('button, .btn, .login-btn, .action-btn');
+            buttons.forEach(btn => {
+                btn.classList.add('btn-click-feedback', 'hover-lift', 'hover-glow');
+                
+                // 添加点击动画
+                btn.addEventListener('click', () => {
+                    btn.classList.add('bounce-animation');
+                    setTimeout(() => {
+                        btn.classList.remove('bounce-animation');
+                    }, 300);
+                });
+                
+                // 触摸设备优化
+                if ('ontouchstart' in window) {
+                    btn.addEventListener('touchstart', () => {
+                        btn.style.transform = 'scale(0.98)';
+                    });
+                    
+                    btn.addEventListener('touchend', () => {
+                        btn.style.transform = '';
+                    });
+                }
+            });
+
+            // 为状态项添加微交互
+            const statusItems = document.querySelectorAll('.status-item');
+            statusItems.forEach(item => {
+                item.classList.add('hover-scale');
+            });
+
+            // 添加加载状态指示器
+            addLoadingIndicator();
+        }
+
+        // 添加加载状态指示器
+        function addLoadingIndicator() {
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator';
+            loadingIndicator.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                background: linear-gradient(90deg, #4cc9f0, #ff6b00);
+                z-index: 9999;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            `;
+            document.body.appendChild(loadingIndicator);
+
+            // 页面加载完成时隐藏加载指示器
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    loadingIndicator.style.transform = 'translateX(0)';
+                    setTimeout(() => {
+                        loadingIndicator.remove();
+                    }, 300);
+                }, 100);
+            });
+        }
+    </script>
+
+    <!-- Service Worker 注册 -->
+    <script>
+        // Service Worker 注册
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker 注册成功:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker 注册失败:', error);
+                    });
+            });
+        }
+
+        // PWA 安装提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('PWA 安装提示可用');
+        });
+
+        // 安装完成事件
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA 安装完成');
+            deferredPrompt = null;
         });
     </script>
 </body>

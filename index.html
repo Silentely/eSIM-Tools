@@ -5,10 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>eSIM工具 - Giffgaff & Simyo</title>
 
+    <!-- PWA支持 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="eSIM工具">
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png">
+
     <!-- 性能优化：预连接与预加载关键资源 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+
+    <!-- 图片预加载 -->
+    <link rel="preload" href="/icons/icon-192x192.webp" as="image" type="image/webp">
+    <link rel="preload" href="/icons/icon-512x512.webp" as="image" type="image/webp">
 
     <!-- 关键CSS优先：preload 后备 rel=stylesheet -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
@@ -16,6 +30,9 @@
     <!-- Font Awesome 延迟加载：首次渲染后再加载，降低首屏阻塞 -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" crossorigin="anonymous"></noscript>
+
+    <!-- 增强动画CSS -->
+    <link rel="stylesheet" href="/src/styles/enhanced-animations.css">
 
     <style>
         /* Design System: 语义化令牌与统一规范 */
@@ -308,6 +325,38 @@
 
     <!-- 将 bootstrap 脚本 defer，减少阻塞 -->
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    
+    <!-- Service Worker 注册 -->
+    <script>
+        // Service Worker 注册
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker 注册成功:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker 注册失败:', error);
+                    });
+            });
+        }
+
+        // PWA 安装提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // 可以在这里显示安装按钮
+            console.log('PWA 安装提示可用');
+        });
+
+        // 安装完成事件
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA 安装完成');
+            deferredPrompt = null;
+        });
+    </script>
+
     <script>
         // IntersectionObserver 触发入场动画，避免 setTimeout 导致的潜在回流
         document.addEventListener('DOMContentLoaded', () => {
@@ -325,13 +374,59 @@
                 else el.classList.add('show'); // 回退策略
             });
 
-            // 点击跟踪（可选）
+            // 增强按钮交互
             document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
+                // 添加点击反馈动画类
+                btn.classList.add('btn-click-feedback', 'hover-lift', 'hover-glow');
+                
+                btn.addEventListener('click', (e) => {
+                    // 添加点击动画
+                    btn.classList.add('bounce-animation');
+                    setTimeout(() => {
+                        btn.classList.remove('bounce-animation');
+                    }, 300);
+
                     const isGiffgaff = btn.getAttribute('aria-describedby') === 'giffgaff-desc';
                     const toolName = isGiffgaff ? 'Giffgaff' : 'Simyo';
                     console.log(`用户选择了 ${toolName} 工具`);
                 });
+
+                // 触摸设备优化
+                if ('ontouchstart' in window) {
+                    btn.addEventListener('touchstart', () => {
+                        btn.style.transform = 'scale(0.98)';
+                    });
+                    
+                    btn.addEventListener('touchend', () => {
+                        btn.style.transform = '';
+                    });
+                }
+            });
+
+            // 添加加载状态指示器
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'loading-indicator';
+            loadingIndicator.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                background: linear-gradient(90deg, #6366f1, #8b5cf6);
+                z-index: 9999;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            `;
+            document.body.appendChild(loadingIndicator);
+
+            // 页面加载完成时隐藏加载指示器
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    loadingIndicator.style.transform = 'translateX(0)';
+                    setTimeout(() => {
+                        loadingIndicator.remove();
+                    }, 300);
+                }, 100);
             });
         });
     </script>

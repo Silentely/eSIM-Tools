@@ -3,7 +3,7 @@
 [![Netlify Status](https://api.netlify.com/api/v1/badges/8fc159e2-3996-4e1b-bf9d-1945a3474682/deploy-status)](https://app.netlify.com/projects/esim-tools/deploys)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-专为Giffgaff和Simyo用户设计的eSIM管理工具集，支持完整的eSIM申请、设备更换和二维码生成流程。
+专为Giffgaff和Simyo用户设计的eSIM管理工具集，支持完整的eSIM申请、设备更换和二维码生成流程。现已支持PWA、Service Worker离线缓存、WebP图片优化等现代Web技术。
 
 ## ✨ 功能特性
 
@@ -14,6 +14,7 @@
 - **GraphQL API集成** - 完整的API调用链
 - **自动二维码生成** - LPA格式激活码
 - **设备更换支持** - 完整的SIM卡更换流程
+- **状态悬浮提示** - 智能显示完整信息，避免截断
 
 ### 📱 Simyo eSIM工具
 - **简单登录验证** - 手机号+密码认证
@@ -21,6 +22,17 @@
 - **短信验证码** - 自动发送和验证
 - **一键二维码生成** - 即时生成可扫描二维码
 - **安装确认功能** - 确保eSIM正确激活
+- **响应式设计** - 完美适配移动端
+
+### 🚀 性能优化特性
+- **PWA支持** - 可安装为原生应用
+- **Service Worker** - 离线缓存和后台同步
+- **资源压缩** - CSS/JS/HTML自动压缩
+- **WebP图片优化** - 更小的图片文件
+- **微交互动画** - 流畅的用户体验
+- **触摸反馈优化** - 移动端友好
+- **加载状态指示** - 实时进度反馈
+- **GPU加速** - 高性能动画渲染
 
 ## 🌐 在线使用
 
@@ -28,15 +40,17 @@
 - **完整功能版本**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
   - 无CORS限制，完整API功能
   - 支持所有eSIM操作
+  - PWA支持，可安装为应用
   - 定期更新维护
 
-### 📱 静态部署版本
-- **工具选择页面**: [https://esim.cosr.eu.org/](https://esim.cosr.eu.org/)
-- **Giffgaff工具**: [https://esim.cosr.eu.org/giffgaff](https://esim.cosr.eu.org/giffgaff)
-- **Simyo工具**: [https://esim.cosr.eu.org/simyo](https://esim.cosr.eu.org/simyo)
-
 ### 💰 优惠信息
+
+#### Simyo优惠
 新用户开卡可享受**额外5欧元话费赠送**！[立即开卡](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
+
+#### Giffgaff优惠
+使用邀请链接注册Giffgaff账户，享受**5英镑话费奖励**！[立即注册](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
+
 
 ## 🚀 本地部署
 
@@ -53,7 +67,12 @@
    npm install
    ```
 
-3. **启动代理服务器**
+3. **构建优化版本**
+   ```bash
+   npm run build
+   ```
+
+4. **启动开发服务器**
    ```bash
    # Windows
    start_simyo_server.bat
@@ -65,7 +84,7 @@
    npm start
    ```
 
-4. **访问应用**
+5. **访问应用**
    ```
    http://localhost:3000
    ```
@@ -75,34 +94,49 @@
 #### 生产环境
 - **无特殊要求** - 纯静态部署 + Netlify Functions
 - **现代浏览器** - Chrome 80+, Firefox 75+, Safari 13+, Edge 80+
+- **PWA支持** - 支持Service Worker的现代浏览器
 
 #### 开发环境
-- **Node.js** >= 18.0.0 (仅本地开发需要)
-- **npm** >= 8.0.0 (仅本地开发需要)
+- **Node.js** >= 18.0.0
+- **npm** >= 8.0.0
+- **ImageMagick** (可选，用于图片优化)
 
-### 技术架构
-- **前端**: 纯HTML/CSS/JavaScript，无框架依赖，会话持久化
-- **后端**: Netlify Functions（生产）+ Node.js Express（开发）
-- **部署**: 完全无服务器架构
-- **API代理**: 统一CORS处理，完整日志记录
-- **安全**: Helmet.js安全头，CORS配置
+### 构建命令
+
+```bash
+# 完整构建（CSS压缩 + JS压缩 + HTML压缩）
+npm run build
+
+# 仅CSS构建
+npm run build:css
+
+# 仅JS构建
+npm run build:js
+
+# 仅HTML构建
+npm run build:html
+
+# 图片优化
+npm run optimize:images
+
+# 完整优化（构建 + 图片优化）
+npm run optimize
+```
 
 ## 📦 Netlify部署
 
 ### 自动部署
 ```bash
-./deploy.sh
+npm run deploy
 ```
 
 ### 手动部署
 1. Fork此仓库
 2. 在[Netlify](https://app.netlify.com)中连接GitHub仓库
 3. 构建设置：
-   - Build command: `echo 'No build needed'`
-   - Publish directory: `.`
+   - Build command: `npm run build`
+   - Publish directory: `dist`
 4. 部署完成！
-
-详细部署指南请参考 [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 ## 🔧 技术架构
 
@@ -111,6 +145,8 @@
 - **JavaScript ES6+** - 现代JavaScript特性
 - **Bootstrap 5** - UI框架
 - **Font Awesome** - 图标库
+- **PWA技术** - Service Worker, Web App Manifest
+- **性能优化** - 资源压缩、图片优化、微交互
 
 ### 后端架构
 - **Netlify Functions** - 无服务器函数处理API代理
@@ -124,6 +160,13 @@
 - **CDN加速** - 全球内容分发网络
 - **自定义域名** - 支持HTTPS
 
+### 性能优化
+- **资源预加载** - 关键CSS/JS预加载
+- **图片优化** - WebP格式 + 响应式图片
+- **代码压缩** - Terser + CSSnano + PostCSS
+- **缓存策略** - Service Worker离线缓存
+- **动画优化** - GPU加速 + 减少重绘
+
 ## 📋 使用指南
 
 ### Giffgaff eSIM申请流程
@@ -132,6 +175,7 @@
 3. **获取会员信息** - 验证账户状态
 4. **申请eSIM** - 预留SIM卡并手动激活
 5. **生成二维码** - 获取LPA激活码
+6. **状态悬浮提示** - 鼠标悬停查看完整信息
 
 ### Simyo设备更换流程
 1. **登录账户** - 输入手机号和密码
@@ -139,10 +183,11 @@
 3. **验证码处理** - 短信或客服验证码
 4. **获取eSIM配置** - 生成新的激活码
 5. **扫码安装** - 在新设备上安装eSIM
+6. **触摸反馈** - 移动端优化的交互体验
 
 详细使用说明：
-- [Giffgaff工具说明](./README_giffgaff_esim.md)
-- [Simyo工具说明](./README_simyo_esim.md)
+- [Giffgaff工具说明](./docs/reference/README_giffgaff_esim.md)
+- [Simyo工具说明](./docs/reference/README_simyo_esim.md)
 
 ## ⚠️ 重要说明
 
@@ -158,66 +203,58 @@
 ### 使用方式说明
 
 #### 🌟 推荐方式：在线服务 ([https://esim.cosr.eu.org](https://esim.cosr.eu.org))
-- **优势**: 无需部署，即开即用，无CORS限制
+- **优势**: 无需部署，即开即用，无CORS限制，PWA支持
 - **适用**: 普通用户日常使用
-- **特点**: 定期维护更新，稳定可靠，完整功能
+- **特点**: 定期维护更新，稳定可靠，完整功能，性能优化
 
 #### 🔧 自建部署：本地/私有服务
 - **文件**: `giffgaff_complete_esim.html` + `simyo_complete_esim.html`
 - **优势**: 数据私有，可定制修改，离线使用
 - **适用**: 企业部署，开发者，隐私要求高的用户
 - **要求**: 需要代理服务器解决CORS问题（支持Netlify Functions或本地Node.js）
+- **注意**: 静态部署版本已停止维护，推荐使用在线服务
 
 ## 📁 项目结构
 
 ```
 esim-tools/
 ├── index.html                    # 主页面 - 工具选择
-├── server.js                     # Node.js开发服务器
-├── src/                          # 源代码目录
-│   ├── giffgaff/                 # Giffgaff eSIM工具
-│   │   └── giffgaff_complete_esim.html  # 完整功能版本
-│   └── simyo/                    # Simyo eSIM工具
-│       ├── simyo_complete_esim.html     # 完整功能版本
-│       └── simyo_proxy_server.js        # CORS代理服务器
-├── netlify/                      # Netlify无服务器函数
-│   └── functions/                # 生产环境API代理
-│       ├── giffgaff-graphql.js
-│       ├── giffgaff-mfa-challenge.js
-│       ├── giffgaff-mfa-validation.js
-│       └── verify-cookie.js
-├── docs/                         # 文档目录
-│   ├── fixes/                    # 问题修复说明
-│   │   └── GIFFGAFF_CSP_CALLBACK_FIX.md
-│   ├── guides/                   # 使用指南
-│   │   └── CORS_SOLUTION.md
-│   ├── reference/                # 参考文档
-│   │   ├── README_giffgaff_esim.md
-│   │   └── README_simyo_esim.md
-│   ├── PROJECT_SUMMARY.md        # 项目概览
-│   └── COOKIE_LOGIN_SETUP.md     # Cookie登录配置
-├── tests/                        # 测试文件
-│   ├── test_giffgaff_esim.html   # Giffgaff功能测试
-│   └── test_simyo_esim.html      # Simyo功能测试
-├── scripts/                      # 部署和启动脚本
-│   ├── deploy.sh                 # 自动部署脚本
-│   ├── start_simyo_server.sh     # Linux/macOS启动脚本
-│   └── start_simyo_server.bat    # Windows启动脚本
-├── postman/                      # 原始API脚本（参考）
-├── netlify.toml                  # Netlify部署配置
-├── package.json                  # 项目依赖配置
-├── verify_cookie.php             # PHP Cookie验证（备用）
-└── README.md                     # 项目说明文档
+├── manifest.json                 # PWA应用清单
+├── sw.js                        # Service Worker
+├── postcss.config.js            # PostCSS配置
+├── package.json                 # 项目依赖配置
+├── server.js                    # Node.js开发服务器
+├── src/                         # 源代码目录
+│   ├── giffgaff/                # Giffgaff eSIM工具
+│   │   └── giffgaff_complete_esim.html
+│   ├── simyo/                   # Simyo eSIM工具
+│   │   └── simyo_complete_esim.html
+│   └── styles/                  # 样式文件
+│       ├── design-system.css    # 设计系统
+│       └── enhanced-animations.css # 增强动画
+├── dist/                        # 构建输出目录
+│   ├── index.html               # 压缩后的主页面
+│   ├── giffgaff.html           # 压缩后的Giffgaff工具
+│   ├── simyo.html              # 压缩后的Simyo工具
+│   ├── styles/                 # 压缩后的CSS
+│   └── scripts/                # 压缩后的JS
+├── scripts/                     # 构建和部署脚本
+│   ├── build-html.js           # HTML构建脚本
+│   ├── optimize-images.js      # 图片优化脚本
+│   ├── deploy.sh               # 自动部署脚本
+│   ├── start_simyo_server.sh   # Linux/macOS启动脚本
+│   └── start_simyo_server.bat  # Windows启动脚本
+├── netlify/                     # Netlify无服务器函数
+│   └── functions/               # 生产环境API代理
+├── docs/                        # 文档目录
+│   ├── fixes/                   # 问题修复说明
+│   ├── guides/                  # 使用指南
+│   └── reference/               # 参考文档
+├── tests/                       # 测试文件
+├── postman/                     # 原始API脚本（参考）
+├── netlify.toml                 # Netlify部署配置
+└── README.md                    # 项目说明文档
 ```
-
-### CORS解决方案
-静态部署环境下通过以下方式解决跨域问题：
-1. **推荐**: 使用公共服务 [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
-2. **Netlify代理重定向**: 自动代理API请求
-3. **本地代理服务器**: 运行Node.js代理
-4. **浏览器插件**: 临时解决方案
-
-详细解决方案请参考 [docs/guides/CORS_SOLUTION.md](./docs/guides/CORS_SOLUTION.md)
 
 ## 🧪 测试
 
@@ -228,11 +265,19 @@ open tests/test_giffgaff_esim.html
 open tests/test_simyo_esim.html
 ```
 
+### 性能测试
+```bash
+# 构建并测试性能
+npm run build
+npm run optimize
+```
+
 ### 测试覆盖
 - **单元测试** - 核心函数测试
 - **集成测试** - API调用测试
 - **端到端测试** - 完整流程测试
 - **性能测试** - 响应时间和内存使用
+- **PWA测试** - Service Worker和离线功能
 
 ## 🤝 贡献指南
 
@@ -248,6 +293,7 @@ open tests/test_simyo_esim.html
 - 使用ESLint进行代码检查
 - 遵循现有的代码风格
 - 添加必要的注释和文档
+- 确保性能优化和PWA兼容性
 
 ## 🙏 致谢
 
@@ -262,36 +308,23 @@ open tests/test_simyo_esim.html
 - 查看 [常见问题解答](./docs/guides/DEPLOYMENT_GUIDE.md#故障排除)
 - 参考详细文档和使用指南
 
-## 📋 TODO列表
+## 📋 更新日志
 
-### 🔄 Giffgaff eSIM激活流程自动化
-- [ ] **网络抓包分析**: 在 `https://www.giffgaff.com/activate` 页面进行完整的网络请求抓包
-  - [ ] 输入第四步获得的activationCode
-  - [ ] 点击"Activate your SIM"按钮
-  - [ ] 记录跳转后的页面URL和参数
-  - [ ] 点击"Yes, I want to replace my SIM"按钮
-  - [ ] 分析所有相关的API调用和请求参数
-  - [ ] 记录认证token、session信息等关键参数
-  - [ ] 整理完整的请求流程和参数映射
-- [ ] **自动化脚本开发**: 基于抓包结果开发自动化激活脚本
-  - [X] 实现自动输入activationCode
-  - [X] 实现自动点击激活按钮(完成待实卡测试)
-  - [ ] 实现自动确认SIM替换
-  - [ ] 集成到现有的eSIM申请流程中
-- [ ] **测试验证**: 验证自动化流程的稳定性和准确性
-  - [ ] 多环境测试（不同浏览器、网络环境）
-  - [ ] 错误处理和异常情况处理
-  - [ ] 用户友好的进度提示和状态反馈
+### v2.0.0 (2025-08-05)
+- ✨ 新增PWA支持，可安装为原生应用
+- 🚀 新增Service Worker离线缓存
+- 🎨 新增微交互动画和触摸反馈
+- 📱 优化移动端用户体验
+- 🖼️ 新增WebP图片优化
+- ⚡ 新增资源压缩和性能优化
+- 🔧 新增构建工具链
+- 📊 新增加载状态指示器
 
-### 🛠️ 技术改进
-- [ ] **错误处理优化**: 改进第五步"申請交換eSIM Swap SIM"的400错误处理
-- [ ] **用户体验优化**: 优化前端显示activationCode、ssn等信息的方式
-- [ ] **流程引导优化**: 改进用户手动激活的引导流程
-
-### 📚 文档完善
-- [ ] **API文档**: 完善Giffgaff激活流程的API调用文档
-- [ ] **用户指南**: 更新用户使用指南，包含新的自动化流程
-- [ ] **开发文档**: 添加自动化脚本的开发说明
+### v1.x.x
+- 基础eSIM申请功能
+- OAuth认证和MFA验证
+- 二维码生成和下载
+- 设备更换流程支持
 
 ## 免责声明
 

@@ -1,0 +1,367 @@
+/* 增强动画系统 - 微交互、触摸反馈、加载状态 */
+
+/* 1. 基础动画变量 */
+:root {
+  /* 动画时长 */
+  --anim-duration-xs: 0.1s;
+  --anim-duration-sm: 0.2s;
+  --anim-duration-md: 0.3s;
+  --anim-duration-lg: 0.5s;
+  --anim-duration-xl: 0.8s;
+
+  /* 缓动函数 */
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-sharp: cubic-bezier(0.4, 0, 0.6, 1);
+
+  /* 变换值 */
+  --scale-hover: 1.05;
+  --scale-active: 0.95;
+  --scale-press: 0.98;
+  --translate-y-hover: -2px;
+  --translate-y-active: 1px;
+}
+
+/* 2. 按钮点击反馈动画 */
+.btn-click-feedback {
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--anim-duration-sm) var(--ease-smooth),
+              box-shadow var(--anim-duration-sm) var(--ease-smooth);
+}
+
+.btn-click-feedback::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width var(--anim-duration-md) var(--ease-smooth),
+              height var(--anim-duration-md) var(--ease-smooth);
+}
+
+.btn-click-feedback:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-click-feedback:active {
+  transform: scale(var(--scale-press));
+}
+
+/* 3. 触摸反馈优化 */
+@media (hover: none) and (pointer: coarse) {
+  .btn-click-feedback:hover {
+    transform: none;
+  }
+  
+  .btn-click-feedback:active {
+    transform: scale(var(--scale-active));
+    transition: transform var(--anim-duration-xs) var(--ease-sharp);
+  }
+}
+
+/* 4. 加载状态指示器 */
+.loading-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer var(--anim-duration-xl) infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 5. 脉冲动画 */
+.pulse-animation {
+  animation: pulse var(--anim-duration-lg) var(--ease-smooth) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* 6. 弹跳动画 */
+.bounce-animation {
+  animation: bounce var(--anim-duration-md) var(--ease-bounce);
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40%, 43% {
+    transform: translateY(-10px);
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+  90% {
+    transform: translateY(-2px);
+  }
+}
+
+/* 7. 滑入动画 */
+.slide-in-left {
+  animation: slideInLeft var(--anim-duration-md) var(--ease-smooth);
+}
+
+.slide-in-right {
+  animation: slideInRight var(--anim-duration-md) var(--ease-smooth);
+}
+
+.slide-in-up {
+  animation: slideInUp var(--anim-duration-md) var(--ease-smooth);
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 8. 淡入淡出动画 */
+.fade-in {
+  animation: fadeIn var(--anim-duration-md) var(--ease-smooth);
+}
+
+.fade-out {
+  animation: fadeOut var(--anim-duration-sm) var(--ease-sharp);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* 9. 旋转动画 */
+.rotate-animation {
+  animation: rotate var(--anim-duration-lg) linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 10. 缩放动画 */
+.scale-in {
+  animation: scaleIn var(--anim-duration-md) var(--ease-elastic);
+}
+
+.scale-out {
+  animation: scaleOut var(--anim-duration-sm) var(--ease-sharp);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* 11. 状态切换动画 */
+.status-transition {
+  transition: all var(--anim-duration-sm) var(--ease-smooth);
+}
+
+.status-transition.connecting {
+  background: linear-gradient(90deg, #ffcc00, #ffd633);
+  animation: connecting var(--anim-duration-lg) infinite;
+}
+
+.status-transition.connected {
+  background: linear-gradient(90deg, #28a745, #20c997);
+  transform: scale(1.02);
+}
+
+.status-transition.error {
+  background: linear-gradient(90deg, #dc3545, #fd7e14);
+  animation: errorShake var(--anim-duration-sm) var(--ease-bounce);
+}
+
+@keyframes connecting {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* 12. 进度条动画 */
+.progress-bar {
+  position: relative;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
+  animation: progressFill var(--anim-duration-xl) var(--ease-smooth);
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* 13. 微交互工具类 */
+.hover-lift {
+  transition: transform var(--anim-duration-sm) var(--ease-smooth);
+}
+
+.hover-lift:hover {
+  transform: translateY(var(--translate-y-hover));
+}
+
+.hover-scale {
+  transition: transform var(--anim-duration-sm) var(--ease-smooth);
+}
+
+.hover-scale:hover {
+  transform: scale(var(--scale-hover));
+}
+
+.hover-glow {
+  transition: box-shadow var(--anim-duration-sm) var(--ease-smooth);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+/* 14. 响应式动画优化 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 15. 高性能动画类 */
+.gpu-accelerated {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* 16. 加载骨架屏 */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading var(--anim-duration-xl) infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 17. 成功/错误状态动画 */
+.success-animation {
+  animation: successPulse var(--anim-duration-md) var(--ease-elastic);
+}
+
+.error-animation {
+  animation: errorPulse var(--anim-duration-sm) var(--ease-bounce);
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes errorPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+} 
