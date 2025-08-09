@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data:; connect-src 'self' https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com; img-src 'self' data: https:; frame-src 'none';">
     <title>eSIM工具 - Giffgaff & Simyo</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#6366f1">
 
     <!-- 性能优化：预连接与预加载关键资源 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -13,6 +15,9 @@
     <link rel="preconnect" href="https://api.qrserver.com" crossorigin>
     <link rel="preconnect" href="https://api.giffgaff.com" crossorigin>
     <link rel="preconnect" href="https://appapi.simyo.nl" crossorigin>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/src/assets/favicon.ico" type="image/x-icon">
 
     <!-- 关键CSS优先：preload 后备 rel=stylesheet -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
@@ -315,6 +320,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <!-- 首页逻辑脚本（无内联） -->
     <script defer src="/src/js/home.js"></script>
+    <!-- PWA 安装提示脚本 -->
+    <script defer src="/src/js/pwa.js"></script>
     
     <!-- 性能优化脚本 -->
     <script src="/src/js/performance.js"></script>
