@@ -2,17 +2,27 @@
 class PerformanceOptimizer {
   constructor() {
     this.isOnline = navigator.onLine;
+    this.observers = new Map(); // Track observers for cleanup
     this.init();
   }
 
   init() {
-    // 延后 SW 注册以避免首屏抖动
+    // Delay SW registration to avoid blocking main thread
     setTimeout(() => this.registerServiceWorker(), 2000);
     this.setupNetworkListeners();
     this.optimizeImages();
     this.setupScrollOptimization();
     this.setupIntersectionObserver();
     this.setupTouchOptimization();
+  }
+
+  // Cleanup method to prevent memory leaks
+  destroy() {
+    // Clean up all observers
+    this.observers.forEach((observer, key) => {
+      observer.disconnect();
+    });
+    this.observers.clear();
   }
 
   // 注册Service Worker
@@ -101,29 +111,49 @@ class PerformanceOptimizer {
             observer.unobserve(img);
           }
         });
+      }, {
+        // Load images slightly before they enter viewport
+        rootMargin: '50px'
       });
 
       images.forEach(img => imageObserver.observe(img));
+      
+      // Store observer for cleanup
+      this.observers.set('images', imageObserver);
     } else {
       // 降级处理
       images.forEach(img => this.loadImage(img));
     }
   }
 
-  // 加载图片
+  // 加载图片 (with error handling)
   loadImage(img) {
     const src = img.dataset.src;
     if (!src) return;
 
-    // 检查WebP支持
-    if (this.supportsWebP()) {
-      img.src = src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-    } else {
+    // Create a new image to preload
+    const tempImg = new Image();
+    
+    tempImg.onload = () => {
+      // Check WebP support
+      if (this.supportsWebP()) {
+        img.src = src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+      } else {
+        img.src = src;
+      }
+      img.classList.add('fade-in');
+      img.removeAttribute('data-src');
+    };
+    
+    tempImg.onerror = () => {
+      // Fallback to original format if WebP fails
       img.src = src;
-    }
-
-    img.classList.add('fade-in');
-    img.removeAttribute('data-src');
+      img.classList.add('fade-in');
+      img.removeAttribute('data-src');
+    };
+    
+    // Trigger preload
+    tempImg.src = this.supportsWebP() ? src.replace(/\.(jpg|jpeg|png)$/i, '.webp') : src;
   }
 
   // 检查WebP支持
@@ -163,7 +193,7 @@ class PerformanceOptimizer {
     });
   }
 
-  // 设置交叉观察器
+  // 设置交叉观察器 (with cleanup)
   setupIntersectionObserver() {
     if (!('IntersectionObserver' in window)) return;
 
@@ -171,6 +201,8 @@ class PerformanceOptimizer {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('animate-in');
+          // Optionally unobserve after animation
+          observer.unobserve(entry.target);
         }
       });
     }, {
@@ -181,6 +213,9 @@ class PerformanceOptimizer {
     document.querySelectorAll('[data-animate]').forEach(el => {
       observer.observe(el);
     });
+    
+    // Store observer for cleanup
+    this.observers.set('animations', observer);
   }
 
   // 触摸优化
