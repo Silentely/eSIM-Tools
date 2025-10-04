@@ -1,11 +1,17 @@
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const { promisify } = require('util');
+
+const readdir = promisify(fs.readdir);
+const stat = promisify(fs.stat);
 
 // 配置
 const config = {
   inputDir: path.join(__dirname, '../src/assets/images'),
   outputDir: path.join(__dirname, '../dist/images'),
+  maxConcurrent: 4, // Parallel processing limit
+  minFileSize: 1024, // Skip files smaller than 1KB
   formats: {
     jpeg: { quality: 80, progressive: true },
     png: { compressionLevel: 9, progressive: true },
@@ -34,83 +40,141 @@ function isImageFile(filename) {
 // 优化单个图片
 async function optimizeImage(inputPath, outputPath, format, options = {}) {
   try {
+    // Check if output already exists and is newer than input
+    if (fs.existsSync(outputPath)) {
+      const inputStats = await stat(inputPath);
+      const outputStats = await stat(outputPath);
+      if (outputStats.mtime > inputStats.mtime) {
+        console.log(`⏭️  跳过已优化: ${path.basename(outputPath)}`);
+        return true;
+      }
+    }
+
     const image = sharp(inputPath);
     
-    // 应用格式特定的优化
+    // Get image metadata for size validation
+    const metadata = await image.metadata();
+    
+    // Apply format-specific optimizations
     switch (format) {
       case 'jpeg':
         await image
-          .jpeg({ quality: options.quality || config.formats.jpeg.quality, progressive: true })
+          .jpeg({ 
+            quality: options.quality || config.formats.jpeg.quality, 
+            progressive: true,
+            mozjpeg: true // Use mozjpeg for better compression
+          })
           .toFile(outputPath);
         break;
       case 'png':
         await image
-          .png({ compressionLevel: 9, progressive: true })
+          .png({ 
+            compressionLevel: 9, 
+            progressive: true,
+            adaptiveFiltering: true
+          })
           .toFile(outputPath);
         break;
       case 'webp':
         await image
-          .webp({ quality: options.quality || config.formats.webp.quality, effort: 6 })
+          .webp({ 
+            quality: options.quality || config.formats.webp.quality, 
+            effort: 6,
+            smartSubsample: true
+          })
           .toFile(outputPath);
         break;
       default:
         await image.toFile(outputPath);
     }
     
-    console.log(`✅ 优化完成: ${path.basename(inputPath)} -> ${format.toUpperCase()}`);
-    return true;
+    // Calculate compression savings
+    const inputSize = (await stat(inputPath)).size;
+    const outputSize = (await stat(outputPath)).size;
+    const savings = ((inputSize - outputSize) / inputSize * 100).toFixed(1);
+    
+    console.log(`✅ 优化完成: ${path.basename(inputPath)} -> ${format.toUpperCase()} (节省 ${savings}%)`);
+    return { success: true, inputSize, outputSize, savings };
   } catch (error) {
     console.error(`❌ 优化失败: ${path.basename(inputPath)}`, error.message);
-    return false;
+    return { success: false, error: error.message };
   }
 }
 
-// 生成多种格式
+// 生成多种格式 (with parallel processing)
 async function generateMultipleFormats(inputPath, filename) {
   const baseName = path.parse(filename).name;
-  const results = [];
   
-  // 生成JPEG版本
-  const jpegPath = path.join(config.outputDir, `${baseName}.jpg`);
-  results.push(await optimizeImage(inputPath, jpegPath, 'jpeg'));
-  
-  // 生成WebP版本
-  const webpPath = path.join(config.outputDir, `${baseName}.webp`);
-  results.push(await optimizeImage(inputPath, webpPath, 'webp'));
-  
-  // 生成PNG版本（如果原图是PNG）
-  if (path.extname(filename).toLowerCase() === '.png') {
-    const pngPath = path.join(config.outputDir, `${baseName}.png`);
-    results.push(await optimizeImage(inputPath, pngPath, 'png'));
+  // Check file size threshold
+  const fileStats = await stat(inputPath);
+  if (fileStats.size < config.minFileSize) {
+    console.log(`⏭️  跳过小文件: ${filename} (${fileStats.size} bytes)`);
+    return [];
   }
   
+  // Generate formats in parallel
+  const formatPromises = [];
+  
+  // Generate JPEG version
+  const jpegPath = path.join(config.outputDir, `${baseName}.jpg`);
+  formatPromises.push(optimizeImage(inputPath, jpegPath, 'jpeg'));
+  
+  // Generate WebP version
+  const webpPath = path.join(config.outputDir, `${baseName}.webp`);
+  formatPromises.push(optimizeImage(inputPath, webpPath, 'webp'));
+  
+  // Generate PNG version (if original is PNG)
+  if (path.extname(filename).toLowerCase() === '.png') {
+    const pngPath = path.join(config.outputDir, `${baseName}.png`);
+    formatPromises.push(optimizeImage(inputPath, pngPath, 'png'));
+  }
+  
+  const results = await Promise.all(formatPromises);
   return results;
 }
 
-// 生成缩略图
+// 生成缩略图 (with better error recovery)
 async function generateThumbnails(inputPath, filename) {
   const baseName = path.parse(filename).name;
-  const results = [];
   
   try {
-    // 生成缩略图
+    const image = sharp(inputPath);
+    const metadata = await image.metadata();
+    
+    // Skip if image is already smaller than thumbnail size
+    if (metadata.width <= config.sizes.thumbnail.width && 
+        metadata.height <= config.sizes.thumbnail.height) {
+      console.log(`⏭️  跳过缩略图生成: ${filename} (已足够小)`);
+      return { success: true, skipped: true };
+    }
+    
+    // Generate thumbnail
     const thumbnailPath = path.join(config.outputDir, `${baseName}-thumb.jpg`);
+    
+    // Check if thumbnail already exists and is newer
+    if (fs.existsSync(thumbnailPath)) {
+      const inputStats = await stat(inputPath);
+      const thumbStats = await stat(thumbnailPath);
+      if (thumbStats.mtime > inputStats.mtime) {
+        console.log(`⏭️  跳过已存在的缩略图: ${path.basename(thumbnailPath)}`);
+        return { success: true, skipped: true };
+      }
+    }
+    
     await sharp(inputPath)
       .resize(config.sizes.thumbnail.width, config.sizes.thumbnail.height, {
         fit: 'cover',
         position: 'center'
       })
-      .jpeg({ quality: 80 })
+      .jpeg({ quality: 80, progressive: true })
       .toFile(thumbnailPath);
     
     console.log(`✅ 缩略图生成: ${path.basename(thumbnailPath)}`);
-    results.push(true);
+    return { success: true, skipped: false };
   } catch (error) {
     console.error(`❌ 缩略图生成失败: ${filename}`, error.message);
-    results.push(false);
+    return { success: false, error: error.message };
   }
-  
-  return results;
 }
 
 // 生成图片清单
@@ -139,11 +203,64 @@ function generateManifest() {
   console.log(`📋 图片清单已生成: ${manifestPath}`);
 }
 
+// Process images with concurrency control
+async function processImagesInBatches(imageFiles) {
+  const results = {
+    successful: 0,
+    failed: 0,
+    skipped: 0,
+    totalSavings: 0
+  };
+  
+  // Process in batches to avoid memory issues
+  for (let i = 0; i < imageFiles.length; i += config.maxConcurrent) {
+    const batch = imageFiles.slice(i, i + config.maxConcurrent);
+    
+    await Promise.all(batch.map(async (filename) => {
+      const inputPath = path.join(config.inputDir, filename);
+      console.log(`\n🔄 处理: ${filename}`);
+      
+      try {
+        // Generate multiple formats
+        const formatResults = await generateMultipleFormats(inputPath, filename);
+        formatResults.forEach(result => {
+          if (result && result.success) {
+            results.successful++;
+            if (result.savings) {
+              results.totalSavings += parseFloat(result.savings);
+            }
+          } else if (result && !result.success) {
+            results.failed++;
+          }
+        });
+        
+        // Generate thumbnails
+        const thumbnailResult = await generateThumbnails(inputPath, filename);
+        if (thumbnailResult.success) {
+          if (thumbnailResult.skipped) {
+            results.skipped++;
+          } else {
+            results.successful++;
+          }
+        } else {
+          results.failed++;
+        }
+      } catch (error) {
+        console.error(`❌ 处理失败: ${filename}`, error.message);
+        results.failed++;
+      }
+    }));
+  }
+  
+  return results;
+}
+
 // 主函数
 async function optimizeImages() {
   console.log('🚀 开始图片优化...');
   console.log(`📁 输入目录: ${config.inputDir}`);
   console.log(`📁 输出目录: ${config.outputDir}`);
+  console.log(`⚡ 并发数: ${config.maxConcurrent}`);
   
   // 确保输出目录存在
   ensureOutputDir();
@@ -170,38 +287,27 @@ async function optimizeImages() {
   
   console.log(`📸 找到 ${imageFiles.length} 个图片文件`);
   
-  let successCount = 0;
-  let totalCount = 0;
-  
-  for (const filename of imageFiles) {
-    const inputPath = path.join(config.inputDir, filename);
-    console.log(`\n🔄 处理: ${filename}`);
-    
-    try {
-      // 生成多种格式
-      const formatResults = await generateMultipleFormats(inputPath, filename);
-      totalCount += formatResults.length;
-      successCount += formatResults.filter(Boolean).length;
-      
-      // 生成缩略图
-      const thumbnailResults = await generateThumbnails(inputPath, filename);
-      totalCount += thumbnailResults.length;
-      successCount += thumbnailResults.filter(Boolean).length;
-      
-    } catch (error) {
-      console.error(`❌ 处理失败: ${filename}`, error.message);
-    }
-  }
+  const startTime = Date.now();
+  const results = await processImagesInBatches(imageFiles);
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
   
   // 生成清单
   generateManifest();
   
   console.log(`\n🎉 优化完成!`);
-  console.log(`✅ 成功: ${successCount}/${totalCount}`);
+  console.log(`⏱️  用时: ${duration}秒`);
+  console.log(`✅ 成功: ${results.successful}`);
+  console.log(`⏭️  跳过: ${results.skipped}`);
+  console.log(`❌ 失败: ${results.failed}`);
+  if (results.totalSavings > 0) {
+    const avgSavings = (results.totalSavings / results.successful).toFixed(1);
+    console.log(`💾 平均节省空间: ${avgSavings}%`);
+  }
   console.log(`📁 输出目录: ${config.outputDir}`);
   
-  if (successCount < totalCount) {
-    console.log(`⚠️  有 ${totalCount - successCount} 个文件处理失败`);
+  if (results.failed > 0) {
+    console.log(`⚠️  有 ${results.failed} 个文件处理失败`);
+    process.exit(1);
   }
 }
 

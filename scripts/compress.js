@@ -24,6 +24,12 @@ const compressionOptions = {
 // 需要压缩的文件类型
 const compressibleExtensions = ['.js', '.css', '.html', '.json', '.xml', '.svg'];
 
+// 最小压缩文件大小 (1KB)
+const MIN_COMPRESS_SIZE = 1024;
+
+// 缓存已压缩文件的元数据
+const compressionCache = new Map();
+
 // 压缩单个文件
 async function compressFile(filePath) {
   try {
@@ -35,32 +41,64 @@ async function compressFile(filePath) {
       return null;
     }
     
+    // Skip small files (compression not worth it)
+    if (content.length < MIN_COMPRESS_SIZE) {
+      return null;
+    }
+    
     const fileName = path.basename(filePath);
     const dir = path.dirname(filePath);
+    const fileStat = fs.statSync(filePath);
+    
+    // Check cache - skip if already compressed and source hasn't changed
+    const cacheKey = filePath;
+    if (compressionCache.has(cacheKey)) {
+      const cached = compressionCache.get(cacheKey);
+      if (cached.mtime >= fileStat.mtimeMs) {
+        return null; // Already compressed
+      }
+    }
     
     // Gzip压缩
-    const gzipped = await gzip(content, compressionOptions.gzip);
     const gzipPath = path.join(dir, `${fileName}.gz`);
-    fs.writeFileSync(gzipPath, gzipped);
+    const gzipped = await gzip(content, compressionOptions.gzip);
+    
+    // Only write if compression achieved meaningful reduction
+    const compressionRatio = (content.length - gzipped.length) / content.length;
+    if (compressionRatio > 0.1) { // At least 10% reduction
+      fs.writeFileSync(gzipPath, gzipped);
+    } else {
+      return null; // Skip if compression is not effective
+    }
     
     // Brotli压缩（如果支持）
+    let brotliSize = 0;
     try {
       const brotlied = await brotliCompress(content, compressionOptions.brotli);
       const brotliPath = path.join(dir, `${fileName}.br`);
-      fs.writeFileSync(brotliPath, brotlied);
+      
+      // Only write if brotli is smaller than gzip
+      if (brotlied.length < gzipped.length) {
+        fs.writeFileSync(brotliPath, brotlied);
+        brotliSize = brotlied.length;
+      }
     } catch (error) {
       console.log(`Brotli压缩失败 ${fileName}:`, error.message);
     }
     
     const originalSize = content.length;
     const gzipSize = gzipped.length;
-    const compressionRatio = ((originalSize - gzipSize) / originalSize * 100).toFixed(1);
+    const compressionRatioPercent = (compressionRatio * 100).toFixed(1);
+    
+    // Update cache
+    compressionCache.set(cacheKey, { mtime: fileStat.mtimeMs });
     
     return {
       file: fileName,
       original: originalSize,
       gzip: gzipSize,
-      ratio: compressionRatio
+      brotli: brotliSize,
+      ratio: compressionRatioPercent
     };
   } catch (error) {
     console.error(`压缩文件失败 ${filePath}:`, error.message);
@@ -115,37 +153,43 @@ async function compressBuild() {
     
     // 显示压缩结果
     console.log('\n压缩结果:');
-    console.log('文件名'.padEnd(30) + '原始大小'.padEnd(12) + 'Gzip大小'.padEnd(12) + '压缩率');
-    console.log('-'.repeat(70));
+    console.log('文件名'.padEnd(30) + '原始大小'.padEnd(12) + 'Gzip大小'.padEnd(12) + 'Brotli大小'.padEnd(12) + '压缩率');
+    console.log('-'.repeat(80));
     
     let totalOriginal = 0;
     let totalGzip = 0;
+    let totalBrotli = 0;
     
     results.forEach(result => {
       totalOriginal += result.original;
       totalGzip += result.gzip;
+      if (result.brotli) totalBrotli += result.brotli;
       
       const originalKB = (result.original / 1024).toFixed(1);
       const gzipKB = (result.gzip / 1024).toFixed(1);
+      const brotliKB = result.brotli ? (result.brotli / 1024).toFixed(1) : '-';
       
       console.log(
         result.file.padEnd(30) +
         `${originalKB}KB`.padEnd(12) +
         `${gzipKB}KB`.padEnd(12) +
+        `${brotliKB}KB`.padEnd(12) +
         `${result.ratio}%`
       );
     });
     
     const totalRatio = ((totalOriginal - totalGzip) / totalOriginal * 100).toFixed(1);
-    console.log('-'.repeat(70));
+    console.log('-'.repeat(80));
     console.log(
       '总计'.padEnd(30) +
       `${(totalOriginal / 1024).toFixed(1)}KB`.padEnd(12) +
       `${(totalGzip / 1024).toFixed(1)}KB`.padEnd(12) +
+      `${totalBrotli > 0 ? (totalBrotli / 1024).toFixed(1) + 'KB' : '-'}`.padEnd(12) +
       `${totalRatio}%`
     );
     
-    console.log('\n压缩完成！');
+    console.log(`\n压缩完成！共处理 ${results.length} 个文件`);
+    console.log(`节省空间: ${((totalOriginal - totalGzip) / 1024).toFixed(1)}KB`);
   } catch (error) {
     console.error('压缩失败:', error);
   }
