@@ -824,11 +824,17 @@
                 </div>
                 <div class="status-item">
                     <span class="status-label">eSIM状态:</span>
-                    <span id="statusEsimStatus" class="status-value disconnected">未申请</span>
+                    <span id="statusEsimStatus" class="status-value disconnected">
+                        <span id="esimStatusValue"></span><br>
+                        <span id="esimStatusPhoneSuffix"></span>
+                    </span>
                 </div>
                 <div class="status-item">
                     <span class="status-label">激活码:</span>
-                    <span id="statusActivationCode" class="status-value disconnected">未获取</span>
+                    <span id="statusActivationCode" class="status-value disconnected">
+                        <span id="activationCodeValue"></span><br>
+                        <span id="activationCodeSSN"></span>
+                    </span>
                 </div>
                 <div class="status-item">
                     <span class="status-label">LPA字符串:</span>
@@ -1294,9 +1300,11 @@
                                     
                                     <div class="mt-4">
                                         <div class="btn-group" role="group" aria-label="eSIM激活操作">
-                                            <button id="autoActivateBtn" class="btn btn-primary btn-lg me-2 btn-base btn-primary-gradient" aria-label="自动激活 eSIM">
+                                            <!-- 自动激活按钮：仅在Cookie登录时显示 -->
+                                            <button id="autoActivateBtn" class="btn btn-primary btn-lg me-2 btn-base btn-primary-gradient" aria-label="自动激活 eSIM" style="display: none;">
                                                 <i class="fas fa-magic me-2" aria-hidden="true"></i>自动激活eSIM
                                             </button>
+                                            <!-- 手动确认按钮：始终显示 -->
                                             <button id="confirmActivationBtn" class="btn btn-success btn-lg btn-base" aria-label="确认我已完成手动激活，继续下一步">
                                                 <i class="fas fa-check-circle me-2" aria-hidden="true"></i>我已完成手动激活，继续下一步
                                             </button>
