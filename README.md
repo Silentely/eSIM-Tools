@@ -176,6 +176,7 @@ npm start
 - [Giffgaff详细说明](./docs/reference/README_giffgaff_esim.md)
 - [Simyo详细说明](./docs/reference/README_simyo_esim.md)
 - [性能优化指南](./docs/PERFORMANCE.md)
+- [Giffgaff使用教程](./docs/User_Guide.md)
 
 ## ❓ 常见问题
 
