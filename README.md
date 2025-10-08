@@ -20,7 +20,7 @@
 - **OAuth 2.0 PKCE认证** - 安全的身份验证流程
 - **智能Cookie登录** - 支持免OAuth快速登录
 - **MFA多因子验证** - 邮件验证码支持
-- **手动激活引导** - 安全的官方激活流程 [[memory:4907270]]
+- **手动激活引导** - 安全的官方激活流程
 - **GraphQL API集成** - 完整的API调用链
 - **LPA二维码生成** - 标准eSIM激活码
 
@@ -153,7 +153,7 @@ npm start
 
 ## 📋 使用指南
 
-### 🇬🇧 Giffgaff eSIM申请流程 [[memory:4907270]]
+### 🇬🇧 Giffgaff eSIM申请流程
 1. **身份验证** - OAuth登录或Cookie快速登录
 2. **邮件验证** - 输入收到的MFA验证码
 3. **申请eSIM** - 系统预留RESERVED状态的eSIM卡
