@@ -67,8 +67,25 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // 解析请求体
-        const requestBody = JSON.parse(event.body || '{}');
+        // 解析请求体（支持对象和数组两种格式）
+        let parsedBody = JSON.parse(event.body || '{}');
+        
+        // 如果是数组格式，取第一个元素
+        if (Array.isArray(parsedBody)) {
+            if (parsedBody.length === 0) {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({
+                        error: 'Bad Request',
+                        message: 'GraphQL请求数组不能为空'
+                    })
+                };
+            }
+            parsedBody = parsedBody[0];
+        }
+        
+        const requestBody = parsedBody;
         const { mfaSignature, mfaRef, query, variables, operationName, cookie } = requestBody;
 
         // 从请求体或 Authorization 头提取 accessToken（兼容两种方式）
