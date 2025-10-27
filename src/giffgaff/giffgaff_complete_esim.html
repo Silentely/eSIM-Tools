@@ -2762,18 +2762,29 @@
                         verifyBtn.innerHTML = '<span class="loading"></span> 验证中...';
                         verifyBtn.disabled = true;
                         
-                        // 更新：使用新的MFA验证端点
-                        const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', {
+                        // 更新：直接调用 Giffgaff MFA 验证端点
+                        // 第一步：获取 CSRF token
+                        const csrfResp = await fetch('https://id.giffgaff.com/auth/csrf', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${appState.accessToken}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        if (!csrfResp.ok) throw new Error('获取 CSRF token 失败: ' + csrfResp.status);
+                        const csrfData = await csrfResp.json();
+                        
+                        // 第二步：验证验证码
+                        const resp = await fetch('https://id.giffgaff.com/v4/mfa/validation', {
                             method: 'POST',
-                            headers: { 
+                            headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
+                                'Authorization': `Bearer ${appState.accessToken}`,
+                                'x-csrf-token': csrfData.token
                             },
-                            body: JSON.stringify({ 
-                                accessToken: appState.accessToken, 
-                                cookie: localStorage.getItem('giffgaff_cookie') || undefined, 
-                                ref: appState.emailCodeRef, 
-                                code 
+                            body: JSON.stringify({
+                                ref: appState.emailCodeRef,
+                                code
                             })
                         });
                         if (!resp.ok) throw new Error('验证失败: ' + resp.status);
