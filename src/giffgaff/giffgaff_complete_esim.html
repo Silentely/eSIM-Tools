@@ -3515,16 +3515,9 @@
                     el.addEventListener('click', handler);
                     el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); handler();}});
                 };
-                bind(manual, ()=>{
-                    // 仅显示手动区块，隐藏短信区块
-                    const manualBlock = document.getElementById('manualBlock');
-                    const smsBlock = document.getElementById('smsInlineSection');
-                    if (smsBlock) smsBlock.style.display = 'none';
-                    if (manualBlock) {
-                        manualBlock.style.display = 'block';
-                        manualBlock.scrollIntoView({behavior:'smooth', block:'center'});
-                    }
-                });
+                // 手动激活卡片已禁用 - 不绑定任何事件处理器
+                // bind(manual, ()=>{ ... });
+                // SMS 激活卡片保持正常绑定
                 bind(sms, ()=>{
                     // 仅显示短信区块，隐藏手动区块
                     const sec = document.getElementById('smsInlineSection');
