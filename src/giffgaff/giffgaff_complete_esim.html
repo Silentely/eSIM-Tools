@@ -2713,11 +2713,11 @@
                         // 更新：使用GraphQL接口发送短信验证码
                         const response = await fetch(apiEndpoints.graphql, {
                             method: 'POST',
-                            headers: { 
+                            headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
                             },
-                            body: JSON.stringify([{
+                            body: JSON.stringify({
                                 operationName: "simSwapMfaChallenge",
                                 variables: {},
                                 query: `mutation simSwapMfaChallenge {
@@ -2731,12 +2731,12 @@
                                     __typename
                                   }
                                 }`
-                            }])
+                            })
                         });
                         
                         if (!response.ok) throw new Error('发送失败: ' + response.status);
                         const responseData = await response.json();
-                        const data = Array.isArray(responseData) ? responseData[0].data : responseData.data;
+                        const data = responseData.data;
                         
                         if (!data.simSwapMfaChallenge.ref) throw new Error('未返回引用');
                         appState.emailCodeRef = data.simSwapMfaChallenge.ref;
@@ -2783,14 +2783,14 @@
                         
                         // 预订 eSIM
                         const reserveResp = await fetch(apiEndpoints.graphql, {
-                            method: 'POST', 
+                            method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify([{
+                            body: JSON.stringify({
                                 operationName: "reserveESim",
-                                variables: { 
-                                    input: { 
-                                        memberId: appState.memberId, 
-                                        userIntent: 'SWITCH' 
+                                variables: {
+                                    input: {
+                                        memberId: appState.memberId,
+                                        userIntent: 'SWITCH'
                                     }
                                 },
                                 query: `mutation reserveESim($input: ESimReservationInput!) {
@@ -2810,11 +2810,11 @@
                                     __typename
                                   }
                                 }`
-                            }])
+                            })
                         });
                         if (!reserveResp.ok) throw new Error('预订失败: ' + reserveResp.status);
                         const reserveDataArray = await reserveResp.json();
-                        const reserveData = Array.isArray(reserveDataArray) ? reserveDataArray[0].data : reserveDataArray.data;
+                        const reserveData = reserveDataArray.data;
                         
                         appState.esimSSN = reserveData?.reserveESim?.esim?.ssn || appState.esimSSN;
                         appState.esimActivationCode = reserveData?.reserveESim?.esim?.activationCode || appState.esimActivationCode;
@@ -2827,10 +2827,10 @@
                             // 先尝试获取专用于 swap 的 mfa ref
                             appState.swapRef = appState.emailCodeRef || null;
                             try {
-                                const chResp = await fetch(apiEndpoints.graphql, { 
-                                    method:'POST', 
-                                    headers:{'Content-Type':'application/json'}, 
-                                    body: JSON.stringify([{
+                                const chResp = await fetch(apiEndpoints.graphql, {
+                                    method:'POST',
+                                    headers:{'Content-Type':'application/json'},
+                                    body: JSON.stringify({
                                         operationName: "simSwapMfaChallenge",
                                         variables: {},
                                         query: `mutation simSwapMfaChallenge {
@@ -2844,11 +2844,11 @@
                                             __typename
                                           }
                                         }`
-                                    }])
+                                    })
                                 });
                                 if (chResp.ok) {
                                     const chDataArray = await chResp.json();
-                                    const chData = Array.isArray(chDataArray) ? chDataArray[0].data : chDataArray.data;
+                                    const chData = chDataArray.data;
                                     appState.swapRef = chData?.simSwapMfaChallenge?.ref || appState.swapRef;
                                     // 展示交换验证码输入区
                                     const secSwap = document.getElementById('swapCodeSection');
@@ -2856,14 +2856,14 @@
                                 }
                             } catch (_) {}
 
-                            const swapResp = await fetch(apiEndpoints.graphql, { 
-                                method: 'POST', 
-                                headers: { 'Content-Type': 'application/json' }, 
-                                body: JSON.stringify([{
+                            const swapResp = await fetch(apiEndpoints.graphql, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
                                     operationName: "SwapSim",
-                                    variables: { 
-                                        activationCode: appState.esimActivationCode, 
-                                        mfaSignature: appState.emailSignature 
+                                    variables: {
+                                        activationCode: appState.esimActivationCode,
+                                        mfaSignature: appState.emailSignature
                                     },
                                     query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
                                       swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
@@ -2880,11 +2880,11 @@
                                         __typename
                                       }
                                     }`
-                                }])
+                                })
                             });
                             if (swapResp.ok) {
                                 const swapDataArray = await swapResp.json();
-                                const swapData = Array.isArray(swapDataArray) ? swapDataArray[0].data : swapDataArray.data;
+                                const swapData = swapDataArray.data;
                                 const newSim = swapData?.swapSim?.new;
                                 if (newSim?.ssn) {
                                     appState.esimSSN = newSim.ssn;
@@ -2937,10 +2937,10 @@
                         showStatus(statusEl, '已完成预订，正在获取二维码...', 'success');
                         let got = false;
                         for (let i = 0; i < 10; i++) { // 轮询 ~40s
-                            const tokenResp = await fetch(apiEndpoints.graphql, { 
-                                method: 'POST', 
-                                headers: { 'Content-Type': 'application/json' }, 
-                                body: JSON.stringify([{
+                            const tokenResp = await fetch(apiEndpoints.graphql, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
                                     operationName: "eSimDownloadToken",
                                     variables: { ssn: appState.esimSSN },
                                     query: `query eSimDownloadToken($ssn: String!) {
@@ -2951,11 +2951,11 @@
                                         __typename
                                       }
                                     }`
-                                }])
+                                })
                             });
                             if (tokenResp.ok) {
                                 const tokenDataArray = await tokenResp.json();
-                                const tokenData = Array.isArray(tokenDataArray) ? tokenDataArray[0].data : tokenDataArray.data;
+                                const tokenData = tokenDataArray.data;
                                 const lpa = tokenData.eSimDownloadToken?.lpaString || '';
                                 if (lpa) { appState.lpaString = lpa; got = true; break; }
                             }
