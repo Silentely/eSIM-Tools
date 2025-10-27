@@ -2766,15 +2766,16 @@
                         // 更新：使用新的MFA验证端点
                         const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', {
                             method: 'POST',
-                            headers: { 
+                            headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
+                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined,
+                                'x-esim-key': process.env.ESIM_ACCESS_KEY || ''
                             },
-                            body: JSON.stringify({ 
-                                accessToken: appState.accessToken, 
-                                cookie: localStorage.getItem('giffgaff_cookie') || undefined, 
-                                ref: appState.emailCodeRef, 
-                                code 
+                            body: JSON.stringify({
+                                accessToken: appState.accessToken,
+                                cookie: localStorage.getItem('giffgaff_cookie') || undefined,
+                                ref: appState.emailCodeRef,
+                                code
                             })
                         });
                         if (!resp.ok) throw new Error('验证失败: ' + resp.status);
@@ -2910,17 +2911,18 @@
                                     btn.innerHTML = '<span class="loading"></span> 验证中...';
                                     btn.disabled = true;
                                     // 调用 id.giffgaff.com v4 验证接口以完成第二段校验
-                                    const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', { 
-                                        method:'POST', 
+                                    const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', {
+                                        method:'POST',
                                         headers:{
                                             'Content-Type':'application/json',
-                                            'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
-                                        }, 
-                                        body: JSON.stringify({ 
-                                            accessToken: appState.accessToken, 
-                                            ref: appState.swapRef, 
-                                            code 
-                                        }) 
+                                            'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined,
+                                            'x-esim-key': process.env.ESIM_ACCESS_KEY || ''
+                                        },
+                                        body: JSON.stringify({
+                                            accessToken: appState.accessToken,
+                                            ref: appState.swapRef,
+                                            code
+                                        })
                                     });
                                     if (!resp.ok) throw new Error('交换验证码验证失败: ' + resp.status);
                                     const data = await resp.json();
