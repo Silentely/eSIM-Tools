@@ -2543,11 +2543,12 @@
                 const response = await fetch(apiEndpoints.graphql, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
                     },
-                    body: JSON.stringify({
-                        accessToken: appState.accessToken,
-                        mfaSignature: appState.emailSignature,
+                    body: JSON.stringify([{
+                        operationName: 'getMemberProfileAndSim',
+                        variables: {},
                         query: `query getMemberProfileAndSim {
                             memberProfile {
                                 id
@@ -2559,9 +2560,8 @@
                                 status
                                 __typename
                             }
-                        }`,
-                        operationName: 'getMemberProfileAndSim'
-                    })
+                        }`
+                    }])
                 });
                 
                 if (!response.ok) {
@@ -2630,11 +2630,17 @@
                 const response = await fetch(apiEndpoints.graphql, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
                     },
-                    body: JSON.stringify({
-                        accessToken: appState.accessToken,
-                        mfaSignature: appState.emailSignature,
+                    body: JSON.stringify([{
+                        operationName: 'reserveESim',
+                        variables: {
+                            input: {
+                                memberId: appState.memberId,
+                                userIntent: "SWITCH"
+                            }
+                        },
                         query: `mutation reserveESim($input: ESimReservationInput!) {
                             reserveESim: reserveESim(input: $input) {
                                 id
@@ -2651,15 +2657,8 @@
                                 }
                                 __typename
                             }
-                        }`,
-                        variables: {
-                            input: {
-                                memberId: appState.memberId,
-                                userIntent: "SWITCH"
-                            }
-                        },
-                        operationName: 'reserveESim'
-                    })
+                        }`
+                    }])
                 });
                 
                 if (!response.ok) {
@@ -3186,11 +3185,14 @@
                 const response = await fetch(apiEndpoints.graphql, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
                     },
-                    body: JSON.stringify({
-                        accessToken: appState.accessToken,
-                        mfaSignature: appState.emailSignature,
+                    body: JSON.stringify([{
+                        operationName: 'eSimDownloadToken',
+                        variables: {
+                            ssn: appState.esimSSN
+                        },
                         query: `query eSimDownloadToken($ssn: String!) {
                             eSimDownloadToken(ssn: $ssn) {
                                 id
@@ -3199,12 +3201,8 @@
                                 lpaString
                                 __typename
                             }
-                        }`,
-                        variables: {
-                            ssn: appState.esimSSN
-                        },
-                        operationName: 'eSimDownloadToken'
-                    })
+                        }`
+                    }])
                 });
                 
                 if (!response.ok) {
