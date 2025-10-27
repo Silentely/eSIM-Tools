@@ -2786,6 +2786,8 @@
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
+                                accessToken: appState.accessToken,
+                                mfaSignature: appState.emailSignature,
                                 operationName: "reserveESim",
                                 variables: {
                                     input: {
@@ -2831,6 +2833,8 @@
                                     method:'POST',
                                     headers:{'Content-Type':'application/json'},
                                     body: JSON.stringify({
+                                        accessToken: appState.accessToken,
+                                        mfaSignature: appState.emailSignature,
                                         operationName: "simSwapMfaChallenge",
                                         variables: {},
                                         query: `mutation simSwapMfaChallenge {
@@ -2860,6 +2864,7 @@
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
+                                    accessToken: appState.accessToken,
                                     operationName: "SwapSim",
                                     variables: {
                                         activationCode: appState.esimActivationCode,
@@ -2941,6 +2946,8 @@
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
+                                    accessToken: appState.accessToken,
+                                    mfaSignature: appState.emailSignature,
                                     operationName: "eSimDownloadToken",
                                     variables: { ssn: appState.esimSSN },
                                     query: `query eSimDownloadToken($ssn: String!) {
