@@ -2824,9 +2824,8 @@
                         updateStatus();
                         saveSession();
                         
-                        // 执行 swapSim（关键：将预订的新卡生效）
+                        // 先尝试获取专用于 swap 的 mfa ref（不执行 swapSim，等待用户输入第二个验证码）
                         try {
-                            // 先尝试获取专用于 swap 的 mfa ref
                             appState.swapRef = appState.emailCodeRef || null;
                             try {
                                 const chResp = await fetch(apiEndpoints.graphql, {
@@ -2859,46 +2858,8 @@
                                     if (secSwap) secSwap.style.display = 'block';
                                 }
                             } catch (_) {}
-
-                            const swapResp = await fetch(apiEndpoints.graphql, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    accessToken: appState.accessToken,
-                                    operationName: "SwapSim",
-                                    variables: {
-                                        activationCode: appState.esimActivationCode,
-                                        mfaSignature: appState.emailSignature
-                                    },
-                                    query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
-                                      swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
-                                        old {
-                                          ssn
-                                          activationCode
-                                          __typename
-                                        }
-                                        new {
-                                          ssn
-                                          activationCode
-                                          __typename
-                                        }
-                                        __typename
-                                      }
-                                    }`
-                                })
-                            });
-                            if (swapResp.ok) {
-                                const swapDataArray = await swapResp.json();
-                                const swapData = swapDataArray.data;
-                                const newSim = swapData?.swapSim?.new;
-                                if (newSim?.ssn) {
-                                    appState.esimSSN = newSim.ssn;
-                                    if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
-                                    saveSession();
-                                }
-                            }
                         } catch (e) {
-                            // 忽略，继续轮询获取 LPA
+                            // 忽略，继续
                         }
             
                         // 绑定交换验证码提交（一次性绑定）
@@ -2914,22 +2875,68 @@
                                     btn.innerHTML = '<span class="loading"></span> 验证中...';
                                     btn.disabled = true;
                                     // 调用 id.giffgaff.com v4 验证接口以完成第二段校验
-                                    const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', { 
-                                        method:'POST', 
+                                    const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', {
+                                        method:'POST',
                                         headers:{
                                             'Content-Type':'application/json',
                                             'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
-                                        }, 
-                                        body: JSON.stringify({ 
-                                            accessToken: appState.accessToken, 
-                                            ref: appState.swapRef, 
-                                            code 
-                                        }) 
+                                        },
+                                        body: JSON.stringify({
+                                            accessToken: appState.accessToken,
+                                            cookie: localStorage.getItem('giffgaff_cookie') || undefined,
+                                            ref: appState.swapRef,
+                                            code
+                                        })
                                     });
                                     if (!resp.ok) throw new Error('交换验证码验证失败: ' + resp.status);
                                     const data = await resp.json();
                                     if (!data?.signature) throw new Error('未获取到交换签名');
-                                    showStatus(st, '交换验证码验证成功，系统将继续完成交换与获取二维码...', 'success');
+                                    // 保存第二个 MFA 签名用于 swapSim
+                                    appState.swapSignature = data.signature;
+                                    showStatus(st, '交换验证码验证成功，正在执行 SIM 交换...', 'success');
+                                    
+                                    // 现在执行 swapSim（使用第二个签名）
+                                    try {
+                                        const swapResp = await fetch(apiEndpoints.graphql, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                accessToken: appState.accessToken,
+                                                operationName: "SwapSim",
+                                                variables: {
+                                                    activationCode: appState.esimActivationCode,
+                                                    mfaSignature: appState.swapSignature
+                                                },
+                                                query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
+                                                  swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
+                                                    old {
+                                                      ssn
+                                                      activationCode
+                                                      __typename
+                                                    }
+                                                    new {
+                                                      ssn
+                                                      activationCode
+                                                      __typename
+                                                    }
+                                                    __typename
+                                                  }
+                                                }`
+                                            })
+                                        });
+                                        if (swapResp.ok) {
+                                            const swapDataArray = await swapResp.json();
+                                            const swapData = swapDataArray.data;
+                                            const newSim = swapData?.swapSim?.new;
+                                            if (newSim?.ssn) {
+                                                appState.esimSSN = newSim.ssn;
+                                                if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
+                                                saveSession();
+                                            }
+                                        }
+                                    } catch (e) {
+                                        // 忽略 swapSim 错误，继续轮询获取 LPA
+                                    }
                                 } catch(e) {
                                     showStatus(st, e.message, 'error');
                                 } finally {
