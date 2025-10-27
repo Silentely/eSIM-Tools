@@ -2709,23 +2709,40 @@
                         sendBtn.innerHTML = '<span class="loading"></span> 发送中...';
                         sendBtn.disabled = true;
                         showStatus(statusEl, '正在发送短信验证码...', 'success');
-                        const r = await fetch(apiEndpoints.mfaChallenge, {
+                        
+                        // 更新：使用GraphQL接口发送短信验证码
+                        const response = await fetch(apiEndpoints.graphql, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined },
-                            body: JSON.stringify({
-                                accessToken: appState.accessToken,
-                                cookie: localStorage.getItem('giffgaff_cookie') || undefined,
-                                source: 'esim',
-                                // 从下拉选择读取第一条验证码接收渠道
-                                preferredChannels: [String(document.getElementById('smsInlineChannel')?.value || 'TEXT')]
-                            })
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
+                            },
+                            body: JSON.stringify([{
+                                operationName: "simSwapMfaChallenge",
+                                variables: {},
+                                query: `mutation simSwapMfaChallenge {
+                                  simSwapMfaChallenge {
+                                    ref
+                                    methods {
+                                      value
+                                      channel
+                                      __typename
+                                    }
+                                    __typename
+                                  }
+                                }`
+                            }])
                         });
-                        if (!r.ok) throw new Error('发送失败: ' + r.status);
-                        const d = await r.json();
-                        if (!d.ref) throw new Error('未返回引用');
-                        appState.emailCodeRef = d.ref;
-                        const ch = String(document.getElementById('smsInlineChannel')?.value || 'TEXT');
-                        showStatus(statusEl, ch === 'EMAIL' ? '验证码已发送到您的邮箱，请查收邮件。' : '验证码已发送，请查收短信。', 'success');
+                        
+                        if (!response.ok) throw new Error('发送失败: ' + response.status);
+                        const responseData = await response.json();
+                        const data = Array.isArray(responseData) ? responseData[0].data : responseData.data;
+                        
+                        if (!data.simSwapMfaChallenge.ref) throw new Error('未返回引用');
+                        appState.emailCodeRef = data.simSwapMfaChallenge.ref;
+                        
+                        // 显示发送成功消息
+                        showStatus(statusEl, '验证码已发送，请查收短信。', 'success');
                     } catch (e) {
                         showStatus(statusEl, '发送验证码失败：' + e.message, 'error');
                     } finally {
@@ -2744,25 +2761,64 @@
                     try {
                         verifyBtn.innerHTML = '<span class="loading"></span> 验证中...';
                         verifyBtn.disabled = true;
-                        const resp = await fetch(apiEndpoints.mfaValidation, {
+                        
+                        // 更新：使用新的MFA验证端点
+                        const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined },
-                            body: JSON.stringify({ accessToken: appState.accessToken, cookie: localStorage.getItem('giffgaff_cookie') || undefined, ref: appState.emailCodeRef, code })
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
+                            },
+                            body: JSON.stringify({ 
+                                accessToken: appState.accessToken, 
+                                cookie: localStorage.getItem('giffgaff_cookie') || undefined, 
+                                ref: appState.emailCodeRef, 
+                                code 
+                            })
                         });
                         if (!resp.ok) throw new Error('验证失败: ' + resp.status);
                         const data = await resp.json();
                         appState.emailSignature = data.signature || '';
                         showStatus(statusEl, '验证码验证成功，开始自动预订与激活...', 'success');
+                        
                         // 预订 eSIM
                         const reserveResp = await fetch(apiEndpoints.graphql, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ accessToken: appState.accessToken, mfaSignature: appState.emailSignature, query: `mutation reserveESim($input: ESimReservationInput!) { reserveESim: reserveESim(input: $input) { esim { ssn activationCode deliveryStatus __typename } __typename } }`, variables: { input: { memberId: appState.memberId, userIntent: 'SWITCH' } }, operationName: 'reserveESim' })
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify([{
+                                operationName: "reserveESim",
+                                variables: { 
+                                    input: { 
+                                        memberId: appState.memberId, 
+                                        userIntent: 'SWITCH' 
+                                    }
+                                },
+                                query: `mutation reserveESim($input: ESimReservationInput!) {
+                                  reserveESim: reserveESim(input: $input) {
+                                    id
+                                    memberId
+                                    reservationStartDate
+                                    reservationEndDate
+                                    status
+                                    esim {
+                                      ssn
+                                      activationCode
+                                      deliveryStatus
+                                      associatedMemberId
+                                      __typename
+                                    }
+                                    __typename
+                                  }
+                                }`
+                            }])
                         });
                         if (!reserveResp.ok) throw new Error('预订失败: ' + reserveResp.status);
-                        const reserveData = await reserveResp.json();
-                        appState.esimSSN = reserveData.data?.reserveESim?.esim?.ssn || appState.esimSSN;
-                        appState.esimActivationCode = reserveData.data?.reserveESim?.esim?.activationCode || appState.esimActivationCode;
-                        appState.esimDeliveryStatus = reserveData.data?.reserveESim?.esim?.deliveryStatus || 'RESERVED';
+                        const reserveDataArray = await reserveResp.json();
+                        const reserveData = Array.isArray(reserveDataArray) ? reserveDataArray[0].data : reserveDataArray.data;
+                        
+                        appState.esimSSN = reserveData?.reserveESim?.esim?.ssn || appState.esimSSN;
+                        appState.esimActivationCode = reserveData?.reserveESim?.esim?.activationCode || appState.esimActivationCode;
+                        appState.esimDeliveryStatus = reserveData?.reserveESim?.esim?.deliveryStatus || 'RESERVED';
                         updateStatus();
                         saveSession();
                         
@@ -2771,20 +2827,65 @@
                             // 先尝试获取专用于 swap 的 mfa ref
                             appState.swapRef = appState.emailCodeRef || null;
                             try {
-                                const chResp = await fetch(apiEndpoints.graphql, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: appState.accessToken, query: `mutation simSwapMfaChallenge { simSwapMfaChallenge { ref methods { value channel __typename } __typename } }`, variables:{}, operationName: 'simSwapMfaChallenge' }) });
+                                const chResp = await fetch(apiEndpoints.graphql, { 
+                                    method:'POST', 
+                                    headers:{'Content-Type':'application/json'}, 
+                                    body: JSON.stringify([{
+                                        operationName: "simSwapMfaChallenge",
+                                        variables: {},
+                                        query: `mutation simSwapMfaChallenge {
+                                          simSwapMfaChallenge {
+                                            ref
+                                            methods {
+                                              value
+                                              channel
+                                              __typename
+                                            }
+                                            __typename
+                                          }
+                                        }`
+                                    }])
+                                });
                                 if (chResp.ok) {
-                                    const chData = await chResp.json();
-                                    appState.swapRef = chData?.data?.simSwapMfaChallenge?.ref || appState.swapRef;
+                                    const chDataArray = await chResp.json();
+                                    const chData = Array.isArray(chDataArray) ? chDataArray[0].data : chDataArray.data;
+                                    appState.swapRef = chData?.simSwapMfaChallenge?.ref || appState.swapRef;
                                     // 展示交换验证码输入区
                                     const secSwap = document.getElementById('swapCodeSection');
                                     if (secSwap) secSwap.style.display = 'block';
                                 }
                             } catch (_) {}
 
-                            const swapResp = await fetch(apiEndpoints.graphql, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: appState.accessToken, mfaSignature: appState.emailSignature, mfaRef: appState.swapRef || undefined, query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) { swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) { old { ssn activationCode __typename } new { ssn activationCode __typename } __typename } }`, variables: { activationCode: appState.esimActivationCode, mfaSignature: appState.emailSignature }, operationName: 'SwapSim' }) });
+                            const swapResp = await fetch(apiEndpoints.graphql, { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify([{
+                                    operationName: "SwapSim",
+                                    variables: { 
+                                        activationCode: appState.esimActivationCode, 
+                                        mfaSignature: appState.emailSignature 
+                                    },
+                                    query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
+                                      swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
+                                        old {
+                                          ssn
+                                          activationCode
+                                          __typename
+                                        }
+                                        new {
+                                          ssn
+                                          activationCode
+                                          __typename
+                                        }
+                                        __typename
+                                      }
+                                    }`
+                                }])
+                            });
                             if (swapResp.ok) {
-                                const swapData = await swapResp.json();
-                                const newSim = swapData?.data?.swapSim?.new;
+                                const swapDataArray = await swapResp.json();
+                                const swapData = Array.isArray(swapDataArray) ? swapDataArray[0].data : swapDataArray.data;
+                                const newSim = swapData?.swapSim?.new;
                                 if (newSim?.ssn) {
                                     appState.esimSSN = newSim.ssn;
                                     if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
@@ -2808,7 +2909,18 @@
                                     btn.innerHTML = '<span class="loading"></span> 验证中...';
                                     btn.disabled = true;
                                     // 调用 id.giffgaff.com v4 验证接口以完成第二段校验
-                                    const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', { method:'POST', headers:{'Content-Type':'application/json','Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined}, body: JSON.stringify({ accessToken: appState.accessToken, ref: appState.swapRef, code }) });
+                                    const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', { 
+                                        method:'POST', 
+                                        headers:{
+                                            'Content-Type':'application/json',
+                                            'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
+                                        }, 
+                                        body: JSON.stringify({ 
+                                            accessToken: appState.accessToken, 
+                                            ref: appState.swapRef, 
+                                            code 
+                                        }) 
+                                    });
                                     if (!resp.ok) throw new Error('交换验证码验证失败: ' + resp.status);
                                     const data = await resp.json();
                                     if (!data?.signature) throw new Error('未获取到交换签名');
@@ -2825,16 +2937,32 @@
                         showStatus(statusEl, '已完成预订，正在获取二维码...', 'success');
                         let got = false;
                         for (let i = 0; i < 10; i++) { // 轮询 ~40s
-                            const tokenResp = await fetch(apiEndpoints.graphql, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessToken: appState.accessToken, mfaSignature: appState.emailSignature, query: `query eSimDownloadToken($ssn: String!) { eSimDownloadToken(ssn: $ssn) { lpaString __typename } }`, variables: { ssn: appState.esimSSN }, operationName: 'eSimDownloadToken' }) });
+                            const tokenResp = await fetch(apiEndpoints.graphql, { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' }, 
+                                body: JSON.stringify([{
+                                    operationName: "eSimDownloadToken",
+                                    variables: { ssn: appState.esimSSN },
+                                    query: `query eSimDownloadToken($ssn: String!) {
+                                      eSimDownloadToken(ssn: $ssn) {
+                                        host
+                                        matchingId
+                                        lpaString
+                                        __typename
+                                      }
+                                    }`
+                                }])
+                            });
                             if (tokenResp.ok) {
-                                const tokenData = await tokenResp.json();
-                                const lpa = tokenData.data?.eSimDownloadToken?.lpaString || '';
+                                const tokenDataArray = await tokenResp.json();
+                                const tokenData = Array.isArray(tokenDataArray) ? tokenDataArray[0].data : tokenDataArray.data;
+                                const lpa = tokenData.eSimDownloadToken?.lpaString || '';
                                 if (lpa) { appState.lpaString = lpa; got = true; break; }
                             }
                             await new Promise(r=>setTimeout(r, 4000));
                         }
                         if (got) { showSection(5); showESimResult(); }
-                        else { showStatus(statusEl, '暂未获取到LPA，请在第五步稍后点击“获取eSIM Token”。', 'warning'); }
+                        else { showStatus(statusEl, '暂未获取到LPA，请在第五步稍后点击"获取eSIM Token"。', 'warning'); }
                     } catch (e) {
                         showStatus(statusEl, '短信激活失败：' + e.message, 'error');
                     } finally {
