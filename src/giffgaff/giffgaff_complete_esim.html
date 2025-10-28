@@ -2781,16 +2781,21 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
+                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined,
+                                'X-CF-Turnstile': window.__cfTurnstileToken || ''
                             },
                             body: JSON.stringify({
                                 accessToken: appState.accessToken,
                                 cookie: localStorage.getItem('giffgaff_cookie') || undefined,
                                 ref: appState.emailCodeRef,
-                                code
+                                code,
+                                turnstileToken: window.__cfTurnstileToken || ''
                             })
                         });
-                        if (!resp.ok) throw new Error('验证失败: ' + resp.status);
+                        if (!resp.ok) {
+                            const errText = await resp.text();
+                            throw new Error(`验证失败: ${resp.status} - ${errText}`);
+                        }
                         const data = await resp.json();
                         appState.emailSignature = data.signature || '';
                         showStatus(statusEl, '验证码验证成功，开始自动预订与激活...', 'success');
@@ -2801,9 +2806,13 @@
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${appState.accessToken}`,
-                                'X-MFA-Signature': appState.emailSignature
+                                'X-MFA-Signature': appState.emailSignature,
+                                'X-CF-Turnstile': window.__cfTurnstileToken || ''
                             },
                             body: JSON.stringify({
+                                accessToken: appState.accessToken,
+                                mfaSignature: appState.emailSignature,
+                                turnstileToken: window.__cfTurnstileToken || '',
                                 operationName: "reserveESim",
                                 variables: {
                                     input: {
@@ -2837,136 +2846,76 @@
                         const reserveData = await reserveResp.json();
                         if (reserveData.errors) throw new Error('预订GraphQL错误: ' + reserveData.errors[0].message);
                         
-                        appState.esimSSN = reserveData?.reserveESim?.esim?.ssn || appState.esimSSN;
-                        appState.esimActivationCode = reserveData?.reserveESim?.esim?.activationCode || appState.esimActivationCode;
-                        appState.esimDeliveryStatus = reserveData?.reserveESim?.esim?.deliveryStatus || 'RESERVED';
+                        appState.esimSSN = reserveData?.data?.reserveESim?.esim?.ssn || appState.esimSSN;
+                        appState.esimActivationCode = reserveData?.data?.reserveESim?.esim?.activationCode || appState.esimActivationCode;
+                        appState.esimDeliveryStatus = reserveData?.data?.reserveESim?.esim?.deliveryStatus || 'RESERVED';
                         updateStatus();
                         saveSession();
                         
+                        showStatus(statusEl, '预订成功，正在完成SIM交换...', 'success');
+                        
                         // 执行 swapSim（关键：将预订的新卡生效）
-                        try {
-                            // 先尝试获取专用于 swap 的 mfa ref
-                            appState.swapRef = appState.emailCodeRef || null;
-                            try {
-                                const chResp = await fetch(apiEndpoints.graphql, {
-                                    method:'POST',
-                                    headers:{
-                                        'Content-Type':'application/json',
-                                        'Authorization': `Bearer ${appState.accessToken}`
-                                    },
-                                    body: JSON.stringify({
-                                        accessToken: appState.accessToken,
-                                        mfaSignature: appState.emailSignature,
-                                        operationName: "simSwapMfaChallenge",
-                                        variables: {},
-                                        query: `mutation simSwapMfaChallenge {
-                                          simSwapMfaChallenge {
-                                            ref
-                                            methods {
-                                              value
-                                              channel
-                                              __typename
-                                            }
-                                            __typename
-                                          }
-                                        }`
-                                    })
-                                });
-                                if (chResp.ok) {
-                                    const chData = await chResp.json();
-                                    appState.swapRef = chData?.data?.simSwapMfaChallenge?.ref || appState.swapRef;
-                                    // 展示交换验证码输入区
-                                    const secSwap = document.getElementById('swapCodeSection');
-                                    if (secSwap) secSwap.style.display = 'block';
-                                }
-                            } catch (_) {}
-
-                            const swapResp = await fetch(apiEndpoints.graphql, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${appState.accessToken}`,
-                                    'X-MFA-Signature': appState.emailSignature
+                        const swapResp = await fetch(apiEndpoints.graphql, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${appState.accessToken}`,
+                                'X-MFA-Signature': appState.emailSignature,
+                                'X-CF-Turnstile': window.__cfTurnstileToken || ''
+                            },
+                            body: JSON.stringify({
+                                accessToken: appState.accessToken,
+                                mfaSignature: appState.emailSignature,
+                                turnstileToken: window.__cfTurnstileToken || '',
+                                operationName: "SwapSim",
+                                variables: {
+                                    activationCode: appState.esimActivationCode,
+                                    mfaSignature: appState.emailSignature
                                 },
-                                body: JSON.stringify({
-                                    operationName: "SwapSim",
-                                    variables: {
-                                        activationCode: appState.esimActivationCode,
-                                        mfaSignature: appState.emailSignature
-                                    },
-                                    query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
-                                      swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
-                                        old {
-                                          ssn
-                                          activationCode
-                                          __typename
-                                        }
-                                        new {
-                                          ssn
-                                          activationCode
-                                          __typename
-                                        }
-                                        __typename
-                                      }
-                                    }`
-                                })
-                            });
-                            if (swapResp.ok) {
-                                const swapData = await swapResp.json();
-                                if (swapData.errors) {
-                                    console.warn('SwapSim GraphQL错误:', swapData.errors);
-                                } else {
-                                    const newSim = swapData?.data?.swapSim?.new;
-                                    if (newSim?.ssn) {
-                                        appState.esimSSN = newSim.ssn;
-                                        if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
-                                        saveSession();
+                                query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
+                                  swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
+                                    old {
+                                      ssn
+                                      activationCode
+                                      __typename
                                     }
+                                    new {
+                                      ssn
+                                      activationCode
+                                      __typename
+                                    }
+                                    __typename
+                                  }
+                                }`
+                            })
+                        });
+                        
+                        if (swapResp.ok) {
+                            const swapData = await swapResp.json();
+                            if (swapData.errors) {
+                                console.warn('SwapSim GraphQL错误:', swapData.errors);
+                                showStatus(statusEl, 'SIM交换遇到问题，将尝试直接获取二维码...', 'warning');
+                            } else {
+                                const newSim = swapData?.data?.swapSim?.new;
+                                if (newSim?.ssn) {
+                                    appState.esimSSN = newSim.ssn;
+                                    if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
+                                    appState.esimDeliveryStatus = 'ACTIVE';
+                                    updateStatus();
+                                    saveSession();
+                                    showStatus(statusEl, 'SIM交换成功，正在获取二维码...', 'success');
                                 }
                             }
-                        } catch (e) {
-                            // 忽略，继续轮询获取 LPA
+                        } else {
+                            console.warn('SwapSim请求失败:', swapResp.status);
+                            showStatus(statusEl, 'SIM交换请求失败，将尝试直接获取二维码...', 'warning');
                         }
-            
-                        // 绑定交换验证码提交（一次性绑定）
-                        (function bindSwapCodeOnce(){
-                            const btn = document.getElementById('swapCodeVerifyBtn');
-                            const input = document.getElementById('swapSmsCode');
-                            const st = document.getElementById('swapCodeStatus');
-                            if (!btn || btn.__bound) return; btn.__bound = true;
-                            btn.addEventListener('click', async ()=>{
-                                const code = (input?.value || '').trim();
-                                if (!/^\d{6}$/.test(code)) { showStatus(st, '请输入6位验证码', 'error'); return; }
-                                try {
-                                    btn.innerHTML = '<span class="loading"></span> 验证中...';
-                                    btn.disabled = true;
-                                    // 调用 id.giffgaff.com v4 验证接口以完成第二段校验
-                                    const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', {
-                                        method:'POST',
-                                        headers:{
-                                            'Content-Type':'application/json',
-                                            'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
-                                        },
-                                        body: JSON.stringify({
-                                            accessToken: appState.accessToken,
-                                            ref: appState.swapRef,
-                                            code
-                                        })
-                                    });
-                                    if (!resp.ok) throw new Error('交换验证码验证失败: ' + resp.status);
-                                    const data = await resp.json();
-                                    if (!data?.signature) throw new Error('未获取到交换签名');
-                                    showStatus(st, '交换验证码验证成功，系统将继续完成交换与获取二维码...', 'success');
-                                } catch(e) {
-                                    showStatus(st, e.message, 'error');
-                                } finally {
-                                    btn.innerHTML = '<i class="fas fa-check me-2"></i> 验证并完成交换';
-                                    btn.disabled = false;
-                                }
-                            });
-                        })();
-                        // 直接尝试获取 LPA（与 App 抓包一致，不走网页 /activate 流）
-                        showStatus(statusEl, '已完成预订，正在获取二维码...', 'success');
+                        
+                        // 等待几秒让系统处理完成
+                        await new Promise(r => setTimeout(r, 3000));
+                        
+                        // 现在尝试获取 LPA（在交换完成后）
+                        showStatus(statusEl, '正在获取eSIM二维码...', 'success');
                         let got = false;
                         for (let i = 0; i < 10; i++) { // 轮询 ~40s
                             const tokenResp = await fetch(apiEndpoints.graphql, {
@@ -2974,9 +2923,13 @@
                                 headers: {
                                     'Content-Type': 'application/json',
                                     'Authorization': `Bearer ${appState.accessToken}`,
-                                    'X-MFA-Signature': appState.emailSignature
+                                    'X-MFA-Signature': appState.emailSignature,
+                                    'X-CF-Turnstile': window.__cfTurnstileToken || ''
                                 },
                                 body: JSON.stringify({
+                                    accessToken: appState.accessToken,
+                                    mfaSignature: appState.emailSignature,
+                                    turnstileToken: window.__cfTurnstileToken || '',
                                     operationName: "eSimDownloadToken",
                                     variables: { ssn: appState.esimSSN },
                                     query: `query eSimDownloadToken($ssn: String!) {
