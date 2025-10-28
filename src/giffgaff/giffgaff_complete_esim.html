@@ -2855,7 +2855,7 @@
                         showStatus(statusEl, '预订成功，正在完成SIM交换...', 'success');
                         
                         // 执行 swapSim（关键：将预订的新卡生效）
-                        // 注意：swapSim 需要 mfaRef（来自 simSwapMfaChallenge），而不是 mfaSignature！
+                        // 注意：swapSim 同时需要 mfaSignature 和 mfaRef 两个参数！
                         const swapResp = await fetch(apiEndpoints.graphql, {
                             method: 'POST',
                             headers: {
@@ -2871,10 +2871,11 @@
                                 operationName: "SwapSim",
                                 variables: {
                                     activationCode: appState.esimActivationCode,
-                                    mfaRef: appState.emailCodeRef  // 使用 mfaRef 而不是 mfaSignature
+                                    mfaSignature: appState.emailSignature,  // 需要 signature
+                                    mfaRef: appState.emailCodeRef  // 也需要 ref
                                 },
-                                query: `mutation SwapSim($activationCode: String!, $mfaRef: String!) {
-                                  swapSim(activationCode: $activationCode, mfaRef: $mfaRef) {
+                                query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!, $mfaRef: String!) {
+                                  swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature, mfaRef: $mfaRef) {
                                     old {
                                       ssn
                                       activationCode
