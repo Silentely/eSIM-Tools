@@ -2764,12 +2764,11 @@
                         verifyBtn.disabled = true;
                         
                         // 更新：使用新的MFA验证端点
-                        const resp = await fetch('/.netlify/functions/giffgaff-mfa-validation', {
+                        const resp = await fetch(apiEndpoints.mfaValidation, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined,
-                                'x-esim-key': process.env.ESIM_ACCESS_KEY || ''
+                                'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
                             },
                             body: JSON.stringify({
                                 accessToken: appState.accessToken,
@@ -2915,8 +2914,7 @@
                                         method:'POST',
                                         headers:{
                                             'Content-Type':'application/json',
-                                            'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined,
-                                            'x-esim-key': process.env.ESIM_ACCESS_KEY || ''
+                                            'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
                                         },
                                         body: JSON.stringify({
                                             accessToken: appState.accessToken,
