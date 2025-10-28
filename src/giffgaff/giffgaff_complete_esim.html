@@ -2890,29 +2890,50 @@
                             })
                         });
                         
-                        if (swapResp.ok) {
-                            const swapData = await swapResp.json();
-                            if (swapData.errors) {
-                                console.warn('SwapSim GraphQL错误:', swapData.errors);
-                                showStatus(statusEl, 'SIM交换遇到问题，将尝试直接获取二维码...', 'warning');
-                            } else {
-                                const newSim = swapData?.data?.swapSim?.new;
-                                if (newSim?.ssn) {
-                                    appState.esimSSN = newSim.ssn;
-                                    if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
-                                    appState.esimDeliveryStatus = 'ACTIVE';
-                                    updateStatus();
-                                    saveSession();
-                                    showStatus(statusEl, 'SIM交换成功，正在获取二维码...', 'success');
-                                }
-                            }
-                        } else {
-                            console.warn('SwapSim请求失败:', swapResp.status);
-                            showStatus(statusEl, 'SIM交换请求失败，将尝试直接获取二维码...', 'warning');
+                        let swapSuccess = false;
+                        if (!swapResp.ok) {
+                            const errText = await swapResp.text();
+                            console.error('SwapSim请求失败:', swapResp.status, errText);
+                            throw new Error(`SIM交换失败: ${swapResp.status} - ${errText}`);
+                        }
+                        
+                        const swapData = await swapResp.json();
+                        console.log('SwapSim 完整响应:', swapData);
+                        
+                        if (swapData.errors) {
+                            const errMsg = swapData.errors[0]?.message || 'SwapSim失败';
+                            console.error('SwapSim GraphQL错误:', swapData.errors);
+                            throw new Error(`SIM交换GraphQL错误: ${errMsg}`);
+                        }
+                        
+                        const newSim = swapData?.data?.swapSim?.new;
+                        if (!newSim || !newSim.ssn) {
+                            throw new Error('SIM交换响应异常，未找到新SIM信息');
+                        }
+                        
+                        // 交换成功，更新状态
+                        appState.esimSSN = newSim.ssn;
+                        if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
+                        appState.esimDeliveryStatus = 'ACTIVE';
+                        swapSuccess = true;
+                        
+                        console.log('SIM交换成功:', {
+                            oldSSN: swapData?.data?.swapSim?.old?.ssn,
+                            newSSN: newSim.ssn,
+                            newActivationCode: newSim.activationCode
+                        });
+                        
+                        updateStatus();
+                        saveSession();
+                        showStatus(statusEl, 'SIM交换成功！正在获取二维码...', 'success');
+                        
+                        // 只有交换成功才继续获取二维码
+                        if (!swapSuccess) {
+                            throw new Error('SIM交换未成功，无法获取二维码');
                         }
                         
                         // 等待几秒让系统处理完成
-                        await new Promise(r => setTimeout(r, 3000));
+                        await new Promise(r => setTimeout(r, 5000));
                         
                         // 现在尝试获取 LPA（在交换完成后）
                         showStatus(statusEl, '正在获取eSIM二维码...', 'success');
