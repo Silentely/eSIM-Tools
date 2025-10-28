@@ -134,12 +134,9 @@ exports.handler = async (event, context) => {
                     const h = {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Origin': 'https://www.giffgaff.com',
-                        'Referer': 'https://www.giffgaff.com/',
-                        'Accept-Language': 'en-US,en;q=0.9',
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
+                        'User-Agent': process.env.GG_USER_AGENT || 'giffgaff/1332 CFNetwork/1568.300.101 Darwin/24.2.0',
+                        'Accept-Language': 'zh-CN,zh-Hans;q=0.9',
+                        'Accept-Encoding': 'gzip, deflate, br'
                     };
                     if (token) h['Authorization'] = `Bearer ${token}`;
                     if (!token && cookie) h['Cookie'] = cookie;

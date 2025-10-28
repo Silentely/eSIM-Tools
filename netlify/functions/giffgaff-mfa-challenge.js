@@ -159,7 +159,9 @@ exports.handler = async (event, context) => {
                     headers: {
                         'Accept': 'application/json',
                         'Cookie': mergedCookie,
-                        'User-Agent': 'giffgaff/1321 CFNetwork/1568.300.101 Darwin/24.2.0'
+                        'User-Agent': process.env.GG_USER_AGENT || 'giffgaff/1332 CFNetwork/1568.300.101 Darwin/24.2.0',
+                        'Accept-Language': 'zh-CN,zh-Hans;q=0.9',
+                        'Accept-Encoding': 'gzip, deflate, br'
                     },
                     timeout: 15000
                 });
@@ -200,7 +202,7 @@ exports.handler = async (event, context) => {
             );
         };
 
-        // App(Token)通道：v4 按原逻辑
+        // App(Token)通道：v4 使用真实的 iOS App UA
         const sendChallengeV4Token = async (token) => axios.post(
             'https://id.giffgaff.com/v4/mfa/challenge/me',
             { source, preferredChannels },
@@ -208,12 +210,9 @@ exports.handler = async (event, context) => {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0',
-                    'Origin': 'https://www.giffgaff.com',
-                    'Referer': 'https://www.giffgaff.com/',
-                    'Accept-Language': 'zh-CN,zh;q=0.9',
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache',
+                    'User-Agent': process.env.GG_USER_AGENT || 'giffgaff/1332 CFNetwork/1568.300.101 Darwin/24.2.0',
+                    'Accept-Language': 'zh-CN,zh-Hans;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br',
                     ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
                     ...(mergedCookie ? { 'Cookie': mergedCookie } : {})

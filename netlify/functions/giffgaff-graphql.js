@@ -128,35 +128,39 @@ exports.handler = async (event, context) => {
             timestamp: new Date().toISOString()
         });
 
-        // 构建请求头
+        // 构建请求头（使用真实的 iOS App UA 和头部）
         const requestHeaders = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`,
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'User-Agent': process.env.GG_USER_AGENT || 'giffgaff/1332 CFNetwork/1568.300.101 Darwin/24.2.0',
             'Origin': 'https://publicapi.giffgaff.com',
-            'Referer': 'https://www.giffgaff.com/',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+            'Accept-Language': 'zh-CN,zh-Hans;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br'
         };
 
-        // 针对 reserveESim / swapSim 需要设备元数据头，按 Postman 约定补充（可通过环境变量覆盖）
+        // 针对 reserveESim / swapSim / eSimDownloadToken 需要设备元数据头（使用 HAR 中的真实值）
         const opName = operationName || '';
         const isReserve = /reserveESim\s*\(/.test(String(query || '')) || /reserveESim/i.test(opName);
         const isSwap = /swapSim\s*\(/i.test(String(query || '')) || /swapSim/i.test(opName);
         const isToken = /eSimDownloadToken\s*\(/i.test(String(query || '')) || /eSimDownloadToken/i.test(opName);
-        const needsAppHeaders = isReserve || isSwap || isToken;
+        const isMfaChallenge = /simSwapMfaChallenge/i.test(String(query || '')) || /simSwapMfaChallenge/i.test(opName);
+        const needsAppHeaders = isReserve || isSwap || isToken || isMfaChallenge;
+        
         if (needsAppHeaders) {
-            requestHeaders['x-gg-app-os'] = process.env.GG_APP_OS || 'Android';
-            requestHeaders['x-gg-app-os-version'] = process.env.GG_APP_OS_VERSION || '14';
-            requestHeaders['x-gg-app-build-number'] = process.env.GG_APP_BUILD_NUMBER || '763';
-            requestHeaders['x-gg-app-device-manufacturer'] = process.env.GG_APP_DEVICE_MANUFACTURER || 'Google';
-            requestHeaders['x-gg-app-device-model'] = process.env.GG_APP_DEVICE_MODEL || 'Pixel8';
-            requestHeaders['x-gg-app-version'] = process.env.GG_APP_VERSION || '14.0.8';
-            requestHeaders['x-gg-app-bundle-version'] = process.env.GG_APP_BUNDLE_VERSION || 'v31';
+            // 使用 HAR 抓包中的真实 iOS App 头部
+            requestHeaders['x-gg-app-device-manufacturer'] = process.env.GG_APP_DEVICE_MANUFACTURER || 'Apple';
+            requestHeaders['x-gg-app-os'] = process.env.GG_APP_OS || 'iOS';
+            requestHeaders['x-gg-app-version'] = process.env.GG_APP_VERSION || '17.46.11';
+            requestHeaders['x-gg-app-build-number'] = process.env.GG_APP_BUILD_NUMBER || '1332';
+            requestHeaders['x-gg-app-os-version'] = process.env.GG_APP_OS_VERSION || '18.2';
             requestHeaders['apollographql-client-name'] = process.env.APOLLO_CLIENT_NAME || 'iOS 18.2';
-            requestHeaders['apollographql-client-version'] = process.env.APOLLO_CLIENT_VERSION || '17.25.2 1321';
+            requestHeaders['apollographql-client-version'] = process.env.APOLLO_CLIENT_VERSION || '17.46.11 1332';
+            requestHeaders['x-gg-app-bundle-version'] = process.env.GG_APP_BUNDLE_VERSION || 'v0';
+            requestHeaders['x-gg-app-device-model'] = process.env.GG_APP_DEVICE_MODEL || 'iPhone SE';
+            requestHeaders['x-gg-app-device-id'] = process.env.GG_APP_DEVICE_ID || 'iPhone12,8';
+            requestHeaders['baggage'] = process.env.GG_BAGGAGE || 'client-tracking-ctx-id=d1c9ee72-573b-490e-a219-6b41992a5bdb';
+            
             try {
                 const { randomUUID } = require('crypto');
                 requestHeaders['x-request-id'] = randomUUID();
