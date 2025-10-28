@@ -2735,11 +2735,24 @@
                             }])
                         });
                         
-                        if (!response.ok) throw new Error('发送失败: ' + response.status);
-                        const responseData = await response.json();
-                        const data = Array.isArray(responseData) ? responseData[0].data : responseData.data;
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`发送失败: ${response.status} - ${errorText}`);
+                        }
                         
-                        if (!data.simSwapMfaChallenge.ref) throw new Error('未返回引用');
+                        const responseData = await response.json();
+                        console.log('simSwapMfaChallenge 响应:', responseData);
+                        
+                        // 处理可能的错误响应
+                        if (responseData.errors) {
+                            throw new Error(responseData.errors[0].message || '发送验证码失败');
+                        }
+                        
+                        const data = responseData.data;
+                        if (!data || !data.simSwapMfaChallenge || !data.simSwapMfaChallenge.ref) {
+                            throw new Error('未返回有效的验证码引用');
+                        }
+                        
                         appState.emailCodeRef = data.simSwapMfaChallenge.ref;
                         
                         // 显示发送成功消息
@@ -2835,10 +2848,15 @@
                             // 先尝试获取专用于 swap 的 mfa ref
                             appState.swapRef = appState.emailCodeRef || null;
                             try {
-                                const chResp = await fetch(apiEndpoints.graphql, { 
-                                    method:'POST', 
-                                    headers:{'Content-Type':'application/json'}, 
-                                    body: JSON.stringify([{
+                                const chResp = await fetch(apiEndpoints.graphql, {
+                                    method:'POST',
+                                    headers:{
+                                        'Content-Type':'application/json',
+                                        'Authorization': `Bearer ${appState.accessToken}`
+                                    },
+                                    body: JSON.stringify({
+                                        accessToken: appState.accessToken,
+                                        mfaSignature: appState.emailSignature,
                                         operationName: "simSwapMfaChallenge",
                                         variables: {},
                                         query: `mutation simSwapMfaChallenge {
@@ -2852,12 +2870,11 @@
                                             __typename
                                           }
                                         }`
-                                    }])
+                                    })
                                 });
                                 if (chResp.ok) {
-                                    const chDataArray = await chResp.json();
-                                    const chData = Array.isArray(chDataArray) ? chDataArray[0].data : chDataArray.data;
-                                    appState.swapRef = chData?.simSwapMfaChallenge?.ref || appState.swapRef;
+                                    const chData = await chResp.json();
+                                    appState.swapRef = chData?.data?.simSwapMfaChallenge?.ref || appState.swapRef;
                                     // 展示交换验证码输入区
                                     const secSwap = document.getElementById('swapCodeSection');
                                     if (secSwap) secSwap.style.display = 'block';
