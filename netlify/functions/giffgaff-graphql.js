@@ -167,18 +167,10 @@ exports.handler = async (event, context) => {
             } catch (_) {}
         }
 
-        // 如果有MFA签名/引用，添加到请求头
+        // 如果有MFA签名，添加到请求头（swapSim 只需要签名，不需要 ref）
         if (mfaSignature) {
             requestHeaders['X-MFA-Signature'] = mfaSignature;
             requestHeaders['x-mfa-signature'] = mfaSignature;
-            requestHeaders['X-GG-MFA-SIGNATURE'] = mfaSignature;
-            requestHeaders['x-gg-mfa-signature'] = mfaSignature;
-        }
-        if (mfaRef) {
-            requestHeaders['X-GG-MFA-REF'] = mfaRef;
-            requestHeaders['x-gg-mfa-ref'] = mfaRef;
-            requestHeaders['X-MFA-REF'] = mfaRef;
-            requestHeaders['x-mfa-ref'] = mfaRef;
         }
 
         // 构建GraphQL请求体
