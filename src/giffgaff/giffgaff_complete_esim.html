@@ -1123,7 +1123,7 @@
                                     <h5 class="fw-bold">短信验证码激活</h5>
                                     <p class="small text-muted mb-0">仅在手机号可正常接收验证码时使用；系统将自动完成预订与激活。</p>
                                     <div class="text-center mt-3 badge-spacer">
-                                        <span id="smsWipBadge" class="badge bg-warning text-dark badge-pill-cta">调试中未完善</span>
+                                        <span id="smsWipBadge" class="badge bg-success text-white badge-pill-cta">✓ 推荐使用</span>
                                     </div>
                                 </div>
                             </div>
@@ -1148,14 +1148,16 @@
                             </div>
                         </div>
                         <div id="smsInlineStatus" class="status mt-2" role="status" aria-live="polite"></div>
-                        <div class="mt-3" style="max-width:420px;">
-                            <label for="smsInlineCode" class="form-label">短信验证码</label>
-                            <input id="smsInlineCode" type="text" class="form-control" placeholder="输入6位验证码" maxlength="6" />
-                        </div>
-                        <div class="btn-group mt-3">
-                            <button id="smsInlineVerifyBtn" class="btn btn-primary">
-                                <i class="fas fa-check me-2"></i> 验证并继续激活
-                            </button>
+                        <div id="smsCodeInputSection" class="mt-3" style="display:none;">
+                            <div style="max-width:420px;">
+                                <label for="smsInlineCode" class="form-label">短信验证码</label>
+                                <input id="smsInlineCode" type="text" class="form-control" placeholder="输入6位验证码" maxlength="6" />
+                            </div>
+                            <div class="btn-group mt-3">
+                                <button id="smsInlineVerifyBtn" class="btn btn-primary">
+                                    <i class="fas fa-check me-2"></i> 验证并继续激活
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Cookie 闸门：当缺少 giffgaff 官网 Cookie 时，先要求用户粘贴并验证 -->
@@ -1943,7 +1945,7 @@
                             if (appState.lpaString) {
                                 // 重新打开页面时，不再展示 LPA 原文与二维码，仅提示已完成并建议清理
                                 if (elements?.tokenStatus) {
-                                    showStatus(elements.tokenStatus, '已成功获取到 eSIM 二维码/LPA（为安全起见仅显示一次，本页不再展示原文）。是否清空 cookies？', 'success');
+                                    showStatus(elements.tokenStatus, '已成功获取到 eSIM 二维码/LPA（为安全起见仅显示一次，本页不再展示原文，如有需要请点击获取Token）', 'success');
                                 }
                                 setTimeout(() => {
                                     const shouldClear = confirm('已成功获取到 eSIM 二维码/LPA（仅显示一次）。是否立即清空 cookies 并重置？');
@@ -2755,8 +2757,10 @@
                         
                         appState.emailCodeRef = data.simSwapMfaChallenge.ref;
                         
-                        // 显示发送成功消息
+                        // 显示发送成功消息并显示验证码输入区
                         showStatus(statusEl, '验证码已发送，请查收短信。', 'success');
+                        const codeSection = document.getElementById('smsCodeInputSection');
+                        if (codeSection) codeSection.style.display = 'block';
                     } catch (e) {
                         showStatus(statusEl, '发送验证码失败：' + e.message, 'error');
                     } finally {
@@ -3538,12 +3542,6 @@
                     if (sec) {
                         sec.style.display = 'block';
                         sec.scrollIntoView({behavior:'smooth', block:'center'});
-                        try {
-                            const lbl = sec.querySelector('.form-label');
-                            if (lbl && !lbl.__warned) { lbl.__warned = true; lbl.insertAdjacentHTML('beforeend', ' <span class="badge bg-warning text-dark">调试中请不要继续操作</span>'); }
-                            const hint = document.getElementById('smsInlineStatus');
-                            if (hint && !hint.__warned) { hint.__warned = true; showStatus(hint, '注意：验证码激活流程处于调试中，建议优先使用“手动激活”。', 'warning'); }
-                        } catch(_){}
                     }
                     // 短信激活走 GraphQL，不再强制需要 Cookie
                     const gate = document.getElementById('smsCookieGate');
