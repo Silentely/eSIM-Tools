@@ -7,6 +7,8 @@
   您的浏览器不支持视频播放，请<a href="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720">点击这里</a>下载视频。
 </video>
 
+[giffgaff.webm](https://github.com/user-attachments/assets/d4fbd0ff-b8bc-4477-a0c4-45698fe4802c)
+
 ## 1. 打开giffgaff的eSIM更换网页
 
 访问eSIM Tools网站，选择Giffgaff eSIM工具。
