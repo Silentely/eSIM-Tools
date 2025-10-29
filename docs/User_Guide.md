@@ -1,5 +1,12 @@
 # giffgaff 使用教程
 
+> 🎬 视频教程 - giffgaff eSIM更换操作演示
+
+<video controls preload="metadata" width="100%" style="max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+  <source src="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720" type="video/mp4">
+  您的浏览器不支持视频播放，请<a href="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720">点击这里</a>下载视频。
+</video>
+
 ## 1. 打开giffgaff的eSIM更换网页
 
 访问eSIM Tools网站，选择Giffgaff eSIM工具。

@@ -51,8 +51,7 @@
 ## 🌐 在线使用
 
 ### 🚀 在线服务（推荐）
-**完整功能版本**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
-- ✅ 无CORS限制，完整API功能
+**完整版本**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
 - ✅ 支持所有eSIM操作和流程
 - ✅ 性能优化，支持离线使用
 - ✅ 定期更新维护
@@ -77,7 +76,7 @@
 >
 > ⚠️ **已停用功能**：手动激活方式已于2025年10月8日被官方修复停用
 >
-> 📖 **详细教程**：查看 [Giffgaff使用教程](./docs/User_Guide.md) 获取图文并茂的完整操作指南
+> 📖 **详细教程**：查看 [Giffgaff使用教程](./docs/User_Guide.md) 获取图文及视频完整操作指南
 
 ### 🇳🇱 Simyo eSIM申请流程
 1. **账户登录** - 输入荷兰手机号(06开头)和密码
@@ -87,7 +86,7 @@
 5. **扫码安装** - 使用生成的二维码在新设备上安装
 
 ### 📚 详细文档
-- **[Giffgaff使用教程](./docs/User_Guide.md)** - 图文并茂的完整操作指南（推荐优先阅读）
+- **[Giffgaff使用教程](./docs/User_Guide.md)** - 图文及视频完整操作指南
 - [Giffgaff详细说明](./docs/reference/README_giffgaff_esim.md)
 - [Simyo详细说明](./docs/reference/README_simyo_esim.md)
 - [性能优化指南](./docs/PERFORMANCE.md)
