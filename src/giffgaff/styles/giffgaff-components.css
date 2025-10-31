@@ -1,0 +1,567 @@
+/**
+ * Giffgaff eSIM 工具 - 组件样式
+ * 包含：头部、按钮、步骤指示器、状态显示等组件
+ */
+
+/* ===== 应用头部 ===== */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.app-icon {
+    font-size: 24px;
+    margin-right: 10px;
+    color: #ffcc00;
+}
+
+.app-title {
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(to right, #ffcc00, #4361ee);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* ===== 按钮样式 ===== */
+.login-btn {
+    background: linear-gradient(to right, #ffcc00, #ffffff);
+    border: none;
+    font-size: 16px;
+    color: #212529;
+    cursor: pointer;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 30px;
+    transition: all 0.3s;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.login-btn:hover {
+    background: linear-gradient(to right, #ffffff, #ffcc00);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 204, 0, 0.5);
+}
+
+.github-btn {
+    background: linear-gradient(to right, #333333, #666666);
+    border: none;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 30px;
+    transition: all 0.3s;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    border: 1px solid rgba(51, 51, 51, 0.3);
+    margin-left: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.github-btn:hover {
+    background: linear-gradient(to right, #666666, #333333);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(51, 51, 51, 0.5);
+    color: #ffffff;
+}
+
+.btn-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.btn {
+    padding: 16px 25px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.btn-primary {
+    background: linear-gradient(to right, #ffcc00, #ffffff);
+    color: #212529;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(to right, #ffffff, #ffcc00);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.clear-session-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.clear-session-btn:hover {
+    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+    transform: translateY(-1px);
+}
+
+/* ===== 页面标题 ===== */
+.page-title {
+    text-align: center;
+    margin: 30px 0 40px;
+}
+
+.page-title h1 {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.5px;
+    color: #212529;
+}
+
+.page-title p {
+    color: rgba(33, 37, 41, 0.7);
+    font-size: 18px;
+    margin-top: 8px;
+}
+
+/* ===== 步骤指示器 ===== */
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 auto 40px;
+    position: relative;
+    max-width: 820px;
+    counter-reset: step;
+    padding: 16px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f8fafc, #eef2f7);
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    width: 120px;
+    position: relative;
+}
+
+.step-number {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #fffdf7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #212529;
+    border: 2px solid rgba(255, 193, 7, 0.55);
+    box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.18);
+}
+
+.step.active .step-number {
+    background: linear-gradient(135deg, #ffcc00, #ffd84d);
+    color: white;
+    box-shadow: 0 6px 16px rgba(255, 193, 7, 0.45);
+    border-color: rgba(255, 193, 7, 0.8);
+}
+
+.step-text {
+    font-size: 14px;
+    text-align: center;
+    color: #212529;
+    font-weight: 500;
+}
+
+/* ===== 状态显示 ===== */
+.status {
+    margin-top: 25px;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    font-size: 16px;
+    border-left: 4px solid transparent;
+    color: #212529;
+}
+
+.status.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+.status.success {
+    border-left: 4px solid var(--primary);
+}
+
+.status.error {
+    border-left: 4px solid var(--warning);
+}
+
+/* ===== 状态网格 ===== */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    min-height: 40px;
+}
+
+.status-label {
+    font-weight: 500;
+    color: #6c757d;
+    min-width: 100px;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+.status-value {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #495057;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    cursor: default;
+    position: relative;
+    text-align: right;
+}
+
+.status-value:hover {
+    background-color: rgba(255, 204, 0, 0.1);
+    border-radius: 4px;
+}
+
+.status-value.connected {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.status-value.disconnected {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+/* ===== 模式徽标 ===== */
+.mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #7c2d12;
+    background: linear-gradient(135deg, #fff7d6, #ffe9a6);
+    border: 1px solid #ffd24d;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* ===== 推广横幅 ===== */
+.promo-banner {
+    background: linear-gradient(135deg, #ffcc00, #ffd633);
+    border-radius: 12px;
+    margin: 20px 0;
+    padding: 16px 20px;
+    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
+    animation: subtle-pulse 3s ease-in-out infinite;
+}
+
+.promo-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.promo-icon {
+    color: #212529;
+    font-size: 20px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.promo-text {
+    color: #212529;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.promo-link {
+    color: #212529;
+    text-decoration: underline;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.promo-link:hover {
+    color: #000;
+    text-decoration: none;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== 章节控制 ===== */
+.section {
+    display: none;
+    animation: slideIn 0.5s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+.verification-section {
+    margin-top: 25px;
+    display: none;
+}
+
+.verification-section.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+/* ===== 表单标签 ===== */
+.form-label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 17px;
+    color: #212529;
+}
+
+/* ===== Tooltip提示框 ===== */
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-width: 400px;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip.show {
+    opacity: 1;
+}
+
+.qrcode-container {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.qrcode-container:hover .tooltip {
+    opacity: 1;
+}
+
+/* ===== 加载指示器 ===== */
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    border-top-color: #000;
+    animation: spin 1s ease-in-out infinite;
+}
+
+/* ===== Toast通知 ===== */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.toast-notification.show {
+    opacity: 1;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+}
+
+.toast-content i {
+    color: #4cc9f0;
+    font-size: 18px;
+}
+
+/* ===== 网络状态指示器 ===== */
+.network-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.network-status.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.network-status.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.network-status.show {
+    transform: translateX(0);
+}
+
+/* ===== 更新通知 ===== */
+.update-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    z-index: 10000;
+    max-width: 300px;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ===== 加载内容 ===== */
+.loading-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.loading-content p {
+    margin: 0;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* ===== 徽章样式 ===== */
+.badge-pill-cta {
+    font-size: 1.15rem;
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    letter-spacing: 1px;
+    display: inline-block;
+    line-height: 1;
+}
+
+.badge-spacer {
+    margin-top: 0.75rem;
+}
+
+/* ===== 触摸反馈 ===== */
+.touch-active {
+    transform: scale(0.98) !important;
+    transition: transform 0.1s ease !important;
+}
+
+/* ===== 结果容器 ===== */
+#resultContainer {
+    display: none;
+}
+
+#resultContainer.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}

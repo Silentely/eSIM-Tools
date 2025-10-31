@@ -16,8 +16,14 @@
   
 # 重定向和重写规则
 [[redirects]]
-  # Giffgaff eSIM页面
+  # Giffgaff eSIM页面 - 模块化版本
   from = "/giffgaff"
+  to = "/src/giffgaff/giffgaff_modular.html"
+  status = 200
+
+[[redirects]]
+  # Giffgaff eSIM页面 - 原始版本（备份）
+  from = "/giffgaff-legacy"
   to = "/src/giffgaff/giffgaff_complete_esim.html"
   status = 200
 

@@ -1,0 +1,191 @@
+/**
+ * Giffgaff eSIM 工具 - 响应式样式
+ * 包含：移动端适配、平板适配等响应式设计
+ */
+
+/* ===== 平板设备 (max-width: 992px) ===== */
+@media (max-width: 992px) {
+    .service-time-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .service-time-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .service-time-body {
+        align-items: center;
+        text-align: center;
+    }
+    
+    .service-time-title {
+        text-align: center;
+    }
+    
+    .service-time-layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .service-time-icon-section {
+        padding-top: 0;
+        width: auto;
+    }
+    
+    .service-time-content-section {
+        padding-left: 0;
+        text-align: center;
+    }
+    
+    .service-time-message {
+        text-align: center;
+    }
+    
+    .service-time-action-badge {
+        align-self: center;
+        margin-top: 10px;
+    }
+    
+    .current-time-card {
+        grid-template-columns: 56px 1fr;
+        gap: 12px;
+    }
+    
+    .time-card-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+    }
+    
+    .time-card-icon i {
+        font-size: 24px;
+    }
+    
+    .time-card-value {
+        font-size: 26px;
+    }
+}
+
+/* ===== 移动设备 (max-width: 768px) ===== */
+@media (max-width: 768px) {
+    .app-title {
+        font-size: 20px;
+    }
+    
+    .page-title h1 {
+        font-size: 26px;
+    }
+    
+    .step {
+        width: 80px;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-value {
+        max-width: 120px;
+    }
+    
+    .status-label {
+        min-width: 80px;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .step-text {
+        font-size: 13px;
+    }
+    
+    .card-header {
+        padding: 15px;
+        font-size: 19px;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    textarea, input {
+        padding: 14px;
+        font-size: 15px;
+    }
+    
+    .btn {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+    .header-buttons {
+        gap: 8px;
+        flex-wrap: nowrap;
+    }
+
+    .login-btn, .github-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+        min-width: fit-content;
+    }
+}
+
+/* ===== 小屏移动设备 (max-width: 480px) ===== */
+@media (max-width: 480px) {
+    .step-indicator {
+        max-width: 95%;
+    }
+    
+    .step {
+        width: 60px;
+    }
+    
+    .step-number {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+    
+    .step-text {
+        font-size: 12px;
+    }
+    
+    .header-buttons {
+        gap: 6px;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    .login-btn, .github-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        width: fit-content;
+    }
+    
+    .service-time-grid {
+        padding: 14px;
+    }
+    
+    .service-time-left {
+        padding: 12px;
+    }
+    
+    .service-time-header {
+        gap: 8px;
+    }
+    
+    .service-time-action-badge {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .time-card-value {
+        font-size: 24px;
+    }
+}

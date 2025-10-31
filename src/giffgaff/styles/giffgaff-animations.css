@@ -1,0 +1,148 @@
+/**
+ * Giffgaff eSIM 工具 - 动画样式
+ * 包含：所有动画效果和过渡动画
+ */
+
+/* ===== 基础动画 ===== */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ===== 推广横幅动画 ===== */
+@keyframes subtle-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+    60% { transform: translateY(-3px); }
+}
+
+/* ===== 服务时间动画 ===== */
+@keyframes breathing-light {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(220, 38, 38, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes breathing-light-orange {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes breathing-light-green {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(22, 163, 74, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(22, 163, 74, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes breathing-light-purple {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(99, 102, 241, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes warning-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes success-bounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    25% {
+        transform: scale(1.02);
+    }
+    75% {
+        transform: scale(1.02);
+    }
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+    }
+}
+
+@keyframes time-update {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes time-breathe {
+    0%, 100% { transform: translateZ(0) scale(1); }
+    50% { transform: translateZ(0) scale(1.02); }
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 服务时间图标过渡 ===== */
+#serviceTimeIcon {
+    transition: all 0.3s ease;
+}

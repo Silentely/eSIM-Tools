@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    
+    <!-- 预连接优化 -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://qrcode.show" crossorigin>
+    <link rel="preconnect" href="https://api.giffgaff.com" crossorigin>
+    <link rel="preconnect" href="https://id.giffgaff.com" crossorigin>
+    <link rel="preconnect" href="https://publicapi.giffgaff.com" crossorigin>
+    
+    <!-- CSP策略 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com; img-src 'self' data: https:; frame-src 'none';">
+    
+    <title>Giffgaff eSIM 申请工具</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#ffcc00">
+    <link rel="icon" href="/src/assets/favicon.ico" type="image/x-icon">
+    
+    <!-- 外部样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/src/assets/fontawesome/all.min.css">
+    
+    <!-- 共享设计系统 -->
+    <link rel="preload" href="/src/styles/design-system.css" as="style" onload="this.rel='stylesheet'">
+    <link rel="preload" href="/src/styles/animations.css" as="style" onload="this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="/src/styles/design-system.css">
+        <link rel="stylesheet" href="/src/styles/animations.css">
+    </noscript>
+    
+    <!-- Giffgaff专用样式 -->
+    <link rel="stylesheet" href="./styles/giffgaff-base.css">
+    <link rel="stylesheet" href="./styles/giffgaff-components.css">
+    <link rel="stylesheet" href="./styles/giffgaff-service-time.css">
+    <link rel="stylesheet" href="./styles/giffgaff-animations.css">
+    <link rel="stylesheet" href="./styles/giffgaff-responsive.css">
+    
+    <!-- Service Worker 注册 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container main-container">
+        <!-- 应用头部 -->
+        <div class="app-header">
+            <div class="logo-container">
+                <i class="fas fa-sim-card app-icon" aria-hidden="true"></i>
+                <div class="app-title">Giffgaff eSIM工具</div>
+            </div>
+
+            <div class="header-buttons">
+                <button class="login-btn" onclick="openTutorial()" aria-label="查看教程">
+                    <i class="fas fa-book" aria-hidden="true"></i> 查看教程
+                </button>
+                <a href="https://github.com/Silentely/eSIM-Tools" target="_blank" class="github-btn" aria-label="打开GitHub仓库">
+                    <i class="fab fa-github" aria-hidden="true"></i> GitHub
+                </a>
+            </div>
+        </div>
+        
+        <!-- 开卡推广 -->
+        <div class="promo-banner reveal">
+            <div class="promo-content">
+                <i class="fas fa-gift promo-icon"></i>
+                <span class="promo-text">
+                    如果您还没有Giffgaff账户，可以<a href="https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268" target="_blank" class="promo-link">点击这里开卡</a>，享受额外5英镑话费赠送！
+                </span>
+            </div>
+        </div>
+        
+        <!-- 页面标题 -->
+        <div class="page-title reveal">
+            <h1>Giffgaff eSIM 申请工具</h1>
+            <p>将您的实体SIM卡无缝转换为eSIM</p>
+            <div id="modeBadge" class="mode-badge" style="display:none" aria-live="polite">
+                <i class="fas fa-exchange-alt" aria-hidden="true"></i> 设备更换模式
+            </div>
+        </div>
+        
+        <!-- 服务时间提示 -->
+        <div id="serviceTimeAlert" class="alert mb-4 service-time-alert">
+            <div class="service-time-grid">
+                <div class="service-time-left">
+                    <div class="service-time-header">
+                        <div id="actionMessage" class="service-time-action-badge" style="display: none;"></div>
+                    </div>
+                    <div class="service-time-body">
+                        <div class="service-time-layout">
+                            <div class="service-time-icon-section">
+                                <i id="serviceTimeIcon" class="fas" aria-hidden="true"></i>
+                            </div>
+                            <div class="service-time-content-section">
+                                <div class="service-time-title">服务时间提醒：</div>
+                                <div id="serviceTimeMessage" class="service-time-message">当前时间在服务时间外，Giffgaff官方在英国时间04:30至21:30之间提供SIM交换服务。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="current-time-card" aria-label="当前时间">
+                    <div class="time-card-icon">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                    </div>
+                    <div class="time-card-text">
+                        <div class="time-card-label">当前时间</div>
+                        <div id="currentTime" class="time-card-value">--:--</div>
+                        <div id="ukTimeHint" class="time-card-hint">英国时间 --:--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 状态显示面板 -->
+        <div class="status-panel card-elevated reveal" role="status" aria-live="polite">
+            <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 当前状态</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">当前模式:</span>
+                    <span id="statusMode" class="status-value connected">标准流程</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Access Token:</span>
+                    <span id="statusAccessToken" class="status-value disconnected">未登录</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">MFA 签名:</span>
+                    <span id="statusMfaSignature" class="status-value disconnected">未验证</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">会员ID:</span>
+                    <span id="statusMemberId" class="status-value disconnected">未获取</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">eSIM状态:</span>
+                    <span id="statusEsimStatus" class="status-value disconnected">
+                        <span id="esimStatusValue"></span><br>
+                        <span id="esimStatusPhoneSuffix"></span>
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">激活码:</span>
+                    <span id="statusActivationCode" class="status-value disconnected">
+                        <span id="activationCodeValue"></span><br>
+                        <span id="activationCodeSSN"></span>
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">LPA字符串:</span>
+                    <span id="statusLpaString" class="status-value disconnected">未生成</span>
+                </div>
+            </div>
+            <button id="clearSessionBtn" class="clear-session-btn" aria-label="清除会话并重置所有进度">
+                <i class="fas fa-trash-alt" aria-hidden="true"></i> 清除会话
+            </button>
+        </div>
+        
+        <!-- 步骤指示器 -->
+        <div class="step-indicator reveal" role="list" aria-label="进度步骤">
+            <div class="step active" role="listitem" aria-current="step" data-step="1">
+                <div class="step-number" aria-hidden="true">1</div>
+                <div class="step-text">OAuth登录</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-text">邮件验证</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-text">会员信息</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-text">申请eSIM</div>
+            </div>
+            <div class="step" data-step="5">
+                <div class="step-number">5</div>
+                <div class="step-text">获取二维码</div>
+            </div>
+        </div>
+        
+        <!-- 步骤1: 选择登录方式 -->
+        <div id="step1" class="section active reveal">
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <i class="fas fa-key"></i> 第一步：选择登录方式
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        请选择您偏好的登录方式：
+                    </p>
+                    
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        <div class="col">
+                            <div id="oauthCard" class="card h-100" style="cursor: pointer;" role="button" tabindex="0" aria-label="选择 OAuth 登录">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-shield-alt fa-3x mb-3" style="color: var(--primary);"></i>
+                                    <h5>OAuth 2.0 登录</h5>
+                                    <p class="text-muted">安全的官方认证方式</p>
+                                    <small class="text-success">✓ 推荐使用</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div id="cookieCard" class="card h-100" style="cursor: pointer;" role="button" tabindex="0" aria-label="选择 Cookie 登录">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cookie-bite fa-3x mb-3" style="color: var(--warning);"></i>
+                                    <h5>Cookie 登录</h5>
+                                    <p class="text-muted">使用已有登录Cookie</p>
+                                    <small class="text-info">✓ 快速便捷</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="loginMethodStatus" class="status"></div>
+                    
+                    <!-- OAuth登录区域 -->
+                    <div id="oauthLoginSection" class="mt-4" style="display: none;">
+                        <h5 class="mb-3">OAuth 2.0 登录</h5>
+                        
+                        <div class="alert alert-warning mb-4">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>如何获取回调URL：</h6>
+                            <ol class="mb-2">
+                                <li><strong>打开开发者工具</strong>：按 F12 或右键选择"检查"</li>
+                                <li><strong>切换到"网络"标签页</strong></li>
+                                <li><strong>在登录页面输入邮箱验证码</strong></li>
+                                <li><strong>点击登录按钮</strong></li>
+                                <li><strong>在网络面板中查找</strong> <code>giffgaff://auth/callback/</code> 开头的请求</li>
+                                <li><strong>复制完整的URL</strong> 并粘贴到下方输入框</li>
+                            </ol>
+                            <p class="mb-0"><small class="text-muted">💡 提示：如果看不到网络请求，请先打开开发者工具再进行登录操作</small></p>
+                        </div>
+                        
+                        <div class="alert alert-info mb-4">
+                            <h6><i class="fas fa-info-circle me-2"></i>回调URL格式示例：</h6>
+                            <p class="mb-2"><code>giffgaff://auth/callback/?code=ABC123&state=XYZ789</code></p>
+                            <p class="mb-0"><small class="text-muted">确保URL包含 <code>code</code> 和 <code>state</code> 参数</small></p>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button id="oauthLoginBtn" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i> 开始OAuth登录
+                            </button>
+                        </div>
+                    
+                        <div id="oauthStatus" class="status" role="status" aria-live="polite"></div>
+                        
+                        <!-- OAuth回调处理区域 -->
+                        <div id="oauthCallbackSection" class="verification-section">
+                            <div class="mb-4">
+                                <label for="callbackUrl" class="form-label">回调URL：</label>
+                                <textarea id="callbackUrl" class="form-control" placeholder="例如：giffgaff://auth/callback/?code=EDXgE_Uq5Q96LT5s&state=7piz0IXfUIHHoxMURfaboQ" rows="3"></textarea>
+                            </div>
+                            
+                            <div class="btn-group">
+                                <button id="processCallbackBtn" class="btn btn-primary">
+                                    <i class="fas fa-check me-2"></i> 处理回调
+                                </button>
+                            </div>
+                            
+                            <div id="callbackStatus" class="status mt-4" role="status" aria-live="polite"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cookie登录区域 -->
+                    <div id="cookieLoginSection" class="mt-4" style="display: none;">
+                        <h5 class="mb-3">Cookie 登录</h5>
+                        
+                        <div class="alert alert-info mb-4">
+                            <h6><i class="fas fa-info-circle me-2"></i>如何获取Cookie：</h6>
+                            <ol class="mb-2">
+                                <li><strong>访问</strong> <a href="https://www.giffgaff.com" target="_blank" rel="noopener">giffgaff.com</a> 并登录您的账户</li>
+                                <li><strong>打开开发者工具</strong>（Chrome：F12 或 右键→检查）</li>
+                                <li>切换到 <strong>Application</strong>（应用）/ <strong>Storage</strong>（存储）标签页</li>
+                                <li>在左侧选择 <strong>Cookies</strong> → <code>https://www.giffgaff.com</code></li>
+                                <li>复制右侧所有条目，拼成 <code>name=value; name2=value2; ...</code> 格式</li>
+                            </ol>
+                            <div class="mt-2">
+                                <strong>或</strong> 在已登录的 <code>giffgaff.com</code> 页签，打开控制台(Console)粘贴以下代码并回车：
+                                <pre id="cookieConsoleSnippet" class="mt-2 p-2 bg-light border rounded" style="white-space:pre-wrap;word-break:break-all;">
+;(() => {
+  try {
+    const out = document.cookie.split('; ').filter(Boolean).join('; ');
+    console.log(out);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(out)
+        .then(() => console.log('Cookie 已复制到剪贴板'))
+        .catch(() => {});
+    }
+  } catch (e) {
+    console.log('读取 Cookie 失败:', e);
+  }
+})();
+                                </pre>
+                                <div class="text-end mt-2">
+                                    <button id="copyConsoleSnippetBtn" type="button" class="btn btn-sm btn-warning text-dark">
+                                        <i class="fas fa-copy me-1"></i> 复制上方代码
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning p-2 mt-2">
+                                <small>
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    安全提示：仅在可信设备上粘贴 Cookie。本工具不会存储您的 Cookie。
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="cookieInput" class="form-label">Cookie 字符串：</label>
+                            <textarea id="cookieInput" class="form-control" placeholder="输入完整的Cookie字符串" rows="4"></textarea>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button id="verifyCookieBtn" class="btn btn-warning">
+                                <i class="fas fa-check-circle me-2"></i> 验证Cookie
+                            </button>
+                        </div>
+                        
+                        <div id="cookieStatus" class="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤2: 邮件验证 -->
+        <div id="step2" class="section reveal">
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <i class="fas fa-envelope"></i> 第二步：验证码验证（邮件/短信）
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        我们需要发送验证码到您的邮箱或手机进行身份验证：
+                    </p>
+
+                    <div class="row g-3 align-items-end mb-2">
+                        <div class="col-sm-6">
+                            <label for="mfaChannelSelect" class="form-label">验证码接收方式</label>
+                            <select id="mfaChannelSelect" class="form-select">
+                                <option value="EMAIL" selected>邮箱（EMAIL）</option>
+                                <option value="TEXT">短信（TEXT）</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="sendEmailBtn" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i> 发送验证码
+                        </button>
+                    </div>
+                    
+                    <div id="emailStatus" class="status" role="status" aria-live="polite"></div>
+                    
+                    <!-- 验证码输入区域 -->
+                    <div id="emailVerificationSection" class="verification-section">
+                        <p class="mb-4" style="font-size: 17px; color: #212529; margin-top: 25px;">
+                            请检查您的邮箱或短信并输入收到的6位验证码：
+                        </p>
+                        
+                        <div class="mb-4">
+                            <label for="emailCode" class="form-label">验证码：</label>
+                            <input type="text" id="emailCode" class="form-control" placeholder="输入6位验证码" maxlength="6">
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button id="verifyEmailBtn" class="btn btn-primary">
+                                <i class="fas fa-check me-2"></i> 验证验证码
+                            </button>
+                        </div>
+                        
+                        <div id="emailVerifyStatus" class="status mt-4" role="status" aria-live="polite"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤3: 获取会员信息 -->
+        <div id="step3" class="section reveal">
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <i class="fas fa-user"></i> 第三步：获取会员信息
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        获取您的Giffgaff会员信息：
+                    </p>
+                    
+                    <div class="btn-group">
+                        <button id="getMemberBtn" class="btn btn-primary">
+                            <i class="fas fa-user-circle me-2"></i> 获取会员信息
+                        </button>
+                    </div>
+                    
+                    <div id="memberStatus" class="status" role="status" aria-live="polite"></div>
+                    <div id="memberInfo" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤4: 申请eSIM -->
+        <div id="step4" class="section reveal">
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <i class="fas fa-sim-card"></i> 第四步：申请/激活 eSIM
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        请选择一种方式完成 eSIM 激活：
+                    </p>
+                    
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        <div class="col">
+                            <div id="manualActivateCard" class="card h-100" style="cursor:not-allowed; opacity: 0.6;" role="button" tabindex="-1" aria-label="手动激活（已停用）">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-hand-point-up fa-2x mb-2"></i>
+                                    <h5 class="fw-bold">手动激活</h5>
+                                    <p class="small text-muted mb-0">预订空 SIM 后，前往官网手动确认激活。</p>
+                                    <div class="text-center mt-3 badge-spacer">
+                                        <span class="badge bg-danger badge-pill-cta" style="pointer-events: none;">暂停使用</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div id="smsActivateCard" class="card h-100" style="cursor:pointer;" role="button" tabindex="0" aria-label="选择短信验证码激活">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-sms fa-2x mb-2"></i>
+                                    <h5 class="fw-bold">短信验证码激活</h5>
+                                    <p class="small text-muted mb-0">系统将自动完成预订与激活。</p>
+                                    <div class="text-center mt-3 badge-spacer">
+                                        <span class="badge bg-success text-white badge-pill-cta">✓ 推荐使用</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 短信激活内联区域 -->
+                    <div id="smsInlineSection" style="display:none;">
+                        <div class="card card-body mt-3">
+                            <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
+                                <div style="min-width:260px;">
+                                    <label for="smsInlineChannel" class="form-label">验证码接收方式</label>
+                                    <select id="smsInlineChannel" class="form-select">
+                                        <option value="TEXT" selected>短信（TEXT）</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button id="smsInlineSendBtn" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane me-2"></i> 发送验证码
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="smsInlineStatus" class="status mt-2" role="status" aria-live="polite"></div>
+                        
+                        <div id="smsCodeInputSection" class="mt-3" style="display:none;">
+                            <div style="max-width:420px;">
+                                <label for="smsInlineCode" class="form-label">短信验证码</label>
+                                <input id="smsInlineCode" type="text" class="form-control" placeholder="输入6位验证码" maxlength="6" />
+                            </div>
+                            <div class="btn-group mt-3">
+                                <button id="smsInlineVerifyBtn" class="btn btn-primary">
+                                    <i class="fas fa-check me-2"></i> 验证并继续激活
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 手动激活区块 -->
+                    <div id="manualBlock" class="mt-3" style="display:none;">
+                        <div class="btn-group">
+                            <button id="reserveESimBtn" class="btn btn-primary">
+                                <i class="fas fa-bookmark me-2"></i> 预订eSIM
+                            </button>
+                        </div>
+
+                        <!-- 已有激活码快捷入口 -->
+                        <div class="mt-3">
+                            <button id="manualEsimInputToggle" class="btn btn-link p-0" type="button">
+                                我已完成预定eSIM申请（已有激活码/SSN）
+                            </button>
+                            <div id="manualEsimInputSection" class="card card-body mt-2" style="display: none;">
+                                <a href="https://www.giffgaff.com/activate" target="_blank" class="btn btn-link p-0 ms-2 mb-3" style="font-size: 0.9rem;">
+                                    前往激活页面
+                                </a>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label for="manualActivationCode" class="form-label">激活码</label>
+                                        <input id="manualActivationCode" class="form-control" placeholder="如：Y6GKL6" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="manualSSN" class="form-label">SSN</label>
+                                        <input id="manualSSN" class="form-control" placeholder="如：8944…" />
+                                    </div>
+                                </div>
+                                <button id="manualSaveAndNextBtn" class="btn btn-success mt-3" type="button">
+                                    <i class="fas fa-check me-2"></i>保存并进入下一步
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="esimReserveStatus" class="status mt-2" role="status" aria-live="polite"></div>
+
+                        <!-- eSIM信息显示区域 -->
+                        <div id="esimInfoDisplay" class="mt-4" style="display: none;">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>重要：eSIM已预订成功，请立即手动激活</strong>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-warning me-2"></i>
+                                        <strong>请保持此网页开启状态！</strong>
+                                    </div>
+                                    
+                                    <h5 class="text-success mb-3 text-center" id="esimStatusTitle">您的eSIM信息</h5>
+                                    <div class="row text-center">
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>激活码:</strong></p>
+                                            <div class="border p-3 mb-3 bg-light">
+                                                <code id="displayActivationCode" class="text-break fs-4"></code>
+                                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="copyTextFromCode('displayActivationCode', this)">
+                                                    <i class="fas fa-copy"></i> 复制
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>SSN:</strong></p>
+                                            <div class="border p-3 mb-3 bg-light">
+                                                <code id="displaySSN" class="text-break fs-5"></code>
+                                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="copyTextFromCode('displaySSN', this)">
+                                                    <i class="fas fa-copy"></i> 复制
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <button id="confirmActivationBtn" class="btn btn-success btn-lg">
+                                            <i class="fas fa-check-circle me-2"></i>我已完成手动激活，继续下一步
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤5: 获取eSIM -->
+        <div id="step5" class="section reveal">
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <i class="fas fa-qrcode"></i> 第五步：获取eSIM二维码
+                </div>
+                <div class="card-body">
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        获取您的eSIM下载代码和二维码：
+                    </p>
+                    
+                    <div class="btn-group">
+                        <button id="getESimTokenBtn" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i> 获取eSIM Token
+                        </button>
+                    </div>
+                    
+                    <div id="tokenStatus" class="status" role="status" aria-live="polite"></div>
+                    
+                    <!-- eSIM结果显示 -->
+                    <div id="resultContainer" class="mt-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-qrcode me-2"></i> 您的eSIM信息
+                            </div>
+                            <div class="card-body text-center">
+                                <div id="qrcode" class="mt-4"></div>
+                                <div id="esimInfo" class="mt-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- 外部脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 入场动效 -->
+    <script>
+        (function(){
+            const initReveal = () => {
+                const nodes = document.querySelectorAll('.reveal');
+                if (!nodes.length) return;
+                if ('IntersectionObserver' in window) {
+                    const io = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add('show');
+                                io.unobserve(entry.target);
+                            }
+                        });
+                    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+                    nodes.forEach(el => io.observe(el));
+                } else {
+                    nodes.forEach(el => el.classList.add('show'));
+                }
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initReveal, { once: true });
+            } else {
+                initReveal();
+            }
+        })();
+    </script>
+    
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+        (function initInvisibleTurnstile() {
+            var siteKey = (window && window.TURNSTILE_SITE_KEY) || '0x4AAAAAABqjeVscZAiqB11B';
+            function boot() {
+                try {
+                    if (!window.turnstile || !siteKey) { setTimeout(boot, 300); return; }
+                    var c = document.createElement('div');
+                    document.body.appendChild(c);
+                    var id = window.turnstile.render(c, {
+                        sitekey: siteKey,
+                        size: 'invisible',
+                        callback: function (token) { window.__cfTurnstileToken = token; }
+                    });
+                    var exec = function() { try { window.turnstile.execute(id); } catch (e) {} };
+                    exec();
+                    setInterval(exec, 110000);
+                } catch (e) { setTimeout(boot, 500); }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', boot);
+            } else {
+                boot();
+            }
+        })();
+    </script>
+    
+    <!-- 性能优化脚本 -->
+    <script src="/src/js/performance.js"></script>
+    
+    <!-- 主应用脚本（模块化） -->
+    <script type="module" src="./js/giffgaff-app.js"></script>
+    
+    <!-- 统一版权页脚 -->
+    <script type="module" src="/src/js/bootstrap-footer.js"></script>
+</body>
+</html>

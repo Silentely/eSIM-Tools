@@ -1,0 +1,135 @@
+/**
+ * Giffgaff eSIM 工具 - 基础样式
+ * 包含：CSS变量、基础布局、容器样式
+ */
+
+:root {
+    --primary: #ffcc00;
+    --secondary: #ffffff;
+    --success: #4cc9f0;
+    --warning: #f72585;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --gray: #6c757d;
+    
+    /* 服务时间样式变量 */
+    --st-gap: 20px;
+    --st-radius: 16px;
+    --st-card-radius: 18px;
+    --st-card-shadow: 0 8px 28px rgba(20, 20, 43, 0.12);
+    --st-soft-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --st-border: 1px solid rgba(0,0,0,0.06);
+    --st-muted: #64748b;
+    --st-strong: #0f172a;
+    --st-accent: #6366f1;
+}
+
+body {
+    background: linear-gradient(135deg, #fff7e6 0%, #ffefcc 40%, #ffe8b3 100%);
+    color: #212529;
+    min-height: 100vh;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* 全局焦点样式 */
+:focus-visible {
+    outline: 2px solid #4c9aff;
+    outline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    box-shadow: 0 0 0 3px rgba(76,154,255,0.35);
+}
+
+/* 表单元素 */
+textarea, input {
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 204, 0, 0.3);
+    background: rgba(255, 255, 255, 0.9);
+    color: #212529;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+/* 卡片样式 */
+.card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 204, 0, 0.5);
+}
+
+.card-header {
+    background: rgba(255, 204, 0, 0.1);
+    padding: 20px 25px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 204, 0, 0.2);
+}
+
+.card-header i {
+    margin-right: 12px;
+    font-size: 28px;
+    color: #ffcc00;
+}
+
+.card-body {
+    padding: 30px;
+}
+
+/* 状态面板 */
+.status-panel {
+    background: linear-gradient(135deg, #fffff0 0%, #fffbe4 90%);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.status-panel h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
