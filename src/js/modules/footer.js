@@ -24,10 +24,45 @@ export function injectFooter(options = {}) {
   // 3) 最后退回到 body（避免因 body 为 flex row 导致横排：因此仅最后兜底）
 
   const createCopyrightNode = () => {
-    const p = document.createElement('p');
-    p.textContent = options.text || getCopyrightText();
-    p.style.marginTop = '8px';
-    return p;
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.justifyContent = 'center';
+    div.style.gap = '12px';
+    div.style.marginTop = '8px';
+    
+    const span = document.createElement('span');
+    span.textContent = options.text || getCopyrightText();
+    
+    const githubLink = document.createElement('a');
+    githubLink.href = 'https://github.com/Silentely/eSIM-Tools';
+    githubLink.target = '_blank';
+    githubLink.rel = 'noopener noreferrer';
+    githubLink.setAttribute('aria-label', '在 GitHub 上查看源码');
+    githubLink.style.display = 'flex';
+    githubLink.style.alignItems = 'center';
+    githubLink.style.justifyContent = 'center';
+    githubLink.style.color = '#6b7280';
+    githubLink.style.textDecoration = 'none';
+    githubLink.style.transition = 'color 0.2s ease';
+    
+    const githubIcon = document.createElement('i');
+    githubIcon.className = 'fab fa-github';
+    githubIcon.style.fontSize = '18px';
+    
+    githubLink.addEventListener('mouseenter', () => {
+      githubLink.style.color = '#1f2937';
+    });
+    
+    githubLink.addEventListener('mouseleave', () => {
+      githubLink.style.color = '#6b7280';
+    });
+    
+    githubLink.appendChild(githubIcon);
+    div.appendChild(span);
+    div.appendChild(githubLink);
+    
+    return div;
   };
 
   // 情形 1：已有站内 footer（如首页免责声明区）
@@ -74,5 +109,3 @@ export function autoInjectFooter() {
     run();
   }
 }
-
-

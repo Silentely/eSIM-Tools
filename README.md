@@ -88,7 +88,7 @@
 5. **扫码安装** - 使用生成的二维码在新设备上安装
 
 ### 📚 详细文档
-- **[Giffgaff使用教程](./docs/User_Guide.md)** - 图文及视频完整操作指南 | [English](./docs/User_Guide_EN.md)
+- **[Giffgaff使用教程](./docs/User_Guide.md)** | [English](./docs/User_Guide_EN.md)
 - [Giffgaff详细说明](./docs/reference/README_giffgaff_esim.md) | [English](./docs/reference/README_giffgaff_esim_EN.md)
 - [Simyo详细说明](./docs/reference/README_simyo_esim.md) | [English](./docs/reference/README_simyo_esim_EN.md)
 

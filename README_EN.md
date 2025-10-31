@@ -76,7 +76,7 @@ Modern eSIM management toolkit designed for Giffgaff and Simyo users, supporting
 5. **Scan to Install** - Use the generated QR code to install on new device
 
 ### 📚 Detailed Documentation
-- **[Giffgaff User Guide](./docs/User_Guide.md)** - Complete图文 and video operation guide | [中文版](./docs/User_Guide_EN.md)
+- **[Giffgaff User Guide](./docs/User_Guide.md)** | [中文版](./docs/User_Guide_EN.md)
 - [Giffgaff Detailed Instructions](./docs/reference/README_giffgaff_esim.md) | [中文版](./docs/reference/README_giffgaff_esim_EN.md)
 - [Simyo Detailed Instructions](./docs/reference/README_simyo_esim.md) | [中文版](./docs/reference/README_simyo_esim_EN.md)
 - [Performance Optimization Guide](./docs/PERFORMANCE.md)
