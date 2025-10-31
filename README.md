@@ -14,6 +14,8 @@
 
 专为Giffgaff和Simyo用户设计的现代化eSIM管理工具集，支持完整的eSIM申请、激活和二维码生成流程。
 
+[:us: English Version](README_EN.md)
+
 ## ✨ 功能特性
 
 ### 🇬🇧 Giffgaff eSIM工具
@@ -86,10 +88,9 @@
 5. **扫码安装** - 使用生成的二维码在新设备上安装
 
 ### 📚 详细文档
-- **[Giffgaff使用教程](./docs/User_Guide.md)** - 图文及视频完整操作指南
-- [Giffgaff详细说明](./docs/reference/README_giffgaff_esim.md)
-- [Simyo详细说明](./docs/reference/README_simyo_esim.md)
-- [性能优化指南](./docs/PERFORMANCE.md)
+- **[Giffgaff使用教程](./docs/User_Guide.md)** - 图文及视频完整操作指南 | [English](./docs/User_Guide_EN.md)
+- [Giffgaff详细说明](./docs/reference/README_giffgaff_esim.md) | [English](./docs/reference/README_giffgaff_esim_EN.md)
+- [Simyo详细说明](./docs/reference/README_simyo_esim.md) | [English](./docs/reference/README_simyo_esim_EN.md)
 
 ## 🚀 本地部署
 
