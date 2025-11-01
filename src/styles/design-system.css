@@ -61,11 +61,6 @@ textarea:focus-visible {
   /* prevent layout shift from status text changes */
   min-height: 1.25em;
 }
-[role="status"], [role="alert"] {
-  /* ensure SR picks up updates consistently */
-  aria-atomic: true;
-}
-
 .visually-hidden {
   position: absolute !important;
   clip: rect(1px,1px,1px,1px);
@@ -90,6 +85,11 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   margin-bottom: var(--space-4);
 }
 
+.header-buttons .language-switcher {
+  width: auto;
+  margin-bottom: 0;
+}
+
 .lang-switch {
   display: inline-flex;
   align-items: center;
@@ -102,6 +102,12 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   font-weight: 600;
   cursor: pointer;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.header-buttons .lang-switch {
+  padding: 10px 20px;
+  border-radius: 30px;
+  flex-shrink: 0;
 }
 
 .lang-switch:hover {
