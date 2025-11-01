@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-page="simyo">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Simyo eSIM 工具，支持设备更换、短信验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。">
     
     <!-- 预连接优化 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -37,17 +38,25 @@
     <link rel="stylesheet" href="/src/simyo/styles/simyo-animations.css">
     <link rel="stylesheet" href="/src/simyo/styles/simyo-responsive.css">
 </head>
-<body>
+<body aria-label="Simyo eSIM 工具">
     <div class="container main-container">
+        <div class="language-switcher">
+            <button id="languageSwitcher" class="lang-switch" type="button" aria-label="切换语言到英文">🌐 English</button>
+        </div>
         <!-- 应用头部 -->
         <div class="app-header">
             <div class="logo-container">
                 <i class="fas fa-sim-card app-icon" aria-hidden="true"></i>
-                <div class="app-title">Simyo eSIM工具</div>
+                <div class="app-title">
+                    <span class="lang-zh">Simyo eSIM工具</span>
+                    <span class="lang-en">Simyo eSIM Tool</span>
+                </div>
             </div>
             <div class="header-buttons">
                 <button class="help-btn" onclick="openHelp()" aria-label="打开使用帮助">
-                    <i class="fas fa-question-circle" aria-hidden="true"></i> 使用帮助
+                    <i class="fas fa-question-circle" aria-hidden="true"></i>
+                    <span class="lang-zh">使用帮助</span>
+                    <span class="lang-en">Help</span>
                 </button>
                 <a href="https://github.com/Silentely/eSIM-Tools" target="_blank" class="github-btn" aria-label="打开GitHub仓库">
                     <i class="fab fa-github" aria-hidden="true"></i> GitHub
@@ -60,79 +69,150 @@
             <div class="promo-content">
                 <i class="fas fa-gift promo-icon" aria-hidden="true"></i>
                 <span class="promo-text">
-                    如果您还没有开卡，可以<a href="https://vriendendeal.simyo.nl/prepaid/AZzwPzb" target="_blank" class="promo-link">点击这里开卡</a>，享受额外5欧元话费赠送！
+                    <span class="lang-zh">
+                        如果您还没有开卡，可以
+                        <a href="https://vriendendeal.simyo.nl/prepaid/AZzwPzb" target="_blank" class="promo-link">点击这里开卡</a>，
+                        享受额外5欧元话费赠送！
+                    </span>
+                    <span class="lang-en">
+                        New to Simyo? <a href="https://vriendendeal.simyo.nl/prepaid/AZzwPzb" target="_blank" class="promo-link">Order a SIM here</a>
+                        and receive an extra €5 credit!
+                    </span>
                 </span>
             </div>
         </div>
         
         <!-- 页面标题 -->
         <div class="page-title reveal">
-            <h1>Simyo NL eSIM 申请工具</h1>
-            <p>轻松管理您的Simyo eSIM配置</p>
+            <h1>
+                <span class="lang-zh">Simyo NL eSIM 申请工具</span>
+                <span class="lang-en">Simyo NL eSIM Tool</span>
+            </h1>
+            <p>
+                <span class="lang-zh">轻松管理您的Simyo eSIM配置</span>
+                <span class="lang-en">Manage your Simyo eSIM with ease</span>
+            </p>
             <div id="modeBadge" class="mode-badge" style="display:none" aria-live="polite">
-                <i class="fas fa-exchange-alt" aria-hidden="true"></i> 设备更换模式
+                <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                <span class="lang-zh">设备更换模式</span>
+                <span class="lang-en">Device change mode</span>
             </div>
         </div>
         
         <!-- 状态显示面板 -->
         <div class="status-panel card-elevated reveal" role="status" aria-live="polite">
-            <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 当前状态</h3>
+            <h3>
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                <span class="lang-zh">当前状态</span>
+                <span class="lang-en">Current status</span>
+            </h3>
             <div class="status-grid">
                 <div class="status-item">
-                    <span class="status-label">当前模式:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">当前模式:</span>
+                        <span class="lang-en">Current mode:</span>
+                    </span>
                     <span id="statusMode" class="status-value connected">标准流程</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">Session Token:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">Session Token:</span>
+                        <span class="lang-en">Session Token:</span>
+                    </span>
                     <span id="statusSessionToken" class="status-value disconnected">未登录</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">验证码状态:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">验证码状态:</span>
+                        <span class="lang-en">Code status:</span>
+                    </span>
                     <span id="statusValidationCode" class="status-value disconnected">未发送</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">eSIM状态:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">eSIM状态:</span>
+                        <span class="lang-en">eSIM status:</span>
+                    </span>
                     <span id="statusEsimStatus" class="status-value disconnected">未申请</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">激活码:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">激活码:</span>
+                        <span class="lang-en">Activation code:</span>
+                    </span>
                     <span id="statusActivationCode" class="status-value disconnected">未获取</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">LPA字符串:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">LPA字符串:</span>
+                        <span class="lang-en">LPA string:</span>
+                    </span>
                     <span id="statusLpaString" class="status-value disconnected">未生成</span>
                 </div>
             </div>
             <button id="clearSessionBtn" class="clear-session-btn" aria-label="清除会话并重置所有进度">
-                <i class="fas fa-trash-alt" aria-hidden="true"></i> 清除会话
+                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                <span class="lang-zh">清除会话</span>
+                <span class="lang-en">Clear session</span>
             </button>
         </div>
         
         <!-- 使用说明 -->
         <div class="info-card reveal">
-            <h6><i class="fas fa-info-circle" aria-hidden="true"></i> 使用说明</h6>
-            <p><strong>初次注册并安装：</strong>直接使用步骤1-3即可完成</p>
-            <p><strong>更换设备：</strong>在APP中申请更换设备后，使用本工具生成二维码，新设备扫码安装</p>
-            <p><strong>保号服务：</strong>向IBAN:NL19INGB0007811670转账0.01欧元，备注您的Simyo号码</p>
+            <h6>
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                <span class="lang-zh">使用说明</span>
+                <span class="lang-en">Quick guidance</span>
+            </h6>
+            <p>
+                <strong class="lang-zh">初次注册并安装：</strong>
+                <strong class="lang-en">First-time setup:</strong>
+                <span class="lang-zh">直接使用步骤1-3即可完成</span>
+                <span class="lang-en">Complete Steps 1–3 to finish setup</span>
+            </p>
+            <p>
+                <strong class="lang-zh">更换设备：</strong>
+                <strong class="lang-en">Device change:</strong>
+                <span class="lang-zh">在APP中申请更换设备后，使用本工具生成二维码，新设备扫码安装</span>
+                <span class="lang-en">Request a device change in the app, then generate a QR code here for the new device</span>
+            </p>
+            <p>
+                <strong class="lang-zh">保号服务：</strong>
+                <strong class="lang-en">Keep-number tip:</strong>
+                <span class="lang-zh">向 IBAN:NL19INGB0007811670 转账 0.01 欧元，备注您的 Simyo 号码</span>
+                <span class="lang-en">Transfer €0.01 to IBAN NL19INGB0007811670 with your Simyo number in the note</span>
+            </p>
         </div>
         
         <!-- 步骤指示器 -->
         <div class="step-indicator reveal" role="list" aria-label="进度步骤">
             <div class="step active" role="listitem" aria-current="step" data-step="1">
                 <div class="step-number" aria-hidden="true">1</div>
-                <div class="step-text">账户登录</div>
+                <div class="step-text">
+                    <span class="lang-zh">账户登录</span>
+                    <span class="lang-en">Account login</span>
+                </div>
             </div>
             <div class="step" data-step="2">
                 <div class="step-number">2</div>
-                <div class="step-text">获取eSIM</div>
+                <div class="step-text">
+                    <span class="lang-zh">获取eSIM</span>
+                    <span class="lang-en">Get eSIM</span>
+                </div>
             </div>
             <div class="step" data-step="3">
                 <div class="step-number">3</div>
-                <div class="step-text">生成二维码</div>
+                <div class="step-text">
+                    <span class="lang-zh">生成二维码</span>
+                    <span class="lang-en">Generate QR</span>
+                </div>
             </div>
             <div class="step" data-step="4">
                 <div class="step-number">4</div>
-                <div class="step-text">确认安装</div>
+                <div class="step-text">
+                    <span class="lang-zh">确认安装</span>
+                    <span class="lang-en">Confirm install</span>
+                </div>
             </div>
         </div>
         
@@ -140,28 +220,45 @@
         <div id="step1" class="section active reveal">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-sign-in-alt"></i> 第一步：登录Simyo账户
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span class="lang-zh"> 第一步：登录Simyo账户</span>
+                    <span class="lang-en"> Step 1: Sign in to Simyo</span>
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
-                        请输入您的Simyo账户信息进行登录：
+                        <span class="lang-zh">请输入您的Simyo账户信息进行登录：</span>
+                        <span class="lang-en">Enter your Simyo account credentials to continue:</span>
                     </p>
                     
                     <div class="mb-4">
-                        <label for="phoneNumber" class="form-label">手机号码：</label>
+                        <label for="phoneNumber" class="form-label">
+                            <span class="lang-zh">手机号码：</span>
+                            <span class="lang-en">Phone number:</span>
+                        </label>
                         <input type="text" id="phoneNumber" class="form-control" placeholder="例如: 0613123712" maxlength="15" aria-describedby="phoneHelp">
-                        <small id="phoneHelp" class="text-muted">荷兰手机号，06开头共10位数字</small>
+                        <small id="phoneHelp" class="text-muted">
+                            <span class="lang-zh">荷兰手机号，06开头共10位数字</span>
+                            <span class="lang-en">Dutch number starting with 06 (10 digits)</span>
+                        </small>
                     </div>
                     
                     <div class="mb-4">
-                        <label for="password" class="form-label">密码：</label>
+                        <label for="password" class="form-label">
+                            <span class="lang-zh">密码：</span>
+                            <span class="lang-en">Password:</span>
+                        </label>
                         <input type="password" id="password" class="form-control" placeholder="输入您的Simyo密码" aria-describedby="pwdHelp">
-                        <small id="pwdHelp" class="text-muted">仅用于向官方接口鉴权，不会被本页面保存</small>
+                        <small id="pwdHelp" class="text-muted">
+                            <span class="lang-zh">仅用于向官方接口鉴权，不会被本页面保存</span>
+                            <span class="lang-en">Used only for Simyo authentication; never stored locally</span>
+                        </small>
                     </div>
                     
                     <div class="btn-group">
                         <button id="loginBtn" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt me-2"></i> 登录账户
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            <span class="lang-zh">登录账户</span>
+                            <span class="lang-en">Sign in</span>
                         </button>
                     </div>
                     
@@ -174,12 +271,20 @@
         <div id="deviceChangeOption" class="section reveal" style="display: none;">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-mobile-alt"></i> 设备更换选项
+                    <i class="fas fa-mobile-alt"></i>
+                    <span class="lang-zh"> 设备更换选项</span>
+                    <span class="lang-en"> Device change options</span>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <h5><i class="fas fa-info-circle me-2" aria-hidden="true"></i>选择操作类型</h5>
-                        <p>请选择您的需求：</p>
+                        <h5><i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+                            <span class="lang-zh">选择操作类型</span>
+                            <span class="lang-en">Choose your workflow</span>
+                        </h5>
+                        <p>
+                            <span class="lang-zh">请选择您的需求：</span>
+                            <span class="lang-en">Pick the option that matches your scenario:</span>
+                        </p>
                     </div>
                     
                     <div class="row mb-4">
@@ -187,10 +292,17 @@
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-exchange-alt fa-3x text-warning mb-3" aria-hidden="true"></i>
-                                    <h5>更换设备</h5>
-                                    <p class="text-muted">将eSIM转移到新设备</p>
+                                    <h5>
+                                        <span class="lang-zh">更换设备</span>
+                                        <span class="lang-en">Device transfer</span>
+                                    </h5>
+                                    <p class="text-muted">
+                                        <span class="lang-zh">将eSIM转移到新设备</span>
+                                        <span class="lang-en">Move your eSIM to another device</span>
+                                    </p>
                                     <button class="btn btn-primary w-100" onclick="startDeviceChange()">
-                                        选择此选项
+                                        <span class="lang-zh">选择此选项</span>
+                                        <span class="lang-en">Choose this option</span>
                                     </button>
                                 </div>
                             </div>
@@ -199,10 +311,17 @@
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="fas fa-sim-card fa-3x text-success mb-3" aria-hidden="true"></i>
-                                    <h5>直接获取eSIM</h5>
-                                    <p class="text-muted">首次申请或当前设备使用</p>
+                                    <h5>
+                                        <span class="lang-zh">直接获取eSIM</span>
+                                        <span class="lang-en">Get eSIM directly</span>
+                                    </h5>
+                                    <p class="text-muted">
+                                        <span class="lang-zh">首次申请或当前设备使用</span>
+                                        <span class="lang-en">For first-time or current device setup</span>
+                                    </p>
                                     <button class="btn btn-primary w-100" onclick="skipDeviceChange()">
-                                        选择此选项
+                                        <span class="lang-zh">选择此选项</span>
+                                        <span class="lang-en">Choose this option</span>
                                     </button>
                                 </div>
                             </div>
@@ -216,24 +335,47 @@
         <div id="deviceChangeSteps" class="section reveal" style="display: none;">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-exchange-alt" aria-hidden="true"></i> 设备更换流程
+                    <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                    <span class="lang-zh"> 设备更换流程</span>
+                    <span class="lang-en"> Device change workflow</span>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-warning">
-                        <h5><i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>重要提示</h5>
+                        <h5><i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                            <span class="lang-zh">重要提示</span>
+                            <span class="lang-en">Important tips</span>
+                        </h5>
                         <ul class="mb-0">
-                            <li><strong>如果您的现有eSIM能接收短信：</strong>请按顺序执行申请新eSIM，然后发送验证码到短信</li>
-                            <li><strong>如果您的现有eSIM无法接收短信：</strong>只执行申请新eSIM，然后联系Simyo客服索要验证码</li>
+                            <li>
+                                <strong class="lang-zh">如果您的现有eSIM能接收短信：</strong>
+                                <strong class="lang-en">If your current eSIM still receives SMS:</strong>
+                                <span class="lang-zh">请按顺序执行申请新eSIM，然后发送验证码到短信</span>
+                                <span class="lang-en">Apply for a new eSIM first, then send the verification SMS.</span>
+                            </li>
+                            <li>
+                                <strong class="lang-zh">如果您的现有eSIM无法接收短信：</strong>
+                                <strong class="lang-en">If your current eSIM cannot receive SMS:</strong>
+                                <span class="lang-zh">只执行申请新eSIM，然后联系Simyo客服索要验证码</span>
+                                <span class="lang-en">Apply for a new eSIM and request the code from Simyo support.</span>
+                            </li>
                         </ul>
                     </div>
 
                     <!-- Step 2.1: 申请新eSIM -->
                     <div class="mb-4">
-                        <h5>2.1 申请新eSIM</h5>
-                        <p>此步骤会通知Simyo系统您要更换eSIM设备</p>
+                        <h5>
+                            <span class="lang-zh">2.1 申请新eSIM</span>
+                            <span class="lang-en">2.1 Request a new eSIM</span>
+                        </h5>
+                        <p>
+                            <span class="lang-zh">此步骤会通知Simyo系统您要更换eSIM设备</span>
+                            <span class="lang-en">This informs Simyo that you are moving your eSIM to another device.</span>
+                        </p>
                         <div class="btn-group">
                             <button class="btn btn-primary" id="applyNewEsimBtn">
-                                <i class="fas fa-plus me-2"></i>申请新eSIM
+                                <i class="fas fa-plus me-2"></i>
+                                <span class="lang-zh">申请新eSIM</span>
+                                <span class="lang-en">Apply for new eSIM</span>
                             </button>
                         </div>
                         <div id="applyNewEsimStatus" class="status" role="status" aria-live="polite"></div>
@@ -241,11 +383,19 @@
 
                     <!-- Step 2.2: 发送验证码 -->
                     <div class="mb-4">
-                        <h5>2.2 发送验证码到短信（可选）</h5>
-                        <p>如果您能接收短信，在执行完2.1成功后，立即执行此步骤</p>
+                        <h5>
+                            <span class="lang-zh">2.2 发送验证码到短信（可选）</span>
+                            <span class="lang-en">2.2 Send SMS verification code (optional)</span>
+                        </h5>
+                        <p>
+                            <span class="lang-zh">如果您能接收短信，在执行完2.1成功后，立即执行此步骤</span>
+                            <span class="lang-en">If your current eSIM receives SMS, run this step immediately after 2.1.</span>
+                        </p>
                         <div class="btn-group">
                             <button class="btn btn-primary" id="sendSmsBtn" disabled>
-                                <i class="fas fa-sms me-2"></i>发送验证码到短信
+                                <i class="fas fa-sms me-2"></i>
+                                <span class="lang-zh">发送验证码到短信</span>
+                                <span class="lang-en">Send SMS verification code</span>
                             </button>
                         </div>
                         <div id="sendSmsStatus" class="status" role="status" aria-live="polite"></div>
@@ -253,16 +403,27 @@
 
                     <!-- Step 2.3: 验证验证码 -->
                     <div class="mb-4">
-                        <h5>2.3 确认验证码</h5>
-                        <p>无论您是通过短信收到验证码还是从客服处获取，请在此处填写验证码并确认</p>
+                        <h5>
+                            <span class="lang-zh">2.3 确认验证码</span>
+                            <span class="lang-en">2.3 Confirm the verification code</span>
+                        </h5>
+                        <p>
+                            <span class="lang-zh">无论您是通过短信收到验证码还是从客服处获取，请在此处填写验证码并确认</span>
+                            <span class="lang-en">Enter the code you received via SMS or from support and confirm here.</span>
+                        </p>
                         <div class="mb-3">
-                            <label for="validationCodeInput" class="form-label">验证码：</label>
+                            <label for="validationCodeInput" class="form-label">
+                                <span class="lang-zh">验证码：</span>
+                                <span class="lang-en">Verification code:</span>
+                            </label>
                             <input type="text" class="form-control" id="validationCodeInput" 
                                    placeholder="输入6位数字验证码" maxlength="6" pattern="^\d{6}$">
                         </div>
                         <div class="btn-group">
                             <button class="btn btn-primary" id="verifyCodeBtn" disabled>
-                                <i class="fas fa-check me-2"></i>确认验证码
+                                <i class="fas fa-check me-2"></i>
+                                <span class="lang-zh">确认验证码</span>
+                                <span class="lang-en">Confirm code</span>
                             </button>
                         </div>
                         <div id="verifyCodeStatus" class="status" role="status" aria-live="polite"></div>
@@ -270,16 +431,20 @@
 
                     <div class="text-center mt-4">
                         <button class="btn btn-primary" onclick="skipDeviceChange()">
-                            <i class="fas fa-skip-forward me-2"></i>跳过设备更换，直接获取eSIM
+                            <i class="fas fa-skip-forward me-2"></i>
+                            <span class="lang-zh">跳过设备更换，直接获取eSIM</span>
+                            <span class="lang-en">Skip device change and get eSIM</span>
                         </button>
                     </div>
 
                     <div class="d-flex justify-content-between mt-3">
                         <button id="backToDeviceChangeOptionBtn" type="button" class="btn btn-link" aria-label="返回设备更换选项">
-                            ← 返回设备更换选项
+                            <span class="lang-zh">← 返回设备更换选项</span>
+                            <span class="lang-en">← Back to options</span>
                         </button>
                         <button type="button" class="btn btn-link back-step-btn" aria-label="返回上一步">
-                            ← 返回上一步
+                            <span class="lang-zh">← 返回上一步</span>
+                            <span class="lang-en">← Previous step</span>
                         </button>
                     </div>
                 </div>
@@ -290,16 +455,21 @@
         <div id="step2" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-download"></i> 第二步：获取eSIM信息
+                    <i class="fas fa-download"></i>
+                    <span class="lang-zh"> 第二步：获取eSIM信息</span>
+                    <span class="lang-en"> Step 2: Retrieve eSIM info</span>
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
-                        获取您的eSIM配置信息：
+                        <span class="lang-zh">获取您的eSIM配置信息：</span>
+                        <span class="lang-en">Fetch your eSIM configuration:</span>
                     </p>
                     
                     <div class="btn-group">
                         <button id="getEsimBtn" class="btn btn-primary">
-                            <i class="fas fa-sim-card me-2"></i> 获取eSIM
+                            <i class="fas fa-sim-card me-2"></i>
+                            <span class="lang-zh">获取eSIM</span>
+                            <span class="lang-en">Get eSIM</span>
                         </button>
                     </div>
                     
@@ -308,7 +478,8 @@
 
                     <div class="d-flex justify-content-end mt-3">
                         <button type="button" class="btn btn-link back-step-btn" aria-label="返回上一步">
-                            ← 返回上一步
+                            <span class="lang-zh">← 返回上一步</span>
+                            <span class="lang-en">← Previous step</span>
                         </button>
                     </div>
                 </div>
@@ -319,16 +490,21 @@
         <div id="step3" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-qrcode" aria-hidden="true"></i> 第三步：生成eSIM二维码
+                    <i class="fas fa-qrcode" aria-hidden="true"></i>
+                    <span class="lang-zh"> 第三步：生成eSIM二维码</span>
+                    <span class="lang-en"> Step 3: Generate eSIM QR</span>
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
-                        生成eSIM二维码供设备扫描安装：
+                        <span class="lang-zh">生成eSIM二维码供设备扫描安装：</span>
+                        <span class="lang-en">Generate the QR code for your device to scan:</span>
                     </p>
                     
                     <div class="btn-group">
                         <button id="generateQrBtn" class="btn btn-primary">
-                            <i class="fas fa-qrcode me-2"></i> 生成二维码
+                            <i class="fas fa-qrcode me-2"></i>
+                            <span class="lang-zh">生成二维码</span>
+                            <span class="lang-en">Generate QR</span>
                         </button>
                     </div>
                     
@@ -338,7 +514,9 @@
                     <div id="resultContainer" class="mt-4">
                         <div class="card">
                             <div class="card-header">
-                                <i class="fas fa-qrcode me-2" aria-hidden="true"></i> 您的eSIM二维码
+                                <i class="fas fa-qrcode me-2" aria-hidden="true"></i>
+                                <span class="lang-zh">您的eSIM二维码</span>
+                                <span class="lang-en">Your eSIM QR</span>
                             </div>
                             <div class="card-body text-center">
                                 <div id="qrcode" class="mt-4"></div>
@@ -349,7 +527,8 @@
 
                     <div class="d-flex justify-content-end mt-3">
                         <button type="button" class="btn btn-link back-step-btn" aria-label="返回上一步">
-                            ← 返回上一步
+                            <span class="lang-zh">← 返回上一步</span>
+                            <span class="lang-en">← Previous step</span>
                         </button>
                     </div>
                 </div>
@@ -360,21 +539,29 @@
         <div id="step4" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-check-circle" aria-hidden="true"></i> 第四步：确认安装（可选）
+                    <i class="fas fa-check-circle" aria-hidden="true"></i>
+                    <span class="lang-zh"> 第四步：确认安装（可选）</span>
+                    <span class="lang-en"> Step 4: Confirm installation (optional)</span>
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
-                        如果APP无法登录或更换设备，请执行此步骤确认安装：
+                        <span class="lang-zh">如果APP无法登录或更换设备，请执行此步骤确认安装：</span>
+                        <span class="lang-en">Run this step if the app cannot log in or the device change needs confirmation:</span>
                     </p>
                     
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
-                        <strong>说明：</strong>此步骤适用于更换设备或APP登录异常的情况
+                        <strong class="lang-zh">说明：</strong>
+                        <strong class="lang-en">Note:</strong>
+                        <span class="lang-zh">此步骤适用于更换设备或APP登录异常的情况</span>
+                        <span class="lang-en">Use this when switching devices or if the app cannot confirm activation.</span>
                     </div>
                     
                     <div class="btn-group">
                         <button id="confirmInstallBtn" class="btn btn-primary">
-                            <i class="fas fa-check me-2"></i> 确认安装
+                            <i class="fas fa-check me-2"></i>
+                            <span class="lang-zh">确认安装</span>
+                            <span class="lang-en">Confirm install</span>
                         </button>
                     </div>
                     
@@ -382,7 +569,8 @@
 
                     <div class="d-flex justify-content-end mt-3">
                         <button type="button" class="btn btn-link back-step-btn" aria-label="返回上一步">
-                            ← 返回上一步
+                            <span class="lang-zh">← 返回上一步</span>
+                            <span class="lang-en">← Previous step</span>
                         </button>
                     </div>
                 </div>
@@ -419,6 +607,12 @@
                 initReveal();
             }
         })();
+    </script>
+    
+    <!-- 国际化初始化 -->
+    <script type="module">
+        import { initI18n } from '/src/js/modules/i18n.js';
+        initI18n('simyo');
     </script>
     
     <!-- 主应用脚本（模块化） -->

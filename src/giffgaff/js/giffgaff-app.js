@@ -16,6 +16,7 @@ import {
     showToast,
     openTutorial 
 } from './modules/utils.js';
+import { t, tl } from '../../js/modules/i18n.js';
 
 class GiffgaffApp {
     constructor() {
@@ -28,7 +29,7 @@ class GiffgaffApp {
     async init() {
         if (this.initialized) return;
         
-        console.log('Giffgaff eSIM申请工具初始化中...');
+        console.log(t('giffgaff.app.console.initStart'));
         
         // 订阅状态变化
         stateManager.subscribe((state) => {
@@ -59,7 +60,7 @@ class GiffgaffApp {
         }
         
         this.initialized = true;
-        console.log('Giffgaff eSIM申请工具已加载');
+        console.log(t('giffgaff.app.console.initDone'));
     }
     
     /**
@@ -248,14 +249,14 @@ class GiffgaffApp {
                 
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(txt)
-                        .then(() => showToast('代码已复制到剪贴板'))
+                        .then(() => showToast(tl('代码已复制到剪贴板')))
                         .catch(() => {
                             this.fallbackCopy(txt);
-                            showToast('代码已复制');
+                            showToast(tl('代码已复制'));
                         });
                 } else {
                     this.fallbackCopy(txt);
-                    showToast('代码已复制');
+                    showToast(tl('代码已复制'));
                 }
             });
         }
@@ -290,19 +291,19 @@ class GiffgaffApp {
         }
         
         try {
-            elements.oauthLoginBtn.innerHTML = '<span class="loading"></span> 准备登录...';
+            elements.oauthLoginBtn.innerHTML = `<span class="loading"></span> ${tl('准备登录...')}`;
             elements.oauthLoginBtn.disabled = true;
             
-            uiController.showStatus(elements.oauthStatus, "正在准备OAuth登录...", "success");
+            uiController.showStatus(elements.oauthStatus, t('giffgaff.app.status.oauthPreparing'), "success");
             
             const result = await oauthHandler.startOAuthLogin();
             
             elements.oauthCallbackSection.classList.add('active');
-            uiController.showStatus(elements.oauthStatus, result.message, "success");
+            uiController.showStatus(elements.oauthStatus, t('giffgaff.app.status.oauthOpened'), "success");
         } catch (error) {
-            uiController.showStatus(elements.oauthStatus, "OAuth登录准备失败：" + error.message, "error");
+            uiController.showStatus(elements.oauthStatus, t('giffgaff.app.error.oauthPrepare', { message: error.message }), "error");
         } finally {
-            elements.oauthLoginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i> 开始OAuth登录';
+            elements.oauthLoginBtn.innerHTML = `<i class="fas fa-sign-in-alt me-2"></i> ${tl('开始OAuth登录')}`;
             elements.oauthLoginBtn.disabled = false;
         }
     }
@@ -315,27 +316,27 @@ class GiffgaffApp {
         const callbackUrl = elements.callbackUrl.value.trim();
         
         if (!callbackUrl) {
-            uiController.showStatus(elements.callbackStatus, "请输入回调URL", "error");
+            uiController.showStatus(elements.callbackStatus, tl('请输入回调URL'), "error");
             return;
         }
         
         try {
-            elements.processCallbackBtn.innerHTML = '<span class="loading"></span> 处理中...';
+            elements.processCallbackBtn.innerHTML = `<span class="loading"></span> ${tl('处理中...')}`;
             elements.processCallbackBtn.disabled = true;
             
-            uiController.showStatus(elements.callbackStatus, "正在处理OAuth回调...", "success");
+            uiController.showStatus(elements.callbackStatus, t('giffgaff.app.status.oauthProcessing'), "success");
             
             const result = await oauthHandler.processCallback(callbackUrl);
             
-            uiController.showStatus(elements.callbackStatus, "OAuth登录成功！", "success");
+            uiController.showStatus(elements.callbackStatus, t('giffgaff.app.status.oauthSuccess'), "success");
             
             setTimeout(() => {
                 uiController.showSection(2);
             }, 1500);
         } catch (error) {
-            uiController.showStatus(elements.callbackStatus, "OAuth回调处理失败：" + error.message, "error");
+            uiController.showStatus(elements.callbackStatus, t('giffgaff.app.error.oauthCallback', { message: error.message }), "error");
         } finally {
-            elements.processCallbackBtn.innerHTML = '<i class="fas fa-check me-2"></i> 处理回调';
+            elements.processCallbackBtn.innerHTML = `<i class="fas fa-check me-2"></i> ${tl('处理回调')}`;
             elements.processCallbackBtn.disabled = false;
         }
     }
@@ -354,21 +355,21 @@ class GiffgaffApp {
         
         const cookie = elements.cookieInput.value.trim();
         if (!cookie) {
-            uiController.showStatus(elements.cookieStatus, "请输入Cookie字符串", "error");
+            uiController.showStatus(elements.cookieStatus, tl('请输入Cookie字符串'), "error");
             return;
         }
         
         try {
-            elements.verifyCookieBtn.innerHTML = '<span class="loading"></span> 验证中...';
+            elements.verifyCookieBtn.innerHTML = `<span class="loading"></span> ${tl('验证中...')}`;
             elements.verifyCookieBtn.disabled = true;
             
-            uiController.showStatus(elements.cookieStatus, "正在验证Cookie...", "success");
+            uiController.showStatus(elements.cookieStatus, t('giffgaff.app.status.cookieVerifying'), "success");
             
             const result = await cookieHandler.verifyCookie(cookie);
             
             if (result.valid) {
                 uiController.showStatus(elements.cookieStatus, 
-                    "Cookie验证成功！已获取 Access Token，接下来需要进行邮件验证", "success");
+                    t('giffgaff.app.status.cookieSuccess'), "success");
                 
                 setTimeout(() => {
                     uiController.showSection(2);
@@ -381,7 +382,7 @@ class GiffgaffApp {
                 continueBtn.className = 'btn btn-outline-primary mt-3';
                 continueBtn.style.display = 'block';
                 continueBtn.style.margin = '12px auto 0';
-                continueBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i> 仍要继续到下一步';
+                continueBtn.innerHTML = `<i class="fas fa-arrow-right me-2"></i> ${tl('仍要继续到下一步')}`;
                 continueBtn.onclick = () => {
                     stateManager.saveCookie(cookie);
                     uiController.showSection(2);
@@ -393,12 +394,12 @@ class GiffgaffApp {
                     elements.cookieStatus.parentNode.insertBefore(continueBtn, elements.cookieStatus.nextSibling);
                 }
             } else {
-                throw new Error(result.message || 'Cookie验证失败');
+                throw new Error(result.message || tl('Cookie验证失败'));
             }
         } catch (error) {
             uiController.showStatus(elements.cookieStatus, error.message, "error");
         } finally {
-            elements.verifyCookieBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i> 验证Cookie';
+            elements.verifyCookieBtn.innerHTML = `<i class="fas fa-check-circle me-2"></i> ${tl('验证Cookie')}`;
             elements.verifyCookieBtn.disabled = false;
         }
     }
@@ -416,22 +417,22 @@ class GiffgaffApp {
         }
         
         try {
-            elements.sendEmailBtn.innerHTML = '<span class="loading"></span> 发送中...';
+            elements.sendEmailBtn.innerHTML = `<span class="loading"></span> ${tl('发送中...')}`;
             elements.sendEmailBtn.disabled = true;
             
-            uiController.showStatus(elements.emailStatus, "正在发送验证码...", "success");
+            uiController.showStatus(elements.emailStatus, t('giffgaff.app.status.mfaSending'), "success");
             
             const channelSelect = document.getElementById('mfaChannelSelect');
             const channel = channelSelect ? channelSelect.value : 'EMAIL';
             
-            const result = await mfaHandler.sendMFAChallenge(channel);
+            await mfaHandler.sendMFAChallenge(channel);
             
-            uiController.showStatus(elements.emailStatus, result.message + "！", "success");
+            uiController.showStatus(elements.emailStatus, t('giffgaff.app.status.mfaSentSuccess'), "success");
             elements.emailVerificationSection.classList.add('active');
         } catch (error) {
-            uiController.showStatus(elements.emailStatus, "发送验证码失败：" + error.message, "error");
+            uiController.showStatus(elements.emailStatus, t('giffgaff.app.error.mfaSendFailed', { message: error.message }), "error");
         } finally {
-            elements.sendEmailBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> 发送验证码';
+            elements.sendEmailBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i> ${tl('发送验证码')}`;
             elements.sendEmailBtn.disabled = false;
         }
     }
@@ -444,27 +445,27 @@ class GiffgaffApp {
         const code = elements.emailCode.value.trim();
         
         if (!code) {
-            uiController.showStatus(elements.emailVerifyStatus, "请输入验证码", "error");
+            uiController.showStatus(elements.emailVerifyStatus, tl('请输入验证码'), "error");
             return;
         }
         
         try {
-            elements.verifyEmailBtn.innerHTML = '<span class="loading"></span> 验证中...';
+            elements.verifyEmailBtn.innerHTML = `<span class="loading"></span> ${tl('验证中...')}`;
             elements.verifyEmailBtn.disabled = true;
             
-            uiController.showStatus(elements.emailVerifyStatus, "正在验证验证码...", "success");
+            uiController.showStatus(elements.emailVerifyStatus, t('giffgaff.app.status.mfaVerifying'), "success");
             
-            const result = await mfaHandler.validateMFACode(code);
+            await mfaHandler.validateMFACode(code);
             
-            uiController.showStatus(elements.emailVerifyStatus, result.message + "，已获得签名。", "success");
+            uiController.showStatus(elements.emailVerifyStatus, t('giffgaff.app.status.mfaVerifiedSuccess'), "success");
             
             setTimeout(() => {
                 uiController.showSection(3);
             }, 1000);
         } catch (error) {
-            uiController.showStatus(elements.emailVerifyStatus, "验证码验证失败：" + error.message, "error");
+            uiController.showStatus(elements.emailVerifyStatus, t('giffgaff.app.error.mfaVerifyFailed', { message: error.message }), "error");
         } finally {
-            elements.verifyEmailBtn.innerHTML = '<i class="fas fa-check me-2"></i> 验证验证码';
+            elements.verifyEmailBtn.innerHTML = `<i class="fas fa-check me-2"></i> ${tl('验证验证码')}`;
             elements.verifyEmailBtn.disabled = false;
         }
     }
@@ -476,23 +477,23 @@ class GiffgaffApp {
         const { elements } = uiController;
         
         try {
-            elements.getMemberBtn.innerHTML = '<span class="loading"></span> 获取中...';
+            elements.getMemberBtn.innerHTML = `<span class="loading"></span> ${tl('获取中...')}`;
             elements.getMemberBtn.disabled = true;
             
-            uiController.showStatus(elements.memberStatus, "正在获取会员信息...", "success");
+            uiController.showStatus(elements.memberStatus, t('giffgaff.app.status.memberFetching'), "success");
             
             const result = await esimService.getMemberInfo();
             
-            uiController.showStatus(elements.memberStatus, result.message + "！", "success");
+            uiController.showStatus(elements.memberStatus, t('giffgaff.app.status.memberFetched'), "success");
             uiController.showMemberInfo(result.data);
             
             setTimeout(() => {
                 uiController.showSection(4);
             }, 2000);
         } catch (error) {
-            uiController.showStatus(elements.memberStatus, "获取会员信息失败：" + error.message, "error");
+            uiController.showStatus(elements.memberStatus, t('giffgaff.app.error.memberFailed', { message: error.message }), "error");
         } finally {
-            elements.getMemberBtn.innerHTML = '<i class="fas fa-user-circle me-2"></i> 获取会员信息';
+            elements.getMemberBtn.innerHTML = `<i class="fas fa-user-circle me-2"></i> ${tl('获取会员信息')}`;
             elements.getMemberBtn.disabled = false;
         }
     }
@@ -510,22 +511,22 @@ class GiffgaffApp {
         }
         
         try {
-            elements.reserveESimBtn.innerHTML = '<span class="loading"></span> 预订中...';
+            elements.reserveESimBtn.innerHTML = `<span class="loading"></span> ${tl('预订中...')}`;
             elements.reserveESimBtn.disabled = true;
             
-            uiController.showStatus(elements.esimReserveStatus, "正在预订eSIM...", "success");
+            uiController.showStatus(elements.esimReserveStatus, t('giffgaff.app.status.reserveProcessing'), "success");
             
             const result = await esimService.reserveESim();
             
             const status = result.data.esim.deliveryStatus || 'RESERVED';
-            uiController.showStatus(elements.esimReserveStatus, `eSIM预订成功！状态：${status}`, "success");
+            uiController.showStatus(elements.esimReserveStatus, t('giffgaff.app.status.reserveSuccess', { status }), "success");
             
             // 显示eSIM信息和激活指导
             uiController.showESIMInfoAndGuide();
         } catch (error) {
-            uiController.showStatus(elements.esimReserveStatus, "eSIM预订失败：" + error.message, "error");
+            uiController.showStatus(elements.esimReserveStatus, t('giffgaff.app.error.reserveFailed', { message: error.message }), "error");
         } finally {
-            elements.reserveESimBtn.innerHTML = '<i class="fas fa-bookmark me-2"></i> 预订eSIM';
+            elements.reserveESimBtn.innerHTML = `<i class="fas fa-bookmark me-2"></i> ${tl('预订eSIM')}`;
             elements.reserveESimBtn.disabled = false;
         }
     }
@@ -538,21 +539,21 @@ class GiffgaffApp {
         const statusEl = document.getElementById('smsInlineStatus');
         
         try {
-            sendBtn.innerHTML = '<span class="loading"></span> 发送中...';
+            sendBtn.innerHTML = `<span class="loading"></span> ${tl('发送中...')}`;
             sendBtn.disabled = true;
             
-            uiController.showStatus(statusEl, '正在发送短信验证码...', 'success');
+            uiController.showStatus(statusEl, t('giffgaff.app.status.smsSending'), 'success');
             
-            const result = await mfaHandler.sendSimSwapMFAChallenge();
+            await mfaHandler.sendSimSwapMFAChallenge();
             
-            uiController.showStatus(statusEl, result.message + '，请查收短信。', 'success');
+            uiController.showStatus(statusEl, t('giffgaff.app.status.smsSentSuccess'), 'success');
             
             const codeSection = document.getElementById('smsCodeInputSection');
             if (codeSection) codeSection.style.display = 'block';
         } catch (error) {
-            uiController.showStatus(statusEl, '发送验证码失败：' + error.message, 'error');
+            uiController.showStatus(statusEl, t('giffgaff.app.error.smsSendFailed', { message: error.message }), 'error');
         } finally {
-            sendBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> 发送验证码';
+            sendBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i> ${tl('发送验证码')}`;
             sendBtn.disabled = false;
         }
     }
@@ -568,15 +569,15 @@ class GiffgaffApp {
         const code = (codeInput?.value || '').trim();
         
         if (!/^\d{6}$/.test(code)) {
-            uiController.showStatus(statusEl, '请输入6位数字验证码', 'error');
+            uiController.showStatus(statusEl, tl('请输入6位数字验证码'), 'error');
             return;
         }
         
         try {
-            verifyBtn.innerHTML = '<span class="loading"></span> 验证中...';
+            verifyBtn.innerHTML = `<span class="loading"></span> ${tl('验证中...')}`;
             verifyBtn.disabled = true;
             
-            uiController.showStatus(statusEl, '验证码验证成功，开始自动预订与激活...', 'success');
+            uiController.showStatus(statusEl, t('giffgaff.app.status.smsVerifySuccess'), 'success');
             
             // 执行完整的SMS激活流程
             await esimService.smsActivateFlow(code);
@@ -584,9 +585,9 @@ class GiffgaffApp {
             uiController.showSection(5);
             uiController.showESimResult();
         } catch (error) {
-            uiController.showStatus(statusEl, '短信激活失败：' + error.message, 'error');
+            uiController.showStatus(statusEl, t('giffgaff.app.error.smsActivateFailed', { message: error.message }), 'error');
         } finally {
-            verifyBtn.innerHTML = '<i class="fas fa-check me-2"></i> 验证并继续激活';
+            verifyBtn.innerHTML = `<i class="fas fa-check me-2"></i> ${tl('验证并继续激活')}`;
             verifyBtn.disabled = false;
         }
     }
@@ -603,7 +604,7 @@ class GiffgaffApp {
         
         if (!activationCode) {
             const statusEl = document.getElementById('esimReserveStatus');
-            uiController.showStatus(statusEl, '请输入激活码', 'error');
+            uiController.showStatus(statusEl, tl('请输入激活码'), 'error');
             return;
         }
         
@@ -615,7 +616,7 @@ class GiffgaffApp {
         
         // 更新显示
         const title = document.getElementById('esimStatusTitle');
-        if (title) title.textContent = '您的eSIM信息（状态：RESERVED）';
+        if (title) title.textContent = t('giffgaff.app.manual.esimStatusReserved');
         
         const displayActivationCode = document.getElementById('displayActivationCode');
         const displaySSN = document.getElementById('displaySSN');
@@ -635,20 +636,20 @@ class GiffgaffApp {
         const { elements } = uiController;
         
         try {
-            elements.getESimTokenBtn.innerHTML = '<span class="loading"></span> 获取中...';
+            elements.getESimTokenBtn.innerHTML = `<span class="loading"></span> ${tl('获取中...')}`;
             elements.getESimTokenBtn.disabled = true;
             
-            uiController.showStatus(elements.tokenStatus, "正在获取eSIM下载代码...", "success");
+            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetching'), "success");
             
             const state = stateManager.getState();
-            const result = await esimService.getESimDownloadToken(state.esimSSN);
+            await esimService.getESimDownloadToken(state.esimSSN);
             
-            uiController.showStatus(elements.tokenStatus, result.message + "！", "success");
+            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetchedSuccess'), "success");
             uiController.showESimResult();
         } catch (error) {
-            uiController.showStatus(elements.tokenStatus, "获取eSIM下载代码失败：" + error.message, "error");
+            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.tokenFailed', { message: error.message }), "error");
         } finally {
-            elements.getESimTokenBtn.innerHTML = '<i class="fas fa-download me-2"></i> 获取eSIM Token';
+            elements.getESimTokenBtn.innerHTML = `<i class="fas fa-download me-2"></i> ${tl('获取eSIM Token')}`;
             elements.getESimTokenBtn.disabled = false;
         }
     }
@@ -657,11 +658,11 @@ class GiffgaffApp {
      * 处理清除会话
      */
     handleClearSession() {
-        if (confirm('确定要清除所有会话数据吗？这将重置所有进度。')) {
+        if (confirm(tl('确定要清除所有会话数据吗？这将重置所有进度。'))) {
             cookieHandler.stopValidityMonitor();
             stateManager.clearSession();
             uiController.resetUI();
-            uiController.showStatus(uiController.elements.loginMethodStatus, "会话已清除，请重新开始", "success");
+            uiController.showStatus(uiController.elements.loginMethodStatus, tl('会话已清除，请重新开始'), "success");
         }
     }
     
@@ -675,12 +676,12 @@ class GiffgaffApp {
         if (uiController.elements.loginMethodStatus) {
             uiController.showStatus(
                 uiController.elements.loginMethodStatus, 
-                'Cookie已失效，请重新获取并验证。', 
+                tl('Cookie已失效，请重新获取并验证。'), 
                 'error'
             );
         }
         
-        showToast('Cookie已失效，请在第一步重新验证。');
+        showToast(tl('Cookie已失效，请在第一步重新验证。'));
         
         const input = document.getElementById('cookieInput');
         if (input) setTimeout(() => input.focus(), 100);
@@ -703,12 +704,12 @@ class GiffgaffApp {
                         setTimeout(() => {
                             uiController.showStatus(
                                 uiController.elements.tokenStatus,
-                                '已成功获取到 eSIM 二维码/LPA（为安全起见仅显示一次）',
+                                t('giffgaff.app.status.lpaFetchedOnce'),
                                 'success'
                             );
                             
                             setTimeout(() => {
-                                const shouldClear = confirm('已成功获取到 eSIM 二维码/LPA。是否立即清空会话并重置？');
+                                const shouldClear = confirm(t('giffgaff.app.prompt.clearAfterLpa'));
                                 if (shouldClear) {
                                     this.handleClearSession();
                                 }
@@ -733,8 +734,8 @@ class GiffgaffApp {
                 const displaySSN = document.getElementById('displaySSN');
                 
                 if (esimInfoDisplay) {
-                    if (displayActivationCode) displayActivationCode.textContent = state.esimActivationCode || '未获取';
-                    if (displaySSN) displaySSN.textContent = state.esimSSN || '未获取';
+                    if (displayActivationCode) displayActivationCode.textContent = state.esimActivationCode || tl('未获取');
+                    if (displaySSN) displaySSN.textContent = state.esimSSN || tl('未获取');
                     esimInfoDisplay.style.display = 'block';
                 }
             }
@@ -745,7 +746,7 @@ class GiffgaffApp {
             const resumed = sessionStorage.getItem('gg_resumed_once');
             if (resumed !== '1') {
                 sessionStorage.setItem('gg_resumed_once', '1');
-                const ok = confirm('检测到已有激活码/SSN，是否继续完成eSIM激活？');
+                const ok = confirm(t('giffgaff.app.prompt.resumeEsim'));
                 if (ok) {
                     if (state.memberId) {
                         uiController.showSection(4);
@@ -797,7 +798,7 @@ class GiffgaffApp {
         }
         
         const ukHint = document.getElementById('ukTimeHint');
-        if (ukHint) ukHint.textContent = `英国时间 ${ukTime}`;
+        if (ukHint) ukHint.textContent = t('giffgaff.app.service.ukTime', { time: ukTime });
         
         // 更新服务时间提示
         const isOutside = !isServiceTimeAvailable();
@@ -809,15 +810,15 @@ class GiffgaffApp {
         if (isOutside) {
             alertElement.className = 'alert alert-warning mb-4';
             iconElement.className = 'fas fa-exclamation-triangle warning';
-            messageElement.innerHTML = '当前时间在服务时间外，Giffgaff官方的服务窗口为<strong>英国时间 04:30–21:30</strong>';
-            actionMessageElement.innerHTML = '❌ 当前时间不能申请eSIM';
+            messageElement.innerHTML = t('giffgaff.app.service.outside');
+            actionMessageElement.innerHTML = t('giffgaff.app.service.outsideBadge');
             actionMessageElement.className = 'service-time-action-badge warning';
             actionMessageElement.style.display = 'block';
         } else {
             alertElement.className = 'alert alert-success mb-4';
             iconElement.className = 'fas fa-check-circle success';
-            messageElement.innerHTML = '当前时间在Giffgaff官方服务时间内（<strong>英国时间 04:30–21:30</strong>）';
-            actionMessageElement.innerHTML = '✅ 当前时间可以申请eSIM';
+            messageElement.innerHTML = t('giffgaff.app.service.inside');
+            actionMessageElement.innerHTML = t('giffgaff.app.service.insideBadge');
             actionMessageElement.className = 'service-time-action-badge success';
             actionMessageElement.style.display = 'block';
         }

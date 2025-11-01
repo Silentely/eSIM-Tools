@@ -6,6 +6,7 @@
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
 import { generateLPA } from './utils.js';
+import { t } from '../../../js/modules/i18n.js';
 
 export class EsimService {
     constructor() {
@@ -20,7 +21,7 @@ export class EsimService {
         const sessionToken = stateManager.get('sessionToken');
         
         if (!sessionToken) {
-            throw new Error('请先登录账户');
+            throw new Error(t('simyo.errors.requireLogin'));
         }
         
         try {
@@ -32,7 +33,7 @@ export class EsimService {
             const data = await handleApiResponse(response);
             
             if (!data.success || !data.result || !data.result.activationCode) {
-                throw new Error(data.message || '未找到有效的eSIM信息');
+                throw new Error(data.message || t('simyo.esim.errors.notFound'));
             }
             
             const activationCode = data.result.activationCode;
@@ -42,7 +43,7 @@ export class EsimService {
             
             return {
                 success: true,
-                message: 'eSIM信息获取成功',
+                message: t('simyo.esim.status.fetchSuccess'),
                 data: {
                     activationCode: activationCode,
                     status: data.result.status,
@@ -51,7 +52,7 @@ export class EsimService {
                 }
             };
         } catch (error) {
-            console.error('获取eSIM信息失败:', error);
+            console.error(t('simyo.esim.log.fetchFailed'), error);
             throw error;
         }
     }
@@ -64,7 +65,7 @@ export class EsimService {
         const activationCode = stateManager.get('activationCode');
         
         if (!activationCode) {
-            throw new Error('请先获取eSIM信息');
+            throw new Error(t('simyo.esim.errors.requireActivation'));
         }
         
         const lpaString = generateLPA(activationCode);
@@ -84,7 +85,7 @@ export class EsimService {
         const sessionToken = stateManager.get('sessionToken');
         
         if (!sessionToken) {
-            throw new Error('请先登录账户');
+            throw new Error(t('simyo.errors.requireLogin'));
         }
         
         try {
@@ -96,17 +97,17 @@ export class EsimService {
             const data = await handleApiResponse(response);
             
             if (!data.success || !data.result) {
-                throw new Error(data.message || '安装确认失败');
+                throw new Error(data.message || t('simyo.esim.errors.confirmFailed'));
             }
             
             return {
                 success: true,
                 message: data.result.success 
-                    ? 'eSIM安装确认成功！设备应该很快恢复信号' 
-                    : (data.result.message || '安装确认完成，请检查设备eSIM状态')
+                    ? t('simyo.esim.status.confirmSuccess')
+                    : (data.result.message || t('simyo.esim.status.confirmFallback'))
             };
         } catch (error) {
-            console.error('确认安装失败:', error);
+            console.error(t('simyo.esim.log.confirmFailed'), error);
             throw error;
         }
     }

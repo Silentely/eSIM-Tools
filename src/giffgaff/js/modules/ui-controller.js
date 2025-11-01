@@ -4,6 +4,7 @@
  */
 
 import { stateManager } from './state-manager.js';
+import { tl } from '../../../js/modules/i18n.js';
 
 export class UIController {
     constructor() {
@@ -99,11 +100,11 @@ export class UIController {
             if (stepNo <= currentStep) {
                 step.classList.add('active');
                 step.style.cursor = 'pointer';
-                step.title = stepNo < currentStep ? '点击返回此步骤' : '';
+                step.title = stepNo < currentStep ? tl('点击返回此步骤') : '';
             } else {
                 step.classList.remove('active');
                 step.style.cursor = 'not-allowed';
-                step.title = '请按顺序完成前序步骤';
+                step.title = tl('请按顺序完成前序步骤');
             }
         });
     }
@@ -144,11 +145,11 @@ export class UIController {
         if (method === 'oauth') {
             this.elements.oauthLoginSection.style.display = 'block';
             this.elements.cookieLoginSection.style.display = 'none';
-            this.showStatus(this.elements.loginMethodStatus, "已选择OAuth 2.0登录方式", "success");
+            this.showStatus(this.elements.loginMethodStatus, tl('已选择OAuth 2.0登录方式'), "success");
         } else if (method === 'cookie') {
             this.elements.oauthLoginSection.style.display = 'none';
             this.elements.cookieLoginSection.style.display = 'block';
-            this.showStatus(this.elements.loginMethodStatus, "已选择Cookie登录方式", "success");
+            this.showStatus(this.elements.loginMethodStatus, tl('已选择Cookie登录方式'), "success");
         }
     }
     
@@ -161,10 +162,10 @@ export class UIController {
         // 模式显示
         if (this.elements.statusMode) {
             if (state.isDeviceChange) {
-                this.elements.statusMode.textContent = '设备更换';
+                this.elements.statusMode.textContent = tl('设备更换');
                 this.elements.statusMode.className = 'status-value connected';
             } else {
-                this.elements.statusMode.textContent = '标准流程';
+                this.elements.statusMode.textContent = tl('标准流程');
                 this.elements.statusMode.className = 'status-value connected';
             }
         }
@@ -179,7 +180,7 @@ export class UIController {
             this.elements.statusAccessToken.className = 'status-value connected';
             this.addTooltip(this.elements.statusAccessToken, state.accessToken);
         } else {
-            this.elements.statusAccessToken.textContent = '未登录';
+            this.elements.statusAccessToken.textContent = tl('未登录');
             this.elements.statusAccessToken.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusAccessToken);
         }
@@ -190,7 +191,7 @@ export class UIController {
             this.elements.statusMfaSignature.className = 'status-value connected';
             this.addTooltip(this.elements.statusMfaSignature, state.emailSignature, true);
         } else {
-            this.elements.statusMfaSignature.textContent = '未验证';
+            this.elements.statusMfaSignature.textContent = tl('未验证');
             this.elements.statusMfaSignature.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusMfaSignature);
         }
@@ -201,7 +202,7 @@ export class UIController {
             this.elements.statusMemberId.className = 'status-value connected';
             this.addTooltip(this.elements.statusMemberId, state.memberId);
         } else {
-            this.elements.statusMemberId.textContent = '未获取';
+            this.elements.statusMemberId.textContent = tl('未获取');
             this.elements.statusMemberId.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusMemberId);
         }
@@ -209,19 +210,19 @@ export class UIController {
         // eSIM状态
         const hasPrerequisite = !!state.memberId;
         const delivery = hasPrerequisite
-            ? (state.esimDeliveryStatus || (state.esimActivationCode ? 'RESERVED' : '未申请'))
-            : '未申请';
+            ? (state.esimDeliveryStatus || (state.esimActivationCode ? 'RESERVED' : tl('未申请')))
+            : tl('未申请');
         const phoneSuffix = state.phoneNumber ? `/${state.phoneNumber}` : '';
-        const esimStatusText = (hasPrerequisite && delivery && delivery !== '未申请') 
-            ? `${delivery}${phoneSuffix}` 
-            : '未申请';
+        const esimStatusText = (hasPrerequisite && delivery && delivery !== tl('未申请'))
+            ? `${delivery}${phoneSuffix}`
+            : tl('未申请');
         
         this.elements.statusEsimStatus.textContent = esimStatusText;
-        this.elements.statusEsimStatus.className = (hasPrerequisite && delivery && delivery !== '未申请') 
+        this.elements.statusEsimStatus.className = (hasPrerequisite && delivery && delivery !== tl('未申请'))
             ? 'status-value connected' 
             : 'status-value disconnected';
-        
-        if (hasPrerequisite && delivery && delivery !== '未申请') {
+
+        if (hasPrerequisite && delivery && delivery !== tl('未申请')) {
             this.addTooltip(this.elements.statusEsimStatus, esimStatusText);
         } else {
             this.removeTooltip(this.elements.statusEsimStatus);
@@ -236,18 +237,18 @@ export class UIController {
             this.elements.statusActivationCode.className = 'status-value connected';
             this.addTooltip(this.elements.statusActivationCode, text);
         } else {
-            this.elements.statusActivationCode.textContent = '未获取';
+            this.elements.statusActivationCode.textContent = tl('未获取');
             this.elements.statusActivationCode.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusActivationCode);
         }
         
         // LPA字符串
         if (state.lpaString) {
-            this.elements.statusLpaString.textContent = '已获取';
+            this.elements.statusLpaString.textContent = tl('已获取');
             this.elements.statusLpaString.className = 'status-value connected';
             this.removeTooltip(this.elements.statusLpaString);
         } else {
-            this.elements.statusLpaString.textContent = '未生成';
+            this.elements.statusLpaString.textContent = tl('未生成');
             this.elements.statusLpaString.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusLpaString);
         }
@@ -344,11 +345,11 @@ export class UIController {
         this.elements.memberInfo.innerHTML = `
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">会员信息</h5>
-                    <p><strong>会员ID:</strong> ${state.memberId}</p>
-                    <p><strong>会员姓名:</strong> ${state.memberName}</p>
-                    <p><strong>手机号码:</strong> ${state.phoneNumber}</p>
-                    <p><strong>SIM状态:</strong> ${memberData.sim.status}</p>
+                    <h5 class="card-title">${tl('会员信息')}</h5>
+                    <p><strong>${tl('会员ID:')}</strong> ${state.memberId}</p>
+                    <p><strong>${tl('会员姓名:')}</strong> ${state.memberName}</p>
+                    <p><strong>${tl('手机号码:')}</strong> ${state.phoneNumber}</p>
+                    <p><strong>${tl('SIM状态:')}</strong> ${memberData.sim.status}</p>
                 </div>
             </div>
         `;
@@ -365,12 +366,12 @@ export class UIController {
         const esimStatusTitle = document.getElementById('esimStatusTitle');
         
         if (esimInfoDisplay && displayActivationCode && displaySSN) {
-            displayActivationCode.textContent = state.esimActivationCode || '未获取';
-            displaySSN.textContent = state.esimSSN || '未获取';
+            displayActivationCode.textContent = state.esimActivationCode || tl('未获取');
+            displaySSN.textContent = state.esimSSN || tl('未获取');
             
             if (esimStatusTitle) {
                 const deliveryStatus = state.esimDeliveryStatus || 'RESERVED';
-                esimStatusTitle.textContent = `您的eSIM信息（状态：${deliveryStatus}）`;
+                esimStatusTitle.textContent = tl('您的eSIM信息（状态：{status}）', { status: deliveryStatus });
             }
             
             esimInfoDisplay.style.display = 'block';
@@ -398,7 +399,7 @@ export class UIController {
         const setSrc = () => { img.src = vendors[vendorIdx](size, data); };
         setSrc();
         img.setAttribute('loading','lazy');
-        img.alt = 'eSIM二维码';
+        img.alt = tl('eSIM二维码');
         img.className = 'img-fluid';
         img.style.border = '5px solid white';
         img.style.borderRadius = '12px';
@@ -409,7 +410,7 @@ export class UIController {
                 vendorIdx += 1;
                 setSrc();
             } else {
-                this.elements.qrcode.innerHTML = '<div class="alert alert-warning">二维码生成失败，请复制下方 LPA 字符串手动安装。</div>';
+                this.elements.qrcode.innerHTML = `<div class="alert alert-warning">${tl('二维码生成失败，请复制下方 LPA 字符串手动安装。')}</div>`;
             }
         };
 
@@ -448,20 +449,20 @@ export class UIController {
         
         this.elements.esimInfo.innerHTML = `
             <div class="mb-3">
-                <h5 class="text-primary">LPA字符串</h5>
+                <h5 class="text-primary">${tl('LPA字符串')}</h5>
                 <p class="text-break"><small>${state.lpaString}</small></p>
             </div>
             <div class="btn-group mt-3 w-100">
                 <button id="copyLpaBtn" class="btn btn-outline-dark">
-                    <i class="fas fa-copy me-2"></i>复制 LPA 字符串
+                    <i class="fas fa-copy me-2"></i>${tl('复制 LPA 字符串')}
                 </button>
                 <button id="downloadQrBtn" class="btn btn-primary">
-                    <i class="fas fa-download me-2"></i>下载二维码
+                    <i class="fas fa-download me-2"></i>${tl('下载二维码')}
                 </button>
             </div>
             <div class="alert alert-warning mt-3">
                 <i class="fas fa-exclamation-triangle me-2"></i>
-                请立即保存这些信息，页面关闭后将无法再次查看！
+                ${tl('请立即保存这些信息，页面关闭后将无法再次查看！')}
             </div>
         `;
         

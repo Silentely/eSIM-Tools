@@ -1,3 +1,5 @@
+import { t, tl } from '../../../js/modules/i18n.js';
+
 /**
  * Simyo工具函数模块
  * 提供通用的辅助函数
@@ -77,29 +79,19 @@ export function showToast(message) {
 export function openHelp() {
     const helpContent = `
         <div style="max-width: 600px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-            <h3 style="color: #ff6b00; margin-bottom: 20px;"><i class="fas fa-question-circle"></i> Simyo eSIM 使用帮助</h3>
+            <h3 style="color: #ff6b00; margin-bottom: 20px;"><i class="fas fa-question-circle"></i> ${t('simyo.help.title')}</h3>
             
-            <h5>📱 初次注册并安装</h5>
-            <p>1. 输入您的Simyo账户信息登录<br>
-            2. 获取eSIM配置信息<br>
-            3. 生成二维码并在设备上扫描安装<br>
-            4. （可选）确认安装状态</p>
+            <h5>${t('simyo.help.setup.heading')}</h5>
+            <p>${t('simyo.help.setup.content')}</p>
             
-            <h5>🔄 更换设备</h5>
-            <p>1. 在Simyo APP中申请更换设备/eSIM<br>
-            2. 填写验证码后停留在界面上<br>
-            3. 使用本工具生成新二维码<br>
-            4. 新设备扫码安装并启用<br>
-            5. 使用第4步确认安装</p>
+            <h5>${t('simyo.help.device.heading')}</h5>
+            <p>${t('simyo.help.device.content')}</p>
             
-            <h5>💰 保号服务</h5>
-            <p>账户持有人: Simyo<br>
-            IBAN: NL19INGB0007811670<br>
-            金额: 0.01欧元<br>
-            备注: 您的Simyo号码（06开头）</p>
+            <h5>${t('simyo.help.keep.heading')}</h5>
+            <p>${t('simyo.help.keep.content')}</p>
             
             <button onclick="this.parentElement.remove()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                关闭帮助
+                ${t('simyo.help.close')}
             </button>
         </div>
     `;

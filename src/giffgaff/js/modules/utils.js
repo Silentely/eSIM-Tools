@@ -2,6 +2,7 @@
  * 工具函数模块
  * 提供通用的辅助函数
  */
+import { tl } from '../../../js/modules/i18n.js';
 
 /**
  * 生成PKCE Code Verifier
@@ -70,13 +71,12 @@ export function showServiceTimeWarning() {
         const warningMessage = `
             <div style="text-align: center; padding: 20px;">
                 <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
-                <h4 style="color: #dc2626; margin-bottom: 15px;">非SIM申请服务时间</h4>
+                <h4 style="color: #dc2626; margin-bottom: 15px;">${tl('非SIM申请服务时间')}</h4>
                 <p style="color: #374151; margin-bottom: 20px; line-height: 1.6;">
-                    服务窗口：<strong>英国时间 04:30–21:30</strong><br>
-                    建议在窗口内进行 eSIM 申请与交换。
+                    ${tl('服务窗口提示')}
                 </p>
                 <p style="color: #dc2626; font-weight: 600; margin-bottom: 20px;">
-                    ❌ 如果继续操作将导致申请失败！
+                    ${tl('继续操作警告')}
                 </p>
                 <div style="display: flex; gap: 10px; justify-content: center;">
                     <button id="continueAnyway" style="
@@ -88,7 +88,7 @@ export function showServiceTimeWarning() {
                         cursor: pointer;
                         font-weight: 600;
                         transition: all 0.3s ease;
-                    " onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">仍要继续</button>
+                    " onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">${tl('仍要继续')}</button>
                     <button id="cancelOperation" style="
                         background: #6b7280; 
                         color: white; 
@@ -98,7 +98,7 @@ export function showServiceTimeWarning() {
                         cursor: pointer;
                         font-weight: 600;
                         transition: all 0.3s ease;
-                    " onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#6b7280'">取消操作</button>
+                    " onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#6b7280'">${tl('取消操作')}</button>
                 </div>
             </div>
         `;
@@ -211,7 +211,7 @@ export function copyTextFromCode(codeElementId, btnEl) {
     copyToClipboard(text).then(() => {
         if (btnEl) {
             const old = btnEl.innerHTML;
-            btnEl.innerHTML = '<i class="fas fa-check"></i> 已复制';
+            btnEl.innerHTML = `<i class="fas fa-check"></i> ${tl('已复制')}`;
             btnEl.classList.add('btn-success');
             btnEl.classList.remove('btn-outline-primary');
             setTimeout(() => {
@@ -221,8 +221,8 @@ export function copyTextFromCode(codeElementId, btnEl) {
             }, 1500);
         }
     }).catch((e) => {
-        console.error('复制失败:', e);
-        alert('复制失败，请手动选择文本复制');
+        console.error(tl('复制失败:'), e);
+        alert(tl('复制失败，请手动选择文本复制'));
     });
 }
 

@@ -6,6 +6,7 @@
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
 import { validateVerificationCode } from './utils.js';
+import { t } from '../../../js/modules/i18n.js';
 
 export class DeviceChangeHandler {
     constructor() {
@@ -20,7 +21,7 @@ export class DeviceChangeHandler {
         const sessionToken = stateManager.get('sessionToken');
         
         if (!sessionToken) {
-            throw new Error('请先登录账户');
+            throw new Error(t('simyo.errors.requireLogin'));
         }
         
         try {
@@ -32,16 +33,16 @@ export class DeviceChangeHandler {
             const data = await handleApiResponse(response);
             
             if (!data.success || !data.result) {
-                throw new Error(data.message || '申请新eSIM失败');
+                throw new Error(data.message || t('simyo.device.applyFailed'));
             }
             
             return {
                 success: true,
-                message: data.result.message || '新eSIM申请成功',
+                message: data.result.message || t('simyo.device.applySuccess'),
                 nextStep: data.result.nextStep
             };
         } catch (error) {
-            console.error('申请新eSIM失败:', error);
+            console.error(t('simyo.device.log.applyFailed'), error);
             throw error;
         }
     }
@@ -54,7 +55,7 @@ export class DeviceChangeHandler {
         const sessionToken = stateManager.get('sessionToken');
         
         if (!sessionToken) {
-            throw new Error('请先登录账户');
+            throw new Error(t('simyo.errors.requireLogin'));
         }
         
         try {
@@ -66,16 +67,16 @@ export class DeviceChangeHandler {
             const data = await handleApiResponse(response);
             
             if (!data.success || !data.result) {
-                throw new Error(data.message || '发送验证码失败');
+                throw new Error(data.message || t('simyo.device.smsFailed'));
             }
             
             return {
                 success: true,
-                message: data.result.message || '验证码已发送',
+                message: data.result.message || t('simyo.device.smsSuccess'),
                 nextStep: data.result.nextStep
             };
         } catch (error) {
-            console.error('发送验证码失败:', error);
+            console.error(t('simyo.device.log.smsFailed'), error);
             throw error;
         }
     }
@@ -89,11 +90,11 @@ export class DeviceChangeHandler {
         const sessionToken = stateManager.get('sessionToken');
         
         if (!sessionToken) {
-            throw new Error('请先登录账户');
+            throw new Error(t('simyo.errors.requireLogin'));
         }
         
         if (!validateVerificationCode(validationCode)) {
-            throw new Error('请输入6位数字验证码');
+            throw new Error(t('simyo.errors.invalidCodeFormat'));
         }
         
         try {
@@ -108,7 +109,7 @@ export class DeviceChangeHandler {
             const data = await handleApiResponse(response);
             
             if (!data.success || !data.result) {
-                throw new Error(data.message || '验证码验证失败');
+                throw new Error(data.message || t('simyo.device.verifyFailed'));
             }
             
             // 保存验证码到状态
@@ -116,11 +117,11 @@ export class DeviceChangeHandler {
             
             return {
                 success: true,
-                message: data.result.message || '验证码验证成功',
+                message: data.result.message || t('simyo.device.verifySuccess'),
                 nextStep: data.result.nextStep
             };
         } catch (error) {
-            console.error('验证码验证失败:', error);
+            console.error(t('simyo.device.log.verifyFailed'), error);
             throw error;
         }
     }

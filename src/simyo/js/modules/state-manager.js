@@ -1,3 +1,5 @@
+import { t } from '../../../js/modules/i18n.js';
+
 /**
  * Simyo状态管理模块
  * 负责应用状态的集中管理、持久化和恢复
@@ -80,7 +82,7 @@ export class StateManager {
             try {
                 listener(this.state);
             } catch (error) {
-                console.error('状态监听器执行错误:', error);
+                console.error(t('simyo.state.log.listenerFailed'), error);
             }
         });
     }
@@ -101,7 +103,7 @@ export class StateManager {
             };
             localStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionData));
         } catch (error) {
-            console.error('保存会话失败:', error);
+            console.error(t('simyo.state.log.saveFailed'), error);
         }
     }
     
@@ -137,7 +139,7 @@ export class StateManager {
             this.notifyListeners();
             return true;
         } catch (error) {
-            console.error('恢复会话失败:', error);
+            console.error(t('simyo.state.log.restoreFailed'), error);
             localStorage.removeItem(this.SESSION_KEY);
             return false;
         }

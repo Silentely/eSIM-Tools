@@ -78,6 +78,42 @@ textarea:focus-visible {
 }
 
 /* 3) Utilities */
+.lang-zh { display: inline; }
+.lang-en { display: none; }
+html[data-locale="en"] .lang-zh { display: none !important; }
+html[data-locale="en"] .lang-en { display: inline !important; }
+
+.language-switcher {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.lang-switch:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.lang-switch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring-color);
+}
+
 .main-container {
   max-width: 900px;
   margin-left: auto;

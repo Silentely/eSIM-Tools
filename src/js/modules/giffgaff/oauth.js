@@ -6,8 +6,9 @@ class OAuthManager {
   constructor() {
     this.config = {
       clientId: "4a05bf219b3985647d9b9a3ba610a9ce",
-      authUrl: "https://id.giffgaff.com/auth/oauth/authorize",
-      redirectUri: "giffgaff://auth/callback/"
+      authUrl: "https://id.giffgaff.com/oauth/authorize",
+      redirectUri: "giffgaff://auth/callback/",
+      tokenEndpoint: "/.netlify/functions/giffgaff-token-exchange"
     };
 
     this.getTurnstileToken = () => {
@@ -107,7 +108,7 @@ class OAuthManager {
       
       return code;
     } catch (error) {
-      console.error('解析回调URL失败:', error);
+      console.error('Failed to parse callback URL:', error);
       return null;
     }
   }
@@ -120,14 +121,14 @@ class OAuthManager {
    */
   // 前端不再直接持有 client_secret，改由服务端函数代为交换
   async exchangeToken(code, codeVerifier) {
-    console.log(`发送令牌交换请求: code=${code.substring(0, 3)}*****, code_verifier=${codeVerifier.substring(0, 3)}*****`);
+    console.log(`Sending token exchange request: code=${code.substring(0, 3)}*****, code_verifier=${codeVerifier.substring(0, 3)}*****`);
     // 等待 Turnstile token（最多等待 ~2.5s）
     let tsToken = this.getTurnstileToken();
     for (let i = 0; i < 5 && !tsToken; i++) {
       await new Promise(r => setTimeout(r, 500));
       tsToken = this.getTurnstileToken();
     }
-    const res = await fetch('/bff/giffgaff-token-exchange', {
+    const res = await fetch(this.config.tokenEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -139,7 +140,7 @@ class OAuthManager {
     });
     if (!res.ok) {
       const text = await res.text();
-      console.error(`令牌交换失败: ${res.status}`, text);
+      console.error(`Token exchange failed: ${res.status}`, text);
       throw new Error(`Token exchange failed: ${res.status} - ${text}`);
     }
     return await res.json();

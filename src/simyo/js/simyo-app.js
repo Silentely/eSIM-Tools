@@ -14,6 +14,7 @@ import {
     openHelp,
     delay
 } from './modules/utils.js';
+import { t, tl } from '../../js/modules/i18n.js';
 
 class SimyoApp {
     constructor() {
@@ -26,7 +27,7 @@ class SimyoApp {
     async init() {
         if (this.initialized) return;
         
-        console.log('Simyo eSIM申请工具初始化中...');
+        console.log(t('simyo.app.console.initStart'));
         
         // 订阅状态变化
         stateManager.subscribe((state) => {
@@ -49,7 +50,7 @@ class SimyoApp {
         uiController.updateStatusPanel();
         
         this.initialized = true;
-        console.log('Simyo eSIM申请工具已加载');
+        console.log(t('simyo.app.console.initDone'));
     }
     
     /**
@@ -177,27 +178,27 @@ class SimyoApp {
         const password = elements.password.value.trim();
         
         if (!phoneNumber || !password) {
-            uiController.showStatus(elements.loginStatus, "请输入完整的登录信息", "error");
+            uiController.showStatus(elements.loginStatus, t('simyo.app.validation.loginForm'), "error");
             return;
         }
         
         try {
-            elements.loginBtn.innerHTML = '<span class="loading"></span> 登录中...';
+            elements.loginBtn.innerHTML = `<span class="loading"></span> ${tl('登录中...')}`;
             elements.loginBtn.disabled = true;
             
-            uiController.showStatus(elements.loginStatus, "正在验证账户信息...", "success");
+            uiController.showStatus(elements.loginStatus, t('simyo.app.status.loginValidating'), "success");
             
             const result = await authHandler.login(phoneNumber, password);
             
-            uiController.showStatus(elements.loginStatus, result.message + "！", "success");
+            uiController.showStatus(elements.loginStatus, result.message || t('simyo.app.status.loginSuccess'), "success");
             
             // 显示设备更换选项
             await delay(1000);
             uiController.showDeviceChangeOption();
         } catch (error) {
-            uiController.showStatus(elements.loginStatus, "登录失败：" + error.message, "error");
+            uiController.showStatus(elements.loginStatus, t('simyo.app.error.loginFailed', { message: error.message }), "error");
         } finally {
-            elements.loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i> 登录账户';
+            elements.loginBtn.innerHTML = `<i class="fas fa-sign-in-alt me-2"></i> ${tl('登录账户')}`;
             elements.loginBtn.disabled = false;
         }
     }
@@ -210,14 +211,14 @@ class SimyoApp {
         const statusEl = document.getElementById('applyNewEsimStatus');
         
         try {
-            applyBtn.innerHTML = '<span class="loading"></span> 申请中...';
+            applyBtn.innerHTML = `<span class="loading"></span> ${tl('申请中...')}`;
             applyBtn.disabled = true;
             
-            uiController.showStatus(statusEl, "正在申请新eSIM...", "success");
+            uiController.showStatus(statusEl, t('simyo.app.status.applyProcessing'), "success");
             
             const result = await deviceChangeHandler.applyNewEsim();
             
-            uiController.showStatus(statusEl, result.message, "success");
+            uiController.showStatus(statusEl, result.message || t('simyo.app.status.applySuccess'), "success");
             
             // 启用发送短信按钮
             const sendSmsBtn = document.getElementById('sendSmsBtn');
@@ -229,9 +230,9 @@ class SimyoApp {
                 uiController.showStatus(statusEl, result.nextStep, "info");
             }
         } catch (error) {
-            uiController.showStatus(statusEl, "申请新eSIM失败：" + error.message, "error");
+            uiController.showStatus(statusEl, t('simyo.app.error.applyFailed', { message: error.message }), "error");
         } finally {
-            applyBtn.innerHTML = '<i class="fas fa-plus me-2"></i>申请新eSIM';
+            applyBtn.innerHTML = `<i class="fas fa-plus me-2"></i>${tl('申请新eSIM')}`;
             applyBtn.disabled = false;
         }
     }
@@ -244,14 +245,14 @@ class SimyoApp {
         const statusEl = document.getElementById('sendSmsStatus');
         
         try {
-            sendBtn.innerHTML = '<span class="loading"></span> 发送中...';
+            sendBtn.innerHTML = `<span class="loading"></span> ${tl('发送中...')}`;
             sendBtn.disabled = true;
             
-            uiController.showStatus(statusEl, "正在发送验证码到短信...", "success");
+            uiController.showStatus(statusEl, t('simyo.app.status.smsProcessing'), "success");
             
             const result = await deviceChangeHandler.sendSmsCode();
             
-            uiController.showStatus(statusEl, result.message, "success");
+            uiController.showStatus(statusEl, result.message || t('simyo.app.status.smsSuccess'), "success");
             
             // 启用验证码输入
             const codeInput = document.getElementById('validationCodeInput');
@@ -263,9 +264,9 @@ class SimyoApp {
                 uiController.showStatus(statusEl, result.nextStep, "info");
             }
         } catch (error) {
-            uiController.showStatus(statusEl, "发送验证码失败：" + error.message, "error");
+            uiController.showStatus(statusEl, t('simyo.app.error.smsFailed', { message: error.message }), "error");
         } finally {
-            sendBtn.innerHTML = '<i class="fas fa-sms me-2"></i>发送验证码到短信';
+            sendBtn.innerHTML = `<i class="fas fa-sms me-2"></i>${tl('发送验证码到短信')}`;
             sendBtn.disabled = false;
         }
     }
@@ -281,14 +282,14 @@ class SimyoApp {
         const validationCode = codeInput.value.trim();
         
         try {
-            verifyBtn.innerHTML = '<span class="loading"></span> 验证中...';
+            verifyBtn.innerHTML = `<span class="loading"></span> ${tl('验证中...')}`;
             verifyBtn.disabled = true;
             
-            uiController.showStatus(statusEl, "正在验证验证码...", "success");
+            uiController.showStatus(statusEl, t('simyo.app.status.verifyProcessing'), "success");
             
             const result = await deviceChangeHandler.verifyCode(validationCode);
             
-            uiController.showStatus(statusEl, result.message, "success");
+            uiController.showStatus(statusEl, result.message || t('simyo.app.status.verifySuccess'), "success");
             
             // 显示下一步提示并自动进入获取eSIM步骤
             if (result.nextStep) {
@@ -299,9 +300,9 @@ class SimyoApp {
             await delay(2000);
             uiController.skipDeviceChange();
         } catch (error) {
-            uiController.showStatus(statusEl, "验证码验证失败：" + error.message, "error");
+            uiController.showStatus(statusEl, t('simyo.app.error.verifyFailed', { message: error.message }), "error");
         } finally {
-            verifyBtn.innerHTML = '<i class="fas fa-check me-2"></i>确认验证码';
+            verifyBtn.innerHTML = `<i class="fas fa-check me-2"></i>${tl('确认验证码')}`;
             verifyBtn.disabled = true;
         }
     }
@@ -313,23 +314,23 @@ class SimyoApp {
         const { elements } = uiController;
         
         try {
-            elements.getEsimBtn.innerHTML = '<span class="loading"></span> 获取中...';
+            elements.getEsimBtn.innerHTML = `<span class="loading"></span> ${tl('获取中...')}`;
             elements.getEsimBtn.disabled = true;
             
-            uiController.showStatus(elements.esimStatus, "正在获取eSIM信息...", "success");
+            uiController.showStatus(elements.esimStatus, t('simyo.app.status.getEsimProcessing'), "success");
             
             const result = await esimService.getEsim();
             
-            uiController.showStatus(elements.esimStatus, result.message + "！", "success");
+            uiController.showStatus(elements.esimStatus, result.message || t('simyo.app.status.getEsimSuccess'), "success");
             uiController.showEsimInfo(result.data);
             
             // 进入下一步
             await delay(2000);
             uiController.showSection(3);
         } catch (error) {
-            uiController.showStatus(elements.esimStatus, "获取eSIM信息失败：" + error.message, "error");
+            uiController.showStatus(elements.esimStatus, t('simyo.app.error.getEsimFailed', { message: error.message }), "error");
         } finally {
-            elements.getEsimBtn.innerHTML = '<i class="fas fa-sim-card me-2"></i> 获取eSIM';
+            elements.getEsimBtn.innerHTML = `<i class="fas fa-sim-card me-2"></i> ${tl('获取eSIM')}`;
             elements.getEsimBtn.disabled = false;
         }
     }
@@ -341,15 +342,15 @@ class SimyoApp {
         const { elements } = uiController;
         
         try {
-            elements.generateQrBtn.innerHTML = '<span class="loading"></span> 生成中...';
+            elements.generateQrBtn.innerHTML = `<span class="loading"></span> ${tl('生成中...')}`;
             elements.generateQrBtn.disabled = true;
             
-            uiController.showStatus(elements.qrStatus, "正在生成eSIM二维码...", "success");
+            uiController.showStatus(elements.qrStatus, t('simyo.app.status.generateProcessing'), "success");
             
             const result = esimService.generateLPAString();
             
             uiController.showQRResult(result.lpaString);
-            uiController.showStatus(elements.qrStatus, "eSIM二维码生成成功！", "success");
+            uiController.showStatus(elements.qrStatus, t('simyo.app.status.generateSuccess'), "success");
             
             // 绑定复制和下载按钮
             this.bindQRActions(result.lpaString);
@@ -358,9 +359,9 @@ class SimyoApp {
             await delay(2000);
             uiController.showSection(4);
         } catch (error) {
-            uiController.showStatus(elements.qrStatus, "二维码生成失败：" + error.message, "error");
+            uiController.showStatus(elements.qrStatus, t('simyo.app.error.generateFailed', { message: error.message }), "error");
         } finally {
-            elements.generateQrBtn.innerHTML = '<i class="fas fa-qrcode me-2"></i> 生成二维码';
+            elements.generateQrBtn.innerHTML = `<i class="fas fa-qrcode me-2"></i> ${tl('生成二维码')}`;
             elements.generateQrBtn.disabled = false;
         }
     }
@@ -376,7 +377,7 @@ class SimyoApp {
             copyBtn.__bound = true;
             copyBtn.addEventListener('click', () => {
                 copyToClipboard(lpaString);
-                showToast('LPA激活码已复制到剪贴板');
+                showToast(t('simyo.app.toast.lpaCopied'));
             });
         }
         
@@ -395,18 +396,18 @@ class SimyoApp {
         const { elements } = uiController;
         
         try {
-            elements.confirmInstallBtn.innerHTML = '<span class="loading"></span> 确认中...';
+            elements.confirmInstallBtn.innerHTML = `<span class="loading"></span> ${tl('确认中...')}`;
             elements.confirmInstallBtn.disabled = true;
             
-            uiController.showStatus(elements.confirmStatus, "正在确认eSIM安装状态...", "success");
+            uiController.showStatus(elements.confirmStatus, t('simyo.app.status.confirmProcessing'), "success");
             
             const result = await esimService.confirmInstall();
             
-            uiController.showStatus(elements.confirmStatus, result.message, "success");
+            uiController.showStatus(elements.confirmStatus, result.message || t('simyo.app.status.confirmSuccess'), "success");
         } catch (error) {
-            uiController.showStatus(elements.confirmStatus, "确认安装失败：" + error.message, "error");
+            uiController.showStatus(elements.confirmStatus, t('simyo.app.error.confirmFailed', { message: error.message }), "error");
         } finally {
-            elements.confirmInstallBtn.innerHTML = '<i class="fas fa-check me-2"></i> 确认安装';
+            elements.confirmInstallBtn.innerHTML = `<i class="fas fa-check me-2"></i> ${tl('确认安装')}`;
             elements.confirmInstallBtn.disabled = false;
         }
     }
@@ -415,10 +416,10 @@ class SimyoApp {
      * 处理清除会话
      */
     handleClearSession() {
-        if (confirm('确定要清除所有会话数据吗？这将重置所有进度。')) {
+        if (confirm(t('simyo.app.prompt.clearSession'))) {
             stateManager.clearSession();
             uiController.resetUI();
-            uiController.showStatus(uiController.elements.loginStatus, "会话已清除，请重新登录", "success");
+            uiController.showStatus(uiController.elements.loginStatus, t('simyo.app.toast.sessionCleared'), "success");
         }
     }
     
@@ -444,12 +445,12 @@ class SimyoApp {
                         
                         uiController.showStatus(
                             uiController.elements.qrStatus,
-                            '已成功获取到 eSIM 二维码/LPA（仅显示一次）',
+                            t('simyo.app.status.lpaFetchedOnce'),
                             'success'
                         );
                         
                         setTimeout(() => {
-                            const shouldClear = confirm('已成功获取到 eSIM 二维码/LPA。是否立即清空会话并重置？');
+                            const shouldClear = confirm(t('simyo.app.prompt.clearAfterLpa'));
                             if (shouldClear) {
                                 this.handleClearSession();
                             }

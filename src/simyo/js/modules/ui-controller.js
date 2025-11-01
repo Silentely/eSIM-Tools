@@ -4,6 +4,7 @@
  */
 
 import { stateManager } from './state-manager.js';
+import { t, tl } from '../../../js/modules/i18n.js';
 
 export class UIController {
     constructor() {
@@ -78,11 +79,11 @@ export class UIController {
             if (stepNo <= currentStep) {
                 step.classList.add('active');
                 step.style.cursor = 'pointer';
-                step.title = stepNo < currentStep ? '点击返回此步骤' : '';
+                step.title = stepNo < currentStep ? tl('点击返回此步骤') : '';
             } else {
                 step.classList.remove('active');
                 step.style.cursor = 'not-allowed';
-                step.title = '请按顺序完成前序步骤';
+                step.title = tl('请按顺序完成前序步骤');
             }
         });
     }
@@ -156,10 +157,10 @@ export class UIController {
         // 模式显示
         if (this.elements.statusMode) {
             if (state.isDeviceChange) {
-                this.elements.statusMode.textContent = '设备更换';
+                this.elements.statusMode.textContent = tl('设备更换');
                 this.elements.statusMode.className = 'status-value connected';
             } else {
-                this.elements.statusMode.textContent = '标准流程';
+                this.elements.statusMode.textContent = tl('标准流程');
                 this.elements.statusMode.className = 'status-value connected';
             }
         }
@@ -174,26 +175,26 @@ export class UIController {
             this.elements.statusSessionToken.className = 'status-value connected';
             this.addTooltip(this.elements.statusSessionToken, state.sessionToken);
         } else {
-            this.elements.statusSessionToken.textContent = '未登录';
+            this.elements.statusSessionToken.textContent = tl('未登录');
             this.elements.statusSessionToken.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusSessionToken);
         }
         
         // 验证码状态
         if (state.validationCode) {
-            this.elements.statusValidationCode.textContent = '已发送';
+            this.elements.statusValidationCode.textContent = tl('已发送');
             this.elements.statusValidationCode.className = 'status-value connected';
         } else {
-            this.elements.statusValidationCode.textContent = '未发送';
+            this.elements.statusValidationCode.textContent = tl('未发送');
             this.elements.statusValidationCode.className = 'status-value disconnected';
         }
         
         // eSIM状态
         if (state.activationCode) {
-            this.elements.statusEsimStatus.textContent = '已申请';
+            this.elements.statusEsimStatus.textContent = tl('已申请');
             this.elements.statusEsimStatus.className = 'status-value connected';
         } else {
-            this.elements.statusEsimStatus.textContent = '未申请';
+            this.elements.statusEsimStatus.textContent = tl('未申请');
             this.elements.statusEsimStatus.className = 'status-value disconnected';
         }
         
@@ -203,17 +204,17 @@ export class UIController {
             this.elements.statusActivationCode.className = 'status-value connected';
             this.addTooltip(this.elements.statusActivationCode, state.activationCode);
         } else {
-            this.elements.statusActivationCode.textContent = '未获取';
+            this.elements.statusActivationCode.textContent = tl('未获取');
             this.elements.statusActivationCode.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusActivationCode);
         }
         
         // LPA字符串
         if (state.activationCode) {
-            this.elements.statusLpaString.textContent = '已获取';
+            this.elements.statusLpaString.textContent = tl('已获取');
             this.elements.statusLpaString.className = 'status-value connected';
         } else {
-            this.elements.statusLpaString.textContent = '未生成';
+            this.elements.statusLpaString.textContent = tl('未生成');
             this.elements.statusLpaString.className = 'status-value disconnected';
         }
     }
@@ -307,7 +308,7 @@ export class UIController {
     generateQRCode(data) {
         const size = 300;
         const vendors = [
-            (s, d) => `https://qrcode.show/${encodeURIComponent(d)}?size=${s}`,
+            (s, d) => `https://qrcode.show/qr?size=${s}x${s}&data=${encodeURIComponent(d)}`,
             (s, d) => `https://quickchart.io/qr?size=${s}&text=${encodeURIComponent(d)}`,
             (s, d) => `https://chart.googleapis.com/chart?cht=qr&chs=${s}x${s}&chl=${encodeURIComponent(d)}`
         ];
@@ -321,9 +322,9 @@ export class UIController {
         const img = document.createElement('img');
         const setSrc = () => { img.src = vendors[vendorIdx](size, data); };
         setSrc();
-        img.alt = 'eSIM二维码';
+        img.alt = tl('eSIM二维码');
         img.setAttribute('role', 'img');
-        img.setAttribute('aria-label', 'eSIM 安装二维码');
+        img.setAttribute('aria-label', tl('eSIM 安装二维码'));
         img.className = 'img-fluid';
         img.style.border = '5px solid white';
         img.style.borderRadius = '12px';
@@ -335,7 +336,7 @@ export class UIController {
                 vendorIdx += 1;
                 setSrc();
             } else {
-                this.elements.qrcode.innerHTML = '<div class="alert alert-warning">二维码生成失败，请复制下方 LPA 字符串手动安装。</div>';
+                this.elements.qrcode.innerHTML = `<div class="alert alert-warning">${tl('二维码生成失败，请复制下方 LPA 字符串手动安装。')}</div>`;
             }
         };
 
@@ -369,10 +370,10 @@ export class UIController {
         this.elements.esimInfo.innerHTML = `
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">eSIM信息</h5>
-                    <p><strong>激活码:</strong> <span class="text-break">${esimData.activationCode}</span></p>
-                    <p><strong>状态:</strong> ${esimData.status || '准备就绪'}</p>
-                    ${esimData.phoneNumber ? `<p><strong>关联号码:</strong> ${esimData.phoneNumber}</p>` : ''}
+                    <h5 class="card-title">${tl('eSIM信息')}</h5>
+                    <p><strong>${tl('激活码:')}</strong> <span class="text-break">${esimData.activationCode}</span></p>
+                    <p><strong>${tl('状态:')}</strong> ${esimData.status || tl('准备就绪')}</p>
+                    ${esimData.phoneNumber ? `<p><strong>${tl('关联号码:')}</strong> ${esimData.phoneNumber}</p>` : ''}
                     ${esimData.iccid ? `<p><strong>ICCID:</strong> ${esimData.iccid}</p>` : ''}
                 </div>
             </div>
@@ -388,20 +389,20 @@ export class UIController {
         
         this.elements.activationInfo.innerHTML = `
             <div class="mb-3">
-                <h5 class="text-primary">LPA激活码</h5>
+                <h5 class="text-primary">${tl('LPA激活码')}</h5>
                 <p class="text-break"><small>${lpaString}</small></p>
             </div>
             <div class="btn-group mt-3 w-100">
                 <button id="copyLpaBtn" class="btn btn-base btn-dark-gradient">
-                    <i class="fas fa-copy me-2"></i>复制激活码
+                    <i class="fas fa-copy me-2"></i>${tl('复制激活码')}
                 </button>
                 <button id="downloadQrBtn" class="btn btn-base btn-primary-gradient">
-                    <i class="fas fa-download me-2"></i>下载二维码
+                    <i class="fas fa-download me-2"></i>${tl('下载二维码')}
                 </button>
             </div>
             <div class="alert alert-info mt-3">
                 <i class="fas fa-mobile-alt me-2"></i>
-                <strong>使用说明：</strong>在支持eSIM的设备上扫描此二维码进行安装，或手动输入LPA激活码
+                <strong>${tl('使用说明：')}</strong>${tl('在支持eSIM的设备上扫描此二维码进行安装，或手动输入LPA激活码')}
             </div>
         `;
     }

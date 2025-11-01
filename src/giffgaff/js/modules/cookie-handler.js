@@ -5,6 +5,7 @@
 
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints } from './api-config.js';
+import { t, tl } from '../../../js/modules/i18n.js';
 
 export class CookieHandler {
     constructor() {
@@ -26,9 +27,9 @@ export class CookieHandler {
             
             if (!response.ok) {
                 if (response.status === 401) {
-                    return { valid: false, message: 'Cookie已失效' };
+                    return { valid: false, message: tl('Cookie已失效') };
                 }
-                throw new Error(`验证失败: ${response.status}`);
+                throw new Error(t('giffgaff.cookie.verifyFailed', { status: response.status }));
             }
             
             const result = await response.json();
@@ -48,19 +49,19 @@ export class CookieHandler {
                 return {
                     valid: true,
                     accessToken: result.accessToken,
-                    message: 'Cookie验证成功'
+                    message: t('giffgaff.cookie.verifySuccess')
                 };
             } else if (result.success && !result.valid) {
                 return {
                     valid: false,
                     partialSuccess: true,
-                    message: result.message || 'Cookie验证通过，但未获取到可用于API的访问令牌'
+                    message: result.message || t('giffgaff.cookie.partialSuccess')
                 };
             } else {
-                throw new Error(result.message || 'Cookie验证失败');
+                throw new Error(result.message || t('giffgaff.cookie.error'));
             }
         } catch (error) {
-            console.error('Cookie验证错误:', error);
+            console.error(t('giffgaff.cookie.log.error'), error);
             throw error;
         }
     }
@@ -102,7 +103,7 @@ export class CookieHandler {
             this.handleCookieExpired();
             return { valid: false };
         } catch (err) {
-            console.error('Cookie有效性检查错误:', err);
+            console.error(t('giffgaff.cookie.log.checkError'), err);
             return { transientError: true, error: err?.message };
         }
     }
@@ -148,7 +149,7 @@ export class CookieHandler {
         
         // 触发过期事件
         const event = new CustomEvent('cookieExpired', {
-            detail: { message: 'Cookie已失效，请重新验证' }
+            detail: { message: tl('Cookie已失效，请重新验证。') }
         });
         window.dispatchEvent(event);
     }

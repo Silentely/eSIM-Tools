@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-page="home">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="eSIM 工具集，支持 Giffgaff 与 Simyo 的 eSIM 申请与管理、二维码生成及验证码处理。">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data:; connect-src 'self' https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com; img-src 'self' data: https:; frame-src 'none';">
     <title>eSIM Tools - Giffgaff & Simyo</title>
     <link rel="manifest" href="/manifest.webmanifest">
@@ -94,6 +95,34 @@
             width: 100%;
             text-align: center;
             border: 1px solid color-mix(in oklab, white 70%, transparent);
+        }
+
+        .language-switcher{
+            display:flex;
+            justify-content:flex-end;
+            width:100%;
+            margin-bottom: var(--s3);
+        }
+        .lang-switch{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:6px 16px;
+            border-radius:999px;
+            border:1px solid rgba(99,102,241,.25);
+            background: rgba(255,255,255,.7);
+            color: var(--text-primary);
+            font-weight:600;
+            cursor:pointer;
+            transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+        }
+        .lang-switch:hover{
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        .lang-switch:focus-visible{
+            outline:none;
+            box-shadow: var(--ring);
         }
 
         .header{ margin-bottom: var(--s6); }
@@ -253,10 +282,13 @@
     <!-- Google tag (gtag.js) 延迟加载 -->
     <script defer src="https://www.googletagmanager.com/gtag/js?id=G-HGX38HMNL1"></script>
 </head>
-<body>
+<body aria-label="eSIM 工具选择">
     <div class="main-container" role="region" aria-label="eSIM 工具选择">
+        <div class="language-switcher">
+            <button id="languageSwitcher" class="lang-switch" type="button" aria-label="切换语言到英文">🌐 English</button>
+        </div>
         <div class="header">
-            <h1><i class="fas fa-sim-card" aria-hidden="true"></i> eSIM 工具集</h1>
+            <h1><i class="fas fa-sim-card" aria-hidden="true"></i> <span class="header-title-text">eSIM 工具集</span></h1>
             <p class="subtitle">轻松管理您的 Giffgaff 与 Simyo eSIM 配置</p>
             <a href="https://github.com/Silentely/eSIM-Tools" target="_blank" rel="noopener noreferrer" class="github-btn" aria-label="在新窗口打开 GitHub 仓库">
                 <i class="fab fa-github" aria-hidden="true"></i> GitHub
@@ -269,9 +301,9 @@
                 <div class="tool-icon" aria-hidden="true">
                     <i class="fas fa-mobile-alt"></i>
                 </div>
-                <h2 id="giffgaff-title" class="tool-title">Giffgaff eSIM 工具</h2>
+                <h2 id="giffgaff-title" class="tool-title"><span class="tool-title-text">Giffgaff eSIM 工具</span></h2>
                 <p id="giffgaff-desc" class="tool-description">
-                    完整的 Giffgaff eSIM 申请与管理，支持 OAuth 认证、MFA 验证与 GraphQL API 调用
+                    <span class="tool-description-text">完整的 Giffgaff eSIM 申请与管理，支持 OAuth 认证、MFA 验证与 GraphQL API 调用</span>
                 </p>
                 <ul class="tool-features">
                     <li><i class="fa-solid fa-check" aria-hidden="true"></i><span>OAuth 2.0 PKCE 认证</span></li>
@@ -290,9 +322,9 @@
                 <div class="tool-icon" aria-hidden="true">
                     <i class="fas fa-sim-card"></i>
                 </div>
-                <h2 id="simyo-title" class="tool-title">Simyo 工具</h2>
+                <h2 id="simyo-title" class="tool-title"><span class="tool-title-text">Simyo 工具</span></h2>
                 <p id="simyo-desc" class="tool-description">
-                    专为 Simyo NL 用户的 eSIM 管理，支持设备更换与短信验证码处理
+                    <span class="tool-description-text">专为 Simyo NL 用户的 eSIM 管理，支持设备更换与短信验证码处理</span>
                 </p>
                 <ul class="tool-features">
                     <li><i class="fa-solid fa-check" aria-hidden="true"></i><span>简单快捷的登录验证</span></li>
@@ -323,6 +355,12 @@
     <script defer src="/src/js/home.js"></script>
     <!-- 统一版权页脚（自动注入年份/品牌） -->
     <script type="module" src="/src/js/bootstrap-footer.js"></script>
+
+    <!-- 国际化初始化 -->
+    <script type="module">
+        import { initI18n } from '/src/js/modules/i18n.js';
+        initI18n('home');
+    </script>
     
     
     <!-- 性能优化脚本 -->

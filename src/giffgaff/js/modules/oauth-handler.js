@@ -6,6 +6,7 @@
 import { stateManager } from './state-manager.js';
 import { generateCodeVerifier, generateCodeChallenge, generateState } from './utils.js';
 import { oauthConfig } from './api-config.js';
+import { t } from '../../../js/modules/i18n.js';
 
 export class OAuthHandler {
     /**
@@ -28,7 +29,7 @@ export class OAuthHandler {
                 sessionStorage.setItem('gg_pkce_map', JSON.stringify(pkceMap));
                 sessionStorage.setItem('gg_oauth_last_state', state);
             } catch (e) {
-                console.error('保存PKCE参数失败:', e);
+                console.error(t('giffgaff.oauth.log.savePkceFailed'), e);
             }
             
             // 构建授权URL
@@ -49,10 +50,10 @@ export class OAuthHandler {
             
             return {
                 success: true,
-                message: '登录页面已打开，请完成登录后复制回调URL'
+                message: t('giffgaff.oauth.status.windowOpened')
             };
         } catch (error) {
-            console.error('OAuth登录准备失败:', error);
+            console.error(t('giffgaff.oauth.log.prepareFailed'), error);
             throw error;
         }
     }
@@ -77,11 +78,11 @@ export class OAuthHandler {
             }
             
             if (!code) {
-                throw new Error("回调URL中未找到授权码");
+                throw new Error(t('giffgaff.oauth.errors.missingCode'));
             }
             
-            console.log('解析到的授权码:', code);
-            console.log('解析到的状态:', state);
+            console.log(t('giffgaff.oauth.log.codeFound'), code);
+            console.log(t('giffgaff.oauth.log.stateFound'), state);
             
             // 恢复code verifier
             let codeVerifier = stateManager.get('codeVerifier');
@@ -99,12 +100,12 @@ export class OAuthHandler {
                         }
                     }
                 } catch (e) {
-                    console.error('恢复code verifier失败:', e);
+                    console.error(t('giffgaff.oauth.log.restoreVerifierFailed'), e);
                 }
             }
             
             if (!codeVerifier) {
-                throw new Error('会话已重置或过期：缺少 code_verifier，请重新点击"开始OAuth登录"');
+                throw new Error(t('giffgaff.oauth.errors.missingVerifier'));
             }
             
             // 交换访问令牌
@@ -120,7 +121,9 @@ export class OAuthHandler {
             });
             
             if (!tokenResponse.ok) {
-                throw new Error(`Token交换失败: ${tokenResponse.status}`);
+                throw new Error(t('giffgaff.oauth.errors.tokenExchangeFailed', {
+                    status: tokenResponse.status
+                }));
             }
             
             const tokenData = await tokenResponse.json();
@@ -136,7 +139,7 @@ export class OAuthHandler {
                 }
                 sessionStorage.setItem('gg_pkce_map', JSON.stringify(pkceMap));
             } catch (e) {
-                console.error('清理PKCE参数失败:', e);
+                console.error(t('giffgaff.oauth.log.cleanupFailed'), e);
             }
             
             return {
@@ -144,7 +147,7 @@ export class OAuthHandler {
                 accessToken: tokenData.access_token
             };
         } catch (error) {
-            console.error('OAuth回调处理失败:', error);
+            console.error(t('giffgaff.oauth.log.callbackFailed'), error);
             throw error;
         }
     }

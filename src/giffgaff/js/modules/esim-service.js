@@ -5,6 +5,7 @@
 
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints, graphqlQueries } from './api-config.js';
+import { t } from '../../../js/modules/i18n.js';
 
 export class ESimService {
     constructor() {
@@ -19,11 +20,11 @@ export class ESimService {
             const state = stateManager.getState();
             
             if (!state.accessToken) {
-                throw new Error("缺少访问令牌，请重新进行OAuth认证");
+                throw new Error(t('giffgaff.esim.errors.missingAccessToken'));
             }
             
             if (!state.emailSignature) {
-                throw new Error("缺少邮件验证签名，请完成邮件验证");
+                throw new Error(t('giffgaff.esim.errors.missingMfaSignature'));
             }
             
             const response = await fetch(this.apiEndpoints.graphql, {
@@ -39,7 +40,10 @@ export class ESimService {
             
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`请求失败: ${response.status} - ${errorText}`);
+                throw new Error(t('giffgaff.esim.errors.requestFailed', {
+                    status: response.status,
+                    message: errorText
+                }));
             }
             
             const data = await response.json();
@@ -58,10 +62,10 @@ export class ESimService {
             return {
                 success: true,
                 data: data.data,
-                message: '会员信息获取成功'
+                message: t('giffgaff.app.status.memberFetched')
             };
         } catch (error) {
-            console.error('获取会员信息失败:', error);
+            console.error(t('giffgaff.esim.log.memberFailed'), error);
             throw error;
         }
     }
@@ -92,7 +96,10 @@ export class ESimService {
             
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`请求失败: ${response.status} - ${errorText}`);
+                throw new Error(t('giffgaff.esim.errors.requestFailed', {
+                    status: response.status,
+                    message: errorText
+                }));
             }
             
             const data = await response.json();
@@ -111,10 +118,12 @@ export class ESimService {
             return {
                 success: true,
                 data: data.data.reserveESim,
-                message: 'eSIM预订成功'
+                message: t('giffgaff.app.status.reserveSuccess', {
+                    status: data.data.reserveESim.esim.deliveryStatus
+                })
             };
         } catch (error) {
-            console.error('预订eSIM失败:', error);
+            console.error(t('giffgaff.esim.log.reserveFailed'), error);
             throw error;
         }
     }
@@ -150,18 +159,21 @@ export class ESimService {
             
             if (!response.ok) {
                 const errText = await response.text();
-                throw new Error(`SIM交换失败: ${response.status} - ${errText}`);
+                throw new Error(t('giffgaff.esim.errors.swapFailed', {
+                    status: response.status,
+                    message: errText
+                }));
             }
             
             const swapData = await response.json();
             
             if (swapData.errors) {
-                throw new Error(swapData.errors[0]?.message || 'SIM交换失败');
+                throw new Error(swapData.errors[0]?.message || t('giffgaff.esim.errors.swapGeneric'));
             }
             
             const newSim = swapData?.data?.swapSim?.new;
             if (!newSim || !newSim.ssn) {
-                throw new Error('SIM交换响应异常，未找到新SIM信息');
+                throw new Error(t('giffgaff.esim.errors.swapMissingSim'));
             }
             
             // 更新状态
@@ -174,10 +186,10 @@ export class ESimService {
             return {
                 success: true,
                 data: swapData.data.swapSim,
-                message: 'SIM交换成功'
+                message: t('giffgaff.esim.status.swapSuccess')
             };
         } catch (error) {
-            console.error('SIM交换失败:', error);
+            console.error(t('giffgaff.esim.log.swapFailed'), error);
             throw error;
         }
     }
@@ -203,7 +215,10 @@ export class ESimService {
             
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`请求失败: ${response.status} - ${errorText}`);
+                throw new Error(t('giffgaff.esim.errors.requestFailed', {
+                    status: response.status,
+                    message: errorText
+                }));
             }
             
             const data = await response.json();
@@ -219,10 +234,10 @@ export class ESimService {
                 success: true,
                 lpaString,
                 data: data.data.eSimDownloadToken,
-                message: 'eSIM下载代码获取成功'
+                message: t('giffgaff.app.status.tokenFetchedSuccess')
             };
         } catch (error) {
-            console.error('获取eSIM下载Token失败:', error);
+            console.error(t('giffgaff.esim.log.downloadFailed'), error);
             throw error;
         }
     }
@@ -234,7 +249,7 @@ export class ESimService {
         try {
             const webCookie = stateManager.getCookie();
             if (!webCookie) {
-                throw new Error('需要 giffgaff 官网 Cookie 才能自动激活');
+                throw new Error(t('giffgaff.esim.errors.cookieRequired'));
             }
             
             const state = stateManager.getState();
@@ -251,7 +266,10 @@ export class ESimService {
             
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`激活请求失败: ${response.status} - ${errorText}`);
+                throw new Error(t('giffgaff.esim.errors.autoActivateFailed', {
+                    status: response.status,
+                    message: errorText
+                }));
             }
             
             const result = await response.json();
@@ -259,17 +277,24 @@ export class ESimService {
             if (result.success) {
                 // 更新eSIM状态
                 stateManager.set('esimDeliveryStatus', 'ACTIVE');
-                
+                const needsManualConfirm =
+                    Boolean(result?.needsManualConfirm) ||
+                    (typeof result?.message === 'string' &&
+                        (result.message.includes('手动') ||
+                         result.message.toLowerCase().includes('manual')));
                 return {
                     success: true,
-                    needsManualConfirm: result.message.includes('可能需要手动确认'),
-                    message: result.message
+                    needsManualConfirm,
+                    message: needsManualConfirm
+                        ? t('giffgaff.esim.status.autoActivateManual')
+                        : t('giffgaff.esim.status.autoActivateSuccess'),
+                    rawMessage: result.message
                 };
             } else {
-                throw new Error(result.message || '激活失败');
+                throw new Error(result.message || t('giffgaff.esim.errors.activateGeneric'));
             }
         } catch (error) {
-            console.error('自动激活eSIM失败:', error);
+            console.error(t('giffgaff.esim.log.autoActivateFailed'), error);
             throw error;
         }
     }
@@ -299,10 +324,10 @@ export class ESimService {
             
             return {
                 success: true,
-                message: '短信激活流程完成'
+                message: t('giffgaff.esim.status.smsFlowComplete')
             };
         } catch (error) {
-            console.error('短信激活流程失败:', error);
+            console.error(t('giffgaff.esim.log.smsFlowFailed'), error);
             throw error;
         }
     }
@@ -321,12 +346,15 @@ export class ESimService {
                     return result;
                 }
             } catch (error) {
-                console.warn(`获取LPA尝试 ${i + 1}/${maxRetries} 失败:`, error);
+                console.warn(t('giffgaff.esim.log.lpaAttemptFailed', {
+                    attempt: i + 1,
+                    total: maxRetries
+                }), error);
             }
             await new Promise(r => setTimeout(r, 4000));
         }
         
-        throw new Error('获取LPA超时，请稍后在第五步手动获取');
+        throw new Error(t('giffgaff.esim.errors.lpaTimeout'));
     }
     
     /**
@@ -353,7 +381,10 @@ export class ESimService {
         
         if (!response.ok) {
             const errText = await response.text();
-            throw new Error(`验证失败: ${response.status} - ${errText}`);
+            throw new Error(t('giffgaff.esim.errors.validationFailed', {
+                status: response.status,
+                message: errText
+            }));
         }
         
         const data = await response.json();

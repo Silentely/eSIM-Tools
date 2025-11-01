@@ -82,7 +82,9 @@ class Utils {
    * 生成二维码 URL
    */
   generateQRCodeURL(data, size = 300) {
-    return `https://qrcode.show/${encodeURIComponent(data)}?size=${size}`;
+    const encoded = encodeURIComponent(data);
+    const dimension = `${size}x${size}`;
+    return `https://qrcode.show/qr?size=${dimension}&data=${encoded}`;
   }
 
   /**

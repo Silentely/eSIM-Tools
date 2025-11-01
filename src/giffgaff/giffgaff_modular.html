@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-page="giffgaff">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Giffgaff eSIM 工具，支持 OAuth 登录、MFA 验证、二维码生成与设备更换。">
     
     <!-- 预连接优化 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -51,18 +52,26 @@
         }
     </script>
 </head>
-<body>
+<body aria-label="Giffgaff eSIM 工具">
     <div class="container main-container">
+        <div class="language-switcher">
+            <button id="languageSwitcher" class="lang-switch" type="button" aria-label="切换语言到英文">🌐 English</button>
+        </div>
         <!-- 应用头部 -->
         <div class="app-header">
             <div class="logo-container">
                 <i class="fas fa-sim-card app-icon" aria-hidden="true"></i>
-                <div class="app-title">Giffgaff eSIM工具</div>
+                <div class="app-title">
+                    <span class="lang-zh">Giffgaff eSIM工具</span>
+                    <span class="lang-en">Giffgaff eSIM Tool</span>
+                </div>
             </div>
 
             <div class="header-buttons">
                 <button class="login-btn" onclick="openTutorial()" aria-label="查看教程">
-                    <i class="fas fa-book" aria-hidden="true"></i> 查看教程
+                    <i class="fas fa-book" aria-hidden="true"></i>
+                    <span class="lang-zh">查看教程</span>
+                    <span class="lang-en">View Tutorial</span>
                 </button>
                 <a href="https://github.com/Silentely/eSIM-Tools" target="_blank" class="github-btn" aria-label="打开GitHub仓库">
                     <i class="fab fa-github" aria-hidden="true"></i> GitHub
@@ -75,17 +84,38 @@
             <div class="promo-content">
                 <i class="fas fa-gift promo-icon"></i>
                 <span class="promo-text">
-                    如果您还没有Giffgaff账户，可以<a href="https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268" target="_blank" class="promo-link">点击这里开卡</a>，享受额外5英镑话费赠送！
+                    <span class="lang-zh">
+                        如果您还没有Giffgaff账户，可以
+                        <a href="https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268" target="_blank" class="promo-link">
+                            点击这里开卡
+                        </a>
+                        ，享受额外5英镑话费赠送！
+                    </span>
+                    <span class="lang-en">
+                        New to Giffgaff? 
+                        <a href="https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268" target="_blank" class="promo-link">
+                            order here
+                        </a>
+                        to receive an extra £5 credit!
+                    </span>
                 </span>
             </div>
         </div>
         
         <!-- 页面标题 -->
         <div class="page-title reveal">
-            <h1>Giffgaff eSIM 申请工具</h1>
-            <p>将您的实体SIM卡无缝转换为eSIM</p>
+            <h1>
+                <span class="lang-zh">Giffgaff eSIM 申请工具</span>
+                <span class="lang-en">Giffgaff eSIM Application Tool</span>
+            </h1>
+            <p>
+                <span class="lang-zh">将您的实体SIM卡无缝转换为eSIM</span>
+                <span class="lang-en">Convert your physical SIM to an eSIM seamlessly</span>
+            </p>
             <div id="modeBadge" class="mode-badge" style="display:none" aria-live="polite">
-                <i class="fas fa-exchange-alt" aria-hidden="true"></i> 设备更换模式
+                <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                <span class="lang-zh">设备更换模式</span>
+                <span class="lang-en">Device change mode</span>
             </div>
         </div>
         
@@ -102,8 +132,14 @@
                                 <i id="serviceTimeIcon" class="fas" aria-hidden="true"></i>
                             </div>
                             <div class="service-time-content-section">
-                                <div class="service-time-title">服务时间提醒：</div>
-                                <div id="serviceTimeMessage" class="service-time-message">当前时间在服务时间外，Giffgaff官方在英国时间04:30至21:30之间提供SIM交换服务。</div>
+                                <div class="service-time-title">
+                                    <span class="lang-zh">服务时间提醒：</span>
+                                    <span class="lang-en">Service window reminder:</span>
+                                </div>
+                                <div id="serviceTimeMessage" class="service-time-message">
+                                    <span class="lang-zh">当前时间在服务时间外，Giffgaff官方在英国时间04:30至21:30之间提供SIM交换服务。</span>
+                                    <span class="lang-en">Outside of service hours. Giffgaff processes SIM swaps between 04:30 and 21:30 UK time.</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -114,9 +150,15 @@
                         <i class="fas fa-clock" aria-hidden="true"></i>
                     </div>
                     <div class="time-card-text">
-                        <div class="time-card-label">当前时间</div>
+                        <div class="time-card-label">
+                            <span class="lang-zh">当前时间</span>
+                            <span class="lang-en">Current time</span>
+                        </div>
                         <div id="currentTime" class="time-card-value">--:--</div>
-                        <div id="ukTimeHint" class="time-card-hint">英国时间 --:--</div>
+                        <div id="ukTimeHint" class="time-card-hint">
+                            <span class="lang-zh">英国时间 --:--</span>
+                            <span class="lang-en">UK time --:--</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -124,45 +166,72 @@
         
         <!-- 状态显示面板 -->
         <div class="status-panel card-elevated reveal" role="status" aria-live="polite">
-            <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 当前状态</h3>
+            <h3>
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                <span class="lang-zh">当前状态</span>
+                <span class="lang-en">Current status</span>
+            </h3>
             <div class="status-grid">
                 <div class="status-item">
-                    <span class="status-label">当前模式:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">当前模式:</span>
+                        <span class="lang-en">Current mode:</span>
+                    </span>
                     <span id="statusMode" class="status-value connected">标准流程</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">Access Token:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">Access Token:</span>
+                        <span class="lang-en">Access Token:</span>
+                    </span>
                     <span id="statusAccessToken" class="status-value disconnected">未登录</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">MFA 签名:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">MFA 签名:</span>
+                        <span class="lang-en">MFA signature:</span>
+                    </span>
                     <span id="statusMfaSignature" class="status-value disconnected">未验证</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">会员ID:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">会员ID:</span>
+                        <span class="lang-en">Member ID:</span>
+                    </span>
                     <span id="statusMemberId" class="status-value disconnected">未获取</span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">eSIM状态:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">eSIM状态:</span>
+                        <span class="lang-en">eSIM status:</span>
+                    </span>
                     <span id="statusEsimStatus" class="status-value disconnected">
                         <span id="esimStatusValue"></span><br>
                         <span id="esimStatusPhoneSuffix"></span>
                     </span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">激活码:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">激活码:</span>
+                        <span class="lang-en">Activation code:</span>
+                    </span>
                     <span id="statusActivationCode" class="status-value disconnected">
                         <span id="activationCodeValue"></span><br>
                         <span id="activationCodeSSN"></span>
                     </span>
                 </div>
                 <div class="status-item">
-                    <span class="status-label">LPA字符串:</span>
+                    <span class="status-label">
+                        <span class="lang-zh">LPA字符串:</span>
+                        <span class="lang-en">LPA string:</span>
+                    </span>
                     <span id="statusLpaString" class="status-value disconnected">未生成</span>
                 </div>
             </div>
             <button id="clearSessionBtn" class="clear-session-btn" aria-label="清除会话并重置所有进度">
-                <i class="fas fa-trash-alt" aria-hidden="true"></i> 清除会话
+                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                <span class="lang-zh">清除会话</span>
+                <span class="lang-en">Clear session</span>
             </button>
         </div>
         
@@ -170,23 +239,38 @@
         <div class="step-indicator reveal" role="list" aria-label="进度步骤">
             <div class="step active" role="listitem" aria-current="step" data-step="1">
                 <div class="step-number" aria-hidden="true">1</div>
-                <div class="step-text">OAuth登录</div>
+                <div class="step-text">
+                    <span class="lang-zh">OAuth登录</span>
+                    <span class="lang-en">OAuth login</span>
+                </div>
             </div>
             <div class="step" data-step="2">
                 <div class="step-number">2</div>
-                <div class="step-text">邮件验证</div>
+                <div class="step-text">
+                    <span class="lang-zh">邮件验证</span>
+                    <span class="lang-en">Email verification</span>
+                </div>
             </div>
             <div class="step" data-step="3">
                 <div class="step-number">3</div>
-                <div class="step-text">会员信息</div>
+                <div class="step-text">
+                    <span class="lang-zh">会员信息</span>
+                    <span class="lang-en">Member info</span>
+                </div>
             </div>
             <div class="step" data-step="4">
                 <div class="step-number">4</div>
-                <div class="step-text">申请eSIM</div>
+                <div class="step-text">
+                    <span class="lang-zh">申请eSIM</span>
+                    <span class="lang-en">Reserve eSIM</span>
+                </div>
             </div>
             <div class="step" data-step="5">
                 <div class="step-number">5</div>
-                <div class="step-text">获取二维码</div>
+                <div class="step-text">
+                    <span class="lang-zh">获取二维码</span>
+                    <span class="lang-en">Get QR code</span>
+                </div>
             </div>
         </div>
         
@@ -194,11 +278,16 @@
         <div id="step1" class="section active reveal">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-key"></i> 第一步：选择登录方式
+                    <i class="fas fa-key"></i>
+                    <span class="lang-zh"> 第一步：选择登录方式</span>
+                    <span class="lang-en"> Step 1: Choose a login method</span>
                 </div>
                 <div class="card-body">
-                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                    <p class="mb-4 lang-zh" style="font-size: 17px; color: #212529;">
                         请选择您偏好的登录方式：
+                    </p>
+                    <p class="mb-4 lang-en" style="font-size: 17px; color: #212529;">
+                        Pick the login method you prefer:
                     </p>
                     
                     <div class="row row-cols-1 row-cols-md-2 g-3">
@@ -206,9 +295,18 @@
                             <div id="oauthCard" class="card h-100" style="cursor: pointer;" role="button" tabindex="0" aria-label="选择 OAuth 登录">
                                 <div class="card-body text-center">
                                     <i class="fas fa-shield-alt fa-3x mb-3" style="color: var(--primary);"></i>
-                                    <h5>OAuth 2.0 登录</h5>
-                                    <p class="text-muted">安全的官方认证方式</p>
-                                    <small class="text-success">✓ 推荐使用</small>
+                                    <h5>
+                                        <span class="lang-zh">OAuth 2.0 登录</span>
+                                        <span class="lang-en">OAuth 2.0 login</span>
+                                    </h5>
+                                    <p class="text-muted">
+                                        <span class="lang-zh">安全的官方认证方式</span>
+                                        <span class="lang-en">Secure official authentication</span>
+                                    </p>
+                                    <small class="text-success">
+                                        <span class="lang-zh">✓ 推荐使用</span>
+                                        <span class="lang-en">✓ Recommended</span>
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -216,9 +314,18 @@
                             <div id="cookieCard" class="card h-100" style="cursor: pointer;" role="button" tabindex="0" aria-label="选择 Cookie 登录">
                                 <div class="card-body text-center">
                                     <i class="fas fa-cookie-bite fa-3x mb-3" style="color: var(--warning);"></i>
-                                    <h5>Cookie 登录</h5>
-                                    <p class="text-muted">使用已有登录Cookie</p>
-                                    <small class="text-info">✓ 快速便捷</small>
+                                    <h5>
+                                        <span class="lang-zh">Cookie 登录</span>
+                                        <span class="lang-en">Cookie login</span>
+                                    </h5>
+                                    <p class="text-muted">
+                                        <span class="lang-zh">使用已有登录Cookie</span>
+                                        <span class="lang-en">Use an existing session cookie</span>
+                                    </p>
+                                    <small class="text-info">
+                                        <span class="lang-zh">✓ 快速便捷</span>
+                                        <span class="lang-en">✓ Quick and easy</span>
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -228,11 +335,15 @@
                     
                     <!-- OAuth登录区域 -->
                     <div id="oauthLoginSection" class="mt-4" style="display: none;">
-                        <h5 class="mb-3">OAuth 2.0 登录</h5>
+                        <h5 class="mb-3">
+                            <span class="lang-zh">OAuth 2.0 登录</span>
+                            <span class="lang-en">OAuth 2.0 login</span>
+                        </h5>
                         
                         <div class="alert alert-warning mb-4">
-                            <h6><i class="fas fa-exclamation-triangle me-2"></i>如何获取回调URL：</h6>
-                            <ol class="mb-2">
+                            <h6 class="lang-zh"><i class="fas fa-exclamation-triangle me-2"></i>如何获取回调URL：</h6>
+                            <h6 class="lang-en d-none"><i class="fas fa-exclamation-triangle me-2"></i>How to capture the callback URL:</h6>
+                            <ol class="mb-2 lang-zh">
                                 <li><strong>打开开发者工具</strong>：按 F12 或右键选择"检查"</li>
                                 <li><strong>切换到"网络"标签页</strong></li>
                                 <li><strong>在登录页面输入邮箱验证码</strong></li>
@@ -240,18 +351,31 @@
                                 <li><strong>在网络面板中查找</strong> <code>giffgaff://auth/callback/</code> 开头的请求</li>
                                 <li><strong>复制完整的URL</strong> 并粘贴到下方输入框</li>
                             </ol>
-                            <p class="mb-0"><small class="text-muted">💡 提示：如果看不到网络请求，请先打开开发者工具再进行登录操作</small></p>
+                            <ol class="mb-2 lang-en">
+                                <li><strong>Open DevTools</strong>: press F12 or right-click → “Inspect”.</li>
+                                <li><strong>Switch to the “Network” tab.</strong></li>
+                                <li><strong>Enter the email verification code</strong> on the login page.</li>
+                                <li><strong>Click the login button.</strong></li>
+                                <li><strong>Find the request</strong> starting with <code>giffgaff://auth/callback/</code> in the network list.</li>
+                                <li><strong>Copy the full URL</strong> and paste it into the input field below.</li>
+                            </ol>
+                            <p class="mb-0 lang-zh"><small class="text-muted">💡 提示：如果看不到网络请求，请先打开开发者工具再进行登录操作</small></p>
+                            <p class="mb-0 lang-en"><small class="text-muted">💡 Tip: open DevTools before logging in so the requests are recorded.</small></p>
                         </div>
                         
                         <div class="alert alert-info mb-4">
-                            <h6><i class="fas fa-info-circle me-2"></i>回调URL格式示例：</h6>
+                            <h6 class="lang-zh"><i class="fas fa-info-circle me-2"></i>回调URL格式示例：</h6>
+                            <h6 class="lang-en d-none"><i class="fas fa-info-circle me-2"></i>Example callback URL:</h6>
                             <p class="mb-2"><code>giffgaff://auth/callback/?code=ABC123&state=XYZ789</code></p>
-                            <p class="mb-0"><small class="text-muted">确保URL包含 <code>code</code> 和 <code>state</code> 参数</small></p>
+                            <p class="mb-0 lang-zh"><small class="text-muted">确保URL包含 <code>code</code> 和 <code>state</code> 参数</small></p>
+                            <p class="mb-0 lang-en"><small class="text-muted">Make sure the URL includes the <code>code</code> and <code>state</code> parameters.</small></p>
                         </div>
                         
                         <div class="btn-group">
                             <button id="oauthLoginBtn" class="btn btn-primary">
-                                <i class="fas fa-sign-in-alt me-2"></i> 开始OAuth登录
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                <span class="lang-zh">开始OAuth登录</span>
+                                <span class="lang-en">Start OAuth login</span>
                             </button>
                         </div>
                     
@@ -661,6 +785,12 @@
     
     <!-- 性能优化脚本 -->
     <script src="/src/js/performance.js"></script>
+    
+    <!-- 国际化初始化 -->
+    <script type="module">
+        import { initI18n } from '/src/js/modules/i18n.js';
+        initI18n('giffgaff');
+    </script>
     
     <!-- 主应用脚本（模块化） -->
     <script type="module" src="/src/giffgaff/js/giffgaff-app.js"></script>

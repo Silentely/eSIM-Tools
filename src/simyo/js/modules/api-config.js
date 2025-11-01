@@ -4,6 +4,7 @@
  */
 
 import { isNetlifyEnvironment } from './utils.js';
+import { t } from '../../../js/modules/i18n.js';
 
 /**
  * Simyo客户端配置
@@ -92,7 +93,7 @@ export async function handleApiResponse(response) {
         if (data.success && data.result) {
             return data;
         } else {
-            throw new Error(data.message || data.error || '请求失败');
+            throw new Error(data.message || data.error || t('simyo.api.error.generic'));
         }
     }
 }

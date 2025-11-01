@@ -6,6 +6,7 @@
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
 import { validatePhoneNumber } from './utils.js';
+import { t } from '../../../js/modules/i18n.js';
 
 export class AuthHandler {
     constructor() {
@@ -21,11 +22,11 @@ export class AuthHandler {
     async login(phoneNumber, password) {
         // 验证手机号格式
         if (!validatePhoneNumber(phoneNumber)) {
-            throw new Error('请输入有效的荷兰手机号（06开头，10位数字）');
+            throw new Error(t('simyo.errors.invalidPhone'));
         }
         
         if (!password) {
-            throw new Error('请输入密码');
+            throw new Error(t('simyo.errors.requirePassword'));
         }
         
         try {
@@ -44,7 +45,7 @@ export class AuthHandler {
             const sessionToken = data.result?.sessionToken;
             
             if (!sessionToken) {
-                throw new Error(data.message || '登录失败，未获取到session token');
+                throw new Error(data.message || t('simyo.auth.loginMissingToken'));
             }
             
             // 保存到状态
@@ -56,11 +57,11 @@ export class AuthHandler {
             
             return {
                 success: true,
-                message: '登录成功',
+                message: t('simyo.auth.loginSuccess'),
                 sessionToken: sessionToken
             };
         } catch (error) {
-            console.error('登录失败:', error);
+            console.error(t('simyo.auth.log.loginFailed'), error);
             throw error;
         }
     }
