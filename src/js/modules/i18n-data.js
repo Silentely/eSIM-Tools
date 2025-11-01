@@ -232,6 +232,9 @@ export const TRANSLATIONS = {
     'home.simyo.features.confirm': '安装确认功能',
     'home.simyo.cta': '使用 Simyo 工具',
     'home.footer.html': '<i class=\"fas fa-info-circle me-2\" aria-hidden=\"true\"></i> 本工具仅供个人使用，请遵守相关服务条款。<br><i class=\"fas fa-shield-alt me-2\" aria-hidden=\"true\"></i> 所有数据处理均在本地进行，保护您的隐私安全。',
+    'footer.container.ariaLabel': '版权与声明',
+    'footer.github.ariaLabel': '在 GitHub 上查看源码',
+    'footer.copyright': '© {yearRange} {brand}。保留所有权利。',
 
     'giffgaff.meta.title': 'Giffgaff eSIM 申请工具',
     'giffgaff.meta.description': 'Giffgaff eSIM 工具，支持 OAuth 登录、MFA 验证、二维码生成与设备更换。',
@@ -454,6 +457,9 @@ export const TRANSLATIONS = {
     'home.simyo.features.confirm': 'Installation confirmation',
     'home.simyo.cta': 'Launch Simyo tool',
     'home.footer.html': '<i class=\"fas fa-info-circle me-2\" aria-hidden=\"true\"></i> For personal use only. Please follow the related terms of service.<br><i class=\"fas fa-shield-alt me-2\" aria-hidden=\"true\"></i> All data processing happens locally to keep your privacy safe.',
+    'footer.container.ariaLabel': 'Copyright and disclaimer',
+    'footer.github.ariaLabel': 'View source on GitHub',
+    'footer.copyright': '© {yearRange} {brand}. All rights reserved.',
 
     'giffgaff.meta.title': 'Giffgaff eSIM Application Tool',
     'giffgaff.meta.description': 'Giffgaff eSIM toolkit covering OAuth login, MFA verification, QR generation, and device change workflows.',

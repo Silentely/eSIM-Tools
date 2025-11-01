@@ -18,43 +18,107 @@ window.TURNSTILE_SITE_KEY = (typeof process !== 'undefined' && process.env && pr
   ? process.env.TURNSTILE_SITE_KEY
   : '0x4AAAAAABqjeVscZAiqB11B';
 
+
 if (window.TURNSTILE_SITE_KEY) {
-  const s = document.createElement('script');
-  s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-  s.async = true;
-  s.defer = true;
-  document.head.appendChild(s);
+  const ensureLoaderScript = () => {
+    if (window.turnstile) {
+      return true;
+    }
+    const selector = 'script[src="https://challenges.cloudflare.com/turnstile/v0/api.js"]';
+    const existing = document.querySelector(selector);
+    if (existing) {
+      if (!existing.dataset.turnstileLoader) {
+        existing.dataset.turnstileLoader = 'true';
+      }
+      return false;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    script.dataset.turnstileLoader = 'true';
+    document.head.appendChild(script);
+    return false;
+  };
 
   // 定义回调，保存 token 供 /bff/* 请求使用
   window.onTurnstileDone = (token) => {
     window.__cfTurnstileToken = token;
   };
 
-  // 初始化不可见 Turnstile 并立即执行获取 token
+  let widgetId = null;
+  let hasExecuted = false;
+  let executing = false;
+
+  const markIdle = () => { executing = false; };
+
+  const handleToken = (token) => {
+    window.__cfTurnstileToken = token;
+    markIdle();
+  };
+
+  const runExecute = () => {
+    if (!window.turnstile || widgetId == null || executing) {
+      return;
+    }
+    executing = true;
+    if (hasExecuted) {
+      try { window.turnstile.reset(widgetId); } catch (_) {}
+    }
+    hasExecuted = true;
+    try {
+      window.turnstile.execute(widgetId);
+    } catch (_) {
+      markIdle();
+    }
+  };
+
   const initTurnstile = () => {
     if (!window.turnstile) {
       setTimeout(initTurnstile, 300);
       return;
     }
     const container = document.createElement('div');
+    container.style.display = 'none';
+    container.setAttribute('aria-hidden', 'true');
     document.body.appendChild(container);
-    const widgetId = window.turnstile.render(container, {
+    widgetId = window.turnstile.render(container, {
       sitekey: window.TURNSTILE_SITE_KEY,
       size: 'invisible',
-      callback: (token) => {
-        window.__cfTurnstileToken = token;
+      callback: handleToken,
+      'error-callback': markIdle,
+      'timeout-callback': markIdle,
+      'expired-callback': () => {
+        markIdle();
+        runExecute();
       }
     });
-    // 主动执行以获取 token（并定期刷新）
-    const exec = () => { try { window.turnstile.execute(widgetId); } catch (_) {} };
-    exec();
-    setInterval(exec, 110000); // 约每110秒刷新一次
+    runExecute();
+    setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      runExecute();
+    }, 110000);
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTurnstile);
+  const boot = () => {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initTurnstile, { once: true });
+    } else {
+      initTurnstile();
+    }
+  };
+
+  if (ensureLoaderScript()) {
+    boot();
   } else {
-    initTurnstile();
+    const waitForScript = () => {
+      if (window.turnstile) {
+        boot();
+        return;
+      }
+      setTimeout(waitForScript, 150);
+    };
+    waitForScript();
   }
 }
 

@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://publicapi.giffgaff.com" crossorigin>
     
     <!-- CSP策略 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com; img-src 'self' data: https:; frame-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com;">
     
     <title>Giffgaff eSIM 申请工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
@@ -764,15 +764,32 @@
                 try {
                     if (!window.turnstile || !siteKey) { setTimeout(boot, 300); return; }
                     var c = document.createElement('div');
+                    c.style.display = 'none';
+                    c.setAttribute('aria-hidden', 'true');
                     document.body.appendChild(c);
+                    var isExecuting = false;
+                    var hasExecuted = false;
+                    var markIdle = function() { isExecuting = false; };
+                    var exec = function() {
+                        if (!window.turnstile || isExecuting) { return; }
+                        isExecuting = true;
+                        if (hasExecuted) { try { window.turnstile.reset(id); } catch (_) {} }
+                        hasExecuted = true;
+                        try { window.turnstile.execute(id); } catch (e) { markIdle(); }
+                    };
                     var id = window.turnstile.render(c, {
                         sitekey: siteKey,
                         size: 'invisible',
-                        callback: function (token) { window.__cfTurnstileToken = token; }
+                        callback: function (token) { window.__cfTurnstileToken = token; markIdle(); },
+                        'error-callback': markIdle,
+                        'timeout-callback': markIdle,
+                        'expired-callback': function () { markIdle(); exec(); }
                     });
-                    var exec = function() { try { window.turnstile.execute(id); } catch (e) {} };
                     exec();
-                    setInterval(exec, 110000);
+                    setInterval(function () {
+                        if (document.visibilityState === 'hidden') { return; }
+                        exec();
+                    }, 110000);
                 } catch (e) { setTimeout(boot, 500); }
             }
             if (document.readyState === 'loading') {
