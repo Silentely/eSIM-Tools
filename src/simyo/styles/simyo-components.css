@@ -1,0 +1,347 @@
+/**
+ * Simyo组件样式
+ * 定义卡片、按钮、状态面板等组件样式
+ */
+
+/* 卡片样式 */
+.card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 107, 0, 0.3);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 107, 0, 0.5);
+}
+
+.card-header {
+    background: rgba(255, 107, 0, 0.1);
+    padding: 20px 25px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 107, 0, 0.2);
+}
+
+.card-header i {
+    margin-right: 12px;
+    font-size: 28px;
+    color: #ff6b00;
+}
+
+.card-body {
+    padding: 30px;
+}
+
+/* 按钮样式 */
+.btn-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.btn {
+    padding: 16px 25px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.btn-primary {
+    background: linear-gradient(to right, #ff6b00, #ffffff);
+    color: #212529;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(to right, #ffffff, #ff6b00);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.help-btn {
+    background: linear-gradient(to right, #ff6b00, #ffffff);
+    border: none;
+    font-size: 16px;
+    color: #212529;
+    cursor: pointer;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 30px;
+    transition: all 0.3s;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    border: 1px solid rgba(255, 107, 0, 0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.help-btn:hover {
+    background: linear-gradient(to right, #ffffff, #ff6b00);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 107, 0, 0.5);
+}
+
+.github-btn {
+    background: linear-gradient(to right, #333333, #666666);
+    border: none;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 30px;
+    transition: all 0.3s;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    border: 1px solid rgba(51, 51, 51, 0.3);
+    margin-left: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.github-btn:hover {
+    background: linear-gradient(to right, #666666, #333333);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    border-color: rgba(51, 51, 51, 0.5);
+    color: #ffffff;
+}
+
+/* 状态显示 */
+.status {
+    margin-top: 25px;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    font-size: 16px;
+    border-left: 4px solid transparent;
+    color: #212529;
+}
+
+.status.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+.status.success {
+    border-left: 4px solid var(--success);
+}
+
+.status.error {
+    border-left: 4px solid var(--warning);
+}
+
+/* 状态面板 */
+.status-panel {
+    background: linear-gradient(135deg, #fffff0 0%, #fffbe4 90%);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.status-panel h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #7c2d12;
+    background: linear-gradient(135deg, #ffedd5, #fed7aa);
+    border: 1px solid #fdba74;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    min-height: 40px;
+}
+
+.status-label {
+    font-weight: 500;
+    color: #6c757d;
+    min-width: 100px;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+.status-value {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: #495057;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    cursor: default;
+    position: relative;
+    text-align: right;
+}
+
+.status-value:hover {
+    background-color: rgba(255, 107, 0, 0.1);
+    border-radius: 4px;
+}
+
+.status-value.connected {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.status-value.disconnected {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.clear-session-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.clear-session-btn:hover {
+    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+    transform: translateY(-1px);
+}
+
+/* 信息卡片 */
+.info-card {
+    background: linear-gradient(135deg, #fcf6f6 0%, #fd9246 60%);
+    color: #212529;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 107, 0, 0.3);
+}
+
+.info-card h6 {
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.info-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* 推广横幅 */
+.promo-banner {
+    background: linear-gradient(135deg, #ff6b00, #ff8c42);
+    border-radius: 12px;
+    margin: 20px 0;
+    padding: 16px 20px;
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+    animation: subtle-pulse 3s ease-in-out infinite;
+}
+
+.promo-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.promo-icon {
+    color: white;
+    font-size: 20px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.promo-text {
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.promo-link {
+    color: white;
+    text-decoration: underline;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.promo-link:hover {
+    color: #fff3e0;
+    text-decoration: none;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+/* 二维码容器 */
+.qrcode-container {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.qrcode-container:hover .tooltip {
+    opacity: 1;
+}

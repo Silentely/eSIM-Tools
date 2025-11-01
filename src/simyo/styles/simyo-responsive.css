@@ -1,0 +1,210 @@
+/**
+ * Simyo响应式设计
+ * 定义不同屏幕尺寸下的样式适配
+ */
+
+/* 平板设备 (768px及以下) */
+@media (max-width: 768px) {
+    .app-title {
+        font-size: 20px;
+    }
+    
+    .page-title h1 {
+        font-size: 26px;
+    }
+    
+    .step {
+        width: 80px;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .step-text {
+        font-size: 13px;
+    }
+    
+    .card-header {
+        padding: 15px;
+        font-size: 19px;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    textarea, input {
+        padding: 14px;
+        font-size: 15px;
+    }
+    
+    .btn {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-value {
+        max-width: 120px;
+    }
+    
+    .status-label {
+        min-width: 80px;
+    }
+
+    .header-buttons {
+        gap: 8px;
+        flex-wrap: nowrap;
+    }
+
+    .help-btn, .github-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+        min-width: fit-content;
+    }
+}
+
+/* 小屏手机 (480px及以下) */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 0;
+    }
+    
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .header-buttons {
+        gap: 6px;
+        flex-direction: column;
+        align-items: flex-end;
+        width: 100%;
+    }
+    
+    .help-btn, .github-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        width: fit-content;
+    }
+    
+    .page-title h1 {
+        font-size: 22px;
+    }
+    
+    .page-title p {
+        font-size: 16px;
+    }
+    
+    .step-indicator {
+        padding: 12px 16px;
+    }
+    
+    .step {
+        width: 60px;
+    }
+    
+    .step-number {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .step-text {
+        font-size: 11px;
+    }
+    
+    .card-header {
+        padding: 12px 15px;
+        font-size: 17px;
+    }
+    
+    .card-header i {
+        font-size: 22px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .status-panel {
+        padding: 15px;
+    }
+    
+    .status-panel h3 {
+        font-size: 16px;
+    }
+    
+    .promo-content {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .promo-text {
+        font-size: 14px;
+    }
+}
+
+/* 超小屏设备 (360px及以下) */
+@media (max-width: 360px) {
+    .app-title {
+        font-size: 18px;
+    }
+    
+    .page-title h1 {
+        font-size: 20px;
+    }
+    
+    .step-indicator {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    
+    .step {
+        width: 50px;
+    }
+    
+    .step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .step-text {
+        font-size: 10px;
+    }
+    
+    .card-header {
+        font-size: 16px;
+    }
+    
+    textarea, input {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .btn {
+        padding: 12px;
+        font-size: 15px;
+    }
+}

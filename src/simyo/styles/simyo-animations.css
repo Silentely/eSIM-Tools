@@ -1,0 +1,106 @@
+/**
+ * Simyo动画效果
+ * 定义所有动画和过渡效果
+ */
+
+/* 淡入动画 */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* 滑入动画 */
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateX(30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0); 
+    }
+}
+
+/* 脉冲动画 */
+@keyframes subtle-pulse {
+    0%, 100% { 
+        transform: scale(1); 
+    }
+    50% { 
+        transform: scale(1.02); 
+    }
+}
+
+/* 弹跳动画 */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { 
+        transform: translateY(0); 
+    }
+    40% { 
+        transform: translateY(-5px); 
+    }
+    60% { 
+        transform: translateY(-3px); 
+    }
+}
+
+/* 入场动效 */
+.reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    will-change: opacity, transform;
+}
+
+.reveal.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 降低动效：尊重用户的减少动态偏好 */
+@media (prefers-reduced-motion: reduce) {
+    .reveal {
+        transition: none;
+        transform: none;
+        opacity: 1;
+    }
+    
+    .card,
+    .help-btn,
+    .github-btn,
+    .btn {
+        transition: none !important;
+    }
+    
+    @keyframes fadeIn {
+        from, to { 
+            opacity: 1; 
+            transform: none; 
+        }
+    }
+    
+    @keyframes slideIn {
+        from, to { 
+            opacity: 1; 
+            transform: none; 
+        }
+    }
+    
+    @keyframes subtle-pulse {
+        from, to { 
+            transform: none; 
+        }
+    }
+    
+    @keyframes bounce {
+        from, to { 
+            transform: none; 
+        }
+    }
+}

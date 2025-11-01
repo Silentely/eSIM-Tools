@@ -155,6 +155,11 @@ app.get('/giffgaff-legacy', (req, res) => {
 });
 
 app.get('/simyo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src/simyo/simyo_modular.html'));
+});
+
+// 原始版本备份路由
+app.get('/simyo-legacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'src/simyo/simyo_complete_esim.html'));
 });
 

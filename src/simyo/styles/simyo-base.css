@@ -1,0 +1,273 @@
+/**
+ * Simyo基础样式
+ * 定义CSS变量、基础布局和通用样式
+ */
+
+:root {
+    /* Simyo品牌色 */
+    --primary: #ff6b00;
+    --secondary: #ffd6b3;
+    --success: #10b981;
+    --warning: #ef4444;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --gray: #6c757d;
+}
+
+body {
+    background: linear-gradient(135deg, #f6f1eb 0%, #efe2d3 45%, #e6cfb8 100%);
+    color: #212529;
+    min-height: 100vh;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* 应用头部 */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.app-icon {
+    font-size: 24px;
+    margin-right: 10px;
+    color: #ff6b00;
+}
+
+.app-title {
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(to right, #ff6b00, #0056b3);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+}
+
+.header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 页面标题 */
+.page-title {
+    text-align: center;
+    margin: 30px 0 40px;
+}
+
+.page-title h1 {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.5px;
+    color: #212529;
+}
+
+.page-title p {
+    color: rgba(33, 37, 41, 0.7);
+    font-size: 18px;
+    margin-top: 8px;
+}
+
+/* 步骤指示器 */
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 auto 40px;
+    position: relative;
+    max-width: 720px;
+    counter-reset: step;
+    padding: 16px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f8fafc, #eef2f7);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    width: 120px;
+    position: relative;
+}
+
+.step-number {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #fffaf5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #212529;
+    border: 2px solid rgba(255, 107, 0, 0.55);
+    box-shadow: inset 0 0 0 2px rgba(255, 107, 0, 0.18);
+}
+
+.step.active .step-number {
+    background: linear-gradient(135deg, #ff7a1a, #ffb066);
+    color: white;
+    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.45);
+    border-color: rgba(255, 107, 0, 0.8);
+}
+
+.step-text {
+    font-size: 14px;
+    text-align: center;
+    color: #212529;
+    font-weight: 500;
+}
+
+/* 表单元素 */
+.form-label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 17px;
+    color: #212529;
+}
+
+textarea, input {
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 107, 0, 0.3);
+    background: rgba(255, 255, 255, 0.9);
+    color: #212529;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.2);
+    background: rgba(255, 255, 255, 1);
+}
+
+/* 焦点样式 */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    box-shadow: 0 0 0 3px rgba(76,154,255,0.35);
+}
+
+:focus-visible {
+    outline: 2px solid #4c9aff;
+    outline-offset: 2px;
+}
+
+/* 区块显示控制 */
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+#resultContainer {
+    display: none;
+}
+
+#resultContainer.active {
+    display: block;
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    border-top-color: #ff6b00;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Tooltip样式 */
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-width: 400px;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip.show {
+    opacity: 1;
+}
+
+/* Toast通知样式 */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.toast-notification.show {
+    opacity: 1;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+}
+
+.toast-content i {
+    color: #ff6b00;
+    font-size: 18px;
+}

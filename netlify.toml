@@ -28,8 +28,14 @@
   status = 200
 
 [[redirects]]
-  # Simyo eSIM页面
+  # Simyo eSIM页面 - 模块化版本
   from = "/simyo"
+  to = "/src/simyo/simyo_modular.html"
+  status = 200
+
+[[redirects]]
+  # Simyo eSIM页面 - 原始版本（备份）
+  from = "/simyo-legacy"
   to = "/src/simyo/simyo_complete_esim.html"
   status = 200
 
