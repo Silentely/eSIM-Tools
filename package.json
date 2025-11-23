@@ -4,12 +4,13 @@
   "description": "专为Giffgaff和Simyo用户设计的eSIM管理工具集",
   "main": "index.js",
   "scripts": {
+    "prestart": "npm run build",
+    "predev": "npm run build",
+    "prenetlify-dev": "npm run build",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "npm run build:css && npm run build:js",
-    "build:css": "postcss src/styles/*.css -d dist/css",
-    "build:js": "NODE_OPTIONS=--max-old-space-size=1536 webpack --mode production",
-    "build:dev": "npm run build:css && npm run build:js",
+    "build": "npm run build:static",
+    "build:static": "node scripts/build-static.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -19,7 +20,7 @@
     "compress": "node scripts/compress.js",
     "security-check": "node scripts/security-check.js",
     "deploy-prepare": "node scripts/deploy-prepare.js",
-    "deploy-analyze": "node scripts/deploy-prepare.js",
+    "deploy-analyze": "node scripts/deploy-analyze.js",
     "deploy-test": "node scripts/test-deploy-config.js"
   },
   "keywords": [

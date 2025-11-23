@@ -1,8 +1,8 @@
 [build]
   # 构建命令
   command = "npm run build --silent"
-  # 发布目录：使用项目根目录，直接提供现有 HTML（避免 dist 无 index.html 导致 404）
-  publish = "."
+  # 发布目录：仅暴露构建后的 dist 输出
+  publish = "dist"
   # Functions目录
   functions = "netlify/functions"
   # Edge Functions 目录

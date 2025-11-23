@@ -24,6 +24,12 @@ export default async (request, context) => {
   // 从 Edge 运行时环境读取密钥
   // Netlify Edge 使用 Deno 运行时
   const accessKey = (typeof Deno !== 'undefined' && Deno.env && (Deno.env.get('ACCESS_KEY') || Deno.env.get('ESIM_ACCESS_KEY'))) || '';
+  if (!accessKey) {
+    return new Response(JSON.stringify({ error: 'Server Misconfigured', message: 'ACCESS_KEY not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
   // Turnstile 校验（可选，若配置了 TURNSTILE_SECRET_KEY 则启用）
   const turnstileSecret = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('TURNSTILE_SECRET_KEY')) || '';
@@ -113,5 +119,4 @@ export default async (request, context) => {
   // 直接透传响应
   return response;
 };
-
 

@@ -11,7 +11,7 @@ exports.handler = async (event, context) => {
     const lower = Object.fromEntries(Object.entries(event.headers || {}).map(([k, v]) => [String(k).toLowerCase(), v]));
     const requestOrigin = lower['origin'];
 
-    const ACCESS_KEY = process.env.ACCESS_KEY || process.env.ESIM_ACCESS_KEY || '';
+    const ACCESS_KEY = process.env.ACCESS_KEY || process.env.ESIM_ACCESS_KEY;
     const getProvidedKey = () => {
         const fromHeader = lower['x-esim-key'] || lower['x-app-key'] || '';
         if (fromHeader) return fromHeader;
@@ -46,12 +46,12 @@ exports.handler = async (event, context) => {
         return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden', message: 'Origin not allowed' }) };
     }
 
-    // 鉴权参数校验（若配置了 ACCESS_KEY 则要求提供）
-    if (ACCESS_KEY) {
-        const provided = getProvidedKey();
-        if (!provided || provided !== ACCESS_KEY) {
-            return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized', message: 'Missing or invalid auth key' }) };
-        }
+    if (!ACCESS_KEY) {
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server Misconfigured', message: 'ACCESS_KEY not configured' }) };
+    }
+    const provided = getProvidedKey();
+    if (!provided || provided !== ACCESS_KEY) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized', message: 'Missing or invalid auth key' }) };
     }
 
     // 只允许POST请求

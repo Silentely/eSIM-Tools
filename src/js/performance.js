@@ -7,8 +7,6 @@ class PerformanceOptimizer {
   }
 
   init() {
-    // Delay SW registration to avoid blocking main thread
-    setTimeout(() => this.registerServiceWorker(), 2000);
     this.setupNetworkListeners();
     this.optimizeImages();
     this.setupScrollOptimization();
@@ -25,51 +23,7 @@ class PerformanceOptimizer {
     this.observers.clear();
   }
 
-  // 注册Service Worker
-  async registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-      try {
-        // 允许通过 meta 配置路径（发布在根目录或 dist）
-        const swMeta = document.querySelector('meta[name="sw-path"]');
-        const swPath = swMeta?.getAttribute('content') || '/sw.js';
-               const registration = await navigator.serviceWorker.register(swPath);
-               // 注册成功
-        
-        // 检查更新
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              this.showUpdateNotification();
-            }
-          });
-        });
-            } catch (error) {
-              console.error('Service Worker registration failed:', error);
-      }
-    }
-  }
-
-  // 显示更新通知
-  showUpdateNotification() {
-    const notification = document.createElement('div');
-    notification.className = 'update-notification fade-in';
-    notification.innerHTML = `
-      <div class="notification-content">
-        <i class="fas fa-download me-2"></i>
-        新版本可用，点击刷新页面
-        <button class="btn btn-sm btn-primary ms-2" onclick="location.reload()">
-          刷新
-        </button>
-      </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.remove();
-    }, 10000);
-  }
+  // （Service Worker 已停用）
 
   // 设置网络监听器
   setupNetworkListeners() {

@@ -6,12 +6,27 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const STATIC_ROOT = path.join(__dirname, process.env.STATIC_ROOT || 'dist');
+const INTERNAL_FUNCTION_KEY = process.env.ACCESS_KEY || process.env.ESIM_ACCESS_KEY || '';
+
+// 启动时环境检查
+if (!INTERNAL_FUNCTION_KEY) {
+    console.error('❌ ACCESS_KEY 或 ESIM_ACCESS_KEY 未配置');
+    console.error('💡 请在 .env 文件或环境变量中设置 ACCESS_KEY');
+    console.error('⚠️  Netlify Functions 将无法正常工作，请修复后重启');
+}
+
+if (!fs.existsSync(STATIC_ROOT)) {
+    console.warn(`⚠️  静态目录 ${STATIC_ROOT} 不存在，请先运行 npm run build`);
+    console.warn('💡 运行: npm run build');
+}
 
 // 中间件配置
 app.use(helmet({
@@ -41,8 +56,16 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 静态文件服务
-app.use(express.static('.'));
+const staticMiddleware = express.static(STATIC_ROOT, { fallthrough: true, index: false });
+app.use((req, res, next) => {
+    if (!['GET', 'HEAD'].includes(req.method)) {
+        return next();
+    }
+    if (/\.html?$/i.test(req.path)) {
+        return next();
+    }
+    return staticMiddleware(req, res, next);
+});
 
 // API路由 - 模拟Netlify Functions
 const giffgaffMfaChallenge = require('./netlify/functions/giffgaff-mfa-challenge');
@@ -56,9 +79,14 @@ const giffgaffSmsActivate = require('./netlify/functions/giffgaff-sms-activate')
 function wrapNetlifyFunction(handler) {
     return async (req, res) => {
         try {
+            const headers = Object.assign({}, req.headers);
+            // 仅在客户端未提供密钥时注入内部密钥（避免覆盖）
+            if (INTERNAL_FUNCTION_KEY && !headers['x-esim-key'] && !headers['x-app-key']) {
+                headers['x-esim-key'] = INTERNAL_FUNCTION_KEY;
+            }
             const event = {
                 httpMethod: req.method,
-                headers: req.headers,
+                headers,
                 body: JSON.stringify(req.body),
                 queryStringParameters: req.query
             };
@@ -145,30 +173,25 @@ app.use('/api/simyo/*', (req, res) => {
 });
 
 // 路由配置
-app.get('/giffgaff', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src/giffgaff/giffgaff_modular.html'));
-});
+const htmlRoutes = [
+    { url: '/giffgaff', file: 'src/giffgaff/giffgaff_modular.html' },
+    { url: '/giffgaff-legacy', file: 'src/giffgaff/giffgaff_complete_esim.html' },
+    { url: '/simyo', file: 'src/simyo/simyo_modular.html' },
+    { url: '/simyo-legacy', file: 'src/simyo/simyo_complete_esim.html' },
+    { url: '/simyo-static', file: 'src/simyo/simyo_static.html' },
+    // 兼容静态路径访问（与 Netlify 重写保持一致）
+    { url: '/src/giffgaff/giffgaff_modular.html', file: 'src/giffgaff/giffgaff_modular.html' },
+    { url: '/src/giffgaff/giffgaff_complete_esim.html', file: 'src/giffgaff/giffgaff_complete_esim.html' },
+    { url: '/src/simyo/simyo_modular.html', file: 'src/simyo/simyo_modular.html' },
+    { url: '/src/simyo/simyo_complete_esim.html', file: 'src/simyo/simyo_complete_esim.html' },
+    { url: '/src/simyo/simyo_static.html', file: 'src/simyo/simyo_static.html' },
+    { url: '/', file: 'index.html' }
+];
 
-// 原始版本备份路由
-app.get('/giffgaff-legacy', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src/giffgaff/giffgaff_complete_esim.html'));
-});
-
-app.get('/simyo', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src/simyo/simyo_modular.html'));
-});
-
-// 原始版本备份路由
-app.get('/simyo-legacy', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src/simyo/simyo_complete_esim.html'));
-});
-
-app.get('/simyo-static', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src/simyo/simyo_static.html'));
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+htmlRoutes.forEach(({ url, file }) => {
+    app.get(url, (req, res) => {
+        res.sendFile(path.join(STATIC_ROOT, file));
+    });
 });
 
 // 错误处理
@@ -182,6 +205,13 @@ app.use((err, req, res, next) => {
 
 // 404处理
 app.use((req, res) => {
+    // 优先返回 HTML 404 页面（如果存在）
+    const html404Path = path.join(STATIC_ROOT, '404.html');
+    if (fs.existsSync(html404Path) && req.accepts('html')) {
+        return res.status(404).sendFile(html404Path);
+    }
+
+    // API 请求或无 404 页面时返回 JSON
     res.status(404).json({
         error: 'Not Found',
         message: '请求的资源不存在'
