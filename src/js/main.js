@@ -10,7 +10,7 @@ import { autoInjectFooter } from './modules/footer.js';
 // 入口脚本：避免冗余控制台输出
 
 // 通过构建时注入的环境变量设置访问密钥（仅用于本站 Netlify Functions）
-window.ESIM_ACCESS_KEY = (typeof process !== 'undefined' && process.env && process.env.ESIM_ACCESS_KEY) ? process.env.ESIM_ACCESS_KEY : '';
+window.ACCESS_KEY = (typeof process !== 'undefined' && process.env && process.env.ACCESS_KEY) ? process.env.ACCESS_KEY : '';
 
 // 注入 Turnstile site key（若存在则在页面加载后自动挂载 Turnstile）
 // 优先使用构建环境变量；未配置则使用提供的站点密钥

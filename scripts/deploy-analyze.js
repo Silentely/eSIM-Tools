@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+const BuildLogger = require('./logger.js');
+
 const fs = require('fs');
 const path = require('path');
 
@@ -25,10 +27,10 @@ function listFiles(dir, base = dir) {
     process.exit(1);
   }
   const files = listFiles(distDir);
-  console.log('📦 dist 构建分析：');
+  BuildLogger.log('📦 dist 构建分析：');
   files.sort((a, b) => b.size - a.size);
   files.slice(0, 10).forEach(file => {
-    console.log(`${file.rel.padEnd(50)} ${(file.size / 1024).toFixed(1)} KB`);
+    BuildLogger.log(`${file.rel.padEnd(50)} ${(file.size / 1024).toFixed(1)} KB`);
   });
-  console.log(`合计文件 ${files.length} 个，总大小 ${(files.reduce((sum, f) => sum + f.size, 0) / 1024).toFixed(1)} KB`);
+  BuildLogger.log(`合计文件 ${files.length} 个，总大小 ${(files.reduce((sum, f) => sum + f.size, 0) / 1024).toFixed(1)} KB`);
 })();

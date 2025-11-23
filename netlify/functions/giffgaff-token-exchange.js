@@ -5,177 +5,91 @@
  */
 
 const axios = require('axios');
+const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
 
-exports.handler = async (event) => {
-  const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://esim.cosr.eu.org';
-  const lower = Object.fromEntries(Object.entries(event.headers || {}).map(([k, v]) => [String(k).toLowerCase(), v]));
-  const requestOrigin = lower['origin'];
-  const ACCESS_KEY = process.env.ACCESS_KEY || process.env.ESIM_ACCESS_KEY;
-  const getProvidedKey = () => {
-    const fromHeader = lower['x-esim-key'] || lower['x-app-key'] || '';
-    if (fromHeader) return fromHeader;
-    try {
-      const bodyObj = JSON.parse(event.body || '{}');
-      if (bodyObj && typeof bodyObj.authKey === 'string') return bodyObj.authKey;
-    } catch {}
-    const q = event.queryStringParameters || {};
-    if (q.authKey) return q.authKey;
-    return '';
-  };
+// 验证环境变量配置（严格验证，不自动修复）
+function validateClientCredentials() {
+  const clientId = process.env.GIFFGAFF_CLIENT_ID;
+  const clientSecret = process.env.GIFFGAFF_CLIENT_SECRET;
 
-  const headers = {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Vary': 'Origin',
-    'Content-Type': 'application/json'
-  };
-
-  if (event.httpMethod === 'OPTIONS') {
-    if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
-      return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden', message: 'Origin not allowed' }) };
-    }
-    return { statusCode: 200, headers, body: '' };
+  if (!clientId) {
+    throw new AuthError('GIFFGAFF_CLIENT_ID 未配置', 500);
   }
 
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method Not Allowed', message: '只允许POST请求' })
-    };
+  if (!clientSecret) {
+    throw new AuthError('GIFFGAFF_CLIENT_SECRET 未配置', 500);
   }
 
-  if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
-    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden', message: 'Origin not allowed' }) };
+  // 严格验证 clientSecret 格式（Base64）
+  if (!/^[A-Za-z0-9+/]+=*$/.test(clientSecret)) {
+    throw new AuthError('GIFFGAFF_CLIENT_SECRET 格式无效：必须为 Base64 编码', 500);
   }
 
-  if (!ACCESS_KEY) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server Misconfigured', message: 'ACCESS_KEY not configured' }) };
-  }
-  const provided = getProvidedKey();
-  if (!provided || provided !== ACCESS_KEY) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized', message: 'Missing or invalid auth key' }) };
+  if (clientSecret.length < 32) {
+    throw new AuthError('GIFFGAFF_CLIENT_SECRET 长度过短：必须至少32字符', 500);
   }
 
-  try {
-    const body = JSON.parse(event.body || '{}');
-    const { code, code_verifier: codeVerifier, redirect_uri: redirectUri } = body;
-
-    if (!code || !codeVerifier) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Bad Request', message: 'code 与 code_verifier 均为必需参数' })
-      };
-    }
-
-    const clientId = process.env.GIFFGAFF_CLIENT_ID;
-    const clientSecret = process.env.GIFFGAFF_CLIENT_SECRET;
-    // 根据Postman配置文件中的设置使用正确的令牌端点URL
-    const tokenUrl = process.env.GIFFGAFF_TOKEN_URL || 'https://id.giffgaff.com/auth/oauth/token';
-    const defaultRedirectUri = process.env.GIFFGAFF_REDIRECT_URI || 'giffgaff://auth/callback/';
-
-    if (!clientId || !clientSecret) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          error: 'Server Misconfiguration',
-          message: '缺少 GIFFGAFF_CLIENT_ID 或 GIFFGAFF_CLIENT_SECRET 环境变量'
-        })
-      };
-    }
-
-    // 使用正确的客户端密钥格式，确保包含等号
-    let cleanedSecret = clientSecret;
-    
-    // 确保客户端密钥包含等号，这在base64密钥中很重要
-    if (!cleanedSecret.endsWith('=')) {
-      // 如果不是以等号结尾，先检查是否以百分号结尾并去除
-      if (cleanedSecret.endsWith('%')) {
-        cleanedSecret = cleanedSecret.slice(0, -1);
-        console.log('检测到客户端密钥末尾有百分号，已去除');
-      }
-      
-      // 如果客户端密钥是标准的base64，但缺少等号，添加等号
-      if (!/=$/.test(cleanedSecret)) {
-        cleanedSecret = cleanedSecret + '=';
-        console.log('客户端密钥可能缺少等号，已添加');
-      }
-    }
-    
-    console.log(`使用客户端ID: ${clientId.substring(0, 5)}*****`);
-    console.log(`客户端密钥长度: ${cleanedSecret.length}`);
-    const authHeader = Buffer.from(`${clientId}:${cleanedSecret}`).toString('base64');
-
-    const form = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri || defaultRedirectUri,
-      code_verifier: codeVerifier
-    });
-
-    // 添加调试日志
-console.log(`请求令牌端点: ${tokenUrl}`);
-console.log(`请求参数: ${form.toString()}`);
-// 不打印敏感信息
-console.log(`请求头部: Authorization: Basic ******, Content-Type: application/x-www-form-urlencoded`);
-
-// 根据Postman配置使用Authorization头发送客户端凭据，而不是表单参数
-const formWithCredentials = new URLSearchParams({
-  grant_type: 'authorization_code',
-  code,
-  redirect_uri: redirectUri || defaultRedirectUri,
-  code_verifier: codeVerifier
-});
-
-console.log(`请求参数(包含凭据): ${formWithCredentials.toString().replace(cleanedSecret, '******')}`);
-
-// 确保授权码没有被额外编码
-// 如果授权码中包含了URL编码字符，尝试解码一次
-let decodedCode = code;
-try {
-  if (code.includes('%')) {
-    const possiblyDecodedCode = decodeURIComponent(code);
-    if (possiblyDecodedCode !== code) {
-      decodedCode = possiblyDecodedCode;
-      console.log('检测到授权码可能被多次编码，已解码');
-      
-      // 更新表单参数
-      formWithCredentials.set('code', decodedCode);
-    }
-  }
-} catch (e) {
-  console.log('授权码解码失败，使用原始码');
+  return { clientId, clientSecret };
 }
 
-const response = await axios.post(tokenUrl, formWithCredentials, {
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Accept': 'application/json',
-    'Authorization': `Basic ${authHeader}`
+// 输入验证 schema
+const tokenExchangeSchema = {
+  code: {
+    required: true,
+    type: 'string',
+    minLength: 10,
+    maxLength: 500
   },
-  timeout: 30000
-});
-
-    return { statusCode: 200, headers, body: JSON.stringify(response.data) };
-  } catch (error) {
-    const status = error.response?.status || 500;
-    const data = error.response?.data || { message: error.message };
-    
-    // 添加详细错误日志
-    console.error('Token exchange error:', {
-      status,
-      data,
-      message: error.message,
-      stack: error.stack
-    });
-    
-    return {
-      statusCode: status,
-      headers,
-      body: JSON.stringify({ error: 'Token Exchange Failed', details: data })
-    };
+  code_verifier: {
+    required: true,
+    type: 'string',
+    minLength: 43,
+    maxLength: 128,
+    pattern: /^[A-Za-z0-9\-._~]+$/
+  },
+  redirect_uri: {
+    required: false,
+    type: 'string',
+    maxLength: 500
   }
 };
+
+exports.handler = withAuth(async (event, context, { auth, body }) => {
+  // 输入验证
+  validateInput(tokenExchangeSchema, body);
+
+  const { code, code_verifier: codeVerifier, redirect_uri: redirectUri } = body;
+
+  // 验证环境配置
+  const { clientId, clientSecret } = validateClientCredentials();
+
+  const tokenUrl = process.env.GIFFGAFF_TOKEN_URL || 'https://id.giffgaff.com/auth/oauth/token';
+  const defaultRedirectUri = process.env.GIFFGAFF_REDIRECT_URI || 'giffgaff://auth/callback/';
+
+  // 构建 Basic Auth header（不再自动修复密钥）
+  const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+  const form = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: redirectUri || defaultRedirectUri,
+    code_verifier: codeVerifier
+  });
+
+  // 执行令牌交换（使用 axios，30秒超时）
+  const response = await axios.post(tokenUrl, form.toString(), {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${authHeader}`,
+      'User-Agent': 'giffgaff/1332 CFNetwork/1568.300.101 Darwin/24.2.0'
+    },
+    timeout: 30000
+  });
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify(response.data)
+  };
+}, {
+  validateSchema: tokenExchangeSchema
+});

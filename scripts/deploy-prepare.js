@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+const BuildLogger = require('./logger.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -6,9 +7,9 @@ const projectRoot = path.join(__dirname, '..');
 const distDir = path.join(projectRoot, 'dist');
 
 function ensureAccessKey() {
-  const key = process.env.ACCESS_KEY || process.env.ESIM_ACCESS_KEY;
+  const key = process.env.ACCESS_KEY;
   if (!key) {
-    throw new Error('ACCESS_KEY/ESIM_ACCESS_KEY 未配置，无法保护 Functions。');
+    throw new Error('ACCESS_KEY 未配置，无法保护 Functions。');
   }
 }
 
@@ -20,8 +21,8 @@ function ensureDist() {
 }
 
 (function main() {
-  console.log('🔧 检查部署前置条件...');
+  BuildLogger.log('🔧 检查部署前置条件...');
   ensureAccessKey();
   ensureDist();
-  console.log('✅ 部署前检查通过，可继续执行部署流程');
+  BuildLogger.success(' 部署前检查通过，可继续执行部署流程');
 })();

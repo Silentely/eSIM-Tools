@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+const BuildLogger = require('./logger.js');
+
 const fs = require('fs');
 const path = require('path');
 
@@ -14,5 +16,5 @@ const netlifyToml = path.join(__dirname, '..', 'netlify.toml');
     console.error('netlify.toml 未将 publish 指向 dist');
     process.exit(1);
   }
-  console.log('✅ Netlify 配置检查通过 (publish=dist)');
+  BuildLogger.success(' Netlify 配置检查通过 (publish=dist)');
 })();

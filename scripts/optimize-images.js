@@ -1,6 +1,8 @@
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const BuildLogger = require('./logger.js');
+
 const { promisify } = require('util');
 
 const readdir = promisify(fs.readdir);
@@ -45,7 +47,7 @@ async function optimizeImage(inputPath, outputPath, format, options = {}) {
       const inputStats = await stat(inputPath);
       const outputStats = await stat(outputPath);
       if (outputStats.mtime > inputStats.mtime) {
-        console.log(`⏭️  跳过已优化: ${path.basename(outputPath)}`);
+        BuildLogger.log(`⏭️  跳过已优化: ${path.basename(outputPath)}`);
         return true;
       }
     }
@@ -93,7 +95,7 @@ async function optimizeImage(inputPath, outputPath, format, options = {}) {
     const outputSize = (await stat(outputPath)).size;
     const savings = ((inputSize - outputSize) / inputSize * 100).toFixed(1);
     
-    console.log(`✅ 优化完成: ${path.basename(inputPath)} -> ${format.toUpperCase()} (节省 ${savings}%)`);
+    BuildLogger.success(' 优化完成: ${path.basename(inputPath)} -> ${format.toUpperCase()} (节省 ${savings}%)');
     return { success: true, inputSize, outputSize, savings };
   } catch (error) {
     console.error(`❌ 优化失败: ${path.basename(inputPath)}`, error.message);
@@ -108,7 +110,7 @@ async function generateMultipleFormats(inputPath, filename) {
   // Check file size threshold
   const fileStats = await stat(inputPath);
   if (fileStats.size < config.minFileSize) {
-    console.log(`⏭️  跳过小文件: ${filename} (${fileStats.size} bytes)`);
+    BuildLogger.log(`⏭️  跳过小文件: ${filename} (${fileStats.size} bytes)`);
     return [];
   }
   
@@ -144,7 +146,7 @@ async function generateThumbnails(inputPath, filename) {
     // Skip if image is already smaller than thumbnail size
     if (metadata.width <= config.sizes.thumbnail.width && 
         metadata.height <= config.sizes.thumbnail.height) {
-      console.log(`⏭️  跳过缩略图生成: ${filename} (已足够小)`);
+      BuildLogger.log(`⏭️  跳过缩略图生成: ${filename} (已足够小)`);
       return { success: true, skipped: true };
     }
     
@@ -156,7 +158,7 @@ async function generateThumbnails(inputPath, filename) {
       const inputStats = await stat(inputPath);
       const thumbStats = await stat(thumbnailPath);
       if (thumbStats.mtime > inputStats.mtime) {
-        console.log(`⏭️  跳过已存在的缩略图: ${path.basename(thumbnailPath)}`);
+        BuildLogger.log(`⏭️  跳过已存在的缩略图: ${path.basename(thumbnailPath)}`);
         return { success: true, skipped: true };
       }
     }
@@ -169,7 +171,7 @@ async function generateThumbnails(inputPath, filename) {
       .jpeg({ quality: 80, progressive: true })
       .toFile(thumbnailPath);
     
-    console.log(`✅ 缩略图生成: ${path.basename(thumbnailPath)}`);
+    BuildLogger.success(' 缩略图生成: ${path.basename(thumbnailPath)}');
     return { success: true, skipped: false };
   } catch (error) {
     console.error(`❌ 缩略图生成失败: ${filename}`, error.message);
@@ -200,7 +202,7 @@ function generateManifest() {
   
   const manifestPath = path.join(config.outputDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-  console.log(`📋 图片清单已生成: ${manifestPath}`);
+  BuildLogger.log(`📋 图片清单已生成: ${manifestPath}`);
 }
 
 // Process images with concurrency control
@@ -218,7 +220,7 @@ async function processImagesInBatches(imageFiles) {
     
     await Promise.all(batch.map(async (filename) => {
       const inputPath = path.join(config.inputDir, filename);
-      console.log(`\n🔄 处理: ${filename}`);
+      BuildLogger.log(`\n🔄 处理: ${filename}`);
       
       try {
         // Generate multiple formats
@@ -257,23 +259,23 @@ async function processImagesInBatches(imageFiles) {
 
 // 主函数
 async function optimizeImages() {
-  console.log('🚀 开始图片优化...');
-  console.log(`📁 输入目录: ${config.inputDir}`);
-  console.log(`📁 输出目录: ${config.outputDir}`);
-  console.log(`⚡ 并发数: ${config.maxConcurrent}`);
+  BuildLogger.log('🚀 开始图片优化...');
+  BuildLogger.log(`📁 输入目录: ${config.inputDir}`);
+  BuildLogger.log(`📁 输出目录: ${config.outputDir}`);
+  BuildLogger.log(`⚡ 并发数: ${config.maxConcurrent}`);
   
   // 确保输出目录存在
   ensureOutputDir();
   
   // 检查输入目录是否存在
   if (!fs.existsSync(config.inputDir)) {
-    console.log(`⚠️  输入目录不存在，创建示例目录: ${config.inputDir}`);
+    BuildLogger.warn('  输入目录不存在，创建示例目录: ${config.inputDir}');
     fs.mkdirSync(config.inputDir, { recursive: true });
     
     // 创建示例文件
     const examplePath = path.join(config.inputDir, 'example.txt');
     fs.writeFileSync(examplePath, '请将需要优化的图片文件放在此目录中');
-    console.log(`📝 已创建示例文件: ${examplePath}`);
+    BuildLogger.log(`📝 已创建示例文件: ${examplePath}`);
     return;
   }
   
@@ -281,11 +283,11 @@ async function optimizeImages() {
   const imageFiles = files.filter(isImageFile);
   
   if (imageFiles.length === 0) {
-    console.log('⚠️  未找到图片文件');
+    BuildLogger.warn('  未找到图片文件');
     return;
   }
   
-  console.log(`📸 找到 ${imageFiles.length} 个图片文件`);
+  BuildLogger.log(`📸 找到 ${imageFiles.length} 个图片文件`);
   
   const startTime = Date.now();
   const results = await processImagesInBatches(imageFiles);
@@ -294,19 +296,19 @@ async function optimizeImages() {
   // 生成清单
   generateManifest();
   
-  console.log(`\n🎉 优化完成!`);
-  console.log(`⏱️  用时: ${duration}秒`);
-  console.log(`✅ 成功: ${results.successful}`);
-  console.log(`⏭️  跳过: ${results.skipped}`);
-  console.log(`❌ 失败: ${results.failed}`);
+  BuildLogger.log(`\n🎉 优化完成!`);
+  BuildLogger.log(`⏱️  用时: ${duration}秒`);
+  BuildLogger.success(' 成功: ${results.successful}');
+  BuildLogger.log(`⏭️  跳过: ${results.skipped}`);
+  BuildLogger.error(' 失败: ${results.failed}');
   if (results.totalSavings > 0) {
     const avgSavings = (results.totalSavings / results.successful).toFixed(1);
-    console.log(`💾 平均节省空间: ${avgSavings}%`);
+    BuildLogger.log(`💾 平均节省空间: ${avgSavings}%`);
   }
-  console.log(`📁 输出目录: ${config.outputDir}`);
+  BuildLogger.log(`📁 输出目录: ${config.outputDir}`);
   
   if (results.failed > 0) {
-    console.log(`⚠️  有 ${results.failed} 个文件处理失败`);
+    BuildLogger.warn('  有 ${results.failed} 个文件处理失败');
     process.exit(1);
   }
 }
@@ -314,7 +316,7 @@ async function optimizeImages() {
 // 命令行参数处理
 const args = process.argv.slice(2);
 if (args.includes('--help') || args.includes('-h')) {
-  console.log(`
+  BuildLogger.log(`
 📸 图片优化工具 (Sharp版本)
 
 用法: node optimize-images.js [选项]

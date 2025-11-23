@@ -1,3 +1,5 @@
+import Logger from '../../../js/modules/logger.js';
+
 /**
  * MFA验证处理模块
  * 负责多因素认证流程
@@ -41,7 +43,7 @@ export class MFAHandler {
             
             // 检查令牌是否被刷新
             if (data._tokenRefreshed && data._newAccessToken) {
-                console.log(t('giffgaff.mfa.log.tokenRefreshed'));
+                Logger.log(t('giffgaff.mfa.log.tokenRefreshed'));
                 stateManager.set('accessToken', data._newAccessToken);
             }
             
@@ -156,7 +158,7 @@ export class MFAHandler {
             }
             
             const responseData = await response.json();
-            console.log(t('giffgaff.mfa.log.swapResponse'), responseData);
+            Logger.log(t('giffgaff.mfa.log.swapResponse'), responseData);
             
             if (responseData.errors) {
                 throw new Error(responseData.errors[0].message || t('giffgaff.mfa.errors.genericSendFailed'));

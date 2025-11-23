@@ -1,3 +1,5 @@
+import Logger from '../logger.js';
+
 /**
  * Giffgaff API 交互模块
  */
@@ -29,7 +31,7 @@ class APIManager {
    * @returns {Promise<Object>} MFA Challenge Response
    */
   async sendMFAChallenge(accessToken) {
-    console.log('[API] sendMFAChallenge: start', { hasToken: !!accessToken });
+    Logger.log('[API] sendMFAChallenge: start', { hasToken: !!accessToken });
     // 先检查令牌是否过期，如果过期则尝试使用cookie重新验证
     try {
       // 尝试使用现有令牌
@@ -52,7 +54,7 @@ class APIManager {
       // 如果响应成功，直接返回结果
       if (response.ok) {
         const json = await response.json();
-        console.log('[API] sendMFAChallenge: ok', { hasRef: !!json?.ref });
+        Logger.log('[API] sendMFAChallenge: ok', { hasRef: !!json?.ref });
         return json;
       }
       
@@ -68,13 +70,13 @@ class APIManager {
         // 尝试使用本地存储的cookie重新验证
         const cookie = localStorage.getItem('giffgaff_cookie');
         if (cookie) {
-          console.log('尝试使用cookie重新验证');
+          Logger.log('尝试使用cookie重新验证');
           const cookieVerifyResult = await this.verifyCookie(cookie);
           
           if (cookieVerifyResult.success && cookieVerifyResult.accessToken) {
             // 更新全局令牌
             const newAccessToken = cookieVerifyResult.accessToken;
-            console.log('使用cookie重新验证成功，更新令牌');
+            Logger.log('使用cookie重新验证成功，更新令牌');
             
             // 使用新令牌重新发送MFA请求
             const newResponse = await fetch(this.endpoints.mfaChallenge, {
@@ -126,7 +128,7 @@ class APIManager {
    * @returns {Promise<Object>} MFA Validation Response
    */
   async validateMFACode(accessToken, ref, code) {
-    console.log('[API] validateMFACode: start', { hasToken: !!accessToken, ref: String(ref||'').slice(0,6)+'...' });
+    Logger.log('[API] validateMFACode: start', { hasToken: !!accessToken, ref: String(ref||'').slice(0,6)+'...' });
     const response = await fetch(this.endpoints.mfaValidation, {
       method: 'POST',
       headers: {
@@ -147,7 +149,7 @@ class APIManager {
     }
 
     const json = await response.json();
-    console.log('[API] validateMFACode: ok', { hasSignature: !!json?.signature });
+    Logger.log('[API] validateMFACode: ok', { hasSignature: !!json?.signature });
     return json;
   }
 
@@ -158,7 +160,7 @@ class APIManager {
    * - 输出: { success, lpaString, token, ssn, activationCode }
    */
   async smsActivateFlow({ ref, code, accessToken, cookie, memberId, ssn, activationCode }) {
-    console.log('[API] smsActivateFlow: start', { hasToken: !!accessToken, hasCookie: !!cookie, ref: String(ref||'').slice(0,6)+'...' });
+    Logger.log('[API] smsActivateFlow: start', { hasToken: !!accessToken, hasCookie: !!cookie, ref: String(ref||'').slice(0,6)+'...' });
     const resp = await fetch(this.endpoints.smsActivate, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
@@ -169,7 +171,7 @@ class APIManager {
       throw new Error(`SMS activate flow failed: ${resp.status} - ${t}`);
     }
     const json = await resp.json();
-    console.log('[API] smsActivateFlow: ok', { success: !!json?.success, hasLpa: !!json?.lpaString });
+    Logger.log('[API] smsActivateFlow: ok', { success: !!json?.success, hasLpa: !!json?.lpaString });
     return json;
   }
 
@@ -184,7 +186,7 @@ class APIManager {
   async graphqlQuery(accessToken, query, variables = {}, mfaSignature = null) {
     const opMatch = String(query||'').match(/(query|mutation)\s+(\w+)/i);
     const op = opMatch ? opMatch[2] : 'Unknown';
-    console.log('[API] graphqlQuery: start', { op, hasToken: !!accessToken, hasSignature: !!mfaSignature });
+    Logger.log('[API] graphqlQuery: start', { op, hasToken: !!accessToken, hasSignature: !!mfaSignature });
     const response = await fetch(this.endpoints.graphql, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
@@ -213,7 +215,7 @@ class APIManager {
     }
 
     const data = await response.json();
-    console.log('[API] graphqlQuery: ok', { op, hasErrors: !!data?.errors });
+    Logger.log('[API] graphqlQuery: ok', { op, hasErrors: !!data?.errors });
     
     if (data.errors) {
       throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
@@ -229,7 +231,7 @@ class APIManager {
    * @param {string} redirectUri 可选
    */
   async exchangeTokenServerSide(code, codeVerifier, redirectUri) {
-    console.log('[API] tokenExchange: start');
+    Logger.log('[API] tokenExchange: start');
     const response = await fetch(this.endpoints.tokenExchange, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -240,7 +242,7 @@ class APIManager {
       throw new Error(`Server token exchange failed: ${response.status} - ${errorText}`);
     }
     const json = await response.json();
-    console.log('[API] tokenExchange: ok');
+    Logger.log('[API] tokenExchange: ok');
     return json;
   }
 
@@ -250,7 +252,7 @@ class APIManager {
    * @returns {Promise<Object>} Member Profile
    */
   async getMemberProfile(accessToken) {
-    console.log('[API] getMemberProfile: start', { hasToken: !!accessToken });
+    Logger.log('[API] getMemberProfile: start', { hasToken: !!accessToken });
     const query = `
       query getMemberProfileAndSim {
         memberProfile {
@@ -267,7 +269,7 @@ class APIManager {
     `;
 
     const res = await this.graphqlQuery(accessToken, query);
-    console.log('[API] getMemberProfile: ok', { hasMember: !!res?.data?.memberProfile });
+    Logger.log('[API] getMemberProfile: ok', { hasMember: !!res?.data?.memberProfile });
     return res;
   }
 
@@ -279,7 +281,7 @@ class APIManager {
    * @returns {Promise<Object>} Reserve eSIM Response
    */
   async reserveESIM(accessToken, memberId, mfaSignature) {
-    console.log('[API] reserveESIM: start', { hasToken: !!accessToken, hasSignature: !!mfaSignature });
+    Logger.log('[API] reserveESIM: start', { hasToken: !!accessToken, hasSignature: !!mfaSignature });
     const query = `
       mutation reserveESim($input: ESimReservationInput!) {
         reserveESim: reserveESim(input: $input) {
@@ -315,7 +317,7 @@ class APIManager {
         localStorage.setItem('gg_esim_ssn', esim.ssn || '');
       }
     } catch (_) {}
-    console.log('[API] reserveESIM: ok', { hasESIM: !!data?.data?.reserveESim?.esim });
+    Logger.log('[API] reserveESIM: ok', { hasESIM: !!data?.data?.reserveESim?.esim });
     return data;
   }
 
@@ -326,7 +328,7 @@ class APIManager {
    * @returns {Promise<Object>} eSIM Token Response
    */
   async getESIMToken(accessToken, ssn) {
-    console.log('[API] getESIMToken: start', { hasToken: !!accessToken, hasSSN: !!ssn });
+    Logger.log('[API] getESIMToken: start', { hasToken: !!accessToken, hasSSN: !!ssn });
     const query = `
       query eSimDownloadToken($ssn: String!) {
         eSimDownloadToken(ssn: $ssn) {
@@ -348,7 +350,7 @@ class APIManager {
       const lpa = data?.data?.eSimDownloadToken?.lpaString;
       if (lpa) localStorage.setItem('gg_esim_lpa', lpa);
     } catch (_) {}
-    console.log('[API] getESIMToken: ok', { hasLPA: !!data?.data?.eSimDownloadToken?.lpaString });
+    Logger.log('[API] getESIMToken: ok', { hasLPA: !!data?.data?.eSimDownloadToken?.lpaString });
     return data;
   }
 
@@ -358,7 +360,7 @@ class APIManager {
    * @returns {Promise<Object>} Cookie Verification Response
    */
   async verifyCookie(cookie) {
-    console.log('[API] verifyCookie: start', { hasCookie: !!cookie });
+    Logger.log('[API] verifyCookie: start', { hasCookie: !!cookie });
     const response = await fetch(this.endpoints.cookieVerify, {
       method: 'POST',
       headers: {
@@ -376,7 +378,7 @@ class APIManager {
     }
 
     const json = await response.json();
-    console.log('[API] verifyCookie: ok', { success: !!json?.success });
+    Logger.log('[API] verifyCookie: ok', { success: !!json?.success });
     return json;
   }
 
@@ -386,7 +388,7 @@ class APIManager {
    * @returns {Promise<Object>} Auto Activation Response
    */
   async autoActivateESIM(activationCode) {
-    console.log('[API] autoActivateESIM: start', { hasCode: !!activationCode });
+    Logger.log('[API] autoActivateESIM: start', { hasCode: !!activationCode });
     const response = await fetch(this.endpoints.autoActivate, {
       method: 'POST',
       headers: {
@@ -404,7 +406,7 @@ class APIManager {
     }
 
     const json = await response.json();
-    console.log('[API] autoActivateESIM: ok', { success: !!json?.success });
+    Logger.log('[API] autoActivateESIM: ok', { success: !!json?.success });
     return json;
   }
 }

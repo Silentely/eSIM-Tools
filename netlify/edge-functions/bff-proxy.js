@@ -1,7 +1,7 @@
 /**
  * Netlify Edge Function: BFF Proxy
  * - 接收前端对 /bff/* 的请求
- * - 在服务端附加 x-esim-key（来自环境变量 ACCESS_KEY 或 ESIM_ACCESS_KEY）
+ * - 在服务端附加 x-esim-key（来自环境变量 ACCESS_KEY）
  * - 转发到对应的 /.netlify/functions/* 目标
  */
 
@@ -23,7 +23,7 @@ export default async (request, context) => {
 
   // 从 Edge 运行时环境读取密钥
   // Netlify Edge 使用 Deno 运行时
-  const accessKey = (typeof Deno !== 'undefined' && Deno.env && (Deno.env.get('ACCESS_KEY') || Deno.env.get('ESIM_ACCESS_KEY'))) || '';
+  const accessKey = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('ACCESS_KEY')) || '';
   if (!accessKey) {
     return new Response(JSON.stringify({ error: 'Server Misconfigured', message: 'ACCESS_KEY not configured' }), {
       status: 500,

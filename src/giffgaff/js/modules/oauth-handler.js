@@ -1,3 +1,5 @@
+import Logger from '../../../js/modules/logger.js';
+
 /**
  * OAuth处理模块
  * 负责OAuth 2.0 PKCE认证流程
@@ -81,8 +83,8 @@ export class OAuthHandler {
                 throw new Error(t('giffgaff.oauth.errors.missingCode'));
             }
             
-            console.log(t('giffgaff.oauth.log.codeFound'), code);
-            console.log(t('giffgaff.oauth.log.stateFound'), state);
+            Logger.log(t('giffgaff.oauth.log.codeFound'), code);
+            Logger.log(t('giffgaff.oauth.log.stateFound'), state);
             
             // 恢复code verifier
             let codeVerifier = stateManager.get('codeVerifier');

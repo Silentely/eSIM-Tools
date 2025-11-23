@@ -1,3 +1,5 @@
+import Logger from '../logger.js';
+
 /**
  * Giffgaff OAuth 2.0 PKCE 认证模块
  */
@@ -121,7 +123,7 @@ class OAuthManager {
    */
   // 前端不再直接持有 client_secret，改由服务端函数代为交换
   async exchangeToken(code, codeVerifier) {
-    console.log(`Sending token exchange request: code=${code.substring(0, 3)}*****, code_verifier=${codeVerifier.substring(0, 3)}*****`);
+    Logger.log(`Sending token exchange request: code=${code.substring(0, 3)}*****, code_verifier=${codeVerifier.substring(0, 3)}*****`);
     // 等待 Turnstile token（最多等待 ~2.5s）
     let tsToken = this.getTurnstileToken();
     for (let i = 0; i < 5 && !tsToken; i++) {

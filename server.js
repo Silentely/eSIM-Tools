@@ -9,16 +9,17 @@ const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const Logger = require('./src/js/modules/logger.js');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const STATIC_ROOT = path.join(__dirname, process.env.STATIC_ROOT || 'dist');
-const INTERNAL_FUNCTION_KEY = process.env.ACCESS_KEY || process.env.ESIM_ACCESS_KEY || '';
+const INTERNAL_FUNCTION_KEY = process.env.ACCESS_KEY || '';
 
 // 启动时环境检查
 if (!INTERNAL_FUNCTION_KEY) {
-    console.error('❌ ACCESS_KEY 或 ESIM_ACCESS_KEY 未配置');
+    console.error('❌ ACCESS_KEY 未配置');
     console.error('💡 请在 .env 文件或环境变量中设置 ACCESS_KEY');
     console.error('⚠️  Netlify Functions 将无法正常工作，请修复后重启');
 }
@@ -129,7 +130,7 @@ app.use('/.netlify/functions/giffgaff-sms-activate', wrapNetlifyFunction(giffgaf
 // Simyo API代理路由
 app.use('/api/simyo/*', (req, res) => {
     const targetUrl = `https://appapi.simyo.nl/simyoapi/api/v1${req.path.replace('/api/simyo', '')}`;
-    console.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
+    Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
     
     // 设置CORS头（仅允许指定域）
     res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -220,11 +221,11 @@ app.use((req, res) => {
 
 // 启动服务器
 app.listen(PORT, () => {
-    console.log(`🚀 eSIM工具服务器已启动`);
-    console.log(`📍 本地地址: http://localhost:${PORT}`);
-    console.log(`🔧 Giffgaff工具: http://localhost:${PORT}/giffgaff`);
-    console.log(`📱 Simyo工具: http://localhost:${PORT}/simyo`);
-    console.log(`🌐 环境: ${process.env.NODE_ENV || 'development'}`);
+    Logger.log(`🚀 eSIM工具服务器已启动`);
+    Logger.log(`📍 本地地址: http://localhost:${PORT}`);
+    Logger.log(`🔧 Giffgaff工具: http://localhost:${PORT}/giffgaff`);
+    Logger.log(`📱 Simyo工具: http://localhost:${PORT}/simyo`);
+    Logger.log(`🌐 环境: ${process.env.NODE_ENV || 'development'}`);
 });
 
 module.exports = app;

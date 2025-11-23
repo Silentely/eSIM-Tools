@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const BuildLogger = require('./logger.js');
+
 const { promisify } = require('util');
 
 const gzip = promisify(zlib.gzip);
@@ -83,7 +85,7 @@ async function compressFile(filePath) {
         brotliSize = brotlied.length;
       }
     } catch (error) {
-      console.log(`Brotli压缩失败 ${fileName}:`, error.message);
+      BuildLogger.log(`Brotli压缩失败 ${fileName}:`, error.message);
     }
     
     const originalSize = content.length;
@@ -141,20 +143,20 @@ async function compressBuild() {
     return;
   }
   
-  console.log('开始压缩构建文件...');
+  BuildLogger.log('开始压缩构建文件...');
   
   try {
     const results = await compressDirectory(distDir);
     
     if (results.length === 0) {
-      console.log('没有找到需要压缩的文件');
+      BuildLogger.log('没有找到需要压缩的文件');
       return;
     }
     
     // 显示压缩结果
-    console.log('\n压缩结果:');
-    console.log('文件名'.padEnd(30) + '原始大小'.padEnd(12) + 'Gzip大小'.padEnd(12) + 'Brotli大小'.padEnd(12) + '压缩率');
-    console.log('-'.repeat(80));
+    BuildLogger.log('\n压缩结果:');
+    BuildLogger.log('文件名'.padEnd(30) + '原始大小'.padEnd(12) + 'Gzip大小'.padEnd(12) + 'Brotli大小'.padEnd(12) + '压缩率');
+    BuildLogger.log('-'.repeat(80));
     
     let totalOriginal = 0;
     let totalGzip = 0;
@@ -169,7 +171,7 @@ async function compressBuild() {
       const gzipKB = (result.gzip / 1024).toFixed(1);
       const brotliKB = result.brotli ? (result.brotli / 1024).toFixed(1) : '-';
       
-      console.log(
+      BuildLogger.log(
         result.file.padEnd(30) +
         `${originalKB}KB`.padEnd(12) +
         `${gzipKB}KB`.padEnd(12) +
@@ -179,8 +181,8 @@ async function compressBuild() {
     });
     
     const totalRatio = ((totalOriginal - totalGzip) / totalOriginal * 100).toFixed(1);
-    console.log('-'.repeat(80));
-    console.log(
+    BuildLogger.log('-'.repeat(80));
+    BuildLogger.log(
       '总计'.padEnd(30) +
       `${(totalOriginal / 1024).toFixed(1)}KB`.padEnd(12) +
       `${(totalGzip / 1024).toFixed(1)}KB`.padEnd(12) +
@@ -188,8 +190,8 @@ async function compressBuild() {
       `${totalRatio}%`
     );
     
-    console.log(`\n压缩完成！共处理 ${results.length} 个文件`);
-    console.log(`节省空间: ${((totalOriginal - totalGzip) / 1024).toFixed(1)}KB`);
+    BuildLogger.log(`\n压缩完成！共处理 ${results.length} 个文件`);
+    BuildLogger.log(`节省空间: ${((totalOriginal - totalGzip) / 1024).toFixed(1)}KB`);
   } catch (error) {
     console.error('压缩失败:', error);
   }

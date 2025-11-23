@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+const BuildLogger = require('./logger.js');
+
 
 const fs = require('fs');
 const path = require('path');
@@ -89,42 +91,47 @@ function checkDependencies() {
 
 // 生成安全报告
 function generateSecurityReport() {
-  console.log('🔒 安全检查报告\n');
+  BuildLogger.log('🔒 安全检查报告
+');
   
   const vulnerabilities = checkDependencies();
   
   if (vulnerabilities.length === 0) {
-    console.log('✅ 未发现已知的安全漏洞');
+    BuildLogger.success(' 未发现已知的安全漏洞');
     return;
   }
 
-  console.log(`⚠️  发现 ${vulnerabilities.length} 个潜在安全漏洞:\n`);
+  BuildLogger.warn('  发现 ${vulnerabilities.length} 个潜在安全漏洞:
+');
   
   vulnerabilities.forEach((vuln, index) => {
-    console.log(`${index + 1}. ${vuln.package}@${vuln.version}`);
-    console.log(`   严重程度: ${vuln.severity}`);
-    console.log(`   描述: ${vuln.description}`);
-    console.log(`   修复建议: ${vuln.fix}\n`);
+    BuildLogger.log(`${index + 1}. ${vuln.package}@${vuln.version}`);
+    BuildLogger.log(`   严重程度: ${vuln.severity}`);
+    BuildLogger.log(`   描述: ${vuln.description}`);
+    BuildLogger.log(`   修复建议: ${vuln.fix}
+`);
   });
 
-  console.log('🔧 修复建议:');
-  console.log('1. 运行 npm update 更新所有依赖');
-  console.log('2. 运行 npm audit fix 自动修复');
-  console.log('3. 手动更新特定包到最新版本');
+  BuildLogger.log('🔧 修复建议:');
+  BuildLogger.log('1. 运行 npm update 更新所有依赖');
+  BuildLogger.log('2. 运行 npm audit fix 自动修复');
+  BuildLogger.log('3. 手动更新特定包到最新版本');
 }
 
 // 检查开发环境安全配置
 function checkSecurityConfig() {
-  console.log('\n🔧 安全配置检查:\n');
+  BuildLogger.log('
+🔧 安全配置检查:
+');
   
   // 检查Helmet配置
   const serverPath = path.join(__dirname, '../server.js');
   if (fs.existsSync(serverPath)) {
     const serverContent = fs.readFileSync(serverPath, 'utf8');
     if (serverContent.includes('helmet')) {
-      console.log('✅ Helmet安全头已配置');
+      BuildLogger.success(' Helmet安全头已配置');
     } else {
-      console.log('⚠️  建议添加Helmet安全头');
+      BuildLogger.warn('  建议添加Helmet安全头');
     }
   }
 
@@ -132,9 +139,9 @@ function checkSecurityConfig() {
   if (fs.existsSync(serverPath)) {
     const serverContent = fs.readFileSync(serverPath, 'utf8');
     if (serverContent.includes('cors')) {
-      console.log('✅ CORS配置已设置');
+      BuildLogger.success(' CORS配置已设置');
     } else {
-      console.log('⚠️  建议配置CORS');
+      BuildLogger.warn('  建议配置CORS');
     }
   }
 
@@ -150,9 +157,9 @@ function checkSecurityConfig() {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
       if (content.includes('Content-Security-Policy')) {
-        console.log(`✅ ${file} 已配置CSP`);
+        BuildLogger.success(' ${file} 已配置CSP');
       } else {
-        console.log(`⚠️  ${file} 建议添加CSP配置`);
+        BuildLogger.warn('  ${file} 建议添加CSP配置');
       }
     }
   });
@@ -163,12 +170,13 @@ function main() {
   generateSecurityReport();
   checkSecurityConfig();
   
-  console.log('\n📋 安全最佳实践:');
-  console.log('1. 定期更新依赖包');
-  console.log('2. 使用npm audit检查安全漏洞');
-  console.log('3. 配置适当的安全头');
-  console.log('4. 实施内容安全策略(CSP)');
-  console.log('5. 使用HTTPS部署');
+  BuildLogger.log('
+📋 安全最佳实践:');
+  BuildLogger.log('1. 定期更新依赖包');
+  BuildLogger.log('2. 使用npm audit检查安全漏洞');
+  BuildLogger.log('3. 配置适当的安全头');
+  BuildLogger.log('4. 实施内容安全策略(CSP)');
+  BuildLogger.log('5. 使用HTTPS部署');
 }
 
 if (require.main === module) {

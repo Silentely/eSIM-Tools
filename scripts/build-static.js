@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+const BuildLogger = require('./logger.js');
+
 const fs = require('fs');
 const path = require('path');
 
@@ -61,16 +63,16 @@ async function copyDirectory(source, destination) {
 }
 
 (async () => {
-  console.log('🧹 清理 dist 目录...');
+  BuildLogger.log('🧹 清理 dist 目录...');
   await removeDist();
   await fs.promises.mkdir(distDir, { recursive: true });
 
   for (const entry of entries) {
-    console.log(`📦 复制 ${entry} -> dist/${entry}`);
+    BuildLogger.log(`📦 复制 ${entry} -> dist/${entry}`);
     await copyEntry(entry);
   }
 
-  console.log('✅ 静态资源构建完成，输出目录 dist/');
+  BuildLogger.success(' 静态资源构建完成，输出目录 dist/');
 })().catch(err => {
   console.error('构建静态资源失败:', err);
   process.exitCode = 1;

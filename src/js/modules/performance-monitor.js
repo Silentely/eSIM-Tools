@@ -1,3 +1,5 @@
+import Logger from './logger.js';
+
 /**
  * Performance Monitoring Utility
  * Tracks and reports Core Web Vitals and custom metrics
@@ -208,7 +210,7 @@ class PerformanceMonitor {
 
     // Log in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${name}:`, data);
+      Logger.log(`[Performance] ${name}:`, data);
     }
 
     // Send to analytics service

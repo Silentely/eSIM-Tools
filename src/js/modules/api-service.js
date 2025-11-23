@@ -1,3 +1,5 @@
+import Logger from './logger.js';
+
 /**
  * API Service Layer - Provides a consistent interface for API calls
  * with built-in retry, caching, and error handling
@@ -26,14 +28,14 @@ class APIService {
     if (method === 'GET' && this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (Date.now() - cached.timestamp < (options.cacheTime || 300000)) {
-        console.log(`[API] Cache hit: ${endpoint}`);
+        Logger.log(`[API] Cache hit: ${endpoint}`);
         return cached.data;
       }
     }
 
     // Deduplicate concurrent identical requests
     if (this.pendingRequests.has(cacheKey)) {
-      console.log(`[API] Deduplicating request: ${endpoint}`);
+      Logger.log(`[API] Deduplicating request: ${endpoint}`);
       return this.pendingRequests.get(cacheKey);
     }
 
