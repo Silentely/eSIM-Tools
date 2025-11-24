@@ -1501,6 +1501,32 @@
             autoActivateStatus: document.getElementById('autoActivateStatus')
         };
 
+        const TURNSTILE_ATTEMPTS = 5;
+        const TURNSTILE_WAIT_MS = 500;
+
+        const readTurnstileToken = () => {
+            try {
+                if (typeof window !== 'undefined') {
+                    return window.__cfTurnstileToken || undefined;
+                }
+            } catch (err) {
+                console.warn('读取 Turnstile token 失败', err);
+            }
+            return undefined;
+        };
+
+        const waitForTurnstileToken = async () => {
+            let token = readTurnstileToken();
+            for (let i = 0; i < TURNSTILE_ATTEMPTS && !token; i++) {
+                await new Promise(resolve => setTimeout(resolve, TURNSTILE_WAIT_MS));
+                token = readTurnstileToken();
+            }
+            if (!token) {
+                console.warn('Turnstile token 未就绪，继续请求可能得到 403 响应');
+            }
+            return token;
+        };
+
         // 工具函数
         function showStatus(element, message, type) {
             if (!element) return;
@@ -2355,16 +2381,23 @@
                     throw new Error('会话已重置或过期：缺少 code_verifier，请重新点击“开始OAuth登录”');
                 }
 
+                const turnstileToken = await waitForTurnstileToken();
+                const headers = { 'Content-Type': 'application/json' };
+                if (turnstileToken) {
+                    headers['X-CF-Turnstile'] = turnstileToken;
+                }
+
                 // 交换访问令牌
                 const tokenResponse = await fetch(oauthConfig.tokenUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify({
                         code: code,
                         code_verifier: appState.codeVerifier,
                         redirect_uri: oauthConfig.redirectUri,
                         client_id: oauthConfig.clientId,
-                        ...(typeof oauthConfig.useBasic !== 'undefined' ? { use_basic: oauthConfig.useBasic } : {})
+                        ...(typeof oauthConfig.useBasic !== 'undefined' ? { use_basic: oauthConfig.useBasic } : {}),
+                        ...(turnstileToken ? { turnstileToken } : {})
                     })
                 });
                 

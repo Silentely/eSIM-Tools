@@ -10,6 +10,32 @@ import { generateCodeVerifier, generateCodeChallenge, generateState } from './ut
 import { oauthConfig } from './api-config.js';
 import { t } from '../../../js/modules/i18n.js';
 
+const TURNSTILE_MAX_ATTEMPTS = 5;
+const TURNSTILE_WAIT_MS = 500;
+
+const readTurnstileToken = () => {
+    try {
+        if (typeof window !== 'undefined') {
+            return window.__cfTurnstileToken || undefined;
+        }
+    } catch (e) {
+        Logger.warn('读取 Turnstile token 失败', e);
+    }
+    return undefined;
+};
+
+const waitForTurnstileToken = async () => {
+    let token = readTurnstileToken();
+    for (let i = 0; i < TURNSTILE_MAX_ATTEMPTS && !token; i++) {
+        await new Promise(resolve => setTimeout(resolve, TURNSTILE_WAIT_MS));
+        token = readTurnstileToken();
+    }
+    if (!token) {
+        Logger.warn('Turnstile token 仍未就绪，将继续请求但可能被服务端拒绝。');
+    }
+    return token;
+};
+
 export class OAuthHandler {
     /**
      * 开始OAuth登录流程
@@ -110,15 +136,22 @@ export class OAuthHandler {
                 throw new Error(t('giffgaff.oauth.errors.missingVerifier'));
             }
             
+            const turnstileToken = await waitForTurnstileToken();
+            const headers = { 'Content-Type': 'application/json' };
+            if (turnstileToken) {
+                headers['X-CF-Turnstile'] = turnstileToken;
+            }
+
             // 交换访问令牌
             const tokenResponse = await fetch(oauthConfig.tokenUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     code: code,
                     code_verifier: codeVerifier,
                     redirect_uri: oauthConfig.redirectUri,
-                    client_id: oauthConfig.clientId
+                    client_id: oauthConfig.clientId,
+                    ...(turnstileToken ? { turnstileToken } : {})
                 })
             });
             

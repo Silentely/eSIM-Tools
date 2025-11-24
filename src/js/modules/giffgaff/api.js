@@ -232,10 +232,20 @@ class APIManager {
    */
   async exchangeTokenServerSide(code, codeVerifier, redirectUri) {
     Logger.log('[API] tokenExchange: start');
+    const turnstileToken = this.getTurnstileToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (turnstileToken) {
+      headers['X-CF-Turnstile'] = turnstileToken;
+    }
     const response = await fetch(this.endpoints.tokenExchange, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, code_verifier: codeVerifier, redirect_uri: redirectUri })
+      headers,
+      body: JSON.stringify({
+        code,
+        code_verifier: codeVerifier,
+        redirect_uri: redirectUri,
+        ...(turnstileToken ? { turnstileToken } : {})
+      })
     });
     if (!response.ok) {
       const errorText = await response.text();
