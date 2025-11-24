@@ -31,9 +31,13 @@ export default async (request, context) => {
     });
   }
 
-  // Turnstile 校验（可选，若配置了 TURNSTILE_SECRET_KEY 则启用）
+  // Turnstile 校验（可选，可通过 TURNSTILE_ENFORCE=false 关闭）
   const turnstileSecret = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('TURNSTILE_SECRET_KEY')) || '';
-  if (turnstileSecret) {
+  const turnstileEnforceRaw = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('TURNSTILE_ENFORCE')) || 'true';
+  const turnstileEnforce = String(turnstileEnforceRaw).toLowerCase() !== 'false';
+  const shouldCheckTurnstile = turnstileSecret && turnstileEnforce;
+
+  if (shouldCheckTurnstile) {
     try {
       // 读取前端传来的 token（body 或 header）
       let cfToken = request.headers.get('x-cf-turnstile') || '';
@@ -72,6 +76,8 @@ export default async (request, context) => {
     } catch (_) {
       return new Response(JSON.stringify({ error: 'Turnstile Check Error' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
+  } else if (turnstileSecret && !turnstileEnforce) {
+    console.warn('[BFF] Turnstile enforcement disabled via TURNSTILE_ENFORCE=false, skipping challenge.');
   }
 
   // 复制请求头并添加服务端密钥头（仅内部互调使用，不影响浏览器 CORS）
@@ -119,4 +125,3 @@ export default async (request, context) => {
   // 直接透传响应
   return response;
 };
-

@@ -601,8 +601,11 @@ ALLOWED_ORIGIN=https://esim.cosr.eu.org
 # 🔐 生成强随机密钥: openssl rand -hex 32
 ACCESS_KEY=your_strong_random_key_here
 
-# Cloudflare Turnstile 站点密钥 (可选)
+# Cloudflare Turnstile 配置 (可选)
 TURNSTILE_SITE_KEY=0x4AAAAAAA...
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000
+# 设为 false 可在紧急情况下跳过 BFF Turnstile 校验
+TURNSTILE_ENFORCE=true
 
 # Node 环境
 NODE_ENV=development  # development | production

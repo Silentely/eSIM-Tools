@@ -47,7 +47,6 @@ if (window.TURNSTILE_SITE_KEY) {
   };
 
 let widgetId = null;
-let hasExecuted = false;
 let executing = false;
 
 const exposeRefreshHandle = () => {
@@ -77,21 +76,20 @@ const markIdle = () => { executing = false; };
     markIdle();
   };
 
-  const runExecute = () => {
-    if (!window.turnstile || widgetId == null || executing) {
-      return;
-    }
-    executing = true;
-    if (hasExecuted) {
-      try { window.turnstile.reset(widgetId); } catch (_) {}
-    }
-    hasExecuted = true;
-    try {
-      window.turnstile.execute(widgetId);
-    } catch (_) {
-      markIdle();
-    }
-  };
+const runExecute = () => {
+  if (!window.turnstile || widgetId == null || executing) {
+    return;
+  }
+  executing = true;
+  try {
+    window.turnstile.reset(widgetId);
+  } catch (_) {}
+  try {
+    window.turnstile.execute(widgetId);
+  } catch (_) {
+    markIdle();
+  }
+};
 
   const initTurnstile = () => {
     if (!window.turnstile) {
