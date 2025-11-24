@@ -18,6 +18,25 @@ class OAuthManager {
         return (typeof window !== 'undefined' && window.__cfTurnstileToken) ? window.__cfTurnstileToken : undefined;
       } catch { return undefined; }
     };
+
+    this.refreshTurnstileToken = () => {
+      try {
+        if (typeof window === 'undefined') { return false; }
+        if (typeof window.__esimTurnstileRefresh === 'function') {
+          return window.__esimTurnstileRefresh();
+        }
+        if (window.turnstile && typeof window.turnstile.execute === 'function' && window.__turnstileWidgetId != null) {
+          try { window.turnstile.reset(window.__turnstileWidgetId); } catch (_) {}
+          try {
+            window.turnstile.execute(window.__turnstileWidgetId);
+            return true;
+          } catch (_) {}
+        }
+      } catch (err) {
+        Logger.warn('刷新 Turnstile token 失败', err);
+      }
+      return false;
+    };
   }
 
   /**
@@ -126,9 +145,19 @@ class OAuthManager {
     Logger.log(`Sending token exchange request: code=${code.substring(0, 3)}*****, code_verifier=${codeVerifier.substring(0, 3)}*****`);
     // 等待 Turnstile token（最多等待 ~2.5s）
     let tsToken = this.getTurnstileToken();
+    if (!tsToken) {
+      this.refreshTurnstileToken();
+    }
     for (let i = 0; i < 5 && !tsToken; i++) {
       await new Promise(r => setTimeout(r, 500));
       tsToken = this.getTurnstileToken();
+      if (!tsToken) {
+        this.refreshTurnstileToken();
+      }
+    }
+    if (!tsToken) {
+      const lastErr = (typeof window !== 'undefined' && window.__lastTurnstileError) || 'unknown';
+      Logger.warn(`Turnstile token 仍未获取，最后错误: ${lastErr}`);
     }
     const res = await fetch(this.config.tokenEndpoint, {
       method: 'POST',

@@ -771,10 +771,25 @@
                         sitekey: siteKey,
                         size: 'invisible',
                         callback: function (token) { window.__cfTurnstileToken = token; markIdle(); },
-                        'error-callback': markIdle,
-                        'timeout-callback': markIdle,
+                        'error-callback': function (err) {
+                            window.__lastTurnstileError = err;
+                            markIdle();
+                            setTimeout(function(){ window.__esimTurnstileRefresh && window.__esimTurnstileRefresh(); }, 300);
+                        },
+                        'timeout-callback': function () {
+                            markIdle();
+                            window.__esimTurnstileRefresh && window.__esimTurnstileRefresh();
+                        },
                         'expired-callback': function () { markIdle(); exec(); }
                     });
+                    window.__turnstileWidgetId = id;
+                    window.__esimTurnstileRefresh = function () {
+                        if (!window.turnstile || !id) { return false; }
+                        markIdle();
+                        try { window.turnstile.reset(id); } catch (_) {}
+                        exec();
+                        return true;
+                    };
                     exec();
                     setInterval(function () {
                         if (document.visibilityState === 'hidden') { return; }

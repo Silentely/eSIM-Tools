@@ -24,14 +24,42 @@ const readTurnstileToken = () => {
     return undefined;
 };
 
+const triggerTurnstileRefresh = () => {
+    try {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+        if (typeof window.__esimTurnstileRefresh === 'function') {
+            return window.__esimTurnstileRefresh();
+        }
+        if (window.turnstile && typeof window.turnstile.execute === 'function' && window.__turnstileWidgetId != null) {
+            try { window.turnstile.reset(window.__turnstileWidgetId); } catch (_) {}
+            try {
+                window.turnstile.execute(window.__turnstileWidgetId);
+                return true;
+            } catch (_) {}
+        }
+    } catch (err) {
+        Logger.warn('触发 Turnstile 刷新失败', err);
+    }
+    return false;
+};
+
 const waitForTurnstileToken = async () => {
     let token = readTurnstileToken();
+    if (!token) {
+        triggerTurnstileRefresh();
+    }
     for (let i = 0; i < TURNSTILE_MAX_ATTEMPTS && !token; i++) {
         await new Promise(resolve => setTimeout(resolve, TURNSTILE_WAIT_MS));
         token = readTurnstileToken();
+        if (!token) {
+            triggerTurnstileRefresh();
+        }
     }
     if (!token) {
-        Logger.warn('Turnstile token 仍未就绪，将继续请求但可能被服务端拒绝。');
+        const lastError = (typeof window !== 'undefined' && window.__lastTurnstileError) || 'unknown';
+        Logger.warn(`Turnstile token 仍未就绪，将继续请求但可能被服务端拒绝。最后错误: ${lastError}`);
     }
     return token;
 };

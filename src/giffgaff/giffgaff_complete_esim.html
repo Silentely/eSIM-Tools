@@ -1515,14 +1515,40 @@
             return undefined;
         };
 
+        const triggerTurnstileRefresh = () => {
+            try {
+                if (typeof window === 'undefined') { return false; }
+                if (typeof window.__esimTurnstileRefresh === 'function') {
+                    return window.__esimTurnstileRefresh();
+                }
+                if (window.turnstile && typeof window.turnstile.execute === 'function' && window.__turnstileWidgetId != null) {
+                    try { window.turnstile.reset(window.__turnstileWidgetId); } catch (_) {}
+                    try {
+                        window.turnstile.execute(window.__turnstileWidgetId);
+                        return true;
+                    } catch (_) {}
+                }
+            } catch (err) {
+                console.warn('触发 Turnstile 刷新失败', err);
+            }
+            return false;
+        };
+
         const waitForTurnstileToken = async () => {
             let token = readTurnstileToken();
+            if (!token) {
+                triggerTurnstileRefresh();
+            }
             for (let i = 0; i < TURNSTILE_ATTEMPTS && !token; i++) {
                 await new Promise(resolve => setTimeout(resolve, TURNSTILE_WAIT_MS));
                 token = readTurnstileToken();
+                if (!token) {
+                    triggerTurnstileRefresh();
+                }
             }
             if (!token) {
-                console.warn('Turnstile token 未就绪，继续请求可能得到 403 响应');
+                var lastErr = (typeof window !== 'undefined' && window.__lastTurnstileError) || 'unknown';
+                console.warn('Turnstile token 未就绪，继续请求可能得到 403 响应。最后错误: ' + lastErr);
             }
             return token;
         };
@@ -3687,10 +3713,25 @@
               sitekey: siteKey,
               size: 'invisible',
               callback: function (token) { window.__cfTurnstileToken = token; markIdle(); },
-              'error-callback': markIdle,
-              'timeout-callback': markIdle,
+              'error-callback': function (err) {
+                window.__lastTurnstileError = err;
+                markIdle();
+                setTimeout(function(){ window.__esimTurnstileRefresh && window.__esimTurnstileRefresh(); }, 300);
+              },
+              'timeout-callback': function () {
+                markIdle();
+                window.__esimTurnstileRefresh && window.__esimTurnstileRefresh();
+              },
               'expired-callback': function () { markIdle(); exec(); }
             });
+            window.__turnstileWidgetId = id;
+            window.__esimTurnstileRefresh = function () {
+              if (!window.turnstile || !id) { return false; }
+              markIdle();
+              try { window.turnstile.reset(id); } catch (_) {}
+              exec();
+              return true;
+            };
             exec();
             setInterval(function () {
               if (document.visibilityState === 'hidden') { return; }

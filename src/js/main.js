@@ -46,11 +46,31 @@ if (window.TURNSTILE_SITE_KEY) {
     window.__cfTurnstileToken = token;
   };
 
-  let widgetId = null;
-  let hasExecuted = false;
-  let executing = false;
+let widgetId = null;
+let hasExecuted = false;
+let executing = false;
 
-  const markIdle = () => { executing = false; };
+const exposeRefreshHandle = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  window.__turnstileWidgetId = widgetId;
+  window.__esimTurnstileRefresh = () => {
+    if (!window.turnstile || widgetId == null) {
+      return false;
+    }
+    markIdle();
+    try { window.turnstile.reset(widgetId); } catch (_) {}
+    try {
+      runExecute();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+};
+
+const markIdle = () => { executing = false; };
 
   const handleToken = (token) => {
     window.__cfTurnstileToken = token;
@@ -86,13 +106,21 @@ if (window.TURNSTILE_SITE_KEY) {
       sitekey: window.TURNSTILE_SITE_KEY,
       size: 'invisible',
       callback: handleToken,
-      'error-callback': markIdle,
-      'timeout-callback': markIdle,
+      'error-callback': (err) => {
+        window.__lastTurnstileError = err;
+        markIdle();
+        setTimeout(() => window.__esimTurnstileRefresh?.(), 300);
+      },
+      'timeout-callback': () => {
+        markIdle();
+        window.__esimTurnstileRefresh?.();
+      },
       'expired-callback': () => {
         markIdle();
         runExecute();
       }
     });
+    exposeRefreshHandle();
     runExecute();
     setInterval(() => {
       if (document.visibilityState === 'hidden') return;
