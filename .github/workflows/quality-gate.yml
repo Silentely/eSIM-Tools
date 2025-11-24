@@ -1,0 +1,161 @@
+name: 质量守卫
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: 质量与构建校验
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取仓库代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: |
+          if ! npm ci; then
+            echo '检测到锁文件与环境不一致，改用 npm install 同步依赖～'
+            npm install
+          fi
+
+      - name: 运行质量检查脚本
+        id: quality
+        run: npm run quality-check
+        continue-on-error: true
+
+      - name: 运行安全检查脚本
+        id: security
+        run: npm run security-check
+        continue-on-error: true
+
+      - name: 单元测试
+        id: test
+        run: npm test
+        continue-on-error: true
+
+      - name: 构建生产产物
+        id: build
+        run: npm run build
+        continue-on-error: true
+
+      - name: 汇总质量评分
+        if: always()
+        id: rating
+        env:
+          QUALITY_OUTCOME: ${{ steps.quality.outcome }}
+          SECURITY_OUTCOME: ${{ steps.security.outcome }}
+          TEST_OUTCOME: ${{ steps.test.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const qualityOutcome = process.env.QUALITY_OUTCOME ?? 'success';
+          const securityOutcome = process.env.SECURITY_OUTCOME ?? 'success';
+          const testOutcome = process.env.TEST_OUTCOME ?? 'success';
+          const buildOutcome = process.env.BUILD_OUTCOME ?? 'success';
+          const threshold = 90;
+          const breakdown = [];
+          let score = 100;
+
+          if (qualityOutcome !== 'success') {
+            breakdown.push({ metric: 'quality-check', penalty: 30 });
+            score -= 30;
+          }
+          if (securityOutcome !== 'success') {
+            breakdown.push({ metric: 'security-check', penalty: 25 });
+            score -= 25;
+          }
+          if (testOutcome !== 'success') {
+            breakdown.push({ metric: 'test', penalty: 25 });
+            score -= 25;
+          }
+          if (buildOutcome !== 'success') {
+            breakdown.push({ metric: 'build', penalty: 20 });
+            score -= 20;
+          }
+
+          score = Math.max(0, score);
+          let rating = 'F';
+          if (score >= 95) rating = 'S';
+          else if (score >= 90) rating = 'A';
+          else if (score >= 80) rating = 'B';
+          else if (score >= 70) rating = 'C';
+          else if (score >= 60) rating = 'D';
+
+          const payload = {
+            timestamp: new Date().toISOString(),
+            threshold,
+            score,
+            rating,
+            breakdown,
+            outcomes: {
+              quality: qualityOutcome,
+              security: securityOutcome,
+              test: testOutcome,
+              build: buildOutcome
+            }
+          };
+
+          fs.writeFileSync('quality-report.json', JSON.stringify(payload, null, 2));
+          fs.writeFileSync('quality-summary.txt', `rating=${payload.rating}\nscore=${payload.score}\nthreshold=${payload.threshold}`);
+          console.log(`质量评级：${payload.rating}（得分 ${payload.score}/100）`);
+          console.log('扣分明细：', JSON.stringify(breakdown, null, 2));
+
+          if (process.env.GITHUB_OUTPUT) {
+            const needsImprove = payload.score < threshold ? 'yes' : 'no';
+            const lines = [
+              `rating=${payload.rating}`,
+              `score=${payload.score}`,
+              `threshold=${threshold}`,
+              `need_improvement=${needsImprove}`
+            ];
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);
+          }
+          NODE
+
+      - name: 上传质量报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: |
+            quality-report.json
+            quality-summary.txt
+          retention-days: 7
+
+      - name: 若质量检查失败则终止
+        if: steps.quality.outcome == 'failure'
+        run: |
+          echo 'quality-check 未通过，请修复后重试。'
+          exit 1
+
+      - name: 若安全检查失败则终止
+        if: steps.security.outcome == 'failure'
+        run: |
+          echo 'security-check 未通过，请修复后重试。'
+          exit 1
+
+      - name: 若测试失败则终止
+        if: steps.test.outcome == 'failure'
+        run: |
+          echo 'Jest 测试未通过，请修复后重试。'
+          exit 1
+
+      - name: 若构建失败则终止
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo '构建失败，请查看日志。'
+          exit 1

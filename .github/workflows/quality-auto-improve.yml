@@ -1,0 +1,143 @@
+name: 质量自动改进
+
+on:
+  workflow_run:
+    workflows:
+      - 质量守卫
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  auto-improve:
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载质量报告
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: quality-report
+          path: quality-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 解析质量评分
+        id: guard
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'quality-report/quality-report.json';
+          let rating = 'unknown';
+          let score = 0;
+          let threshold = 90;
+          let need = 'no_data';
+          if (fs.existsSync(path)) {
+            const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+            rating = report?.rating ?? rating;
+            score = Number(report?.score ?? score);
+            threshold = Number(report?.threshold ?? threshold);
+            if (Number.isFinite(score) && Number.isFinite(threshold)) {
+              need = score < threshold ? 'yes' : 'no';
+            }
+            fs.writeFileSync('quality-auto-improve-context.json', JSON.stringify(report, null, 2));
+          }
+          const lines = [
+            `rating=${rating}`,
+            `score=${score}`,
+            `threshold=${threshold}`,
+            `need_improvement=${need}`
+          ];
+          console.log(lines.join('\n'));
+          if (process.env.GITHUB_OUTPUT) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);
+          }
+          NODE
+
+      - name: 当前评分及格则跳过
+        if: steps.guard.outputs.need_improvement != 'yes'
+        run: echo "当前评级 ${{ steps.guard.outputs.rating || 'unknown' }} 分数 ${{ steps.guard.outputs.score || '0' }} 已满足阈值，无需自动改进。"
+
+      - name: 检出目标提交
+        if: steps.guard.outputs.need_improvement == 'yes'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: 安装 Node.js 环境
+        if: steps.guard.outputs.need_improvement == 'yes'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖
+        if: steps.guard.outputs.need_improvement == 'yes'
+        run: |
+          if ! npm ci; then
+            echo 'CI 安装失败，改用 npm install'
+            npm install
+          fi
+
+      - name: 自动格式化代码
+        if: steps.guard.outputs.need_improvement == 'yes'
+        run: |
+          npx --yes prettier@3.3.3 --write "src/**/*.{js,css,html}" "netlify/**/*.js" "scripts/**/*.js" || true
+
+      - name: ESLint 自动修复
+        if: steps.guard.outputs.need_improvement == 'yes'
+        run: |
+          npx --yes eslint@9.12.0 . --fix || true
+
+      - name: 重新执行质量检查
+        if: steps.guard.outputs.need_improvement == 'yes'
+        run: npm run quality-check
+
+      - name: 重新执行安全检查
+        if: steps.guard.outputs.need_improvement == 'yes'
+        run: npm run security-check
+
+      - name: 重新运行测试
+        if: steps.guard.outputs.need_improvement == 'yes'
+        run: npm test
+
+      - name: 生成改进补丁
+        if: steps.guard.outputs.need_improvement == 'yes'
+        id: diff
+        run: |
+          if git status --short | grep .; then
+            git diff > quality-auto-improve.patch
+            echo 'has_changes=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_changes=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 上传补丁
+        if: steps.guard.outputs.need_improvement == 'yes' && steps.diff.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-auto-improve-patch
+          path: quality-auto-improve.patch
+          retention-days: 7
+
+      - name: 输出改进报告
+        if: steps.guard.outputs.need_improvement == 'yes'
+        run: |
+          cat <<'TXT' > quality-auto-improve-report.txt
+          rating=${{ steps.guard.outputs.rating }}
+          score=${{ steps.guard.outputs.score }}
+          threshold=${{ steps.guard.outputs.threshold }}
+          patch_generated=${{ steps.diff.outputs.has_changes || 'false' }}
+          TXT
+
+      - name: 上传改进报告附件
+        if: steps.guard.outputs.need_improvement == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-auto-improve-report
+          path: quality-auto-improve-report.txt
+          retention-days: 7

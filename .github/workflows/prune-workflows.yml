@@ -1,0 +1,77 @@
+name: 清理旧工作流历史
+
+on:
+  schedule:
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 删除 3 天前的工作流运行与附件
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const retentionMs = 3 * 24 * 60 * 60 * 1000;
+            const cutoff = Date.now() - retentionMs;
+
+            core.info(`开始清理 ${owner}/${repo} 中早于 ${new Date(cutoff).toISOString()} 的工作流 run～`);
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner,
+              repo,
+              per_page: 100,
+              status: 'completed'
+            });
+
+            let deleted = 0;
+            for (const run of runs) {
+              const runTime = new Date(run.created_at).getTime();
+              if (runTime >= cutoff) continue;
+              core.info(`删除 run #${run.id} (${run.name}) - 创建时间 ${run.created_at}`);
+              try {
+                await github.rest.actions.deleteWorkflowRun({ owner, repo, run_id: run.id });
+                deleted++;
+              } catch (error) {
+                core.warning(`删除 run #${run.id} 失败：${error.message}`);
+              }
+            }
+
+            if (deleted === 0) {
+              core.info('没有需要清理的 run，历史保持良好状态喵。');
+            } else {
+              core.info(`共删除 ${deleted} 条运行记录。`);
+            }
+
+            core.info('继续检查旧的 artifact...');
+            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
+              owner,
+              repo,
+              per_page: 100
+            });
+
+            let deletedArtifacts = 0;
+            for (const artifact of artifacts) {
+              const created = new Date(artifact.created_at).getTime();
+              if (created >= cutoff) continue;
+              core.info(`删除 artifact #${artifact.id} (${artifact.name}) - 创建时间 ${artifact.created_at}`);
+              try {
+                await github.rest.actions.deleteArtifact({ owner, repo, artifact_id: artifact.id });
+                deletedArtifacts++;
+              } catch (error) {
+                core.warning(`删除 artifact #${artifact.id} 失败：${error.message}`);
+              }
+            }
+
+            if (deletedArtifacts === 0) {
+              core.info('旧 artifact 无需清理，仓库保持清爽～');
+            } else {
+              core.info(`共删除 ${deletedArtifacts} 个 artifact。`);
+            }
