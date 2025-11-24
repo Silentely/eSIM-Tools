@@ -91,8 +91,7 @@ function checkDependencies() {
 
 // 生成安全报告
 function generateSecurityReport() {
-  BuildLogger.log('🔒 安全检查报告
-');
+  BuildLogger.log('🔒 安全检查报告\n');
   
   const vulnerabilities = checkDependencies();
   
@@ -101,15 +100,13 @@ function generateSecurityReport() {
     return;
   }
 
-  BuildLogger.warn('  发现 ${vulnerabilities.length} 个潜在安全漏洞:
-');
+  BuildLogger.warn(`  发现 ${vulnerabilities.length} 个潜在安全漏洞:\n`);
   
   vulnerabilities.forEach((vuln, index) => {
     BuildLogger.log(`${index + 1}. ${vuln.package}@${vuln.version}`);
     BuildLogger.log(`   严重程度: ${vuln.severity}`);
     BuildLogger.log(`   描述: ${vuln.description}`);
-    BuildLogger.log(`   修复建议: ${vuln.fix}
-`);
+    BuildLogger.log(`   修复建议: ${vuln.fix}\n`);
   });
 
   BuildLogger.log('🔧 修复建议:');
@@ -120,9 +117,7 @@ function generateSecurityReport() {
 
 // 检查开发环境安全配置
 function checkSecurityConfig() {
-  BuildLogger.log('
-🔧 安全配置检查:
-');
+  BuildLogger.log('\n🔧 安全配置检查:\n');
   
   // 检查Helmet配置
   const serverPath = path.join(__dirname, '../server.js');
@@ -157,9 +152,9 @@ function checkSecurityConfig() {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
       if (content.includes('Content-Security-Policy')) {
-        BuildLogger.success(' ${file} 已配置CSP');
+        BuildLogger.success(` ${file} 已配置CSP`);
       } else {
-        BuildLogger.warn('  ${file} 建议添加CSP配置');
+        BuildLogger.warn(`  ${file} 建议添加CSP配置`);
       }
     }
   });
@@ -170,8 +165,7 @@ function main() {
   generateSecurityReport();
   checkSecurityConfig();
   
-  BuildLogger.log('
-📋 安全最佳实践:');
+  BuildLogger.log('\n📋 安全最佳实践:');
   BuildLogger.log('1. 定期更新依赖包');
   BuildLogger.log('2. 使用npm audit检查安全漏洞');
   BuildLogger.log('3. 配置适当的安全头');
