@@ -15,7 +15,9 @@ class OAuthManager {
 
     this.getTurnstileToken = () => {
       try {
-        return (typeof window !== 'undefined' && window.__cfTurnstileToken) ? window.__cfTurnstileToken : undefined;
+        if (typeof window !== 'undefined') {
+          return window.__captchaToken || window.__cfTurnstileToken || undefined;
+        }
       } catch { return undefined; }
     };
 

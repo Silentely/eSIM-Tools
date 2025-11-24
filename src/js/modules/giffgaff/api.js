@@ -17,11 +17,32 @@ class APIManager {
       smsActivate: "/bff/giffgaff-sms-activate"
     };
 
-    // Turnstile token 获取器（若集成了 Turnstile）
-    this.getTurnstileToken = () => {
+    // 验证码 token 获取器（Turnstile / reCAPTCHA）
+    this.getCaptchaToken = () => {
       try {
-        return (typeof window !== 'undefined' && window.__cfTurnstileToken) ? window.__cfTurnstileToken : undefined;
+        if (typeof window !== 'undefined') {
+          return window.__captchaToken || window.__cfTurnstileToken || undefined;
+        }
       } catch { return undefined; }
+      return undefined;
+    };
+    this.getTurnstileToken = () => this.getCaptchaToken();
+
+    this.attachCaptchaHeaders = (headers = {}) => {
+      const token = this.getTurnstileToken();
+      if (token) {
+        headers['X-CF-Turnstile'] = token;
+        headers['X-Human-Captcha'] = token;
+      }
+      return headers;
+    };
+
+    this.extendCaptchaPayload = (payload = {}) => {
+      const token = this.getTurnstileToken();
+      if (token) {
+        return { ...payload, captchaToken: token, turnstileToken: token };
+      }
+      return payload;
     };
   }
 
@@ -32,23 +53,25 @@ class APIManager {
    */
   async sendMFAChallenge(accessToken) {
     Logger.log('[API] sendMFAChallenge: start', { hasToken: !!accessToken });
+    const cookieValue = (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : null) || undefined;
+    const baseHeaders = {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+    };
+    const makeBody = (extra = {}) => this.extendCaptchaPayload({
+      ...(accessToken ? { accessToken } : {}),
+      cookie: cookieValue,
+      source: 'esim',
+      preferredChannels: ['EMAIL'],
+      ...extra
+    });
     // 先检查令牌是否过期，如果过期则尝试使用cookie重新验证
     try {
       // 尝试使用现有令牌
       const response = await fetch(this.endpoints.mfaChallenge, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
-        },
-        body: JSON.stringify({
-          ...(accessToken ? { accessToken } : {}),
-          // 附带cookie以便服务端在令牌过期或缺失时用 cookie 兜底刷新
-          cookie: (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : null) || undefined,
-          turnstileToken: this.getTurnstileToken(),
-          source: 'esim',
-          preferredChannels: ['EMAIL']
-        })
+        headers: this.attachCaptchaHeaders({ ...baseHeaders }),
+        body: JSON.stringify(makeBody())
       });
       
       // 如果响应成功，直接返回结果
@@ -68,10 +91,10 @@ class APIManager {
           errorData?.details?.error_description === 'Access token expired') {
         
         // 尝试使用本地存储的cookie重新验证
-        const cookie = localStorage.getItem('giffgaff_cookie');
-        if (cookie) {
-          Logger.log('尝试使用cookie重新验证');
-          const cookieVerifyResult = await this.verifyCookie(cookie);
+          const cookie = cookieValue;
+          if (cookie) {
+            Logger.log('尝试使用cookie重新验证');
+            const cookieVerifyResult = await this.verifyCookie(cookie);
           
           if (cookieVerifyResult.success && cookieVerifyResult.accessToken) {
             // 更新全局令牌
@@ -81,17 +104,16 @@ class APIManager {
             // 使用新令牌重新发送MFA请求
             const newResponse = await fetch(this.endpoints.mfaChallenge, {
               method: 'POST',
-              headers: {
+              headers: this.attachCaptchaHeaders({
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${newAccessToken}`
-              },
-              body: JSON.stringify({
+              }),
+              body: JSON.stringify(this.extendCaptchaPayload({
                 accessToken: newAccessToken,
-                cookie: localStorage.getItem('giffgaff_cookie') || undefined,
-                turnstileToken: this.getTurnstileToken(),
+                cookie: cookieValue,
                 source: 'esim',
                 preferredChannels: ['EMAIL']
-              })
+              }))
             });
             
             if (newResponse.ok) {
@@ -131,16 +153,15 @@ class APIManager {
     Logger.log('[API] validateMFACode: start', { hasToken: !!accessToken, ref: String(ref||'').slice(0,6)+'...' });
     const response = await fetch(this.endpoints.mfaValidation, {
       method: 'POST',
-      headers: {
+      headers: this.attachCaptchaHeaders({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
+      }),
+      body: JSON.stringify(this.extendCaptchaPayload({
         accessToken,
         ref: ref,
-        code: code,
-        turnstileToken: this.getTurnstileToken()
-      })
+        code: code
+      }))
     });
 
     if (!response.ok) {
@@ -163,8 +184,8 @@ class APIManager {
     Logger.log('[API] smsActivateFlow: start', { hasToken: !!accessToken, hasCookie: !!cookie, ref: String(ref||'').slice(0,6)+'...' });
     const resp = await fetch(this.endpoints.smsActivate, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
-      body: JSON.stringify({ ref, code, accessToken, cookie: cookie || (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : undefined), memberId, ssn, activationCode })
+      headers: this.attachCaptchaHeaders({ 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) }),
+      body: JSON.stringify(this.extendCaptchaPayload({ ref, code, accessToken, cookie: cookie || (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : undefined), memberId, ssn, activationCode }))
     });
     if (!resp.ok) {
       const t = await resp.text();
@@ -189,15 +210,14 @@ class APIManager {
     Logger.log('[API] graphqlQuery: start', { op, hasToken: !!accessToken, hasSignature: !!mfaSignature });
     const response = await fetch(this.endpoints.graphql, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
-      body: JSON.stringify({
+      headers: this.attachCaptchaHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` }),
+      body: JSON.stringify(this.extendCaptchaPayload({
         accessToken,
         cookie: (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : null) || undefined,
         mfaSignature: mfaSignature || undefined,
-        turnstileToken: this.getTurnstileToken(),
         query,
         variables
-      })
+      }))
     });
 
     if (!response.ok) {
@@ -233,10 +253,7 @@ class APIManager {
   async exchangeTokenServerSide(code, codeVerifier, redirectUri) {
     Logger.log('[API] tokenExchange: start');
     const turnstileToken = this.getTurnstileToken();
-    const headers = { 'Content-Type': 'application/json' };
-    if (turnstileToken) {
-      headers['X-CF-Turnstile'] = turnstileToken;
-    }
+    const headers = this.attachCaptchaHeaders({ 'Content-Type': 'application/json' });
     const response = await fetch(this.endpoints.tokenExchange, {
       method: 'POST',
       headers,
@@ -244,7 +261,7 @@ class APIManager {
         code,
         code_verifier: codeVerifier,
         redirect_uri: redirectUri,
-        ...(turnstileToken ? { turnstileToken } : {})
+        ...(turnstileToken ? { turnstileToken, captchaToken: turnstileToken } : {})
       })
     });
     if (!response.ok) {
@@ -373,13 +390,12 @@ class APIManager {
     Logger.log('[API] verifyCookie: start', { hasCookie: !!cookie });
     const response = await fetch(this.endpoints.cookieVerify, {
       method: 'POST',
-      headers: {
+      headers: this.attachCaptchaHeaders({
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        cookie: cookie,
-        turnstileToken: this.getTurnstileToken()
-      })
+      }),
+      body: JSON.stringify(this.extendCaptchaPayload({
+        cookie: cookie
+      }))
     });
 
     if (!response.ok) {
@@ -401,13 +417,12 @@ class APIManager {
     Logger.log('[API] autoActivateESIM: start', { hasCode: !!activationCode });
     const response = await fetch(this.endpoints.autoActivate, {
       method: 'POST',
-      headers: {
+      headers: this.attachCaptchaHeaders({
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        activationCode: activationCode,
-        turnstileToken: this.getTurnstileToken()
-      })
+      }),
+      body: JSON.stringify(this.extendCaptchaPayload({
+        activationCode: activationCode
+      }))
     });
 
     if (!response.ok) {

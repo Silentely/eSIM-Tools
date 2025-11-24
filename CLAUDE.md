@@ -601,11 +601,13 @@ ALLOWED_ORIGIN=https://esim.cosr.eu.org
 # 🔐 生成强随机密钥: openssl rand -hex 32
 ACCESS_KEY=your_strong_random_key_here
 
-# Cloudflare Turnstile 配置 (可选)
+# 验证码配置
+CAPTCHA_PROVIDER=turnstile   # turnstile | recaptcha | off
 TURNSTILE_SITE_KEY=0x4AAAAAAA...
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000
-# 设为 false 可在紧急情况下跳过 BFF Turnstile 校验
-TURNSTILE_ENFORCE=true
+TURNSTILE_ENFORCE=true       # 设为 false 可暂时跳过 Turnstile
+RECAPTCHA_SITE_KEY=6Lc...    # 当 provider=recaptcha 时必填
+RECAPTCHA_SECRET_KEY=6Lc...  # 仅服务器使用，不会下发到前端
 
 # Node 环境
 NODE_ENV=development  # development | production

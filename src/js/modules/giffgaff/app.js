@@ -7,6 +7,7 @@ import oauthManager from './oauth.js';
 import apiManager from './api.js';
 import utils from './utils.js';
 import domManager from './dom.js';
+import captchaManager from '../captcha-manager.js';
 
 class GiffgaffApp {
   constructor() {
@@ -24,6 +25,12 @@ class GiffgaffApp {
    */
   async init() {
     if (this.initialized) return;
+    
+    try {
+      await captchaManager.init();
+    } catch (error) {
+      console.error('[Giffgaff App] captcha init failed', error);
+    }
     
     try {
       // 添加动画样式

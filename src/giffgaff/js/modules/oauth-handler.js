@@ -16,7 +16,7 @@ const TURNSTILE_WAIT_MS = 500;
 const readTurnstileToken = () => {
     try {
         if (typeof window !== 'undefined') {
-            return window.__cfTurnstileToken || undefined;
+            return window.__captchaToken || window.__cfTurnstileToken || undefined;
         }
     } catch (e) {
         Logger.warn('读取 Turnstile token 失败', e);

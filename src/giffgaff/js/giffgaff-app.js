@@ -17,6 +17,7 @@ import {
     openTutorial 
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
+import captchaManager from '../../js/modules/captcha-manager.js';
 
 class GiffgaffApp {
     constructor() {
@@ -30,6 +31,11 @@ class GiffgaffApp {
         if (this.initialized) return;
         
         console.log(t('giffgaff.app.console.initStart'));
+        try {
+            await captchaManager.init();
+        } catch (error) {
+            console.error('[Giffgaff Modular] captcha init failed', error);
+        }
         
         // 订阅状态变化
         stateManager.subscribe((state) => {

@@ -31,26 +31,32 @@ export default async (request, context) => {
     });
   }
 
-  // Turnstile 校验（可选，可通过 TURNSTILE_ENFORCE=false 关闭）
+  // 验证码配置
+  const providerEnv = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('CAPTCHA_PROVIDER')) || 'turnstile';
+  const provider = ['turnstile', 'recaptcha', 'off'].includes(providerEnv.toLowerCase()) ? providerEnv.toLowerCase() : 'turnstile';
   const turnstileSecret = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('TURNSTILE_SECRET_KEY')) || '';
   const turnstileEnforceRaw = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('TURNSTILE_ENFORCE')) || 'true';
   const turnstileEnforce = String(turnstileEnforceRaw).toLowerCase() !== 'false';
-  const shouldCheckTurnstile = turnstileSecret && turnstileEnforce;
+  const recaptchaSecret = (typeof Deno !== 'undefined' && Deno.env && Deno.env.get('RECAPTCHA_SECRET_KEY')) || '';
 
-  if (shouldCheckTurnstile) {
+  const shouldCheckTurnstile = provider === 'turnstile' && turnstileSecret && turnstileEnforce;
+  const shouldCheckRecaptcha = provider === 'recaptcha' && recaptchaSecret;
+  const captchaMode = shouldCheckTurnstile ? 'turnstile' : (shouldCheckRecaptcha ? 'recaptcha' : 'off');
+
+  if (captchaMode !== 'off') {
     try {
       // 读取前端传来的 token（body 或 header）
-      let cfToken = request.headers.get('x-cf-turnstile') || '';
+      let cfToken = request.headers.get('x-human-captcha') || request.headers.get('x-cf-turnstile') || '';
       if (!cfToken && request.method !== 'GET' && request.method !== 'HEAD') {
         const clone = request.clone();
         const contentType = clone.headers.get('content-type') || '';
         if (/application\/json/i.test(contentType)) {
           const j = await clone.json().catch(() => null);
-          if (j && j.turnstileToken) cfToken = j.turnstileToken;
+          if (j && (j.captchaToken || j.turnstileToken)) cfToken = j.captchaToken || j.turnstileToken;
         } else if (/application\/x-www-form-urlencoded/i.test(contentType)) {
           const t = await clone.text();
           const u = new URLSearchParams(t);
-          cfToken = u.get('turnstileToken') || '';
+          cfToken = u.get('captchaToken') || u.get('turnstileToken') || '';
         }
       }
 
@@ -58,26 +64,38 @@ export default async (request, context) => {
       // 对涉及账户/预订/激活等写操作必须要求 token
       const mustRequire = /giffgaff-token-exchange|giffgaff-mfa-|giffgaff-graphql|verify-cookie|auto-activate-esim|giffgaff-sms-activate/i.test(targetName);
       if (mustRequire && !cfToken) {
-        return new Response(JSON.stringify({ error: 'Turnstile Required' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Captcha Required' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
       }
 
       // 调用 Cloudflare 校验接口
-      if (mustRequire) {
-        const verifyResp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ secret: turnstileSecret, response: cfToken })
-        });
-        const verifyData = await verifyResp.json();
-        if (!verifyData.success) {
-          return new Response(JSON.stringify({ error: 'Turnstile Failed', details: verifyData }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+      if (mustRequire && cfToken) {
+        if (captchaMode === 'turnstile') {
+          const verifyResp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ secret: turnstileSecret, response: cfToken })
+          });
+          const verifyData = await verifyResp.json();
+          if (!verifyData.success) {
+            return new Response(JSON.stringify({ error: 'Turnstile Failed', details: verifyData }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+          }
+        } else if (captchaMode === 'recaptcha') {
+          const verifyResp = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ secret: recaptchaSecret, response: cfToken })
+          });
+          const verifyData = await verifyResp.json();
+          if (!verifyData.success) {
+            return new Response(JSON.stringify({ error: 'Recaptcha Failed', details: verifyData }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+          }
         }
       }
     } catch (_) {
-      return new Response(JSON.stringify({ error: 'Turnstile Check Error' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Captcha Check Error' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
-  } else if (turnstileSecret && !turnstileEnforce) {
-    console.warn('[BFF] Turnstile enforcement disabled via TURNSTILE_ENFORCE=false, skipping challenge.');
+  } else {
+    console.warn('[BFF] Captcha enforcement disabled or misconfigured, skipping challenge.');
   }
 
   // 复制请求头并添加服务端密钥头（仅内部互调使用，不影响浏览器 CORS）
