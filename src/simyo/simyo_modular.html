@@ -37,6 +37,7 @@
     <link rel="stylesheet" href="/src/simyo/styles/simyo-components.css">
     <link rel="stylesheet" href="/src/simyo/styles/simyo-animations.css">
     <link rel="stylesheet" href="/src/simyo/styles/simyo-responsive.css">
+    <link rel="stylesheet" href="/src/styles/notification.css">
 </head>
 <body aria-label="Simyo eSIM 工具">
     <div class="container main-container">
@@ -101,60 +102,65 @@
         
         <!-- 状态显示面板 -->
         <div class="status-panel card-elevated reveal" role="status" aria-live="polite">
-            <h3>
-                <i class="fas fa-info-circle" aria-hidden="true"></i>
-                <span class="lang-zh">当前状态</span>
-                <span class="lang-en">Current status</span>
-            </h3>
-            <div class="status-grid">
-                <div class="status-item">
-                    <span class="status-label">
-                        <span class="lang-zh">当前模式:</span>
-                        <span class="lang-en">Current mode:</span>
-                    </span>
-                    <span id="statusMode" class="status-value connected">标准流程</span>
+            <details open>
+                <summary class="d-flex align-items-center justify-content-between" style="cursor: pointer; list-style: none;">
+                    <h3>
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <span class="lang-zh">当前状态</span>
+                        <span class="lang-en">Current status</span>
+                    </h3>
+                    <i class="fas fa-chevron-down text-muted"></i>
+                </summary>
+                <div class="status-grid mt-3">
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="lang-zh">当前模式:</span>
+                            <span class="lang-en">Current mode:</span>
+                        </span>
+                        <span id="statusMode" class="status-value connected">标准流程</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="lang-zh">Session Token:</span>
+                            <span class="lang-en">Session Token:</span>
+                        </span>
+                        <span id="statusSessionToken" class="status-value disconnected">未登录</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="lang-zh">验证码状态:</span>
+                            <span class="lang-en">Code status:</span>
+                        </span>
+                        <span id="statusValidationCode" class="status-value disconnected">未发送</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="lang-zh">eSIM状态:</span>
+                            <span class="lang-en">eSIM status:</span>
+                        </span>
+                        <span id="statusEsimStatus" class="status-value disconnected">未申请</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="lang-zh">激活码:</span>
+                            <span class="lang-en">Activation code:</span>
+                        </span>
+                        <span id="statusActivationCode" class="status-value disconnected">未获取</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">
+                            <span class="lang-zh">LPA字符串:</span>
+                            <span class="lang-en">LPA string:</span>
+                        </span>
+                        <span id="statusLpaString" class="status-value disconnected">未生成</span>
+                    </div>
                 </div>
-                <div class="status-item">
-                    <span class="status-label">
-                        <span class="lang-zh">Session Token:</span>
-                        <span class="lang-en">Session Token:</span>
-                    </span>
-                    <span id="statusSessionToken" class="status-value disconnected">未登录</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">
-                        <span class="lang-zh">验证码状态:</span>
-                        <span class="lang-en">Code status:</span>
-                    </span>
-                    <span id="statusValidationCode" class="status-value disconnected">未发送</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">
-                        <span class="lang-zh">eSIM状态:</span>
-                        <span class="lang-en">eSIM status:</span>
-                    </span>
-                    <span id="statusEsimStatus" class="status-value disconnected">未申请</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">
-                        <span class="lang-zh">激活码:</span>
-                        <span class="lang-en">Activation code:</span>
-                    </span>
-                    <span id="statusActivationCode" class="status-value disconnected">未获取</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">
-                        <span class="lang-zh">LPA字符串:</span>
-                        <span class="lang-en">LPA string:</span>
-                    </span>
-                    <span id="statusLpaString" class="status-value disconnected">未生成</span>
-                </div>
-            </div>
-            <button id="clearSessionBtn" class="clear-session-btn" aria-label="清除会话并重置所有进度">
-                <i class="fas fa-trash-alt" aria-hidden="true"></i>
-                <span class="lang-zh">清除会话</span>
-                <span class="lang-en">Clear session</span>
-            </button>
+                <button id="clearSessionBtn" class="clear-session-btn" aria-label="清除会话并重置所有进度">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                    <span class="lang-zh">清除会话</span>
+                    <span class="lang-en">Clear session</span>
+                </button>
+            </details>
         </div>
         
         <!-- 使用说明 -->
@@ -613,6 +619,14 @@
     <script type="module">
         import { initI18n } from '/src/js/modules/i18n.js';
         initI18n('simyo');
+    </script>
+
+    <!-- 通知系统初始化 -->
+    <script type="module">
+        import NotificationService from '/src/js/modules/notification-service.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            NotificationService.init();
+        });
     </script>
     
     <!-- 主应用脚本（模块化） -->

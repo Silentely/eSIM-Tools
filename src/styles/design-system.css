@@ -8,8 +8,10 @@
   --primary: #0d6efd;
   --secondary: #ffffff;
   --text: #212529;
-  --muted: #6c757d;
+  --muted: #6c757d; /* Improved contrast can be done via darker shade if needed */
   --bg: #f8f9fa;
+  --surface: #ffffff;
+  --border-color: rgba(0,0,0,0.06);
 
   /* Elevation */
   --radius-sm: 8px;
@@ -38,6 +40,55 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e9ecef;
+    --muted: #adb5bd;
+    --bg: #121212;
+    --surface: #1e1e1e;
+    --border-color: rgba(255,255,255,0.1);
+    
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 18px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 28px rgba(0,0,0,0.4);
+  }
+
+  .card-elevated {
+    background: var(--surface);
+    border-color: var(--border-color);
+  }
+
+  .status-panel {
+    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+    border-color: var(--border-color);
+  }
+
+  .status-panel h3 {
+    color: var(--text);
+  }
+
+  .status-item {
+    background: #2a2a2a;
+    border-color: var(--border-color);
+  }
+
+  .status-value {
+    color: #d0d0d0;
+  }
+
+  .lang-switch {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text);
+  }
+
+  body {
+    background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+    color: var(--text);
+  }
 }
 
 /* 2) Accessibility and base resets */
@@ -110,9 +161,12 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   flex-shrink: 0;
 }
 
-.lang-switch:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+/* Hover only on devices that support it */
+@media (hover: hover) {
+  .lang-switch:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 .lang-switch:focus-visible {
@@ -161,27 +215,34 @@ html[data-locale="en"] .lang-en { display: inline !important; }
 /* 4) Components */
 .card-elevated {
   background: rgba(255,255,255,0.9);
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
 }
-.card-elevated:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(0,0,0,0.12);
+
+@media (hover: hover) {
+  .card-elevated:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(0,0,0,0.12);
+  }
+}
+
+.card-elevated:active {
+  transform: scale(0.98);
 }
 
 .card-header-soft {
-  background: color-mix(in srgb, var(--primary) 12%, #ffffff);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
   padding: 20px 24px;
   font-size: 20px;
   font-weight: 600;
   color: var(--text);
   display: flex;
   align-items: center;
-  border-bottom: 1px solid color-mix(in srgb, var(--primary) 20%, #ffffff);
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 20%, var(--surface));
 }
 .card-header-soft i {
   margin-right: 12px;
@@ -214,21 +275,28 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   box-shadow: var(--shadow-sm);
   border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
 }
-.btn-primary-gradient:hover {
-  background: linear-gradient(to right, var(--secondary), var(--primary));
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+
+@media (hover: hover) {
+  .btn-primary-gradient:hover {
+    background: linear-gradient(to right, var(--secondary), var(--primary));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
 }
+
 .btn-dark-gradient {
   background: linear-gradient(to right, #333, #666);
   color: #fff;
   box-shadow: var(--shadow-sm);
   border: 1px solid rgba(51,51,51,.3);
 }
-.btn-dark-gradient:hover {
-  background: linear-gradient(to right, #666, #333);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+
+@media (hover: hover) {
+  .btn-dark-gradient:hover {
+    background: linear-gradient(to right, #666, #333);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
 }
 
 /* Status panel */
