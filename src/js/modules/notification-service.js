@@ -8,7 +8,7 @@ import NotificationManager from './notification-manager.js';
 
 class NotificationService {
   constructor() {
-    this.apiUrl = '/.netlify/functions/notifications';
+    this.apiUrl = '/.netlify/functions/notifications-internal';
     this.checkInterval = 5 * 60 * 1000; // 5分钟检查一次
     this.lastCheckTime = 0;
     this.shownNotifications = this.loadShownNotifications();
