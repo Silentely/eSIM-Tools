@@ -31,6 +31,7 @@
     <link rel="preload" href="/src/styles/design-system.css" as="style" onload="this.rel='stylesheet'">
     <link rel="preload" href="/src/styles/animations.css" as="style" onload="this.rel='stylesheet'">
     <link rel="stylesheet" href="/src/styles/fa-local.css">
+    <link rel="stylesheet" href="/src/styles/notification.css">
     
     <meta name="build-rev" content="v1">
 
@@ -357,8 +358,15 @@
 
     <!-- 国际化初始化 -->
     <script type="module" src="/src/js/init-home-i18n.js"></script>
-    
-    
+
+    <!-- 通知系统初始化 -->
+    <script type="module">
+        import NotificationService from '/src/js/modules/notification-service.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            NotificationService.init();
+        });
+    </script>
+
     <!-- 性能优化脚本 -->
     <script src="/src/js/performance.js"></script>
     
