@@ -378,14 +378,13 @@
                         <div id="oauthStatus" class="status" role="status" aria-live="polite"></div>
                         
                         <!-- OAuth回调处理区域 -->
-                        <div id="oauthCallbackSection" class="verification-section">
-                            <div class="mb-4">
-                                <label for="callbackUrl" class="form-label">回调URL：</label>
-                                <textarea id="callbackUrl" class="form-control" placeholder="例如：giffgaff://auth/callback/?code=EDXgE_Uq5Q96LT5s&state=7piz0IXfUIHHoxMURfaboQ" rows="3"></textarea>
-                            </div>
-                            
-                            <div class="btn-group">
-                                <button id="processCallbackBtn" class="btn btn-primary">
+                                                    <div id="oauthCallbackSection" class="verification-section">
+                                                        <div class="form-floating mb-4">
+                                                            <textarea id="callbackUrl" class="form-control" placeholder="例如：giffgaff://auth/callback/?code=..." style="height: 100px;"></textarea>
+                                                            <label for="callbackUrl">回调URL</label>
+                                                        </div>
+                                                        
+                                                        <div class="btn-group">                                <button id="processCallbackBtn" class="btn btn-primary">
                                     <i class="fas fa-check me-2"></i> 处理回调
                                 </button>
                             </div>
@@ -438,9 +437,9 @@
                             </div>
                         </div>
                         
-                        <div class="mb-4">
-                            <label for="cookieInput" class="form-label">Cookie 字符串：</label>
-                            <textarea id="cookieInput" class="form-control" placeholder="输入完整的Cookie字符串" rows="4"></textarea>
+                        <div class="form-floating mb-4">
+                            <textarea id="cookieInput" class="form-control" placeholder="输入完整的Cookie字符串" style="height: 120px;"></textarea>
+                            <label for="cookieInput">Cookie 字符串</label>
                         </div>
                         
                         <div class="btn-group">
@@ -490,9 +489,9 @@
                             请检查您的邮箱或短信并输入收到的6位验证码：
                         </p>
                         
-                        <div class="mb-4">
-                            <label for="emailCode" class="form-label">验证码：</label>
+                        <div class="form-floating mb-4">
                             <input type="text" id="emailCode" class="form-control" placeholder="输入6位验证码" maxlength="6">
+                            <label for="emailCode">验证码</label>
                         </div>
                         
                         <div class="btn-group">
@@ -595,8 +594,10 @@
                         
                         <div id="smsCodeInputSection" class="mt-3" style="display:none;">
                             <div style="max-width:420px;">
-                                <label for="smsInlineCode" class="form-label">短信验证码</label>
-                                <input id="smsInlineCode" type="text" class="form-control" placeholder="输入6位验证码" maxlength="6" />
+                                <div class="form-floating">
+                                    <input id="smsInlineCode" type="text" class="form-control" placeholder="输入6位验证码" maxlength="6" />
+                                    <label for="smsInlineCode">短信验证码</label>
+                                </div>
                             </div>
                             <div class="btn-group mt-3">
                                 <button id="smsInlineVerifyBtn" class="btn btn-primary">
@@ -625,12 +626,16 @@
                                 </a>
                                 <div class="row g-2">
                                     <div class="col-md-6">
-                                        <label for="manualActivationCode" class="form-label">激活码</label>
-                                        <input id="manualActivationCode" class="form-control" placeholder="如：Y6GKL6" />
+                                        <div class="form-floating">
+                                            <input id="manualActivationCode" class="form-control" placeholder="如：Y6GKL6" />
+                                            <label for="manualActivationCode">激活码</label>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="manualSSN" class="form-label">SSN</label>
-                                        <input id="manualSSN" class="form-control" placeholder="如：8944…" />
+                                        <div class="form-floating">
+                                            <input id="manualSSN" class="form-control" placeholder="如：8944…" />
+                                            <label for="manualSSN">SSN</label>
+                                        </div>
                                     </div>
                                 </div>
                                 <button id="manualSaveAndNextBtn" class="btn btn-success mt-3" type="button">

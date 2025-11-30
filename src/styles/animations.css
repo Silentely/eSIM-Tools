@@ -236,17 +236,17 @@
   transform: scale(0.95);
 }
 
-/* 响应式动画调整 */
-@media (max-width: 768px) {
-  .btn:active {
-    transform: scale(0.96);
-  }
-  
-  .card:hover {
-    transform: none;
-  }
-  
-  .form-control:focus {
-    transform: none;
-  }
-} 
+
+/* 骨架屏动画 */
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 步骤脉冲环动画 */
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+}
+ 

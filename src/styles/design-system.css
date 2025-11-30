@@ -2,15 +2,19 @@
    Scope: shared across brand pages. Brands override --primary/--secondary in page-level :root.
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 /* 1) Tokens */
 :root {
   /* Palette (brand-neutral defaults; pages override) */
   --primary: #0d6efd;
   --secondary: #ffffff;
+  --primary-dark: #0b5ed7; /* Dark mode variant */
   --text: #212529;
   --muted: #6c757d; /* Improved contrast can be done via darker shade if needed */
   --bg: #f8f9fa;
   --surface: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.8);
   --border-color: rgba(0,0,0,0.06);
 
   /* Elevation */
@@ -40,6 +44,9 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 /* Dark Mode Support */
@@ -49,7 +56,9 @@
     --muted: #adb5bd;
     --bg: #121212;
     --surface: #1e1e1e;
+    --surface-glass: rgba(30, 30, 30, 0.8);
     --border-color: rgba(255,255,255,0.1);
+    --primary-dark: #3d8bfd; /* Lighter blue for dark mode visibility */
     
     --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
     --shadow-md: 0 4px 18px rgba(0,0,0,0.3);
@@ -57,13 +66,15 @@
   }
 
   .card-elevated {
-    background: var(--surface);
+    background: var(--surface-glass);
     border-color: var(--border-color);
   }
 
   .status-panel {
-    background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.9) 0%, rgba(37, 37, 37, 0.9) 100%);
     border-color: var(--border-color);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .status-panel h3 {
@@ -71,7 +82,7 @@
   }
 
   .status-item {
-    background: #2a2a2a;
+    background: rgba(42, 42, 42, 0.8);
     border-color: var(--border-color);
   }
 
@@ -92,6 +103,10 @@
 }
 
 /* 2) Accessibility and base resets */
+body {
+  font-family: var(--font-sans);
+}
+
 :focus-visible {
   outline: 2px solid var(--ring-outline);
   outline-offset: 2px;
@@ -153,6 +168,8 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   font-weight: 600;
   cursor: pointer;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .header-buttons .lang-switch {
@@ -214,12 +231,14 @@ html[data-locale="en"] .lang-en { display: inline !important; }
 
 /* 4) Components */
 .card-elevated {
-  background: rgba(255,255,255,0.9);
+  background: var(--surface-glass);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
   transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 @media (hover: hover) {
@@ -301,12 +320,14 @@ html[data-locale="en"] .lang-en { display: inline !important; }
 
 /* Status panel */
 .status-panel {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, rgba(248, 249, 250, 0.9) 0%, rgba(233, 236, 239, 0.9) 100%);
   border: 1px solid #dee2e6;
   border-radius: var(--radius-md);
   padding: 20px;
   margin: 20px 0;
   box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 .status-panel h3 {
   color: #495057;
@@ -327,7 +348,7 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: white;
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 8px;
   border: 1px solid #e9ecef;
   min-height: 40px;
@@ -395,6 +416,57 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   .main-container { padding-left: 12px; padding-right: 12px; }
   .status-grid { grid-template-columns: 1fr; }
   .status-value { max-width: 150px; }
+}
+
+/* Sticky Bottom Actions */
+.sticky-bottom-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 16px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  display: none; /* Default hidden, shown on mobile via media query if needed or by default on small screens */
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 576px) {
+  .sticky-bottom-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .sticky-bottom-actions .btn {
+    flex: 1;
+  }
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+  color: transparent !important;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #333333 50%, #2a2a2a 75%);
+  }
+}
+
+/* Step Indicator Pulse */
+.step.active .step-number {
+  box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7);
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Keyboard focus visibility for custom buttons built on <a> */

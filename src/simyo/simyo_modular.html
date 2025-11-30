@@ -236,24 +236,24 @@
                         <span class="lang-en">Enter your Simyo account credentials to continue:</span>
                     </p>
                     
-                    <div class="mb-4">
-                        <label for="phoneNumber" class="form-label">
-                            <span class="lang-zh">手机号码：</span>
-                            <span class="lang-en">Phone number:</span>
-                        </label>
+                    <div class="form-floating mb-4">
                         <input type="text" id="phoneNumber" class="form-control" placeholder="例如: 0613123712" maxlength="15" aria-describedby="phoneHelp">
+                        <label for="phoneNumber">
+                            <span class="lang-zh">手机号码</span>
+                            <span class="lang-en">Phone number</span>
+                        </label>
                         <small id="phoneHelp" class="text-muted">
                             <span class="lang-zh">荷兰手机号，06开头共10位数字</span>
                             <span class="lang-en">Dutch number starting with 06 (10 digits)</span>
                         </small>
                     </div>
                     
-                    <div class="mb-4">
-                        <label for="password" class="form-label">
-                            <span class="lang-zh">密码：</span>
-                            <span class="lang-en">Password:</span>
-                        </label>
+                    <div class="form-floating mb-4">
                         <input type="password" id="password" class="form-control" placeholder="输入您的Simyo密码" aria-describedby="pwdHelp">
+                        <label for="password">
+                            <span class="lang-zh">密码</span>
+                            <span class="lang-en">Password</span>
+                        </label>
                         <small id="pwdHelp" class="text-muted">
                             <span class="lang-zh">仅用于向官方接口鉴权，不会被本页面保存</span>
                             <span class="lang-en">Used only for Simyo authentication; never stored locally</span>
@@ -417,13 +417,13 @@
                             <span class="lang-zh">无论您是通过短信收到验证码还是从客服处获取，请在此处填写验证码并确认</span>
                             <span class="lang-en">Enter the code you received via SMS or from support and confirm here.</span>
                         </p>
-                        <div class="mb-3">
-                            <label for="validationCodeInput" class="form-label">
-                                <span class="lang-zh">验证码：</span>
-                                <span class="lang-en">Verification code:</span>
-                            </label>
+                        <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="validationCodeInput" 
                                    placeholder="输入6位数字验证码" maxlength="6" pattern="^\d{6}$">
+                            <label for="validationCodeInput">
+                                <span class="lang-zh">验证码</span>
+                                <span class="lang-en">Verification code</span>
+                            </label>
                         </div>
                         <div class="btn-group">
                             <button class="btn btn-primary" id="verifyCodeBtn" disabled>

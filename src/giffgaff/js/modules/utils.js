@@ -3,6 +3,7 @@
  * 提供通用的辅助函数
  */
 import { tl } from '../../../js/modules/i18n.js';
+import NotificationManager from '../../../js/modules/notification-manager.js';
 
 /**
  * 生成PKCE Code Verifier
@@ -171,31 +172,10 @@ export function copyToClipboard(text) {
 
 /**
  * 显示Toast通知
+ * @deprecated 使用 NotificationManager.info() 代替
  */
 export function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification';
-    toast.innerHTML = `
-        <div class="toast-content">
-            <i class="fas fa-check-circle me-2"></i>
-            ${message}
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => {
-            if (toast.parentNode) {
-                document.body.removeChild(toast);
-            }
-        }, 300);
-    }, 3000);
+    NotificationManager.info(message);
 }
 
 /**
@@ -210,6 +190,7 @@ export function copyTextFromCode(codeElementId, btnEl) {
     
     copyToClipboard(text).then(() => {
         if (btnEl) {
+            // 按钮视觉反馈保留，增强用户体验
             const old = btnEl.innerHTML;
             btnEl.innerHTML = `<i class="fas fa-check"></i> ${tl('已复制')}`;
             btnEl.classList.add('btn-success');
@@ -220,9 +201,11 @@ export function copyTextFromCode(codeElementId, btnEl) {
                 btnEl.classList.add('btn-outline-primary');
             }, 1500);
         }
+        // 统一使用通知系统
+        NotificationManager.success(tl('复制成功'));
     }).catch((e) => {
         console.error(tl('复制失败:'), e);
-        alert(tl('复制失败，请手动选择文本复制'));
+        NotificationManager.error(tl('复制失败，请手动选择文本复制'));
     });
 }
 
