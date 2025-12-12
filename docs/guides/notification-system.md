@@ -2,7 +2,17 @@
 
 ## 概述
 
-eSIM-Tools 通知系统是一个轻量级的消息通知解决方案，支持在部署时自动显示重要更新和修复信息。
+eSIM-Tools 通知系统是一个轻量级的消息通知解决方案，用于在用户访问页面时自动显示重要更新、修复信息与维护提示。
+
+本指南描述的是当前项目内置的通知系统（`NotificationManager` + `NotificationService` + Netlify Functions）。
+
+## 行为说明（重要）
+
+通知的显示策略已更新为：
+
+- 每次页面加载（包含刷新）都会显示一次“最新通知”（`mode=latest`）
+- 仅在同一页面生命周期内去重：避免定时轮询期间重复弹出同一条通知
+- 不再使用 `localStorage` 持久化“已读/已显示”状态，因此刷新后仍会再次显示（符合“每次加载都显示”的需求）
 
 ## 架构设计
 
@@ -16,13 +26,16 @@ eSIM-Tools 通知系统是一个轻量级的消息通知解决方案，支持在
 
 2. **通知服务** (`notification-service.js`)
    - 定期从后端获取通知
-   - 防止重复显示（LocalStorage记录）
+   - 防止重复显示（仅同页内存记录，刷新即清空）
    - 自动初始化和轮询
 
-3. **后端API** (`netlify/functions/notifications.js`)
+3. **后端API**（Netlify Functions）
    - Netlify Serverless Function
    - 提供通知消息查询接口
    - 支持多种查询模式
+   - 主要端点：
+     - `netlify/functions/notifications-internal.js`（前端页面默认使用，带 CORS 头）
+     - `netlify/functions/notifications.js`（通用端点，当前配置为公开接口）
 
 4. **样式系统** (`notification.css`)
    - 与Design System完美融合
@@ -79,7 +92,7 @@ NotificationManager.clearAll();
 
 #### 添加新通知
 
-编辑 `netlify/functions/notifications.js`：
+编辑 `netlify/functions/notifications-internal.js`（或 `netlify/functions/notifications.js`，两者结构一致）：
 
 ```javascript
 const NOTIFICATIONS = [
@@ -104,29 +117,66 @@ const NOTIFICATIONS = [
 
 #### API端点
 
-**获取所有通知**
+本项目存在两个可用端点，参数与响应结构一致，但用途略有不同：
+
+- `/.netlify/functions/notifications-internal`：前端页面默认使用（`NotificationService.apiUrl`），会返回 CORS 相关响应头
+- `/.netlify/functions/notifications`：通用端点（当前也配置为公开）
+
+**获取所有活跃通知（数组）**
 ```
-GET /.netlify/functions/notifications?mode=all
+GET /.netlify/functions/notifications-internal?mode=all
 ```
 
-**获取最新通知**
+**获取最新通知（对象或 null）**
 ```
-GET /.netlify/functions/notifications?mode=latest
+GET /.netlify/functions/notifications-internal?mode=latest
 ```
 
 **响应格式**
 ```json
 {
   "success": true,
+  "data": null,
+  "timestamp": "2025-01-23T12:34:56.789Z"
+}
+```
+
+其中：
+
+- `mode=latest` 时：`data` 为单个通知对象或 `null`
+- `mode=all` 时：`data` 为通知对象数组（仅包含 `active=true` 的通知，按 `priority` 升序排列）
+
+**示例：mode=latest（有最新通知时）**
+```json
+{
+  "success": true,
   "data": {
     "id": "fix-400-error",
-    "message": "已修复报错400问题",
+    "message": "已修复Oauth交换时报错400问题,优化了MFA验证流程",
     "type": "success",
-    "timestamp": "2025-01-23T10:00:00Z",
+    "timestamp": "2025-11-30T10:00:00Z",
     "active": true,
     "priority": 1
   },
-  "timestamp": "2025-01-23T12:34:56.789Z"
+  "timestamp": "2025-11-30T12:34:56.789Z"
+}
+```
+
+**示例：mode=all（返回活跃通知数组）**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "fix-400-error",
+      "message": "已修复Oauth交换时报错400问题,优化了MFA验证流程",
+      "type": "success",
+      "timestamp": "2025-11-30T10:00:00Z",
+      "active": true,
+      "priority": 1
+    }
+  ],
+  "timestamp": "2025-11-30T12:34:56.789Z"
 }
 ```
 
@@ -136,8 +186,8 @@ GET /.netlify/functions/notifications?mode=latest
 
 1. 初始化通知服务
 2. 检查是否有新通知
-3. 自动显示未读通知
-4. 每5分钟轮询一次
+3. 自动显示“最新通知”（每次页面加载都会显示一次）
+4. 每5分钟轮询一次（同页内去重，避免重复弹出）
 
 ---
 
@@ -275,12 +325,12 @@ NotificationManager.info('新功能：支持OAuth认证');
 
 ## 高级功能
 
-### 1. 清除已显示记录（用于测试）
+### 1. 清除“本页已显示”记录（用于测试）
 
 打开浏览器控制台：
 
 ```javascript
-// 清除已显示记录，再次刷新会重新显示所有通知
+// 清除本页内存中的去重记录，下一次定时轮询将可能再次弹出“最新通知”
 NotificationService.clearShownNotifications();
 ```
 
@@ -313,13 +363,18 @@ NotificationService.checkAndShowNotifications();
 **检查清单**:
 1. 确认 `notification.css` 已正确引入
 2. 检查浏览器控制台是否有错误
-3. 验证后端API返回正常
-4. 清除已显示记录后重试
+3. 验证后端API返回正常（Network 面板查看 `/.netlify/functions/notifications-internal?mode=latest`）
+4. 确认后端返回的 `data` 非空且 `active=true`
 
 **解决方案**:
 ```javascript
-// 控制台执行
-NotificationService.clearShownNotifications();
+// 控制台执行：手动触发一次检查（不依赖刷新）
+NotificationService.checkAndShowNotifications();
+```
+
+如果你希望验证“每次页面加载都显示一次”，直接刷新页面即可：
+
+```javascript
 location.reload();
 ```
 
@@ -384,7 +439,7 @@ try {
 
 1. **懒加载**: 通知系统仅在需要时初始化
 2. **防抖**: 5分钟轮询间隔避免频繁请求
-3. **缓存**: LocalStorage记录已显示通知
+3. **去重**: 同一页面生命周期内去重，避免轮询重复弹出
 4. **轻量级**: CSS仅3KB，JS模块化加载
 
 ---
@@ -394,9 +449,16 @@ try {
 1. **XSS防护**: 所有消息通过 `escapeHtml` 转义
 2. **CORS**: API仅允许同源请求
 3. **数据验证**: 严格校验通知格式
-4. **LocalStorage**: 仅存储通知ID，不存储敏感数据
+4. **存储**: 当前不持久化存储“已读/已显示”状态（不会写入 localStorage）
 
 ---
+
+## 与构建/部署的关系
+
+- 源码位于 `src/`：例如 `src/js/modules/notification-service.js`
+- 构建产物位于 `dist/`：本地开发服务器（`server.js`）默认以 `dist/` 作为静态目录
+- 若你修改了 `src/` 下的通知实现，请执行 `npm run build` 以更新 `dist/` 中的产物（以便本地 server/部署使用最新逻辑）
+
 
 ## 未来扩展
 
@@ -423,5 +485,5 @@ eSIM-Tools 通知系统提供了一个简单而强大的方式来向用户传达
 
 ---
 
-**最后更新**: 2025-01-23
+**最后更新**: 2025-12-12 23:58（UTC+8）
 **维护者**: eSIM Tools Team

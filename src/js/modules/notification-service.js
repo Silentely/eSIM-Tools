@@ -11,7 +11,10 @@ class NotificationService {
     this.apiUrl = '/.netlify/functions/notifications-internal';
     this.checkInterval = 5 * 60 * 1000; // 5分钟检查一次
     this.lastCheckTime = 0;
-    this.shownNotifications = this.loadShownNotifications();
+    // 需求变更：通知在“每次页面加载”时都要显示一次。
+    // 因此这里仅做“本次页面生命周期内去重”，避免定时轮询重复弹出；
+    // 不再使用 localStorage 进行跨刷新持久化去重。
+    this.shownNotifications = new Set();
   }
 
   /**
@@ -62,40 +65,14 @@ class NotificationService {
    * 检查是否已显示过
    */
   hasShown(id) {
-    return this.shownNotifications.includes(id);
+    return this.shownNotifications.has(id);
   }
 
   /**
    * 标记为已显示
    */
   markAsShown(id) {
-    if (!this.shownNotifications.includes(id)) {
-      this.shownNotifications.push(id);
-      this.saveShownNotifications();
-    }
-  }
-
-  /**
-   * 加载已显示记录
-   */
-  loadShownNotifications() {
-    try {
-      const stored = localStorage.getItem('esim_shown_notifications');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * 保存已显示记录
-   */
-  saveShownNotifications() {
-    try {
-      localStorage.setItem('esim_shown_notifications', JSON.stringify(this.shownNotifications));
-    } catch (error) {
-      Logger.warn('[NotificationService] 保存失败:', error.message);
-    }
+    this.shownNotifications.add(id);
   }
 
   /**
@@ -114,8 +91,7 @@ class NotificationService {
    * 清除已显示记录（用于测试）
    */
   clearShownNotifications() {
-    this.shownNotifications = [];
-    localStorage.removeItem('esim_shown_notifications');
+    this.shownNotifications = new Set();
     Logger.log('[NotificationService] 已清除显示记录');
   }
 }
