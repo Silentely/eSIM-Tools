@@ -187,8 +187,8 @@
   // 生产环境：加载 SDK
   // ===================================
 
-  // Sentry SDK CDN URL (v8.x)
-  var SENTRY_SDK_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.min.js';
+  // Sentry SDK CDN URL (v8.x) - 使用 jsDelivr 镜像（国内访问更快）
+  var SENTRY_SDK_URL = 'https://cdn.jsdelivr.net/npm/@sentry/browser@8.40.0/build/bundles/bundle.tracing.min.js';
 
   // 创建 script 标签
   var script = document.createElement('script');
