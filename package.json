@@ -36,6 +36,8 @@
   "author": "eSIM Tools Team",
   "license": "MIT",
   "dependencies": {
+    "@sentry/browser": "^10.30.0",
+    "@sentry/node": "^10.30.0",
     "axios": "^1.12.0",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
@@ -49,6 +51,7 @@
     "@babel/plugin-transform-runtime": "^7.28.0",
     "@babel/preset-env": "^7.23.0",
     "@babel/runtime": "^7.28.2",
+    "@sentry/webpack-plugin": "^4.6.1",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/user-event": "^14.5.1",
     "autoprefixer": "^10.4.16",

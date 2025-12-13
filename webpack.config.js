@@ -3,6 +3,13 @@ const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const { GenerateSW } = require('workbox-webpack-plugin');
+const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
+
+// Sentry 配置（仅生产环境且配置完整时启用）
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+const sentryOrg = process.env.SENTRY_ORG;
+const sentryProject = process.env.SENTRY_PROJECT;
+const isSentryEnabled = sentryAuthToken && sentryOrg && sentryProject && process.env.NODE_ENV === 'production';
 
 module.exports = {
   entry: {
@@ -87,6 +94,15 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.ACCESS_KEY': JSON.stringify(process.env.ACCESS_KEY || ''),
       'process.env.TURNSTILE_SITE_KEY': JSON.stringify(process.env.TURNSTILE_SITE_KEY || ''),
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+      'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN || ''),
+      'process.env.SENTRY_ENVIRONMENT': JSON.stringify(process.env.SENTRY_ENVIRONMENT || 'production'),
+      // SENTRY_RELEASE: 优先使用环境变量，其次使用 Netlify COMMIT_REF，最后使用 package.json 版本
+      'process.env.SENTRY_RELEASE': JSON.stringify(
+        process.env.SENTRY_RELEASE ||
+        (process.env.COMMIT_REF ? `esim-tools@${process.env.COMMIT_REF.slice(0, 7)}` : null) ||
+        `esim-tools@${require('./package.json').version}`
+      ),
     }),
     new CompressionPlugin({
       test: /\.(js|css|html|svg)$/,
@@ -175,7 +191,35 @@ module.exports = {
           }
         }
       ]
-    })
+    }),
+    // Sentry Source Maps 上传（仅生产环境且配置完整时启用）
+    ...(isSentryEnabled ? [sentryWebpackPlugin({
+      authToken: sentryAuthToken,
+      org: sentryOrg,
+      project: sentryProject,
+      release: {
+        name: process.env.SENTRY_RELEASE ||
+          (process.env.COMMIT_REF ? `esim-tools@${process.env.COMMIT_REF.slice(0, 7)}` : null) ||
+          `esim-tools@${require('./package.json').version}`,
+        // 自动关联 Git commits（需要在 Git 仓库中运行）
+        setCommits: {
+          auto: true,
+          ignoreMissing: true
+        }
+      },
+      sourcemaps: {
+        // 上传 dist 目录下的 source maps
+        assets: './dist/**/*.js.map',
+        // 上传后删除本地 source maps（安全考虑）
+        deleteFilesAfterUpload: './dist/**/*.js.map'
+      },
+      // 静默模式，减少构建日志
+      silent: false,
+      errorHandler: (err) => {
+        console.warn('[Sentry] Source maps upload failed:', err.message);
+        // 不阻止构建
+      }
+    })] : [])
   ],
   resolve: {
     extensions: ['.js', '.css'],

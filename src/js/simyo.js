@@ -10,6 +10,9 @@ import '../styles/design-system.css';
 import '../styles/animations.css';
 import '../styles/mobile-responsive.css';
 
+// Sentry 错误监控（必须尽早初始化以捕获所有错误）
+import './modules/sentry-init.js';
+
 // 导入性能优化模块
 import './performance.js';
 import { autoInjectFooter } from './modules/footer.js';

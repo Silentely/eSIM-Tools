@@ -3,6 +3,8 @@
  * 提供鉴权、CORS、错误处理等功能
  */
 
+const { captureException, flush, setContext } = require('./sentry');
+
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://esim.cosr.eu.org';
 const ACCESS_KEY = process.env.ACCESS_KEY;
 
@@ -139,6 +141,18 @@ function handleError(error, context = 'unknown') {
 
   console.error(`[${context}] Error:`, JSON.stringify(logData));
 
+  // Sentry 错误上报（仅上报 5xx 服务端错误，4xx 客户端错误不上报）
+  if (statusCode >= 500) {
+    setContext('request', { context, statusCode });
+    captureException(error, {
+      extra: {
+        context,
+        statusCode,
+        responseData: error.response?.data
+      }
+    });
+  }
+
   return {
     statusCode,
     headers: createHeaders(),
@@ -265,7 +279,10 @@ function withAuth(handler, options = {}) {
       return result;
 
     } catch (error) {
-      return handleError(error, functionName);
+      const response = handleError(error, functionName);
+      // Serverless 环境需要显式 flush 确保错误发送到 Sentry
+      await flush(2000);
+      return response;
     }
   };
 }

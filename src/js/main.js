@@ -3,6 +3,9 @@ import '../styles/design-system.css';
 import '../styles/animations.css';
 import '../styles/mobile-responsive.css';
 
+// Sentry 错误监控（必须尽早初始化以捕获所有错误）
+import './modules/sentry-init.js';
+
 // 初始化性能优化
 import './performance.js';
 import './modules/footer.js';
