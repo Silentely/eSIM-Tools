@@ -187,13 +187,13 @@
   // 生产环境：加载 SDK
   // ===================================
 
-  // Sentry SDK CDN URL (v8.x) - 使用 jsDelivr 镜像（国内访问更快）
-  var SENTRY_SDK_URL = 'https://cdn.jsdelivr.net/npm/@sentry/browser@8.40.0/build/bundles/bundle.tracing.min.js';
+  // Sentry SDK URL (v8.x) - 使用本地托管的 bundle（避免国内 CDN 访问问题）
+  var SENTRY_SDK_URL = '/src/assets/vendor/sentry-8.40.0.bundle.tracing.min.js';
 
   // 创建 script 标签
   var script = document.createElement('script');
   script.src = SENTRY_SDK_URL;
-  script.crossOrigin = 'anonymous';
+  // 本地资源不需要 crossOrigin
   script.async = true;
 
   script.onload = function() {
