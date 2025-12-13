@@ -102,7 +102,7 @@
           /^https:\/\/qrcode\.show/,
           /^https:\/\/api\.qrserver\.com/
         ],
-        tracesSampleRate: 0.2,  // 提高到 20% 采样率以获得更多数据
+        tracesSampleRate: 0.1,  // 10% 采样率，节省免费配额
 
         // 错误采样率
         sampleRate: 1.0,
