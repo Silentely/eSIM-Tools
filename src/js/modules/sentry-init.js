@@ -1,5 +1,5 @@
 /**
- * Sentry 前端监控初始化模块
+ * Sentry 前端监控初始化模块 (CDN 版本)
  *
  * 职责：
  * - 环境检测（仅生产环境启用）
@@ -9,13 +9,10 @@
  *
  * @module sentry-init
  *
- * 注意事项：
- * - 此模块通过 Webpack 打包 @sentry/browser npm 包
- * - Webpack DefinePlugin 会替换 process.env.* 为实际环境变量值
- * - 使用 SDK v8+ API (browserTracingIntegration)
+ * 使用方式：
+ * 1. 在 HTML <head> 中加载 Sentry CDN (由 sentry-loader.js 自动处理)
+ * 2. 导入此模块进行初始化
  */
-
-import * as Sentry from '@sentry/browser';
 
 // ===================================
 // 环境检测
@@ -23,159 +20,121 @@ import * as Sentry from '@sentry/browser';
 
 /**
  * 检测是否为开发环境
- * 开发环境包括：
- * 1. NODE_ENV === 'development' 或 'test'
- * 2. localhost 访问
  */
 const isDev = (() => {
-  // Webpack DefinePlugin 会替换 process.env.NODE_ENV
-  const nodeEnv = process.env.NODE_ENV || 'production';
-
-  if (nodeEnv === 'development' || nodeEnv === 'test') {
-    return true;
-  }
-
-  // 浏览器 localhost 访问也视为开发环境
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return true;
-  }
-
-  return false;
+  if (typeof window === 'undefined') return true;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
 })();
 
 // ===================================
-// Sentry 初始化（仅生产环境）
+// Sentry 配置
+// ===================================
+
+// 从 window 获取配置（由 HTML 中的内联脚本设置）
+const SENTRY_DSN = window.SENTRY_DSN || '';
+const SENTRY_ENVIRONMENT = window.SENTRY_ENVIRONMENT || 'production';
+const SENTRY_RELEASE = window.SENTRY_RELEASE || 'esim-tools@unknown';
+
+// ===================================
+// Sentry 初始化
 // ===================================
 
 let sentryInitialized = false;
 
-if (!isDev) {
-  const sentryDsn = process.env.SENTRY_DSN || '';
-  const sentryRelease = process.env.SENTRY_RELEASE || 'esim-tools@unknown';
-  const sentryEnvironment = process.env.SENTRY_ENVIRONMENT || 'production';
+/**
+ * 初始化 Sentry（在 Sentry SDK 加载后调用）
+ */
+function initSentry() {
+  if (isDev) {
+    console.log('[Sentry] 开发环境，使用 Mock 模式');
+    window.Sentry = SentryMock;
+    return;
+  }
 
-  if (!sentryDsn) {
-    console.warn('[Sentry] SENTRY_DSN 未配置，跳过初始化');
-  } else {
-    try {
-      Sentry.init({
-        dsn: sentryDsn,
-        environment: sentryEnvironment,
-        release: sentryRelease,
+  if (!window.Sentry) {
+    console.warn('[Sentry] SDK 未加载，跳过初始化');
+    window.Sentry = SentryMock;
+    return;
+  }
 
-        // ===================================
-        // 性能监控配置 (SDK v8+ API)
-        // ===================================
-        integrations: [
-          Sentry.browserTracingIntegration({
-            // 追踪页面导航
-            tracePropagationTargets: [
-              'localhost',
-              'esim.cosr.eu.org',
-              /^\//,  // 相对路径
-            ],
-          }),
-        ],
+  if (!SENTRY_DSN) {
+    console.warn('[Sentry] DSN 未配置，跳过初始化');
+    window.Sentry = SentryMock;
+    return;
+  }
 
-        // 性能采样率（10% = 节省配额）
-        tracesSampleRate: 0.1,
+  try {
+    window.Sentry.init({
+      dsn: SENTRY_DSN,
+      environment: SENTRY_ENVIRONMENT,
+      release: SENTRY_RELEASE,
 
-        // 错误采样率（100% = 全部错误）
-        sampleRate: 1.0,
+      // 性能监控
+      integrations: [
+        window.Sentry.browserTracingIntegration(),
+      ],
+      tracesSampleRate: 0.1,
 
-        // ===================================
-        // 错误过滤
-        // ===================================
-        ignoreErrors: [
-          // 浏览器内部错误
-          'ResizeObserver loop limit exceeded',
-          'ResizeObserver loop completed with undelivered notifications',
+      // 错误采样率
+      sampleRate: 1.0,
 
-          // 非标准 Promise 拒绝
-          'Non-Error promise rejection captured',
+      // 错误过滤
+      ignoreErrors: [
+        'ResizeObserver loop',
+        'Non-Error promise rejection',
+        /Loading chunk .* failed/,
+        /Network request failed/,
+        /Failed to fetch/,
+        /Load failed/,
+        /AbortError/,
+        /chrome-extension/,
+        /moz-extension/,
+      ],
 
-          // 网络相关错误（不可控）
-          'Network request failed',
-          'Failed to fetch',
-          'NetworkError',
-          'Load failed',
+      denyUrls: [
+        /extensions\//i,
+        /^chrome:\/\//i,
+        /^moz-extension:\/\//i,
+      ],
 
-          // 浏览器扩展引起的错误
-          'Extension context invalidated',
-          'chrome-extension://',
-          'moz-extension://',
-        ],
-
-        // ===================================
-        // 面包屑过滤（Breadcrumb）
-        // ===================================
-        beforeBreadcrumb(breadcrumb) {
-          // 过滤 console 日志（避免日志泄露）
-          if (breadcrumb.category === 'console') {
-            return null;
+      // 敏感数据过滤
+      beforeSend(event) {
+        if (event.request) {
+          delete event.request.cookies;
+          if (event.request.headers) {
+            delete event.request.headers['authorization'];
+            delete event.request.headers['x-esim-key'];
+            delete event.request.headers['cookie'];
           }
+        }
 
-          // 过滤导航到外部链接
-          if (breadcrumb.category === 'navigation' && breadcrumb.data?.to) {
-            const url = breadcrumb.data.to;
-            if (url.startsWith('http') && !url.includes('esim.cosr.eu.org')) {
-              return null;
+        if (event.exception?.values) {
+          event.exception.values.forEach(exception => {
+            if (exception.value) {
+              exception.value = exception.value
+                .replace(/token[=:]\s*[^\s,]+/gi, 'token=***')
+                .replace(/key[=:]\s*[^\s,]+/gi, 'key=***')
+                .replace(/password[=:]\s*[^\s,]+/gi, 'password=***')
+                .replace(/cookie[=:]\s*[^\s,]+/gi, 'cookie=***');
             }
-          }
+          });
+        }
 
-          return breadcrumb;
-        },
+        return event;
+      },
+    });
 
-        // ===================================
-        // 事件前处理（移除敏感数据）
-        // ===================================
-        beforeSend(event) {
-          // 移除请求中的敏感数据
-          if (event.request) {
-            delete event.request.cookies;
-
-            if (event.request.headers) {
-              delete event.request.headers['Authorization'];
-              delete event.request.headers['X-Esim-Key'];
-              delete event.request.headers['Cookie'];
-            }
-
-            // 脱敏查询参数中的 Token
-            if (event.request.query_string) {
-              event.request.query_string = event.request.query_string
-                .replace(/token=[^&]+/gi, 'token=***')
-                .replace(/key=[^&]+/gi, 'key=***')
-                .replace(/code=[^&]+/gi, 'code=***');
-            }
-          }
-
-          // 脱敏异常消息中的敏感信息
-          if (event.exception?.values) {
-            event.exception.values.forEach(exception => {
-              if (exception.value) {
-                exception.value = exception.value
-                  .replace(/token[=:]\s*[^\s,]+/gi, 'token=***')
-                  .replace(/key[=:]\s*[^\s,]+/gi, 'key=***')
-                  .replace(/password[=:]\s*[^\s,]+/gi, 'password=***');
-              }
-            });
-          }
-
-          return event;
-        },
-      });
-
-      sentryInitialized = true;
-      console.log('[Sentry] 初始化成功');
-    } catch (error) {
-      console.error('[Sentry] 初始化失败:', error);
-      sentryInitialized = false;
-    }
+    sentryInitialized = true;
+    console.log('[Sentry] 前端初始化成功');
+  } catch (error) {
+    console.error('[Sentry] 初始化失败:', error);
+    window.Sentry = SentryMock;
   }
 }
 
 // ===================================
-// Mock 对象（开发环境或初始化失败时使用）
+// Mock 对象（开发环境使用）
 // ===================================
 
 const SentryMock = {
@@ -190,114 +149,103 @@ const SentryMock = {
   setUser: () => {},
   setTag: () => {},
   setContext: () => {},
-  withScope: (callback) => callback({ setContext: () => {} }),
+  withScope: (callback) => callback({ setContext: () => {}, setTag: () => {} }),
+  browserTracingIntegration: () => ({}),
 };
 
-// 导出 Sentry 实例
-const SentryInstance = (isDev || !sentryInitialized) ? SentryMock : Sentry;
+// ===================================
+// 自动初始化
+// ===================================
 
-// 暴露到全局变量
+// 如果 Sentry SDK 已加载，立即初始化
 if (typeof window !== 'undefined') {
-  window.Sentry = SentryInstance;
+  if (window.Sentry && window.Sentry.init) {
+    initSentry();
+  } else {
+    // 等待 SDK 加载
+    window.addEventListener('sentry-sdk-loaded', initSentry);
+    // 设置超时回退
+    setTimeout(() => {
+      if (!sentryInitialized) {
+        console.warn('[Sentry] SDK 加载超时，使用 Mock 模式');
+        window.Sentry = SentryMock;
+      }
+    }, 5000);
+  }
 }
 
-export default SentryInstance;
-
 // ===================================
-// Helper 函数
+// 导出 Helper 函数
 // ===================================
 
 /**
- * 设置用户上下文（登录后调用）
- * @param {string} userId - 用户 ID
- * @param {string} [email] - 用户邮箱（可选）
+ * 获取 Sentry 实例
+ */
+export function getSentry() {
+  return window.Sentry || SentryMock;
+}
+
+/**
+ * 设置用户上下文
  */
 export function setUser(userId, email) {
-  if (isDev) return;
-
-  SentryInstance.setUser({
-    id: userId,
-    email: email,
-  });
+  getSentry().setUser({ id: userId, email });
 }
 
 /**
- * 清除用户上下文（登出时调用）
+ * 清除用户上下文
  */
 export function clearUser() {
-  if (isDev) return;
-
-  SentryInstance.setUser(null);
-}
-
-/**
- * 设置自定义标签（用于筛选和分组）
- * @param {string} key - 标签名
- * @param {string} value - 标签值
- */
-export function setTag(key, value) {
-  if (isDev) return;
-
-  SentryInstance.setTag(key, value);
-}
-
-/**
- * 设置自定义上下文（附加元数据）
- * @param {string} name - 上下文名称
- * @param {object} context - 上下文数据
- */
-export function setContext(name, context) {
-  if (isDev) return;
-
-  SentryInstance.setContext(name, context);
+  getSentry().setUser(null);
 }
 
 /**
  * 手动捕获异常
- * @param {Error} error - 错误对象
- * @param {object} [context] - 额外上下文
  */
 export function captureException(error, context) {
-  if (isDev) {
-    console.error('[Sentry Dev] Exception:', error, context);
-    return;
-  }
-
+  const sentry = getSentry();
   if (context) {
-    SentryInstance.withScope(scope => {
+    sentry.withScope(scope => {
       Object.entries(context).forEach(([key, value]) => {
         scope.setContext(key, value);
       });
-      SentryInstance.captureException(error);
+      sentry.captureException(error);
     });
   } else {
-    SentryInstance.captureException(error);
+    sentry.captureException(error);
   }
 }
 
 /**
  * 手动捕获消息
- * @param {string} message - 消息内容
- * @param {string} [level] - 级别 (fatal|error|warning|info|debug)
  */
 export function captureMessage(message, level = 'info') {
-  if (isDev) {
-    console.log(`[Sentry Dev] ${level.toUpperCase()}:`, message);
-    return;
-  }
-
-  SentryInstance.captureMessage(message, level);
+  getSentry().captureMessage(message, level);
 }
 
 /**
- * 添加面包屑（用于错误追溯）
- * @param {object} breadcrumb - 面包屑数据
+ * 测试 Sentry 是否正常工作
  */
-export function addBreadcrumb(breadcrumb) {
-  if (isDev) return;
+export function testSentry() {
+  const sentry = getSentry();
+  console.log('[Sentry Test] 开始测试...');
+  console.log('[Sentry Test] SDK 已加载:', !!window.Sentry);
+  console.log('[Sentry Test] 已初始化:', sentryInitialized);
+  console.log('[Sentry Test] 开发环境:', isDev);
+  console.log('[Sentry Test] DSN 已配置:', !!SENTRY_DSN);
 
-  SentryInstance.addBreadcrumb({
-    level: 'info',
-    ...breadcrumb,
-  });
+  if (sentryInitialized && !isDev) {
+    sentry.captureMessage('Sentry 测试消息 - 前端集成正常', 'info');
+    console.log('[Sentry Test] ✅ 已发送测试消息到 Sentry');
+  } else {
+    console.log('[Sentry Test] ⚠️ Mock 模式，消息不会发送到 Sentry');
+    sentry.captureMessage('测试消息 (Mock)', 'info');
+  }
 }
+
+// 暴露测试函数到全局
+if (typeof window !== 'undefined') {
+  window.testSentry = testSentry;
+}
+
+export default { getSentry, setUser, clearUser, captureException, captureMessage, testSentry };

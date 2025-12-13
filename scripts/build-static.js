@@ -72,6 +72,10 @@ async function copyDirectory(source, destination) {
     await copyEntry(entry);
   }
 
+  // 注入 Sentry 配置
+  BuildLogger.log('🔧 注入 Sentry 配置...');
+  require('./inject-sentry-config.js');
+
   BuildLogger.success(' 静态资源构建完成，输出目录 dist/');
 })().catch(err => {
   console.error('构建静态资源失败:', err);

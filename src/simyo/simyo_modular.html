@@ -5,15 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Simyo eSIM 工具，支持设备更换、短信验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。">
-    
+
+    <!-- Sentry 错误监控配置（必须在其他脚本之前） -->
+    <script>
+      // Sentry 配置 - 在 Netlify 部署时会通过环境变量注入
+      window.SENTRY_DSN = '';  // 在 Netlify 环境变量中配置
+      window.SENTRY_ENVIRONMENT = 'production';
+      window.SENTRY_RELEASE = 'esim-tools@unknown';
+    </script>
+    <script src="/src/js/sentry-loader.js"></script>
+
     <!-- 预连接优化 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://browser.sentry-cdn.com" crossorigin>
     <link rel="preconnect" href="https://qrcode.show" crossorigin>
     <link rel="preconnect" href="https://appapi.simyo.nl" crossorigin>
-    
+
     <!-- CSP策略 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://challenges.cloudflare.com; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://challenges.cloudflare.com https://*.ingest.sentry.io; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com;">
     
     <title>Simyo NL eSIM 申请工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
