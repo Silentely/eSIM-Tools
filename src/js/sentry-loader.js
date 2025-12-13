@@ -83,11 +83,26 @@
         environment: SENTRY_ENVIRONMENT,
         release: SENTRY_RELEASE,
 
-        // 性能监控
+        // 性能监控 - 启用完整的请求追踪
         integrations: [
-          window.Sentry.browserTracingIntegration()
+          window.Sentry.browserTracingIntegration({
+            // 启用 fetch 和 XHR 请求追踪
+            traceFetch: true,
+            traceXHR: true,
+            // 启用页面加载和导航追踪
+            enableLongTask: true
+          })
         ],
-        tracesSampleRate: 0.1,
+        // 追踪传播目标 - 指定哪些请求应该添加追踪头
+        tracePropagationTargets: [
+          'localhost',
+          /^https:\/\/esim\.cosr\.eu\.org/,
+          /^https:\/\/.*\.giffgaff\.com/,
+          /^https:\/\/.*\.simyo\.nl/,
+          /^https:\/\/qrcode\.show/,
+          /^https:\/\/api\.qrserver\.com/
+        ],
+        tracesSampleRate: 0.2,  // 提高到 20% 采样率以获得更多数据
 
         // 错误采样率
         sampleRate: 1.0,
