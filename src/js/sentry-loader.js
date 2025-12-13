@@ -113,7 +113,35 @@
 
         // 敏感数据过滤
         beforeSend: function(event) {
+          // 脱敏 URL 中的敏感查询参数
+          function sanitizeQueryString(url) {
+            if (!url) return url;
+            var sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
+            try {
+              var urlObj = new URL(url, window.location.origin);
+              sensitiveParams.forEach(function(param) {
+                if (urlObj.searchParams.has(param)) {
+                  urlObj.searchParams.set(param, '***');
+                }
+              });
+              return urlObj.toString();
+            } catch (e) {
+              // URL 解析失败，使用正则替换
+              return url.replace(/([?&])(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1$2=***');
+            }
+          }
+
           if (event.request) {
+            // 脱敏 query_string
+            if (event.request.query_string) {
+              event.request.query_string = event.request.query_string
+                .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
+            }
+            // 脱敏 URL
+            if (event.request.url) {
+              event.request.url = sanitizeQueryString(event.request.url);
+            }
+            // 删除敏感 cookies 和 headers
             delete event.request.cookies;
             if (event.request.headers) {
               delete event.request.headers['authorization'];
@@ -129,7 +157,11 @@
                   .replace(/token[=:]\s*[^\s,]+/gi, 'token=***')
                   .replace(/key[=:]\s*[^\s,]+/gi, 'key=***')
                   .replace(/password[=:]\s*[^\s,]+/gi, 'password=***')
-                  .replace(/cookie[=:]\s*[^\s,]+/gi, 'cookie=***');
+                  .replace(/cookie[=:]\s*[^\s,]+/gi, 'cookie=***')
+                  .replace(/code[=:]\s*[^\s,]+/gi, 'code=***')
+                  .replace(/state[=:]\s*[^\s,]+/gi, 'state=***')
+                  .replace(/access_token[=:]\s*[^\s,]+/gi, 'access_token=***')
+                  .replace(/refresh_token[=:]\s*[^\s,]+/gi, 'refresh_token=***');
               }
             });
           }
@@ -200,6 +232,8 @@
     console.log('[Sentry Loader] SDK 加载成功');
     // 加载成功后立即初始化
     initSentry();
+    // 触发自定义事件，通知其他模块 SDK 已加载
+    window.dispatchEvent(new Event('sentry-sdk-loaded'));
   };
 
   script.onerror = function() {

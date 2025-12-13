@@ -7,12 +7,8 @@
     <meta name="description" content="Giffgaff eSIM 工具，支持 OAuth 登录、MFA 验证、二维码生成与设备更换。">
 
     <!-- Sentry 错误监控配置（必须在其他脚本之前） -->
-    <script>
-      // Sentry 配置 - 在 Netlify 部署时会通过环境变量注入
-      window.SENTRY_DSN = '';  // 在 Netlify 环境变量中配置
-      window.SENTRY_ENVIRONMENT = 'production';
-      window.SENTRY_RELEASE = 'esim-tools@unknown';
-    </script>
+    <!-- 使用外链脚本以符合 CSP 策略 -->
+    <script src="/src/js/sentry-config.js"></script>
     <script src="/src/js/sentry-loader.js"></script>
 
     <!-- 预连接优化 -->
