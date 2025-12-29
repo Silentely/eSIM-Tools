@@ -76,10 +76,27 @@ class SimyoApp {
         
         // ===== 通用操作 =====
         elements.clearSessionBtn?.addEventListener('click', () => this.handleClearSession());
-        
+
+        // 帮助按钮
+        const helpBtn = document.getElementById('helpBtn');
+        helpBtn?.addEventListener('click', () => openHelp());
+
+        // 设备更换选项按钮
+        const startDeviceChangeBtn = document.getElementById('startDeviceChangeBtn');
+        startDeviceChangeBtn?.addEventListener('click', () => {
+            uiController.showDeviceChangeSteps();
+            this.bindDeviceChangeFlow();
+        });
+
+        const skipDeviceChangeBtn = document.getElementById('skipDeviceChangeBtn');
+        skipDeviceChangeBtn?.addEventListener('click', () => uiController.skipDeviceChange());
+
+        const skipDeviceChangeAltBtn = document.getElementById('skipDeviceChangeAltBtn');
+        skipDeviceChangeAltBtn?.addEventListener('click', () => uiController.skipDeviceChange());
+
         // 步骤点击跳转
         this.bindStepNavigation();
-        
+
         // 返回按钮
         this.bindBackButtons();
     }
@@ -482,15 +499,5 @@ if (document.readyState === 'loading') {
 } else {
     app.init();
 }
-
-// 导出全局函数供HTML内联事件使用
-window.openHelp = openHelp;
-window.startDeviceChange = () => {
-    uiController.showDeviceChangeSteps();
-    app.bindDeviceChangeFlow();
-};
-window.skipDeviceChange = () => {
-    uiController.skipDeviceChange();
-};
 
 export default app;

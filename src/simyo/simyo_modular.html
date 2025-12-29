@@ -60,7 +60,7 @@
                 <div class="language-switcher">
                     <button id="languageSwitcher" class="lang-switch" type="button" aria-label="切换语言到英文">🌐 English</button>
                 </div>
-                <button class="help-btn" onclick="openHelp()" aria-label="打开使用帮助">
+                <button id="helpBtn" class="help-btn" aria-label="打开使用帮助">
                     <i class="fas fa-question-circle" aria-hidden="true"></i>
                     <span class="lang-zh">使用帮助</span>
                     <span class="lang-en">Help</span>
@@ -312,7 +312,7 @@
                                         <span class="lang-zh">将eSIM转移到新设备</span>
                                         <span class="lang-en">Move your eSIM to another device</span>
                                     </p>
-                                    <button class="btn btn-primary w-100" onclick="startDeviceChange()">
+                                    <button id="startDeviceChangeBtn" class="btn btn-primary w-100">
                                         <span class="lang-zh">选择此选项</span>
                                         <span class="lang-en">Choose this option</span>
                                     </button>
@@ -331,7 +331,7 @@
                                         <span class="lang-zh">首次申请或当前设备使用</span>
                                         <span class="lang-en">For first-time or current device setup</span>
                                     </p>
-                                    <button class="btn btn-primary w-100" onclick="skipDeviceChange()">
+                                    <button id="skipDeviceChangeBtn" class="btn btn-primary w-100">
                                         <span class="lang-zh">选择此选项</span>
                                         <span class="lang-en">Choose this option</span>
                                     </button>
@@ -442,7 +442,7 @@
                     </div>
 
                     <div class="text-center mt-4">
-                        <button class="btn btn-primary" onclick="skipDeviceChange()">
+                        <button id="skipDeviceChangeAltBtn" class="btn btn-primary">
                             <i class="fas fa-skip-forward me-2"></i>
                             <span class="lang-zh">跳过设备更换，直接获取eSIM</span>
                             <span class="lang-en">Skip device change and get eSIM</span>

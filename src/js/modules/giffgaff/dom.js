@@ -66,7 +66,15 @@ class DOMManager {
     
     // 其他
     this.elements.clearSessionBtn = document.getElementById('clearSessionBtn');
-    
+    this.elements.tutorialBtn = document.getElementById('tutorialBtn');
+
+    // 绑定教程按钮点击事件
+    if (this.elements.tutorialBtn) {
+      this.elements.tutorialBtn.addEventListener('click', () => {
+        window.open('https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md', '_blank');
+      });
+    }
+
     this.initialized = true;
   }
 
