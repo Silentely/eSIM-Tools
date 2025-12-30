@@ -69,7 +69,8 @@ class DOMManager {
     this.elements.tutorialBtn = document.getElementById('tutorialBtn');
 
     // 绑定教程按钮点击事件
-    if (this.elements.tutorialBtn) {
+    // 说明：优先使用 <a href target="_blank">，确保在 WebView/PWA 或 JS 初始化失败时也能打开教程
+    if (this.elements.tutorialBtn && this.elements.tutorialBtn.tagName !== 'A') {
       this.elements.tutorialBtn.addEventListener('click', () => {
         window.open('https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md', '_blank');
       });

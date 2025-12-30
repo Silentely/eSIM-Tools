@@ -1,0 +1,7 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "src/giffgaff/giffgaff_complete_esim.html": "5ed77b006a633642c24fbcd672217d6fabdd24e090c545afb97efa3096da9aff",
+    "src/simyo/simyo_complete_esim.html": "f7ca167f6fa07d4c2dbc2630d6edf9e8ea247023b9ebd45ea4e2093d7edbc576"
+  }
+}
