@@ -90,19 +90,23 @@ export function openHelp() {
             <h5>${t('simyo.help.keep.heading')}</h5>
             <p>${t('simyo.help.keep.content')}</p>
             
-            <button onclick="this.parentElement.remove()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer;">
+            <button type="button" data-action="close-help" style="margin-top: 20px; padding: 10px 20px; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer;">
                 ${t('simyo.help.close')}
             </button>
         </div>
     `;
     
     const overlay = document.createElement('div');
+    overlay.dataset.helpOverlay = 'simyo-help';
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.7); z-index: 1000; display: flex;
         align-items: center; justify-content: center; padding: 20px;
     `;
     overlay.innerHTML = helpContent;
+    overlay.querySelector('[data-action="close-help"]')?.addEventListener('click', () => {
+        overlay.remove();
+    });
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
     });
