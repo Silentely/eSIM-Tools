@@ -90,6 +90,10 @@ function initSentry() {
         /AbortError/,
         /chrome-extension/,
         /moz-extension/,
+        /Error invoking post/,
+        /Method not found/,
+        /turnstile/i,
+        /postMessage/i,
       ],
 
       denyUrls: [

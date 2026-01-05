@@ -67,53 +67,67 @@ class CaptchaManager {
   }
 
   async initTurnstile() {
-    await this.loadScript(TURNSTILE_SRC, 'turnstile-loader');
-    return new Promise((resolve) => {
-      const boot = () => {
-        if (!window.turnstile) {
-          setTimeout(boot, 200);
-          return;
-        }
-        const container = document.createElement('div');
-        container.style.display = 'none';
-        container.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(container);
-        this.turnstileWidgetId = window.turnstile.render(container, {
-          sitekey: this.config.turnstileSiteKey,
-          size: 'invisible',
-          callback: (token) => {
-            this.storeToken(token);
-            this.turnstileExecuting = false;
-          },
-          'error-callback': (err) => {
+    try {
+      await this.loadScript(TURNSTILE_SRC, 'turnstile-loader');
+
+      return new Promise((resolve) => {
+        const boot = () => {
+          if (!window.turnstile) {
+            setTimeout(boot, 200);
+            return;
+          }
+          try {
+            const container = document.createElement('div');
+            container.style.display = 'none';
+            container.setAttribute('aria-hidden', 'true');
+            document.body.appendChild(container);
+
+            this.turnstileWidgetId = window.turnstile.render(container, {
+              sitekey: this.config.turnstileSiteKey,
+              size: 'invisible',
+              callback: (token) => {
+                this.storeToken(token);
+                this.turnstileExecuting = false;
+              },
+              'error-callback': (err) => {
+                window.__lastTurnstileError = err;
+                this.turnstileExecuting = false;
+                this.refreshTurnstile();
+              },
+              'timeout-callback': () => {
+                this.turnstileExecuting = false;
+                this.refreshTurnstile();
+              },
+              'expired-callback': () => {
+                this.turnstileExecuting = false;
+                this.refreshTurnstile();
+              }
+            });
+            window.__turnstileWidgetId = this.turnstileWidgetId;
+            window.__esimTurnstileRefresh = () => {
+              this.refreshTurnstile();
+              return true;
+            };
+            this.refreshTurnstile();
+            this.turnstileInterval = setInterval(() => {
+              if (document.visibilityState !== 'hidden') {
+                this.refreshTurnstile();
+              }
+            }, 110000);
+            resolve();
+          } catch (err) {
+            console.error('[CaptchaManager] Turnstile 初始化失败:', err);
             window.__lastTurnstileError = err;
-            this.turnstileExecuting = false;
-            this.refreshTurnstile();
-          },
-          'timeout-callback': () => {
-            this.turnstileExecuting = false;
-            this.refreshTurnstile();
-          },
-          'expired-callback': () => {
-            this.turnstileExecuting = false;
-            this.refreshTurnstile();
+            resolve(); // 即使失败也 resolve，不阻塞应用启动
           }
-        });
-        window.__turnstileWidgetId = this.turnstileWidgetId;
-        window.__esimTurnstileRefresh = () => {
-          this.refreshTurnstile();
-          return true;
         };
-        this.refreshTurnstile();
-        this.turnstileInterval = setInterval(() => {
-          if (document.visibilityState !== 'hidden') {
-            this.refreshTurnstile();
-          }
-        }, 110000);
-        resolve();
-      };
-      boot();
-    });
+        boot();
+      });
+    } catch (err) {
+      console.error('[CaptchaManager] Turnstile 加载失败:', err);
+      window.__lastTurnstileError = err;
+      window.__turnstileDisabled = true;
+    }
   }
 
   refreshTurnstile() {
