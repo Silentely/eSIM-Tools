@@ -1,0 +1,128 @@
+name: "Codex Intelligence Hub"
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
+
+jobs:
+  codex_brain:
+    # 仅在 PR/Issue 评论包含 @codex，或 PR 自动触发时运行
+    if: |
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex'))
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch and Mask Intelligence (Gist)
+        id: gist_config
+        run: |
+          # 1. 获取配置
+          CONFIG=$(curl -s -f -L "${{ secrets.GIST_CONFIG_URL }}")
+          
+          KEY=$(echo "$CONFIG" | jq -r '.api_key')
+          URL=$(echo "$CONFIG" | jq -r '.base_url')
+          AGENTS_URL=$(echo "$CONFIG" | jq -r '.agents_gist_url')
+          PROMPTS_URL=$(echo "$CONFIG" | jq -r '.prompts_gist_url')
+
+          # 2. 核心：全量掩码 (防止在日志中显示)
+          echo "::add-mask::$KEY"
+          echo "::add-mask::$URL"
+          
+          # 3. 输出给后续步骤
+          echo "key=$KEY" >> $GITHUB_OUTPUT
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "model=$(echo "$CONFIG" | jq -r '.model // "gpt-5.2"')" >> $GITHUB_OUTPUT
+          
+          # 4. 下载逻辑资产
+          mkdir -p .github/assets
+          curl -s -f -L "$AGENTS_URL" -o .github/assets/AGENTS.md || echo "No Agents"
+          curl -s -f -L "$PROMPTS_URL" -o .github/assets/SYSTEM_PROMPTS.md || echo "No Prompts"
+
+      - name: Prepare Context
+        id: context
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. 预设过滤规则
+          FILTER=":!*.lock :!*-lock.json :!*.md :!*.svg :!*.png"
+          
+          # 2. 提取公共变量
+          USER_CMD="${{ github.event.comment.body }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_BODY=$(cat << 'EOF'
+          ${{ github.event.issue.body }}
+          EOF
+          )
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # 场景 A: PR 自动审查 (读取 Diff)
+            DIFF=$(git diff ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- . $FILTER | tail -c 8000)
+            DATA="PR 自动审计模式。代码变更如下：\n$DIFF"
+            TASK="请进行代码质量与安全审查。"
+
+          elif [ "${{ github.event.issue.pull_request }}" != "null" ]; then
+            # 场景 B: PR 评论召唤 (读取 Diff + 用户指令)
+            DIFF=$(gh pr diff ${{ github.event.issue.number }} -- . $FILTER | tail -c 8000)
+            DATA="PR 代码上下文：\n$DIFF"
+            TASK="用户指令：$USER_CMD"
+
+          else
+            # 场景 C: 纯 Issue 召唤 (读取 Issue 标题/正文 + 用户指令 + 目录树)
+            TREE=$(find . -maxdepth 2 -not -path '*/.*' | sed 's/$/\\n/' | tr -d '\n')
+            DATA="Issue 背景信息：\n标题：$ISSUE_TITLE\n内容：$ISSUE_BODY\n\n项目结构：\n$TREE"
+            TASK="当前用户指令：$USER_CMD"
+          fi
+
+          # 3. 注入 System Prompt (从 Gist 下载的资产)
+          SYSTEM_P="你是一个全能助手，请严格保护敏感信息。"
+          if [ -f ".github/assets/SYSTEM_PROMPTS.md" ]; then
+             SYSTEM_P=$(cat .github/assets/SYSTEM_PROMPTS.md)
+          fi
+
+          # 4. 组合成最终 Prompt (解决 Shell 注入与换行问题)
+          echo "final_prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "--- 系统指令 ---" >> $GITHUB_OUTPUT
+          echo "$SYSTEM_P" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "--- 上下文数据 ---" >> $GITHUB_OUTPUT
+          echo -e "$DATA" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "--- 执行任务 ---" >> $GITHUB_OUTPUT
+          echo -e "$TASK" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run OpenAI Codex Action
+        id: codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ steps.gist_config.outputs.key }}
+          model: ${{ steps.gist_config.outputs.model }}
+          responses-api-endpoint: "${{ steps.gist_config.outputs.url }}/v1/responses"
+          agents-config: ".github/assets/AGENTS.md"
+          # 直接使用构建好的纯文本，不包含任何 Shell 脚本字符
+          prompt: ${{ steps.prompt_builder.outputs.final_prompt }}
+
+      - name: Post Results
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RESPONSE="${{ steps.codex.outputs.final-message }}"
+          if [ -n "$RESPONSE" ]; then
+            # 动态获取当前编号
+            NUM=${{ github.event.issue.number || github.event.pull_request.number }}
+            gh issue comment $NUM --body "### 🤖 Codex Intelligence Result
+            $RESPONSE"
+          fi
