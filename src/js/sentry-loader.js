@@ -117,7 +117,11 @@
           /Load failed/,
           /AbortError/,
           /chrome-extension/,
-          /moz-extension/
+          /moz-extension/,
+          /Error invoking post/,
+          /Method not found/,
+          /turnstile/i,
+          /postMessage/i
         ],
 
         denyUrls: [
