@@ -10,8 +10,10 @@ jobs:
   codex_brain:
     # 仅在 PR/Issue 评论包含 @codex，或 PR 自动触发时运行
     if: |
-      github.event_name == 'pull_request' || 
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex'))
+      github.actor != 'renovate[bot]' && 
+      github.actor != 'dependabot[bot]' && 
+      (github.event_name == 'pull_request' || 
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')))
     
     runs-on: ubuntu-latest
     permissions:
@@ -21,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
