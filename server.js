@@ -151,10 +151,10 @@ app.use('/api/simyo/*', (req, res) => {
         url: targetUrl,
         headers: {
             'Content-Type': 'application/json',
-            'User-Agent': req.headers['user-agent'] || 'MijnSimyo/4.8.0 (iPhone; iOS 17.5.1; Scale/3.00)',
+            'User-Agent': req.headers['user-agent'] || 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)',
             'X-Client-Token': req.headers['x-client-token'] || 'e77b7e2f43db41bb95b17a2a11581a38',
             'X-Client-Platform': req.headers['x-client-platform'] || 'ios',
-            'X-Client-Version': req.headers['x-client-version'] || '4.8.0'
+            'X-Client-Version': req.headers['x-client-version'] || '4.23.5'
         },
         timeout: 30000
     };

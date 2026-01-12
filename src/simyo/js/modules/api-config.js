@@ -12,8 +12,8 @@ import { t } from '../../../js/modules/i18n.js';
 export const simyoConfig = {
     clientToken: "e77b7e2f43db41bb95b17a2a11581a38",
     clientPlatform: "ios",
-    clientVersion: "4.8.0",
-    userAgent: "MijnSimyo/4.8.0 (iPhone; iOS 17.5.1; Scale/3.00)"
+    clientVersion: "4.23.5",
+    userAgent: "MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)"
 };
 
 /**

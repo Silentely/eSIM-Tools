@@ -17,8 +17,8 @@ const SIMYO_CONFIG = {
     headers: {
         'X-Client-Token': 'e77b7e2f43db41bb95b17a2a11581a38',
         'X-Client-Platform': 'ios',
-        'X-Client-Version': '4.8.0',
-        'User-Agent': 'MijnSimyo/4.8.0 (iPhone; iOS 17.5.1; Scale/3.00)',
+        'X-Client-Version': '4.23.5',
+        'User-Agent': 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)',
         'Content-Type': 'application/json',
         'Connection': 'keep-alive',
         'Accept-Encoding': 'gzip, deflate, br'
