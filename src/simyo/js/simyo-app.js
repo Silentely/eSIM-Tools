@@ -478,8 +478,13 @@ class SimyoApp {
                 uiController.showSection(Math.max(3, state.currentStep));
             } else if (state.isDeviceChange) {
                 // 设备更换模式
-                uiController.elements.deviceChangeOption.style.display = 'none';
-                uiController.elements.deviceChangeSteps.style.display = 'block';
+                if (uiController.elements.deviceChangeOption) {
+                    uiController.elements.deviceChangeOption.style.display = 'none';
+                }
+                if (uiController.elements.deviceChangeSteps) {
+                    uiController.elements.deviceChangeSteps.style.display = '';
+                    uiController.elements.deviceChangeSteps.classList.add('active');
+                }
                 this.bindDeviceChangeFlow();
                 uiController.showSection(Math.max(2, state.currentStep));
             } else {

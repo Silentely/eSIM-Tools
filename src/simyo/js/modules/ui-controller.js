@@ -111,11 +111,17 @@ export class UIController {
         const step1 = document.getElementById('step1');
         const deviceChangeOption = this.elements.deviceChangeOption;
         const deviceChangeSteps = this.elements.deviceChangeSteps;
-        
+
         if (step1) step1.classList.remove('active');
-        if (deviceChangeSteps) deviceChangeSteps.classList.remove('active');
-        if (deviceChangeOption) deviceChangeOption.classList.add('active');
-        
+        if (deviceChangeSteps) {
+            deviceChangeSteps.classList.remove('active');
+            deviceChangeSteps.style.display = 'none';
+        }
+        if (deviceChangeOption) {
+            deviceChangeOption.classList.add('active');
+            deviceChangeOption.style.display = '';  // 移除行内样式，让CSS类控制显示
+        }
+
         const currentStep = stateManager.get('currentStep');
         stateManager.set('currentStep', Math.max(currentStep, 2));
         this.updateSteps(stateManager.get('currentStep'));
@@ -127,23 +133,35 @@ export class UIController {
     showDeviceChangeSteps() {
         const deviceChangeOption = this.elements.deviceChangeOption;
         const deviceChangeSteps = this.elements.deviceChangeSteps;
-        
-        if (deviceChangeOption) deviceChangeOption.classList.remove('active');
-        if (deviceChangeSteps) deviceChangeSteps.classList.add('active');
-        
+
+        if (deviceChangeOption) {
+            deviceChangeOption.classList.remove('active');
+            deviceChangeOption.style.display = 'none';
+        }
+        if (deviceChangeSteps) {
+            deviceChangeSteps.classList.add('active');
+            deviceChangeSteps.style.display = '';  // 移除行内样式，让CSS类控制显示
+        }
+
         stateManager.setState({ isDeviceChange: true });
     }
-    
+
     /**
      * 跳过设备更换
      */
     skipDeviceChange() {
         const deviceChangeOption = this.elements.deviceChangeOption;
         const deviceChangeSteps = this.elements.deviceChangeSteps;
-        
-        if (deviceChangeOption) deviceChangeOption.classList.remove('active');
-        if (deviceChangeSteps) deviceChangeSteps.classList.remove('active');
-        
+
+        if (deviceChangeOption) {
+            deviceChangeOption.classList.remove('active');
+            deviceChangeOption.style.display = 'none';
+        }
+        if (deviceChangeSteps) {
+            deviceChangeSteps.classList.remove('active');
+            deviceChangeSteps.style.display = 'none';
+        }
+
         stateManager.setState({ isDeviceChange: false });
         this.showSection(2); // 显示获取eSIM步骤
     }
