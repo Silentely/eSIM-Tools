@@ -70,7 +70,13 @@ class SimyoApp {
         
         // ===== Step 3: 生成二维码 =====
         elements.generateQrBtn?.addEventListener('click', () => this.handleGenerateQR());
-        
+
+        // 下一步：确认安装
+        const nextToConfirmBtn = document.getElementById('nextToConfirmBtn');
+        nextToConfirmBtn?.addEventListener('click', () => {
+            uiController.showSection(4);
+        });
+
         // ===== Step 4: 确认安装 =====
         elements.confirmInstallBtn?.addEventListener('click', () => this.handleConfirmInstall());
         
@@ -393,9 +399,15 @@ class SimyoApp {
             // 绑定复制和下载按钮
             this.bindQRActions(qrResult.lpaString);
 
-            // 进入下一步
-            await delay(2000);
-            uiController.showSection(4);
+            // 显示"下一步"按钮
+            const nextBtn = document.getElementById('nextToConfirmBtn');
+            if (nextBtn) {
+                nextBtn.style.display = 'block';
+            }
+
+            // 移除自动跳转，让用户手动点击"下一步"按钮
+            // await delay(2000);
+            // uiController.showSection(4);
         } catch (error) {
             uiController.showStatus(elements.qrStatus, t('simyo.app.error.generateFailed', { message: error.message }), "error");
         } finally {

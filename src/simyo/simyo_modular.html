@@ -524,10 +524,14 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end mt-3">
+                    <div class="d-flex justify-content-between mt-3">
                         <button type="button" class="btn btn-link back-step-btn" aria-label="返回上一步">
                             <span class="lang-zh">← 返回上一步</span>
                             <span class="lang-en">← Previous step</span>
+                        </button>
+                        <button type="button" id="nextToConfirmBtn" class="btn btn-primary" style="display: none;">
+                            <span class="lang-zh">下一步：确认安装 →</span>
+                            <span class="lang-en">Next: Confirm Installation →</span>
                         </button>
                     </div>
                 </div>
@@ -539,31 +543,68 @@
             <div class="card card-elevated">
                 <div class="card-header">
                     <i class="fas fa-check-circle" aria-hidden="true"></i>
-                    <span class="lang-zh"> 第四步：确认安装（可选）</span>
-                    <span class="lang-en"> Step 4: Confirm installation (optional)</span>
+                    <span class="lang-zh"> 第四步：确认安装</span>
+                    <span class="lang-en"> Step 4: Confirm installation</span>
                 </div>
                 <div class="card-body">
-                    <p class="mb-4" style="font-size: 17px; color: #212529;">
-                        <span class="lang-zh">如果APP无法登录或更换设备，请执行此步骤确认安装：</span>
-                        <span class="lang-en">Run this step if the app cannot log in or the device change needs confirmation:</span>
-                    </p>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
-                        <strong class="lang-zh">说明：</strong>
-                        <strong class="lang-en">Note:</strong>
-                        <span class="lang-zh">此步骤适用于更换设备或APP登录异常的情况</span>
-                        <span class="lang-en">Use this when switching devices or if the app cannot confirm activation.</span>
+                    <!-- 重要警告 -->
+                    <div class="alert alert-danger" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                            <strong class="lang-zh">⚠️ 重要提示</strong>
+                            <strong class="lang-en">⚠️ Important Notice</strong>
+                        </h5>
+                        <hr>
+                        <p class="mb-2">
+                            <strong class="lang-zh">请务必先在设备上完成eSIM安装，然后再点击"确认安装"按钮！</strong>
+                            <strong class="lang-en">You MUST install the eSIM on your device BEFORE clicking "Confirm Installation"!</strong>
+                        </p>
+                        <p class="mb-0">
+                            <span class="lang-zh">⚠️ 如果未安装就点击确认，二维码将失效，您需要重新申请并生成新的二维码！</span>
+                            <span class="lang-en">⚠️ If you confirm without installing, the QR code will become invalid and you'll need to request a new one!</span>
+                        </p>
                     </div>
-                    
+
+                    <!-- 安装步骤说明 -->
+                    <div class="alert alert-info">
+                        <h6>
+                            <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+                            <strong class="lang-zh">安装步骤：</strong>
+                            <strong class="lang-en">Installation Steps:</strong>
+                        </h6>
+                        <ol class="mb-0">
+                            <li>
+                                <span class="lang-zh">在支持eSIM的设备上扫描上方二维码</span>
+                                <span class="lang-en">Scan the QR code above on an eSIM-compatible device</span>
+                            </li>
+                            <li>
+                                <span class="lang-zh">按照设备提示完成eSIM下载和安装</span>
+                                <span class="lang-en">Follow device prompts to download and install the eSIM</span>
+                            </li>
+                            <li>
+                                <span class="lang-zh">启用已安装的Simyo eSIM配置</span>
+                                <span class="lang-en">Enable the installed Simyo eSIM profile</span>
+                            </li>
+                            <li>
+                                <span class="lang-zh">确认安装成功后，点击下方"确认安装"按钮</span>
+                                <span class="lang-en">After successful installation, click "Confirm Installation" below</span>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <p class="mb-4" style="font-size: 17px; color: #212529;">
+                        <span class="lang-zh">完成eSIM安装后，点击下方按钮通知Simyo服务器：</span>
+                        <span class="lang-en">After installing the eSIM, click below to notify Simyo servers:</span>
+                    </p>
+
                     <div class="btn-group">
-                        <button id="confirmInstallBtn" class="btn btn-primary">
-                            <i class="fas fa-check me-2"></i>
+                        <button id="confirmInstallBtn" class="btn btn-success btn-lg">
+                            <i class="fas fa-check-circle me-2"></i>
                             <span class="lang-zh">确认安装</span>
-                            <span class="lang-en">Confirm install</span>
+                            <span class="lang-en">Confirm Installation</span>
                         </button>
                     </div>
-                    
+
                     <div id="confirmStatus" class="status" role="status" aria-live="polite"></div>
 
                     <div class="d-flex justify-content-end mt-3">
