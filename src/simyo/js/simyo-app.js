@@ -190,33 +190,43 @@ class SimyoApp {
      * 处理登录
      */
     async handleLogin() {
-        const { elements } = uiController;
-        const phoneNumber = elements.phoneNumber.value.trim();
-        const password = elements.password.value.trim();
-        
-        if (!phoneNumber || !password) {
-            uiController.showStatus(elements.loginStatus, t('simyo.app.validation.loginForm'), "error");
+        // 直接获取DOM元素，避免缓存问题
+        const phoneNumberEl = document.getElementById('phoneNumber');
+        const passwordEl = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginStatus = document.getElementById('loginStatus');
+
+        if (!phoneNumberEl || !passwordEl) {
+            console.error('登录表单元素未找到！');
             return;
         }
-        
+
+        const phoneNumber = phoneNumberEl.value.trim();
+        const password = passwordEl.value.trim();
+
+        if (!phoneNumber || !password) {
+            uiController.showStatus(loginStatus, t('simyo.app.validation.loginForm'), "error");
+            return;
+        }
+
         try {
-            elements.loginBtn.innerHTML = `<span class="loading"></span> ${tl('登录中...')}`;
-            elements.loginBtn.disabled = true;
-            
-            uiController.showStatus(elements.loginStatus, t('simyo.app.status.loginValidating'), "success");
-            
+            loginBtn.innerHTML = `<span class="loading"></span> ${tl('登录中...')}`;
+            loginBtn.disabled = true;
+
+            uiController.showStatus(loginStatus, t('simyo.app.status.loginValidating'), "success");
+
             const result = await authHandler.login(phoneNumber, password);
-            
-            uiController.showStatus(elements.loginStatus, result.message || t('simyo.app.status.loginSuccess'), "success");
-            
+
+            uiController.showStatus(loginStatus, result.message || t('simyo.app.status.loginSuccess'), "success");
+
             // 显示设备更换选项
             await delay(1000);
             uiController.showDeviceChangeOption();
         } catch (error) {
-            uiController.showStatus(elements.loginStatus, t('simyo.app.error.loginFailed', { message: error.message }), "error");
+            uiController.showStatus(loginStatus, t('simyo.app.error.loginFailed', { message: error.message }), "error");
         } finally {
-            elements.loginBtn.innerHTML = `<i class="fas fa-sign-in-alt me-2"></i> ${tl('登录账户')}`;
-            elements.loginBtn.disabled = false;
+            loginBtn.innerHTML = `<i class="fas fa-sign-in-alt me-2"></i> ${tl('登录账户')}`;
+            loginBtn.disabled = false;
         }
     }
     
@@ -445,13 +455,16 @@ class SimyoApp {
      */
     handleSessionRestore() {
         const state = stateManager.getState();
-        
+
+        console.log('handleSessionRestore - state:', state);
+
         if (state.sessionToken) {
             // 恢复手机号
-            if (state.phoneNumber && uiController.elements.phoneNumber) {
-                uiController.elements.phoneNumber.value = state.phoneNumber;
+            const phoneNumberEl = document.getElementById('phoneNumber');
+            if (state.phoneNumber && phoneNumberEl) {
+                phoneNumberEl.value = state.phoneNumber;
             }
-            
+
             // 根据状态决定显示位置
             if (state.activationCode) {
                 // 已有激活码，提示用户
@@ -459,13 +472,14 @@ class SimyoApp {
                     const resumed = sessionStorage.getItem('simyo_resumed_once');
                     if (resumed !== '1') {
                         sessionStorage.setItem('simyo_resumed_once', '1');
-                        
+
+                        const qrStatus = document.getElementById('qrStatus');
                         uiController.showStatus(
-                            uiController.elements.qrStatus,
+                            qrStatus,
                             t('simyo.app.status.lpaFetchedOnce'),
                             'success'
                         );
-                        
+
                         setTimeout(() => {
                             const shouldClear = confirm(t('simyo.app.prompt.clearAfterLpa'));
                             if (shouldClear) {
@@ -474,21 +488,25 @@ class SimyoApp {
                         }, 100);
                     }
                 }, 500);
-                
+
                 uiController.showSection(Math.max(3, state.currentStep));
             } else if (state.isDeviceChange) {
                 // 设备更换模式
-                if (uiController.elements.deviceChangeOption) {
-                    uiController.elements.deviceChangeOption.style.display = 'none';
+                const deviceChangeOption = document.getElementById('deviceChangeOption');
+                const deviceChangeSteps = document.getElementById('deviceChangeSteps');
+
+                if (deviceChangeOption) {
+                    deviceChangeOption.style.display = 'none';
                 }
-                if (uiController.elements.deviceChangeSteps) {
-                    uiController.elements.deviceChangeSteps.style.display = '';
-                    uiController.elements.deviceChangeSteps.classList.add('active');
+                if (deviceChangeSteps) {
+                    deviceChangeSteps.style.display = '';
+                    deviceChangeSteps.classList.add('active');
                 }
                 this.bindDeviceChangeFlow();
                 uiController.showSection(Math.max(2, state.currentStep));
             } else {
                 // 显示设备更换选项
+                console.log('显示设备更换选项...');
                 uiController.showDeviceChangeOption();
             }
         }

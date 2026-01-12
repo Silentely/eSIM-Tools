@@ -8,8 +8,19 @@ import { t, tl } from '../../../js/modules/i18n.js';
 
 export class UIController {
     constructor() {
-        this.elements = this.initElements();
+        this.elements = {};
         this.tooltips = new Map();
+        this._elementsCache = null;
+    }
+
+    /**
+     * 获取元素引用（延迟初始化）
+     */
+    get elements() {
+        if (!this._elementsCache) {
+            this._elementsCache = this.initElements();
+        }
+        return this._elementsCache;
     }
     
     /**
@@ -108,9 +119,14 @@ export class UIController {
      * 显示设备更换选项
      */
     showDeviceChangeOption() {
+        // 重新获取元素引用，确保DOM已加载
         const step1 = document.getElementById('step1');
-        const deviceChangeOption = this.elements.deviceChangeOption;
-        const deviceChangeSteps = this.elements.deviceChangeSteps;
+        const deviceChangeOption = document.getElementById('deviceChangeOption');
+        const deviceChangeSteps = document.getElementById('deviceChangeSteps');
+
+        console.log('showDeviceChangeOption - step1:', step1);
+        console.log('showDeviceChangeOption - deviceChangeOption:', deviceChangeOption);
+        console.log('showDeviceChangeOption - deviceChangeSteps:', deviceChangeSteps);
 
         if (step1) step1.classList.remove('active');
         if (deviceChangeSteps) {
@@ -119,7 +135,9 @@ export class UIController {
         }
         if (deviceChangeOption) {
             deviceChangeOption.classList.add('active');
-            deviceChangeOption.style.display = '';  // 移除行内样式，让CSS类控制显示
+            deviceChangeOption.style.display = '';
+        } else {
+            console.error('deviceChangeOption 元素未找到！');
         }
 
         const currentStep = stateManager.get('currentStep');
@@ -131,8 +149,11 @@ export class UIController {
      * 显示设备更换步骤
      */
     showDeviceChangeSteps() {
-        const deviceChangeOption = this.elements.deviceChangeOption;
-        const deviceChangeSteps = this.elements.deviceChangeSteps;
+        const deviceChangeOption = document.getElementById('deviceChangeOption');
+        const deviceChangeSteps = document.getElementById('deviceChangeSteps');
+
+        console.log('showDeviceChangeSteps - deviceChangeOption:', deviceChangeOption);
+        console.log('showDeviceChangeSteps - deviceChangeSteps:', deviceChangeSteps);
 
         if (deviceChangeOption) {
             deviceChangeOption.classList.remove('active');
@@ -140,7 +161,9 @@ export class UIController {
         }
         if (deviceChangeSteps) {
             deviceChangeSteps.classList.add('active');
-            deviceChangeSteps.style.display = '';  // 移除行内样式，让CSS类控制显示
+            deviceChangeSteps.style.display = '';
+        } else {
+            console.error('deviceChangeSteps 元素未找到！');
         }
 
         stateManager.setState({ isDeviceChange: true });
@@ -150,8 +173,11 @@ export class UIController {
      * 跳过设备更换
      */
     skipDeviceChange() {
-        const deviceChangeOption = this.elements.deviceChangeOption;
-        const deviceChangeSteps = this.elements.deviceChangeSteps;
+        const deviceChangeOption = document.getElementById('deviceChangeOption');
+        const deviceChangeSteps = document.getElementById('deviceChangeSteps');
+
+        console.log('skipDeviceChange - deviceChangeOption:', deviceChangeOption);
+        console.log('skipDeviceChange - deviceChangeSteps:', deviceChangeSteps);
 
         if (deviceChangeOption) {
             deviceChangeOption.classList.remove('active');
