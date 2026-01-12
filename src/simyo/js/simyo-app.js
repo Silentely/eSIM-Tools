@@ -326,9 +326,6 @@ class SimyoApp {
 
             await delay(2000);
             uiController.skipDeviceChange();
-
-            // 验证码验证成功后，自动获取eSIM
-            await this.handleGetEsim();
         } catch (error) {
             uiController.showStatus(statusEl, t('simyo.app.error.verifyFailed', { message: error.message }), "error");
         } finally {
@@ -357,9 +354,6 @@ class SimyoApp {
             // 进入下一步
             await delay(2000);
             uiController.showSection(3);
-
-            // 获取eSIM成功后，自动生成二维码
-            await this.handleGenerateQR();
         } catch (error) {
             uiController.showStatus(elements.esimStatus, t('simyo.app.error.getEsimFailed', { message: error.message }), "error");
         } finally {
@@ -369,25 +363,36 @@ class SimyoApp {
     }
     
     /**
-     * 处理生成二维码
+     * 处理生成二维码（合并获取eSIM和生成二维码）
      */
     async handleGenerateQR() {
         const { elements } = uiController;
-        
+
         try {
             elements.generateQrBtn.innerHTML = `<span class="loading"></span> ${tl('生成中...')}`;
             elements.generateQrBtn.disabled = true;
-            
+
+            // 第一步：获取eSIM信息
+            uiController.showStatus(elements.qrStatus, t('simyo.app.status.getEsimProcessing'), "success");
+
+            const esimResult = await esimService.getEsim();
+
+            uiController.showStatus(elements.qrStatus, esimResult.message || t('simyo.app.status.getEsimSuccess'), "success");
+            uiController.showEsimInfo(esimResult.data);
+
+            await delay(1000);
+
+            // 第二步：生成二维码
             uiController.showStatus(elements.qrStatus, t('simyo.app.status.generateProcessing'), "success");
-            
-            const result = esimService.generateLPAString();
-            
-            uiController.showQRResult(result.lpaString);
+
+            const qrResult = esimService.generateLPAString();
+
+            uiController.showQRResult(qrResult.lpaString);
             uiController.showStatus(elements.qrStatus, t('simyo.app.status.generateSuccess'), "success");
-            
+
             // 绑定复制和下载按钮
-            this.bindQRActions(result.lpaString);
-            
+            this.bindQRActions(qrResult.lpaString);
+
             // 进入下一步
             await delay(2000);
             uiController.showSection(4);

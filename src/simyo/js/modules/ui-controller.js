@@ -188,7 +188,7 @@ export class UIController {
         }
 
         stateManager.setState({ isDeviceChange: false });
-        this.showSection(2); // 显示获取eSIM步骤
+        this.showSection(3); // 显示生成二维码步骤（第三步）
     }
     
     /**
@@ -427,9 +427,10 @@ export class UIController {
      * 显示二维码结果
      */
     showQRResult(lpaString) {
+        this.elements.resultContainer.style.display = 'block';
         this.elements.resultContainer.classList.add('active');
         this.generateQRCode(lpaString);
-        
+
         this.elements.activationInfo.innerHTML = `
             <div class="mb-3">
                 <h5 class="text-primary">${tl('LPA激活码')}</h5>
