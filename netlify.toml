@@ -48,9 +48,25 @@
   status = 200
 
 # API代理重定向（用于解决CORS问题）
-# 通用 Simyo API 代理
+# 通用 Simyo API 代理 (webapi - 新版API)
 [[redirects]]
   from = "/api/simyo/*"
+  to = "https://appapi.simyo.nl/webapi/api/v1/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "appapi.simyo.nl"}
+
+# v2 API 代理（用于特定端点如可用验证方式查询）
+[[redirects]]
+  from = "/api/simyo/esim.availableValidationMethods"
+  to = "https://appapi.simyo.nl/webapi/api/v2/esim.availableValidationMethods"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "appapi.simyo.nl"}
+
+# 保留旧版 simyoapi 路径的兼容性（如果需要）
+[[redirects]]
+  from = "/api/simyo/legacy/*"
   to = "https://appapi.simyo.nl/simyoapi/api/v1/:splat"
   status = 200
   force = true
