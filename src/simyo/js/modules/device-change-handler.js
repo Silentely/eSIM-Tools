@@ -76,9 +76,15 @@ export class DeviceChangeHandler {
                 throw new Error(data.message || t('simyo.device.applyFailed'));
             }
 
+            // 根据reason字段选择不同的提示消息
+            let message = data.message || t('simyo.device.applySuccess');
+            if (data.result.reason === 'AlreadyOrderedSimcardEsim') {
+                message = t('simyo.device.applySuccessAlreadyOrdered');
+            }
+
             return {
                 success: true,
-                message: data.result.message || t('simyo.device.applySuccess'),
+                message: message,
                 remainingTries: data.result.remainingNumberOfTries
             };
         } catch (error) {
@@ -94,15 +100,15 @@ export class DeviceChangeHandler {
      */
     async verifyCode(validationCode) {
         const sessionToken = stateManager.get('sessionToken');
-        
+
         if (!sessionToken) {
             throw new Error(t('simyo.errors.requireLogin'));
         }
-        
+
         if (!validateVerificationCode(validationCode)) {
             throw new Error(t('simyo.errors.invalidCodeFormat'));
         }
-        
+
         try {
             const response = await fetch(this.apiEndpoints.verifyCode, {
                 method: 'POST',
@@ -111,20 +117,20 @@ export class DeviceChangeHandler {
                     validationCode: validationCode
                 })
             });
-            
+
             const data = await handleApiResponse(response);
-            
-            if (!data.success || !data.result) {
+
+            if (!data.success) {
                 throw new Error(data.message || t('simyo.device.verifyFailed'));
             }
-            
+
             // 保存验证码到状态
             stateManager.set('validationCode', validationCode);
-            
+
             return {
                 success: true,
-                message: data.result.message || t('simyo.device.verifySuccess'),
-                nextStep: data.result.nextStep
+                message: data.message || t('simyo.device.verifySuccess'),
+                remainingTries: data.result?.remainingNumberOfTries
             };
         } catch (error) {
             console.error(t('simyo.device.log.verifyFailed'), error);

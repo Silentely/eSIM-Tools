@@ -83,12 +83,22 @@ export function createHeaders(includeSession = false, sessionToken = "") {
  */
 export async function handleApiResponse(response) {
     const data = await response.json();
-    
+
     // 适配不同环境的响应格式
     const isNetlify = isNetlifyEnvironment();
-    
+
     if (isNetlify) {
         // Netlify环境：直接从Simyo API响应获取
+        // Simyo API响应格式：{result: {success: true, ...}}
+        // 需要展平 result 以便统一处理
+        if (data.result && data.result.success !== undefined) {
+            // 返回展平后的结构，便于后续使用
+            return {
+                success: data.result.success,
+                result: data.result,
+                message: data.result.message || data.result.reason
+            };
+        }
         return data;
     } else {
         // 本地代理环境：从包装的响应获取
