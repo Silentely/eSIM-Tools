@@ -48,23 +48,7 @@
   status = 200
 
 # API代理重定向（用于解决CORS问题）
-# Simyo 设备更换相关端点（映射到 Netlify Functions）
-[[redirects]]
-  from = "/api/simyo/esim/apply-new-esim"
-  to = "/.netlify/functions/simyo-apply-new-esim"
-  status = 200
-
-[[redirects]]
-  from = "/api/simyo/esim/send-sms-code"
-  to = "/.netlify/functions/simyo-send-sms-code"
-  status = 200
-
-[[redirects]]
-  from = "/api/simyo/esim/verify-code"
-  to = "/.netlify/functions/simyo-verify-code"
-  status = 200
-
-# 通用 Simyo API 代理（放在最后，作为兜底规则）
+# 通用 Simyo API 代理
 [[redirects]]
   from = "/api/simyo/*"
   to = "https://appapi.simyo.nl/simyoapi/api/v1/:splat"
