@@ -494,16 +494,28 @@ class SimyoApp {
                 // 设备更换模式
                 const deviceChangeOption = document.getElementById('deviceChangeOption');
                 const deviceChangeSteps = document.getElementById('deviceChangeSteps');
+                const step1 = document.getElementById('step1');
 
+                console.log('恢复设备更换模式...');
+
+                // 隐藏登录页面和设备更换选项
+                if (step1) step1.classList.remove('active');
                 if (deviceChangeOption) {
+                    deviceChangeOption.classList.remove('active');
                     deviceChangeOption.style.display = 'none';
                 }
+
+                // 显示设备更换流程
                 if (deviceChangeSteps) {
-                    deviceChangeSteps.style.display = '';
                     deviceChangeSteps.classList.add('active');
+                    deviceChangeSteps.style.display = 'block';  // 明确设置为 block
                 }
+
                 this.bindDeviceChangeFlow();
-                uiController.showSection(Math.max(2, state.currentStep));
+
+                // 更新步骤指示器，但不调用 showSection（避免移除 deviceChangeSteps 的 active 类）
+                stateManager.set('currentStep', Math.max(2, state.currentStep));
+                uiController.updateSteps(stateManager.get('currentStep'));
             } else {
                 // 显示设备更换选项
                 console.log('显示设备更换选项...');

@@ -134,7 +134,7 @@ export class UIController {
         }
         if (deviceChangeOption) {
             deviceChangeOption.classList.add('active');
-            deviceChangeOption.style.display = '';
+            deviceChangeOption.style.display = 'block';  // 明确设置为 block
         } else {
             console.error('deviceChangeOption 元素未找到！');
         }
@@ -160,7 +160,7 @@ export class UIController {
         }
         if (deviceChangeSteps) {
             deviceChangeSteps.classList.add('active');
-            deviceChangeSteps.style.display = '';
+            deviceChangeSteps.style.display = 'block';  // 明确设置为 block
         } else {
             console.error('deviceChangeSteps 元素未找到！');
         }
