@@ -185,8 +185,8 @@
             <p>
                 <strong class="lang-zh">更换设备：</strong>
                 <strong class="lang-en">Device change:</strong>
-                <span class="lang-zh">在APP中申请更换设备后，使用本工具生成二维码，新设备扫码安装</span>
-                <span class="lang-en">Request a device change in the app, then generate a QR code here for the new device</span>
+                <span class="lang-zh">在APP中申请更换设备后，验证码将发送到邮箱，使用本工具完成验证并生成二维码</span>
+                <span class="lang-en">Request a device change in the app, check your email for the code, then use this tool to verify and generate a QR code</span>
             </p>
             <p>
                 <strong class="lang-zh">保号服务：</strong>
@@ -352,25 +352,29 @@
                     <span class="lang-en"> Device change workflow</span>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-warning">
-                        <h5><i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
-                            <span class="lang-zh">重要提示</span>
-                            <span class="lang-en">Important tips</span>
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+                            <span class="lang-zh">新版流程说明（邮箱验证）</span>
+                            <span class="lang-en">New workflow (Email verification)</span>
                         </h5>
-                        <ul class="mb-0">
+                        <p class="mb-2">
+                            <strong class="lang-zh">Simyo已更新设备更换流程，现在使用邮箱验证：</strong>
+                            <strong class="lang-en">Simyo has updated the device change flow to use email verification:</strong>
+                        </p>
+                        <ol class="mb-0">
                             <li>
-                                <strong class="lang-zh">如果您的现有eSIM能接收短信：</strong>
-                                <strong class="lang-en">If your current eSIM still receives SMS:</strong>
-                                <span class="lang-zh">请按顺序执行申请新eSIM，然后发送验证码到短信</span>
-                                <span class="lang-en">Apply for a new eSIM first, then send the verification SMS.</span>
+                                <span class="lang-zh">点击"申请新eSIM"，系统会自动发送验证码到您的注册邮箱</span>
+                                <span class="lang-en">Click "Apply for new eSIM" - a code will be sent to your registered email</span>
                             </li>
                             <li>
-                                <strong class="lang-zh">如果您的现有eSIM无法接收短信：</strong>
-                                <strong class="lang-en">If your current eSIM cannot receive SMS:</strong>
-                                <span class="lang-zh">只执行申请新eSIM，然后联系Simyo客服索要验证码</span>
-                                <span class="lang-en">Apply for a new eSIM and request the code from Simyo support.</span>
+                                <span class="lang-zh">检查您的邮箱，获取6位数字验证码</span>
+                                <span class="lang-en">Check your inbox for the 6-digit verification code</span>
                             </li>
-                        </ul>
+                            <li>
+                                <span class="lang-zh">在下方输入验证码并确认</span>
+                                <span class="lang-en">Enter the code below and confirm</span>
+                            </li>
+                        </ol>
                     </div>
 
                     <!-- Step 2.1: 申请新eSIM -->
@@ -380,8 +384,8 @@
                             <span class="lang-en">2.1 Request a new eSIM</span>
                         </h5>
                         <p>
-                            <span class="lang-zh">此步骤会通知Simyo系统您要更换eSIM设备</span>
-                            <span class="lang-en">This informs Simyo that you are moving your eSIM to another device.</span>
+                            <span class="lang-zh">点击申请后，验证码将自动发送到您的注册邮箱</span>
+                            <span class="lang-en">After applying, a verification code will be sent to your registered email automatically.</span>
                         </p>
                         <div class="btn-group">
                             <button class="btn btn-primary" id="applyNewEsimBtn">
@@ -393,38 +397,18 @@
                         <div id="applyNewEsimStatus" class="status" role="status" aria-live="polite"></div>
                     </div>
 
-                    <!-- Step 2.2: 发送验证码 -->
+                    <!-- Step 2.2: 验证邮箱验证码 -->
                     <div class="mb-4">
                         <h5>
-                            <span class="lang-zh">2.2 发送验证码到短信（可选）</span>
-                            <span class="lang-en">2.2 Send SMS verification code (optional)</span>
+                            <span class="lang-zh">2.2 输入邮箱验证码</span>
+                            <span class="lang-en">2.2 Enter the email verification code</span>
                         </h5>
                         <p>
-                            <span class="lang-zh">如果您能接收短信，在执行完2.1成功后，立即执行此步骤</span>
-                            <span class="lang-en">If your current eSIM receives SMS, run this step immediately after 2.1.</span>
-                        </p>
-                        <div class="btn-group">
-                            <button class="btn btn-primary" id="sendSmsBtn" disabled>
-                                <i class="fas fa-sms me-2"></i>
-                                <span class="lang-zh">发送验证码到短信</span>
-                                <span class="lang-en">Send SMS verification code</span>
-                            </button>
-                        </div>
-                        <div id="sendSmsStatus" class="status" role="status" aria-live="polite"></div>
-                    </div>
-
-                    <!-- Step 2.3: 验证验证码 -->
-                    <div class="mb-4">
-                        <h5>
-                            <span class="lang-zh">2.3 确认验证码</span>
-                            <span class="lang-en">2.3 Confirm the verification code</span>
-                        </h5>
-                        <p>
-                            <span class="lang-zh">无论您是通过短信收到验证码还是从客服处获取，请在此处填写验证码并确认</span>
-                            <span class="lang-en">Enter the code you received via SMS or from support and confirm here.</span>
+                            <span class="lang-zh">请检查您的注册邮箱，输入收到的6位数字验证码</span>
+                            <span class="lang-en">Check your registered email and enter the 6-digit verification code.</span>
                         </p>
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="validationCodeInput" 
+                            <input type="text" class="form-control" id="validationCodeInput"
                                    placeholder="输入6位数字验证码" maxlength="6" pattern="^\d{6}$">
                             <label for="validationCodeInput">
                                 <span class="lang-zh">验证码</span>

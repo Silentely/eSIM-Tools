@@ -14,69 +14,75 @@ export class DeviceChangeHandler {
     }
     
     /**
-     * 申请新eSIM
-     * @returns {Promise<Object>} 申请结果
+     * 查询可用的验证方式
+     * @returns {Promise<Object>} 可用的验证方式列表
      */
-    async applyNewEsim() {
+    async getAvailableValidationMethods() {
         const sessionToken = stateManager.get('sessionToken');
-        
+
         if (!sessionToken) {
             throw new Error(t('simyo.errors.requireLogin'));
         }
-        
+
         try {
-            const response = await fetch(this.apiEndpoints.applyNewEsim, {
+            const response = await fetch(this.apiEndpoints.availableValidationMethods, {
                 method: 'POST',
-                headers: createHeaders(true, sessionToken)
+                headers: createHeaders(true, sessionToken),
+                body: JSON.stringify(null)
             });
-            
+
             const data = await handleApiResponse(response);
-            
+
             if (!data.success || !data.result) {
-                throw new Error(data.message || t('simyo.device.applyFailed'));
+                throw new Error(data.message || t('simyo.device.queryFailed'));
             }
-            
+
             return {
                 success: true,
-                message: data.result.message || t('simyo.device.applySuccess'),
-                nextStep: data.result.nextStep
+                methods: data.result.availableMethods || [],
+                message: t('simyo.device.querySuccess')
             };
         } catch (error) {
-            console.error(t('simyo.device.log.applyFailed'), error);
+            console.error(t('simyo.device.log.queryFailed'), error);
             throw error;
         }
     }
-    
+
     /**
-     * 发送短信验证码
-     * @returns {Promise<Object>} 发送结果
+     * 申请新eSIM（支持邮箱验证）
+     * @param {string} validationMethod - 验证方式 (默认: EMAIL)
+     * @returns {Promise<Object>} 申请结果
      */
-    async sendSmsCode() {
+    async applyNewEsim(validationMethod = 'EMAIL') {
         const sessionToken = stateManager.get('sessionToken');
-        
+
         if (!sessionToken) {
             throw new Error(t('simyo.errors.requireLogin'));
         }
-        
+
         try {
-            const response = await fetch(this.apiEndpoints.sendSmsCode, {
+            const response = await fetch(this.apiEndpoints.applyNewEsim, {
                 method: 'POST',
-                headers: createHeaders(true, sessionToken)
+                headers: createHeaders(true, sessionToken),
+                body: JSON.stringify({
+                    initialValidationMethod: validationMethod,
+                    esim: true
+                })
             });
-            
+
             const data = await handleApiResponse(response);
-            
+
             if (!data.success || !data.result) {
-                throw new Error(data.message || t('simyo.device.smsFailed'));
+                throw new Error(data.message || t('simyo.device.applyFailed'));
             }
-            
+
             return {
                 success: true,
-                message: data.result.message || t('simyo.device.smsSuccess'),
-                nextStep: data.result.nextStep
+                message: data.result.message || t('simyo.device.applySuccess'),
+                remainingTries: data.result.remainingNumberOfTries
             };
         } catch (error) {
-            console.error(t('simyo.device.log.smsFailed'), error);
+            console.error(t('simyo.device.log.applyFailed'), error);
             throw error;
         }
     }

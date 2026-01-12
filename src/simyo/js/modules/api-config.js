@@ -34,15 +34,17 @@ export function getApiEndpoints() {
             : "http://localhost:3000/api/simyo/esim/get-by-customer",
         
         // 设备更换相关
-        applyNewEsim: isNetlify 
-            ? "/api/simyo/esim/apply-new-esim" 
-            : "http://localhost:3000/api/simyo/esim/apply-new-esim",
-        sendSmsCode: isNetlify 
-            ? "/api/simyo/esim/send-sms-code" 
-            : "http://localhost:3000/api/simyo/esim/send-sms-code",
-        verifyCode: isNetlify 
-            ? "/api/simyo/esim/verify-code" 
+        applyNewEsim: isNetlify
+            ? "/api/simyo/settings/simcard"
+            : "http://localhost:3000/api/simyo/settings/simcard",
+        verifyCode: isNetlify
+            ? "/api/simyo/esim/verify-code"
             : "http://localhost:3000/api/simyo/esim/verify-code",
+
+        // 新增：查询可用的验证方式 (v2 API)
+        availableValidationMethods: isNetlify
+            ? "/api/simyo/esim.availableValidationMethods"
+            : "http://localhost:3000/api/simyo/esim.availableValidationMethods",
         
         // 安装确认
         confirmInstall: isNetlify 
