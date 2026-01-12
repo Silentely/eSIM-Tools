@@ -323,9 +323,12 @@ class SimyoApp {
                 await delay(2000);
                 uiController.showStatus(statusEl, result.nextStep, "info");
             }
-            
+
             await delay(2000);
             uiController.skipDeviceChange();
+
+            // 验证码验证成功后，自动获取eSIM
+            await this.handleGetEsim();
         } catch (error) {
             uiController.showStatus(statusEl, t('simyo.app.error.verifyFailed', { message: error.message }), "error");
         } finally {
@@ -339,21 +342,24 @@ class SimyoApp {
      */
     async handleGetEsim() {
         const { elements } = uiController;
-        
+
         try {
             elements.getEsimBtn.innerHTML = `<span class="loading"></span> ${tl('获取中...')}`;
             elements.getEsimBtn.disabled = true;
-            
+
             uiController.showStatus(elements.esimStatus, t('simyo.app.status.getEsimProcessing'), "success");
-            
+
             const result = await esimService.getEsim();
-            
+
             uiController.showStatus(elements.esimStatus, result.message || t('simyo.app.status.getEsimSuccess'), "success");
             uiController.showEsimInfo(result.data);
-            
+
             // 进入下一步
             await delay(2000);
             uiController.showSection(3);
+
+            // 获取eSIM成功后，自动生成二维码
+            await this.handleGenerateQR();
         } catch (error) {
             uiController.showStatus(elements.esimStatus, t('simyo.app.error.getEsimFailed', { message: error.message }), "error");
         } finally {
