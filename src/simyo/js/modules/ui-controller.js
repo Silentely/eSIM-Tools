@@ -8,7 +8,6 @@ import { t, tl } from '../../../js/modules/i18n.js';
 
 export class UIController {
     constructor() {
-        this.elements = {};
         this.tooltips = new Map();
         this._elementsCache = null;
     }
@@ -22,7 +21,7 @@ export class UIController {
         }
         return this._elementsCache;
     }
-    
+
     /**
      * 初始化DOM元素引用
      */
