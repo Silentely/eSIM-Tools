@@ -102,14 +102,27 @@ export class UIController {
      * 显示指定步骤
      */
     showSection(stepNumber) {
-        this.elements.sections.forEach((section, index) => {
-            if (index === stepNumber - 1) {
-                section.classList.add('active');
-            } else {
-                section.classList.remove('active');
+        // 直接通过 ID 获取主要步骤元素，避免 index 混淆
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+
+        const steps = [step1, step2, step3, step4];
+
+        // 隐藏所有主要步骤
+        steps.forEach((step, index) => {
+            if (step) {
+                if (index === stepNumber - 1) {
+                    step.classList.add('active');
+                    step.style.display = 'block';
+                } else {
+                    step.classList.remove('active');
+                    step.style.display = 'none';
+                }
             }
         });
-        
+
         stateManager.set('currentStep', stepNumber);
         this.updateSteps(stepNumber);
     }
