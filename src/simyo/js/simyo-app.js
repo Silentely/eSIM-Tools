@@ -87,19 +87,6 @@ class SimyoApp {
         const helpBtn = document.getElementById('helpBtn');
         helpBtn?.addEventListener('click', () => openHelp());
 
-        // 设备更换选项按钮
-        const startDeviceChangeBtn = document.getElementById('startDeviceChangeBtn');
-        startDeviceChangeBtn?.addEventListener('click', () => {
-            uiController.showDeviceChangeSteps();
-            this.bindDeviceChangeFlow();
-        });
-
-        const skipDeviceChangeBtn = document.getElementById('skipDeviceChangeBtn');
-        skipDeviceChangeBtn?.addEventListener('click', () => uiController.skipDeviceChange());
-
-        const skipDeviceChangeAltBtn = document.getElementById('skipDeviceChangeAltBtn');
-        skipDeviceChangeAltBtn?.addEventListener('click', () => uiController.skipDeviceChange());
-
         // 步骤点击跳转
         this.bindStepNavigation();
 
@@ -176,16 +163,6 @@ class SimyoApp {
                 if (prev < currentStep) {
                     uiController.showSection(prev);
                 }
-            }
-            
-            // 返回设备更换选项
-            const backToOption = e.target.closest('#backToDeviceChangeOptionBtn');
-            if (backToOption) {
-                e.preventDefault();
-                const deviceChangeOption = uiController.elements.deviceChangeOption;
-                const deviceChangeSteps = uiController.elements.deviceChangeSteps;
-                if (deviceChangeSteps) deviceChangeSteps.classList.remove('active');
-                if (deviceChangeOption) deviceChangeOption.classList.add('active');
             }
         });
     }
@@ -516,17 +493,15 @@ class SimyoApp {
                 uiController.showSection(Math.max(3, state.currentStep));
             } else if (state.isDeviceChange) {
                 // 设备更换模式
-                const deviceChangeOption = document.getElementById('deviceChangeOption');
                 const deviceChangeSteps = document.getElementById('deviceChangeSteps');
                 const step1 = document.getElementById('step1');
 
                 console.log('恢复设备更换模式...');
 
-                // 隐藏登录页面和设备更换选项
-                if (step1) step1.classList.remove('active');
-                if (deviceChangeOption) {
-                    deviceChangeOption.classList.remove('active');
-                    deviceChangeOption.style.display = 'none';
+                // 隐藏登录页面
+                if (step1) {
+                    step1.classList.remove('active');
+                    step1.style.display = 'none';
                 }
 
                 // 显示设备更换流程
@@ -541,9 +516,9 @@ class SimyoApp {
                 stateManager.set('currentStep', Math.max(2, state.currentStep));
                 uiController.updateSteps(stateManager.get('currentStep'));
             } else {
-                // 显示设备更换选项
-                console.log('显示设备更换选项...');
-                uiController.showDeviceChangeOption();
+                // 直接显示设备更换流程
+                console.log('显示设备更换流程...');
+                uiController.showDeviceChangeSteps();
             }
         }
     }

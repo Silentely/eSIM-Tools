@@ -10,11 +10,19 @@ const { withAuth } = require('./_shared/middleware');
 // 通知消息数据（可以从JSON文件或数据库读取）
 const NOTIFICATIONS = [
   {
+    id: 'fix-simyo-api',
+    message: '已更新Simyo端点,完善更换流程',
+    type: 'success',
+    timestamp: '2026-01-13T00:30:00Z',
+    active: true,
+    priority: 1
+  },
+  {
     id: 'fix-400-error',
     message: '已修复Oauth交换时报错400问题,优化了MFA验证流程',
     type: 'success',
     timestamp: '2025-11-30T10:00:00Z',
-    active: true,
+    active: false,
     priority: 1
   },
   {

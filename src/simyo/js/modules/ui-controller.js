@@ -45,11 +45,10 @@ export class UIController {
             password: document.getElementById('password'),
             loginBtn: document.getElementById('loginBtn'),
             loginStatus: document.getElementById('loginStatus'),
-            
-            // 设备更换选项
-            deviceChangeOption: document.getElementById('deviceChangeOption'),
+
+            // 设备更换流程
             deviceChangeSteps: document.getElementById('deviceChangeSteps'),
-            
+
             // Step 2 - Get eSIM
             getEsimBtn: document.getElementById('getEsimBtn'),
             esimStatus: document.getElementById('esimStatus'),
@@ -126,59 +125,21 @@ export class UIController {
         stateManager.set('currentStep', stepNumber);
         this.updateSteps(stepNumber);
     }
-    
-    /**
-     * 显示设备更换选项
-     */
-    showDeviceChangeOption() {
-        // 重新获取元素引用，确保DOM已加载
-        const step1 = document.getElementById('step1');
-        const deviceChangeOption = document.getElementById('deviceChangeOption');
-        const deviceChangeSteps = document.getElementById('deviceChangeSteps');
 
-        console.log('showDeviceChangeOption - step1:', step1);
-        console.log('showDeviceChangeOption - deviceChangeOption:', deviceChangeOption);
-        console.log('showDeviceChangeOption - deviceChangeSteps:', deviceChangeSteps);
-
-        if (step1) step1.classList.remove('active');
-        if (deviceChangeSteps) {
-            deviceChangeSteps.classList.remove('active');
-            deviceChangeSteps.style.display = 'none';
-        }
-        if (deviceChangeOption) {
-            deviceChangeOption.classList.add('active');
-            deviceChangeOption.style.display = 'block';  // 明确设置为 block
-        } else {
-            console.error('deviceChangeOption 元素未找到！');
-        }
-
-        const currentStep = stateManager.get('currentStep');
-        stateManager.set('currentStep', Math.max(currentStep, 2));
-        this.updateSteps(stateManager.get('currentStep'));
-    }
-    
     /**
      * 显示设备更换步骤
      */
     showDeviceChangeSteps() {
         const step1 = document.getElementById('step1');
-        const deviceChangeOption = document.getElementById('deviceChangeOption');
         const deviceChangeSteps = document.getElementById('deviceChangeSteps');
 
         console.log('showDeviceChangeSteps - step1:', step1);
-        console.log('showDeviceChangeSteps - deviceChangeOption:', deviceChangeOption);
         console.log('showDeviceChangeSteps - deviceChangeSteps:', deviceChangeSteps);
 
         // 隐藏第一步登录卡片
         if (step1) {
             step1.classList.remove('active');
             step1.style.display = 'none';
-        }
-
-        // 隐藏设备更换选项
-        if (deviceChangeOption) {
-            deviceChangeOption.classList.remove('active');
-            deviceChangeOption.style.display = 'none';
         }
 
         // 显示设备更换流程
@@ -197,23 +158,15 @@ export class UIController {
      */
     skipDeviceChange() {
         const step1 = document.getElementById('step1');
-        const deviceChangeOption = document.getElementById('deviceChangeOption');
         const deviceChangeSteps = document.getElementById('deviceChangeSteps');
 
         console.log('skipDeviceChange - step1:', step1);
-        console.log('skipDeviceChange - deviceChangeOption:', deviceChangeOption);
         console.log('skipDeviceChange - deviceChangeSteps:', deviceChangeSteps);
 
         // 隐藏第一步登录卡片
         if (step1) {
             step1.classList.remove('active');
             step1.style.display = 'none';
-        }
-
-        // 隐藏设备更换选项
-        if (deviceChangeOption) {
-            deviceChangeOption.classList.remove('active');
-            deviceChangeOption.style.display = 'none';
         }
 
         // 隐藏设备更换流程
@@ -522,19 +475,15 @@ export class UIController {
                 btn.disabled = false;
             }
         });
-        
-        // 隐藏设备更换相关界面
+
+        // 隐藏设备更换流程界面
         const step1 = document.getElementById('step1');
         if (step1) step1.style.display = 'block';
-        
-        if (this.elements.deviceChangeOption) {
-            this.elements.deviceChangeOption.style.display = 'none';
-        }
-        
+
         if (this.elements.deviceChangeSteps) {
             this.elements.deviceChangeSteps.style.display = 'none';
         }
-        
+
         this.showSection(1);
         this.updateSteps(1);
     }
