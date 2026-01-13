@@ -29,7 +29,7 @@ export class StateManager {
         
         this.listeners = [];
         this.SESSION_KEY = 'simyo_session';
-        this.SESSION_TIMEOUT = 2 * 60 * 60 * 1000; // 2小时
+        this.SESSION_TIMEOUT = 5 * 60 * 1000; // 5分钟
     }
     
     /**

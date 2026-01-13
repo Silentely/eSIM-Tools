@@ -148,16 +148,27 @@ export class UIController {
      * 显示设备更换步骤
      */
     showDeviceChangeSteps() {
+        const step1 = document.getElementById('step1');
         const deviceChangeOption = document.getElementById('deviceChangeOption');
         const deviceChangeSteps = document.getElementById('deviceChangeSteps');
 
+        console.log('showDeviceChangeSteps - step1:', step1);
         console.log('showDeviceChangeSteps - deviceChangeOption:', deviceChangeOption);
         console.log('showDeviceChangeSteps - deviceChangeSteps:', deviceChangeSteps);
 
+        // 隐藏第一步登录卡片
+        if (step1) {
+            step1.classList.remove('active');
+            step1.style.display = 'none';
+        }
+
+        // 隐藏设备更换选项
         if (deviceChangeOption) {
             deviceChangeOption.classList.remove('active');
             deviceChangeOption.style.display = 'none';
         }
+
+        // 显示设备更换流程
         if (deviceChangeSteps) {
             deviceChangeSteps.classList.add('active');
             deviceChangeSteps.style.display = 'block';  // 明确设置为 block
@@ -172,16 +183,27 @@ export class UIController {
      * 跳过设备更换
      */
     skipDeviceChange() {
+        const step1 = document.getElementById('step1');
         const deviceChangeOption = document.getElementById('deviceChangeOption');
         const deviceChangeSteps = document.getElementById('deviceChangeSteps');
 
+        console.log('skipDeviceChange - step1:', step1);
         console.log('skipDeviceChange - deviceChangeOption:', deviceChangeOption);
         console.log('skipDeviceChange - deviceChangeSteps:', deviceChangeSteps);
 
+        // 隐藏第一步登录卡片
+        if (step1) {
+            step1.classList.remove('active');
+            step1.style.display = 'none';
+        }
+
+        // 隐藏设备更换选项
         if (deviceChangeOption) {
             deviceChangeOption.classList.remove('active');
             deviceChangeOption.style.display = 'none';
         }
+
+        // 隐藏设备更换流程
         if (deviceChangeSteps) {
             deviceChangeSteps.classList.remove('active');
             deviceChangeSteps.style.display = 'none';
