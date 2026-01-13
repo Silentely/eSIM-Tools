@@ -225,9 +225,10 @@ class SimyoApp {
 
             uiController.showStatus(loginStatus, result.message || t('simyo.app.status.loginSuccess'), "success");
 
-            // 显示设备更换选项
+            // 直接进入设备更换流程
             await delay(1000);
-            uiController.showDeviceChangeOption();
+            uiController.showDeviceChangeSteps();
+            this.bindDeviceChangeFlow();
         } catch (error) {
             uiController.showStatus(loginStatus, t('simyo.app.error.loginFailed', { message: error.message }), "error");
         } finally {
