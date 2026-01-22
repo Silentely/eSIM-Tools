@@ -81,6 +81,10 @@ class GiffgaffApp {
         // OAuth登录
         elements.oauthLoginBtn?.addEventListener('click', () => this.handleOAuthLogin());
         elements.processCallbackBtn?.addEventListener('click', () => this.handleOAuthCallback());
+
+        // 回调URL输入框智能提取
+        elements.callbackUrl?.addEventListener('input', (e) => this.handleCallbackUrlInput(e));
+        elements.callbackUrl?.addEventListener('paste', (e) => this.handleCallbackUrlPaste(e));
         
         // Cookie登录
         elements.verifyCookieBtn?.addEventListener('click', () => this.handleCookieVerify());
@@ -283,7 +287,88 @@ class GiffgaffApp {
     }
     
     // ===== 事件处理器 =====
-    
+
+    /**
+     * 提取回调URL
+     * @param {string} text - 输入文本
+     * @returns {string} 提取的URL或原始文本
+     */
+    extractCallbackUrl(text) {
+        if (!text) return text;
+
+        // 尝试提取 giffgaff:// 开头的URL
+        // 匹配模式：giffgaff://auth/callback/?code=xxx&state=xxx
+        const urlPattern = /(giffgaff:\/\/auth\/callback\/[^\s'"]*)/i;
+        const match = text.match(urlPattern);
+
+        if (match && match[1]) {
+            return match[1];
+        }
+
+        // 如果没有匹配到，返回原始文本
+        return text;
+    }
+
+    /**
+     * 处理回调URL输入
+     */
+    handleCallbackUrlInput(event) {
+        const textarea = event.target;
+        const originalValue = textarea.value;
+        const extractedUrl = this.extractCallbackUrl(originalValue);
+
+        // 如果提取的URL与原始输入不同，说明进行了提取
+        if (extractedUrl !== originalValue && extractedUrl.startsWith('giffgaff://')) {
+            textarea.value = extractedUrl;
+            // 触发一个小提示
+            const { elements } = uiController;
+            if (elements.callbackStatus) {
+                uiController.showStatus(
+                    elements.callbackStatus,
+                    t('giffgaff.app.status.urlExtracted', { url: extractedUrl.substring(0, 50) + '...' }) || '✓ 已自动提取回调URL',
+                    'success'
+                );
+                // 3秒后清除提示
+                setTimeout(() => {
+                    if (elements.callbackStatus) {
+                        elements.callbackStatus.innerHTML = '';
+                    }
+                }, 3000);
+            }
+        }
+    }
+
+    /**
+     * 处理粘贴事件（优化用户体验）
+     */
+    handleCallbackUrlPaste(event) {
+        // 允许默认粘贴，然后在下一个事件循环中处理
+        setTimeout(() => {
+            const textarea = event.target;
+            const originalValue = textarea.value;
+            const extractedUrl = this.extractCallbackUrl(originalValue);
+
+            if (extractedUrl !== originalValue && extractedUrl.startsWith('giffgaff://')) {
+                textarea.value = extractedUrl;
+                // 触发一个小提示
+                const { elements } = uiController;
+                if (elements.callbackStatus) {
+                    uiController.showStatus(
+                        elements.callbackStatus,
+                        t('giffgaff.app.status.urlExtracted', { url: extractedUrl.substring(0, 50) + '...' }) || '✓ 已自动提取回调URL',
+                        'success'
+                    );
+                    // 3秒后清除提示
+                    setTimeout(() => {
+                        if (elements.callbackStatus) {
+                            elements.callbackStatus.innerHTML = '';
+                        }
+                    }, 3000);
+                }
+            }
+        }, 10);
+    }
+
     /**
      * 处理OAuth登录
      */
