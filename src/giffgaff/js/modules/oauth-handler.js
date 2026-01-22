@@ -101,8 +101,9 @@ export class OAuthHandler {
             
             const authUrl = `${oauthConfig.authUrl}?${authParams.toString()}`;
             
-            // 打开登录页面
-            window.open(authUrl, '_blank');
+            // 打开登录页面 (使用 noopener,noreferrer 避免传递来源信息，减少被WAF拦截的风险)
+            const features = 'noopener,noreferrer,width=500,height=700';
+            window.open(authUrl, '_blank', features);
             
             return {
                 success: true,

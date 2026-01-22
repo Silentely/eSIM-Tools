@@ -11,7 +11,7 @@ import { isNetlifyEnvironment } from './utils.js';
 export const oauthConfig = {
     clientId: "4a05bf219b3985647d9b9a3ba610a9ce",
     redirectUri: "giffgaff://auth/callback/",
-    authUrl: "https://id.giffgaff.com/oauth/authorize",
+    authUrl: "https://id.giffgaff.com/auth/oauth/authorize",
     tokenUrl: "/bff/giffgaff-token-exchange",
     scope: "read"
 };
