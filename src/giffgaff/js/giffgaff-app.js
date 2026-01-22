@@ -81,10 +81,6 @@ class GiffgaffApp {
         // OAuth登录
         elements.oauthLoginBtn?.addEventListener('click', () => this.handleOAuthLogin());
         elements.processCallbackBtn?.addEventListener('click', () => this.handleOAuthCallback());
-
-        // 回调URL输入框智能提取
-        elements.callbackUrl?.addEventListener('input', (e) => this.handleCallbackUrlInput(e));
-        elements.callbackUrl?.addEventListener('paste', (e) => this.handleCallbackUrlPaste(e));
         
         // Cookie登录
         elements.verifyCookieBtn?.addEventListener('click', () => this.handleCookieVerify());
@@ -310,66 +306,6 @@ class GiffgaffApp {
     }
 
     /**
-     * 处理回调URL输入
-     */
-    handleCallbackUrlInput(event) {
-        const textarea = event.target;
-        const originalValue = textarea.value;
-        const extractedUrl = this.extractCallbackUrl(originalValue);
-
-        // 如果提取的URL与原始输入不同，说明进行了提取
-        if (extractedUrl !== originalValue && extractedUrl.startsWith('giffgaff://')) {
-            textarea.value = extractedUrl;
-            // 触发一个小提示
-            const { elements } = uiController;
-            if (elements.callbackStatus) {
-                uiController.showStatus(
-                    elements.callbackStatus,
-                    t('giffgaff.app.status.urlExtracted', { url: extractedUrl.substring(0, 50) + '...' }) || '✓ 已自动提取回调URL',
-                    'success'
-                );
-                // 3秒后清除提示
-                setTimeout(() => {
-                    if (elements.callbackStatus) {
-                        elements.callbackStatus.innerHTML = '';
-                    }
-                }, 3000);
-            }
-        }
-    }
-
-    /**
-     * 处理粘贴事件（优化用户体验）
-     */
-    handleCallbackUrlPaste(event) {
-        // 允许默认粘贴，然后在下一个事件循环中处理
-        setTimeout(() => {
-            const textarea = event.target;
-            const originalValue = textarea.value;
-            const extractedUrl = this.extractCallbackUrl(originalValue);
-
-            if (extractedUrl !== originalValue && extractedUrl.startsWith('giffgaff://')) {
-                textarea.value = extractedUrl;
-                // 触发一个小提示
-                const { elements } = uiController;
-                if (elements.callbackStatus) {
-                    uiController.showStatus(
-                        elements.callbackStatus,
-                        t('giffgaff.app.status.urlExtracted', { url: extractedUrl.substring(0, 50) + '...' }) || '✓ 已自动提取回调URL',
-                        'success'
-                    );
-                    // 3秒后清除提示
-                    setTimeout(() => {
-                        if (elements.callbackStatus) {
-                            elements.callbackStatus.innerHTML = '';
-                        }
-                    }, 3000);
-                }
-            }
-        }, 10);
-    }
-
-    /**
      * 处理OAuth登录
      */
     async handleOAuthLogin() {
@@ -404,23 +340,26 @@ class GiffgaffApp {
      */
     async handleOAuthCallback() {
         const { elements } = uiController;
-        const callbackUrl = elements.callbackUrl.value.trim();
-        
-        if (!callbackUrl) {
+        const rawInput = elements.callbackUrl.value.trim();
+
+        if (!rawInput) {
             uiController.showStatus(elements.callbackStatus, tl('请输入回调URL'), "error");
             return;
         }
-        
+
+        // 自动提取回调URL
+        const callbackUrl = this.extractCallbackUrl(rawInput);
+
         try {
             elements.processCallbackBtn.innerHTML = `<span class="loading"></span> ${tl('处理中...')}`;
             elements.processCallbackBtn.disabled = true;
-            
+
             uiController.showStatus(elements.callbackStatus, t('giffgaff.app.status.oauthProcessing'), "success");
-            
+
             const result = await oauthHandler.processCallback(callbackUrl);
-            
+
             uiController.showStatus(elements.callbackStatus, t('giffgaff.app.status.oauthSuccess'), "success");
-            
+
             setTimeout(() => {
                 uiController.showSection(2);
             }, 1500);
