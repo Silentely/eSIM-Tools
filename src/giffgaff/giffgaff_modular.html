@@ -342,35 +342,67 @@
                             <span class="lang-en">OAuth 2.0 login</span>
                         </h5>
                         
+                        <div class="alert alert-danger mb-4">
+                            <h6 class="lang-zh"><i class="fas fa-exclamation-triangle me-2"></i>⚠️ 重要：OAuth 登录前置条件</h6>
+                            <h6 class="lang-en"><i class="fas fa-exclamation-triangle me-2"></i>⚠️ Important: OAuth Login Prerequisites</h6>
+                            <div class="lang-zh">
+                                <p class="mb-2"><strong>在点击下方"开始OAuth登录"按钮之前，您必须先完成以下步骤：</strong></p>
+                                <ol class="mb-2">
+                                    <li><strong>访问 <a href="https://www.giffgaff.com" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-underline">giffgaff.com</a></strong> 并登录您的账户</li>
+                                    <li><strong>确保登录状态有效</strong>（可以看到您的账户信息）</li>
+                                    <li><strong>保持该标签页打开</strong>，然后返回本页面</li>
+                                </ol>
+                                <p class="mb-0"><small><i class="fas fa-info-circle me-1"></i><strong>为什么需要这样做？</strong> Giffgaff 现在要求用户必须先在官网登录，才能通过 OAuth 授权。如果未登录就点击 OAuth 登录，将无法获取回调 URL。</small></p>
+                            </div>
+                            <div class="lang-en">
+                                <p class="mb-2"><strong>Before clicking "Start OAuth Login" below, you MUST complete these steps first:</strong></p>
+                                <ol class="mb-2">
+                                    <li><strong>Visit <a href="https://www.giffgaff.com" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-underline">giffgaff.com</a></strong> and log in to your account</li>
+                                    <li><strong>Ensure your login session is active</strong> (you can see your account info)</li>
+                                    <li><strong>Keep that tab open</strong>, then return to this page</li>
+                                </ol>
+                                <p class="mb-0"><small><i class="fas fa-info-circle me-1"></i><strong>Why is this required?</strong> Giffgaff now requires users to be logged in on their website before OAuth authorization. Without prior login, you won't be able to capture the callback URL.</small></p>
+                            </div>
+                        </div>
+
                         <div class="alert alert-warning mb-4">
-                            <h6 class="lang-zh"><i class="fas fa-exclamation-triangle me-2"></i>如何获取回调URL：</h6>
-                            <h6 class="lang-en d-none"><i class="fas fa-exclamation-triangle me-2"></i>How to capture the callback URL:</h6>
+                            <h6 class="lang-zh"><i class="fas fa-laptop-code me-2"></i>如何获取回调URL：</h6>
+                            <h6 class="lang-en"><i class="fas fa-laptop-code me-2"></i>How to capture the callback URL:</h6>
                             <ol class="mb-2 lang-zh">
                                 <li><strong>打开开发者工具</strong>：按 F12 或右键选择"检查"</li>
-                                <li><strong>切换到"网络"标签页</strong></li>
-                                <li><strong>在登录页面输入邮箱验证码</strong></li>
-                                <li><strong>点击登录按钮</strong></li>
-                                <li><strong>在网络面板中查找</strong> <code>giffgaff://auth/callback/</code> 开头的请求</li>
-                                <li><strong>复制完整的URL</strong> 并粘贴到下方输入框</li>
+                                <li><strong>切换到"控制台"（Console）标签页</strong></li>
+                                <li><strong>点击下方"开始OAuth登录"按钮</strong>，在新窗口完成登录</li>
+                                <li><strong>在控制台中查找</strong>错误信息：<code>Failed to launch 'giffgaff://auth/callback/...'</code></li>
+                                <li><strong>复制完整的回调URL</strong>（从 <code>giffgaff://</code> 开始到末尾）并粘贴到下方输入框</li>
                             </ol>
                             <ol class="mb-2 lang-en">
-                                <li><strong>Open DevTools</strong>: press F12 or right-click → “Inspect”.</li>
-                                <li><strong>Switch to the “Network” tab.</strong></li>
-                                <li><strong>Enter the email verification code</strong> on the login page.</li>
-                                <li><strong>Click the login button.</strong></li>
-                                <li><strong>Find the request</strong> starting with <code>giffgaff://auth/callback/</code> in the network list.</li>
-                                <li><strong>Copy the full URL</strong> and paste it into the input field below.</li>
+                                <li><strong>Open DevTools</strong>: press F12 or right-click → "Inspect"</li>
+                                <li><strong>Switch to the "Console" tab</strong></li>
+                                <li><strong>Click "Start OAuth Login" below</strong> and complete login in the new window</li>
+                                <li><strong>Look for the error message</strong> in Console: <code>Failed to launch 'giffgaff://auth/callback/...'</code></li>
+                                <li><strong>Copy the full callback URL</strong> (from <code>giffgaff://</code> to the end) and paste it into the input field below</li>
                             </ol>
-                            <p class="mb-0 lang-zh"><small class="text-muted">💡 提示：如果看不到网络请求，请先打开开发者工具再进行登录操作</small></p>
-                            <p class="mb-0 lang-en"><small class="text-muted">💡 Tip: open DevTools before logging in so the requests are recorded.</small></p>
+                            <p class="mb-0 lang-zh"><small class="text-muted">💡 提示：如果控制台没有显示回调URL，说明您未在 giffgaff.com 登录。请退出并重新登录 giffgaff.com，然后重新开始 OAuth 流程。</small></p>
+                            <p class="mb-0 lang-en"><small class="text-muted">💡 Tip: If the callback URL doesn't appear in Console, you're not logged in at giffgaff.com. Please log out and log back in at giffgaff.com, then restart the OAuth flow.</small></p>
                         </div>
                         
                         <div class="alert alert-info mb-4">
                             <h6 class="lang-zh"><i class="fas fa-info-circle me-2"></i>回调URL格式示例：</h6>
-                            <h6 class="lang-en d-none"><i class="fas fa-info-circle me-2"></i>Example callback URL:</h6>
-                            <p class="mb-2"><code>giffgaff://auth/callback/?code=ABC123&state=XYZ789</code></p>
-                            <p class="mb-0 lang-zh"><small class="text-muted">确保URL包含 <code>code</code> 和 <code>state</code> 参数</small></p>
-                            <p class="mb-0 lang-en"><small class="text-muted">Make sure the URL includes the <code>code</code> and <code>state</code> parameters.</small></p>
+                            <h6 class="lang-en"><i class="fas fa-info-circle me-2"></i>Example callback URL:</h6>
+                            <div class="lang-zh">
+                                <p class="mb-2"><strong>控制台错误信息示例：</strong></p>
+                                <p class="mb-2"><code>Failed to launch 'giffgaff://auth/callback/?code=Na22kPkMt3JoLW-w&state=TGo2ljM-2HRt21DaVBxYuw' because the scheme does not have a registered handler.</code></p>
+                                <p class="mb-2"><strong>您需要复制的部分：</strong></p>
+                                <p class="mb-2"><code>giffgaff://auth/callback/?code=Na22kPkMt3JoLW-w&state=TGo2ljM-2HRt21DaVBxYuw</code></p>
+                                <p class="mb-0"><small class="text-muted">✓ 确保URL包含 <code>code</code> 和 <code>state</code> 参数</small></p>
+                            </div>
+                            <div class="lang-en">
+                                <p class="mb-2"><strong>Example Console error message:</strong></p>
+                                <p class="mb-2"><code>Failed to launch 'giffgaff://auth/callback/?code=Na22kPkMt3JoLW-w&state=TGo2ljM-2HRt21DaVBxYuw' because the scheme does not have a registered handler.</code></p>
+                                <p class="mb-2"><strong>What you need to copy:</strong></p>
+                                <p class="mb-2"><code>giffgaff://auth/callback/?code=Na22kPkMt3JoLW-w&state=TGo2ljM-2HRt21DaVBxYuw</code></p>
+                                <p class="mb-0"><small class="text-muted">✓ Make sure the URL includes the <code>code</code> and <code>state</code> parameters</small></p>
+                            </div>
                         </div>
                         
                         <div class="btn-group">
@@ -384,17 +416,23 @@
                         <div id="oauthStatus" class="status" role="status" aria-live="polite"></div>
                         
                         <!-- OAuth回调处理区域 -->
-                                                    <div id="oauthCallbackSection" class="verification-section">
-                                                        <div class="form-floating mb-4">
-                                                            <textarea id="callbackUrl" class="form-control" placeholder="例如：giffgaff://auth/callback/?code=..." style="height: 100px;"></textarea>
-                                                            <label for="callbackUrl">回调URL</label>
-                                                        </div>
-                                                        
-                                                        <div class="btn-group">                                <button id="processCallbackBtn" class="btn btn-primary">
-                                    <i class="fas fa-check me-2"></i> 处理回调
+                        <div id="oauthCallbackSection" class="verification-section">
+                            <div class="form-floating mb-4">
+                                <textarea id="callbackUrl" class="form-control" placeholder="粘贴从控制台复制的完整回调URL..." style="height: 100px;"></textarea>
+                                <label for="callbackUrl">
+                                    <span class="lang-zh">回调URL（从控制台复制）</span>
+                                    <span class="lang-en">Callback URL (from Console)</span>
+                                </label>
+                            </div>
+
+                            <div class="btn-group">
+                                <button id="processCallbackBtn" class="btn btn-primary">
+                                    <i class="fas fa-check me-2"></i>
+                                    <span class="lang-zh">处理回调</span>
+                                    <span class="lang-en">Process callback</span>
                                 </button>
                             </div>
-                            
+
                             <div id="callbackStatus" class="status mt-4" role="status" aria-live="polite"></div>
                         </div>
                     </div>

@@ -10,11 +10,19 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://esim.cosr.eu.org';
 // 通知消息数据（可以从JSON文件或数据库读取）
 const NOTIFICATIONS = [
   {
+    id: 'fix-giffgaff-oauth',
+    message: 'giffgaff的oauth登录方式已变更,请阅读新方法使用',
+    type: 'info',
+    timestamp: '2026-01-22T13:50:00Z',
+    active: true,
+    priority: 1
+  },
+  {
     id: 'fix-400-error',
     message: '已修复Oauth交换时报错400问题,优化了MFA验证流程',
-    type: 'success',
+    type: 'info',
     timestamp: '2025-11-30T10:00:00Z',
-    active: true,
+    active: false,
     priority: 1
   },
   {
