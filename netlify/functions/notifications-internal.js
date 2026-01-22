@@ -23,7 +23,7 @@ const NOTIFICATIONS = [
     type: 'info',
     timestamp: '2025-11-30T10:00:00Z',
     active: false,
-    priority: 1
+    priority: 2
   },
   {
     id: 'new-feature-oauth',
@@ -31,7 +31,7 @@ const NOTIFICATIONS = [
     type: 'info',
     timestamp: '2025-06-20T15:30:00Z',
     active: false,
-    priority: 2
+    priority: 3
   }
 ];
 
