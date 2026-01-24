@@ -22,10 +22,10 @@ OAuth method requires obtaining the callback URL. For instructions on how to get
 
 ![Get Callback URL Instructions](image/102.jpg)
 
-1. Click the "Login with OAuth" button
-2. In the newly opened page, enter your Giffgaff username and password and click login (please open the browser developer tools network panel in advance)
-3. Enter the email verification code
-4. Find the callback URL in the network panel of the developer tools (format: `giffgaff://auth/callback/?code=ABC123&state=XYZ789`)
+1. First, open the login page for the giffgaff website on a new tab: `https://www.giffgaff.com` and log in.
+2. After logging in, return to the eSIM replacement page and open the developer tools: press F12 or right-click and select “Inspect” to switch to the “Console” tab.
+3. Click the “Start OAuth Login” button at the bottom; once the new window opens, switch back to the eSIM replacement page.
+4. Look for the error message in the console: “Failed to launch ‘giffgaff://auth/callback/…’”. Copy the callback URL from that line.
 
 ![Get Callback URL](image/103.jpg)
 
