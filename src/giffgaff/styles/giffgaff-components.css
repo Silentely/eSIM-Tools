@@ -176,13 +176,17 @@
 /* ===== 提示框列表间距 ===== */
 .alert.alert-warning ol,
 .alert.alert-warning ul {
-    padding-left: 1.6rem;
+    padding-left: 1rem;
     margin-left: 0;
-    list-style-position: outside;
+    list-style-position: inside;
 }
 
 .alert.alert-warning li {
-    padding-left: 0.2rem;
+    padding-left: 0.35rem;
+}
+
+.alert.alert-warning ol li::marker {
+    content: counter(list-item) ".\00A0\00A0";
 }
 
 /* ===== 步骤指示器 ===== */
