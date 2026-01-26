@@ -111,8 +111,39 @@ function initSentry() {
         /^chrome-extension:\/\//i,
       ],
 
-      // 敏感数据过滤
+      // 敏感数据过滤和浏览器扩展错误过滤
       beforeSend(event) {
+        // 1. 过滤浏览器扩展相关错误
+        if (event.exception?.values) {
+          for (const exception of event.exception.values) {
+            // 检查错误消息
+            if (exception.value) {
+              const errorMessage = exception.value.toLowerCase();
+              // 过滤 ethereum 相关错误
+              if (errorMessage.includes('ethereum') ||
+                  errorMessage.includes('cannot redefine property')) {
+                return null;  // 丢弃此事件
+              }
+            }
+
+            // 检查堆栈帧 URL
+            if (exception.stacktrace?.frames) {
+              for (const frame of exception.stacktrace.frames) {
+                if (frame.filename) {
+                  const filename = frame.filename.toLowerCase();
+                  // 过滤扩展相关的堆栈帧
+                  if (filename.includes('chrome-extension://') ||
+                      filename.includes('moz-extension://') ||
+                      filename.includes('extensions/')) {
+                    return null;  // 丢弃此事件
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // 2. 删除敏感请求数据
         if (event.request) {
           delete event.request.cookies;
           if (event.request.headers) {
@@ -122,6 +153,7 @@ function initSentry() {
           }
         }
 
+        // 3. 脱敏异常消息中的敏感信息
         if (event.exception?.values) {
           event.exception.values.forEach(exception => {
             if (exception.value) {
