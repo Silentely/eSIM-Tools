@@ -15,6 +15,63 @@
  */
 
 // ===================================
+// 全局错误拦截（在 Sentry 之前）
+// ===================================
+
+/**
+ * 在 Sentry 捕获之前拦截浏览器扩展相关的错误
+ * 这是最强的防护层，确保扩展错误不会污染 Sentry 日志
+ */
+if (typeof window !== 'undefined') {
+  // 拦截 unhandledrejection 事件
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason;
+
+    // 检查是否为浏览器扩展相关错误
+    if (reason && typeof reason === 'object') {
+      const errorMessage = (reason.message || reason.toString()).toLowerCase();
+      const errorStack = (reason.stack || '').toLowerCase();
+
+      // 过滤 ethereum 和扩展相关错误
+      if (errorMessage.includes('ethereum') ||
+          errorMessage.includes('cannot redefine property') ||
+          errorStack.includes('chrome-extension://') ||
+          errorStack.includes('moz-extension://')) {
+        // 阻止错误传播到 Sentry
+        event.preventDefault();
+        console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', errorMessage);
+        return;
+      }
+    }
+  });
+
+  // 拦截 error 事件
+  window.addEventListener('error', (event) => {
+    const error = event.error;
+    const filename = event.filename || '';
+
+    // 检查是否为浏览器扩展相关错误
+    if (error) {
+      const errorMessage = (error.message || '').toLowerCase();
+      const errorStack = (error.stack || '').toLowerCase();
+
+      // 过滤 ethereum 和扩展相关错误
+      if (errorMessage.includes('ethereum') ||
+          errorMessage.includes('cannot redefine property') ||
+          errorStack.includes('chrome-extension://') ||
+          errorStack.includes('moz-extension://') ||
+          filename.includes('chrome-extension://') ||
+          filename.includes('moz-extension://')) {
+        // 阻止错误传播到 Sentry
+        event.preventDefault();
+        console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', errorMessage);
+        return;
+      }
+    }
+  }, true);  // 使用捕获阶段，确保在 Sentry 之前执行
+}
+
+// ===================================
 // 环境检测
 // ===================================
 
