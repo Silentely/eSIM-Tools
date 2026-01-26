@@ -81,25 +81,34 @@ function initSentry() {
 
       // 错误过滤
       ignoreErrors: [
-        'ResizeObserver loop',
-        'Non-Error promise rejection',
+        // 浏览器扩展冲突
+        /Cannot redefine property:? ethereum/i,
+        /Cannot redefine property/i,
+        /ethereum/i,
+        // 浏览器扩展通用错误
+        /chrome-extension/i,
+        /moz-extension/i,
+        // 网络相关错误
+        /ResizeObserver loop/,
+        /Non-Error promise rejection/,
         /Loading chunk .* failed/,
         /Network request failed/,
         /Failed to fetch/,
         /Load failed/,
         /AbortError/,
-        /chrome-extension/,
-        /moz-extension/,
         /Error invoking post/,
         /Method not found/,
+        // 第三方服务错误
         /turnstile/i,
         /postMessage/i,
       ],
 
       denyUrls: [
+        // 浏览器扩展
         /extensions\//i,
         /^chrome:\/\//i,
         /^moz-extension:\/\//i,
+        /^chrome-extension:\/\//i,
       ],
 
       // 敏感数据过滤
