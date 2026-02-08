@@ -83,6 +83,8 @@ Thumbs.db
 *.swo
 *~
 .serena
+.ace-tool/
+.omc
 
 # Build outputs
 build/
@@ -113,3 +115,4 @@ postman/
 
 # Gemini 剪贴板临时文件
 .gemini-clipboard/
+
