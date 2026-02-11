@@ -27,48 +27,95 @@ if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
 
-    // 检查是否为浏览器扩展相关错误
-    if (reason && typeof reason === 'object') {
-      const errorMessage = (reason.message || reason.toString()).toLowerCase();
-      const errorStack = (reason.stack || '').toLowerCase();
+    // 将 reason 转换为字符串进行检查
+    let errorMessage = '';
+    let errorStack = '';
 
-      // 过滤 ethereum 和扩展相关错误
-      if (errorMessage.includes('ethereum') ||
-          errorMessage.includes('cannot redefine property') ||
-          errorStack.includes('chrome-extension://') ||
-          errorStack.includes('moz-extension://')) {
+    if (reason) {
+      // 处理不同类型的 reason
+      if (typeof reason === 'string') {
+        errorMessage = reason.toLowerCase();
+      } else if (typeof reason === 'object') {
+        errorMessage = (reason.message || reason.toString()).toLowerCase();
+        errorStack = (reason.stack || '').toLowerCase();
+      }
+
+      // 增强的过滤条件
+      const isExtensionError =
+        // 检查错误消息
+        errorMessage.includes('ethereum') ||
+        errorMessage.includes('cannot redefine property') ||
+        errorMessage.includes('redefine property') ||
+        errorMessage.includes('defineProperty') ||
+        // 检查堆栈
+        errorStack.includes('chrome-extension://') ||
+        errorStack.includes('moz-extension://') ||
+        errorStack.includes('extensions/') ||
+        errorStack.includes('object.defineproperty') ||
+        errorStack.includes('inpage.js') ||
+        // 检查 Promise 来源
+        (event.promise && event.promise.toString().includes('extension'));
+
+      if (isExtensionError) {
         // 阻止错误传播到 Sentry
         event.preventDefault();
-        console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', errorMessage);
+        console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', {
+          message: errorMessage.substring(0, 100),
+          type: typeof reason,
+          hasStack: !!errorStack
+        });
         return;
       }
     }
-  });
+  }, true);  // 使用捕获阶段，确保最早执行
 
   // 拦截 error 事件
   window.addEventListener('error', (event) => {
     const error = event.error;
-    const filename = event.filename || '';
 
-    // 检查是否为浏览器扩展相关错误
+    // 将错误信息转换为字符串进行检查
+    let errorMessage = '';
+    let errorStack = '';
+
     if (error) {
-      const errorMessage = (error.message || '').toLowerCase();
-      const errorStack = (error.stack || '').toLowerCase();
-
-      // 过滤 ethereum 和扩展相关错误
-      if (errorMessage.includes('ethereum') ||
-          errorMessage.includes('cannot redefine property') ||
-          errorStack.includes('chrome-extension://') ||
-          errorStack.includes('moz-extension://') ||
-          filename.includes('chrome-extension://') ||
-          filename.includes('moz-extension://')) {
-        // 阻止错误传播到 Sentry
-        event.preventDefault();
-        console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', errorMessage);
-        return;
+      if (typeof error === 'string') {
+        errorMessage = error.toLowerCase();
+      } else if (typeof error === 'object') {
+        errorMessage = (error.message || error.toString()).toLowerCase();
+        errorStack = (error.stack || '').toLowerCase();
       }
     }
-  }, true);  // 使用捕获阶段，确保在 Sentry 之前执行
+
+    // 增强的过滤条件
+    const isExtensionError =
+      // 检查错误消息
+      errorMessage.includes('ethereum') ||
+      errorMessage.includes('cannot redefine property') ||
+      errorMessage.includes('redefine property') ||
+      errorMessage.includes('defineproperty') ||
+      // 检查堆栈
+      errorStack.includes('chrome-extension://') ||
+      errorStack.includes('moz-extension://') ||
+      errorStack.includes('extensions/') ||
+      errorStack.includes('object.defineproperty') ||
+      errorStack.includes('inpage.js') ||
+      // 检查文件名
+      (event.filename && (
+        event.filename.includes('chrome-extension://') ||
+        event.filename.includes('moz-extension://') ||
+        event.filename.includes('extensions/')
+      ));
+
+    if (isExtensionError) {
+      event.preventDefault();
+      console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', {
+        message: errorMessage.substring(0, 100),
+        filename: event.filename,
+        hasStack: !!errorStack
+      });
+      return;
+    }
+  }, true);  // 使用捕获阶段，确保最早执行
 }
 
 // ===================================
@@ -138,13 +185,22 @@ function initSentry() {
 
       // 错误过滤
       ignoreErrors: [
-        // 浏览器扩展冲突
+        // 浏览器扩展冲突（增强版）
         /Cannot redefine property:? ethereum/i,
         /Cannot redefine property/i,
+        /redefine property/i,
+        /defineProperty/i,
+        /Object\.defineProperty/i,
         /ethereum/i,
         // 浏览器扩展通用错误
         /chrome-extension/i,
         /moz-extension/i,
+        /extensions\//i,
+        /inpage\.js/i,
+        // TronLink 和其他钱包扩展
+        /tronlink/i,
+        /backpack/i,
+        /metamask/i,
         // 网络相关错误
         /ResizeObserver loop/,
         /Non-Error promise rejection/,
@@ -170,20 +226,36 @@ function initSentry() {
 
       // 敏感数据过滤和浏览器扩展错误过滤
       beforeSend(event) {
-        // 1. 过滤浏览器扩展相关错误
+        // 1. 过滤浏览器扩展相关错误（增强版）
         if (event.exception?.values) {
           for (const exception of event.exception.values) {
-            // 检查错误消息
+            // 检查错误消息（增强检测）
             if (exception.value) {
               const errorMessage = exception.value.toLowerCase();
-              // 过滤 ethereum 相关错误
+              // 过滤 ethereum 和 defineProperty 相关错误
               if (errorMessage.includes('ethereum') ||
-                  errorMessage.includes('cannot redefine property')) {
+                  errorMessage.includes('cannot redefine property') ||
+                  errorMessage.includes('redefine property') ||
+                  errorMessage.includes('defineproperty') ||
+                  errorMessage.includes('object.defineproperty')) {
+                console.debug('[Sentry beforeSend] 已拦截扩展错误:', exception.value);
                 return null;  // 丢弃此事件
               }
             }
 
-            // 检查堆栈帧 URL
+            // 检查错误类型
+            if (exception.type) {
+              const errorType = exception.type.toLowerCase();
+              if (errorType.includes('typeerror') && exception.value) {
+                const errorValue = exception.value.toLowerCase();
+                if (errorValue.includes('redefine') || errorValue.includes('ethereum')) {
+                  console.debug('[Sentry beforeSend] 已拦截 TypeError 扩展错误');
+                  return null;
+                }
+              }
+            }
+
+            // 检查堆栈帧 URL（增强检测）
             if (exception.stacktrace?.frames) {
               for (const frame of exception.stacktrace.frames) {
                 if (frame.filename) {
@@ -191,8 +263,20 @@ function initSentry() {
                   // 过滤扩展相关的堆栈帧
                   if (filename.includes('chrome-extension://') ||
                       filename.includes('moz-extension://') ||
-                      filename.includes('extensions/')) {
+                      filename.includes('extensions/') ||
+                      filename.includes('inpage.js')) {
+                    console.debug('[Sentry beforeSend] 已拦截扩展堆栈:', frame.filename);
                     return null;  // 丢弃此事件
+                  }
+                }
+
+                // 检查函数名
+                if (frame.function) {
+                  const functionName = frame.function.toLowerCase();
+                  if (functionName.includes('defineproperty') ||
+                      functionName.includes('object.defineproperty')) {
+                    console.debug('[Sentry beforeSend] 已拦截 defineProperty 调用');
+                    return null;
                   }
                 }
               }
@@ -200,7 +284,25 @@ function initSentry() {
           }
         }
 
-        // 2. 删除敏感请求数据
+        // 2. 检查错误机制类型（针对 onunhandledrejection）
+        if (event.exception?.mechanism) {
+          const mechanism = event.exception.mechanism;
+          if (mechanism.type === 'onunhandledrejection' && event.exception?.values) {
+            for (const exception of event.exception.values) {
+              if (exception.value) {
+                const errorMessage = exception.value.toLowerCase();
+                if (errorMessage.includes('ethereum') ||
+                    errorMessage.includes('redefine') ||
+                    errorMessage.includes('defineproperty')) {
+                  console.debug('[Sentry beforeSend] 已拦截 unhandledrejection 扩展错误');
+                  return null;
+                }
+              }
+            }
+          }
+        }
+
+        // 3. 删除敏感请求数据
         if (event.request) {
           delete event.request.cookies;
           if (event.request.headers) {
@@ -210,7 +312,7 @@ function initSentry() {
           }
         }
 
-        // 3. 脱敏异常消息中的敏感信息
+        // 4. 脱敏异常消息中的敏感信息
         if (event.exception?.values) {
           event.exception.values.forEach(exception => {
             if (exception.value) {
