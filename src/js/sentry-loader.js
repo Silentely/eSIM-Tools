@@ -31,6 +31,97 @@
 
   // 初始化状态
   var sentryInitialized = false;
+  var EXTENSION_NOISE_STORE_KEY = '__sentryExtensionNoiseStats';
+  var EXTENSION_NOISE_SAMPLE_LIMIT = 20;
+  var EXTENSION_ERROR_KEYWORDS = [
+    'cannot redefine property',
+    'redefine property',
+    'defineproperty',
+    'object.defineproperty',
+    'ethereum',
+    'chrome-extension://',
+    'moz-extension://',
+    'extensions/',
+    'inpage.js',
+    'tronlink',
+    'backpack',
+    'metamask'
+  ];
+
+  function toLowerSafe(value) {
+    if (value === null || value === undefined) return '';
+    return String(value).toLowerCase();
+  }
+
+  function includesExtensionKeyword(value) {
+    var normalized = toLowerSafe(value);
+    if (!normalized) return false;
+    return EXTENSION_ERROR_KEYWORDS.some(function(keyword) {
+      return normalized.indexOf(keyword) !== -1;
+    });
+  }
+
+  function isExtensionProviderConflict(payload) {
+    if (!payload) return false;
+
+    return includesExtensionKeyword(payload.message) ||
+      includesExtensionKeyword(payload.stack) ||
+      includesExtensionKeyword(payload.filename) ||
+      includesExtensionKeyword(payload.functionName) ||
+      includesExtensionKeyword(payload.mechanismType);
+  }
+
+  function recordExtensionNoise(source, payload) {
+    try {
+      var store = window[EXTENSION_NOISE_STORE_KEY];
+      if (!store || typeof store !== 'object') {
+        store = { count: 0, samples: [] };
+      }
+      if (!Array.isArray(store.samples)) {
+        store.samples = [];
+      }
+
+      store.count += 1;
+      store.lastSource = source;
+      store.lastSeenAt = new Date().toISOString();
+
+      var sample = {
+        source: source,
+        message: toLowerSafe(payload && payload.message).substring(0, 160),
+        filename: payload && payload.filename ? String(payload.filename).substring(0, 240) : '',
+        mechanismType: toLowerSafe(payload && payload.mechanismType),
+        timestamp: store.lastSeenAt
+      };
+
+      if (sample.message || sample.filename) {
+        if (store.samples.length >= EXTENSION_NOISE_SAMPLE_LIMIT) {
+          store.samples.shift();
+        }
+        store.samples.push(sample);
+      }
+
+      window[EXTENSION_NOISE_STORE_KEY] = store;
+
+      if (typeof window.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('sentry-extension-noise-blocked', {
+          detail: {
+            count: store.count,
+            lastSource: source
+          }
+        }));
+      }
+    } catch (_) {}
+  }
+
+  if (!window.getSentryExtensionNoiseStats) {
+    window.getSentryExtensionNoiseStats = function() {
+      var store = window[EXTENSION_NOISE_STORE_KEY];
+      if (!store || typeof store !== 'object') {
+        return { count: 0, samples: [] };
+      }
+      return store;
+    };
+  }
 
   // ===================================
   // Mock 对象（开发环境或加载失败时使用）
@@ -52,6 +143,75 @@
     },
     browserTracingIntegration: function() { return {}; }
   };
+
+  // ===================================
+  // 全局错误拦截（在 SDK 初始化之前）
+  // ===================================
+
+  window.addEventListener('unhandledrejection', function(event) {
+    var reason = event && event.reason;
+    var message = '';
+    var stack = '';
+
+    if (typeof reason === 'string') {
+      message = reason;
+    } else if (reason && typeof reason === 'object') {
+      message = reason.message || reason.toString();
+      stack = reason.stack || '';
+    }
+
+    var shouldBlock = isExtensionProviderConflict({
+      message: message,
+      stack: stack,
+      mechanismType: 'onunhandledrejection'
+    });
+
+    if (!shouldBlock && event && event.promise) {
+      shouldBlock = includesExtensionKeyword(event.promise);
+    }
+
+    if (shouldBlock) {
+      event.preventDefault();
+      recordExtensionNoise('loader-unhandledrejection', {
+        message: message,
+        mechanismType: 'onunhandledrejection'
+      });
+      console.debug('[Sentry Filter] 已在 loader 阶段拦截扩展冲突:', {
+        message: toLowerSafe(message).substring(0, 100),
+        hasStack: !!stack
+      });
+    }
+  }, true);
+
+  window.addEventListener('error', function(event) {
+    var error = event && event.error;
+    var message = event && event.message ? event.message : '';
+    var stack = '';
+    var filename = event && event.filename ? event.filename : '';
+
+    if (typeof error === 'string') {
+      message = error;
+    } else if (error && typeof error === 'object') {
+      message = error.message || message || error.toString();
+      stack = error.stack || '';
+    }
+
+    if (isExtensionProviderConflict({
+      message: message,
+      stack: stack,
+      filename: filename
+    })) {
+      event.preventDefault();
+      recordExtensionNoise('loader-error', {
+        message: message,
+        filename: filename
+      });
+      console.debug('[Sentry Filter] 已在 loader 阶段拦截扩展错误:', {
+        message: toLowerSafe(message).substring(0, 100),
+        filename: filename
+      });
+    }
+  }, true);
 
   // ===================================
   // 初始化函数
@@ -109,6 +269,12 @@
 
         // 错误过滤
         ignoreErrors: [
+          /Cannot redefine property:? ethereum/i,
+          /Cannot redefine property/i,
+          /redefine property/i,
+          /defineProperty/i,
+          /Object\.defineProperty/i,
+          /ethereum/i,
           'ResizeObserver loop',
           'Non-Error promise rejection',
           /Loading chunk .* failed/,
@@ -118,6 +284,11 @@
           /AbortError/,
           /chrome-extension/,
           /moz-extension/,
+          /extensions\//i,
+          /inpage\.js/i,
+          /tronlink/i,
+          /backpack/i,
+          /metamask/i,
           /Error invoking post/,
           /Method not found/,
           /turnstile/i,
@@ -127,11 +298,48 @@
         denyUrls: [
           /extensions\//i,
           /^chrome:\/\//i,
-          /^moz-extension:\/\//i
+          /^moz-extension:\/\//i,
+          /^chrome-extension:\/\//i
         ],
 
         // 敏感数据过滤
         beforeSend: function(event) {
+          if (event && event.exception && event.exception.values) {
+            for (var i = 0; i < event.exception.values.length; i++) {
+              var exception = event.exception.values[i] || {};
+              var mechanismType = exception.mechanism && exception.mechanism.type
+                ? exception.mechanism.type
+                : '';
+
+              if (isExtensionProviderConflict({
+                message: exception.value,
+                mechanismType: mechanismType
+              })) {
+                recordExtensionNoise('loader-beforeSend-exception', {
+                  message: exception.value,
+                  mechanismType: mechanismType
+                });
+                return null;
+              }
+
+              var stacktrace = exception.stacktrace;
+              var frames = stacktrace && stacktrace.frames ? stacktrace.frames : [];
+              for (var j = 0; j < frames.length; j++) {
+                var frame = frames[j] || {};
+                if (isExtensionProviderConflict({
+                  filename: frame.filename,
+                  functionName: frame.function
+                })) {
+                  recordExtensionNoise('loader-beforeSend-frame', {
+                    filename: frame.filename,
+                    message: frame.function
+                  });
+                  return null;
+                }
+              }
+            }
+          }
+
           // 脱敏 URL 中的敏感查询参数
           function sanitizeQueryString(url) {
             if (!url) return url;
