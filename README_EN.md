@@ -273,6 +273,10 @@ Having issues or suggestions?
 - 📖 View [Project Documentation](./docs/)
 - 💬 Participate in community discussions
 
+## 📈 Historical Star Ratings
+
+![](https://starchart.cc/Silentely/eSIM-Tools.svg)
+
 ## 📄 License
 
 - All code in this project, unless otherwise stated, is released under the [MIT License](LICENSE).

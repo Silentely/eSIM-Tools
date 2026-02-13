@@ -16,6 +16,7 @@
 
 [:us: English Version](README_EN.md)
 
+
 ## ✨ 功能特性
 
 ### 🇬🇧 Giffgaff eSIM工具
@@ -283,6 +284,10 @@ open tests/test_simyo_esim.html
 - 📋 [提交Issue](https://github.com/Silentely/eSIM-Tools/issues)
 - 📖 查看[项目文档](./docs/)
 - 💬 参与社区讨论
+
+## 📈 历史 Star 数
+
+![](https://starchart.cc/Silentely/eSIM-Tools.svg)
 
 ## 📄 许可证
 
