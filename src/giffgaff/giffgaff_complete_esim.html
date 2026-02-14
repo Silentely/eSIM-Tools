@@ -3474,9 +3474,14 @@
             }, 3000);
         }
 
-        // 打开教程
+        // 打开教程（根据当前语言跳转对应版本）
         function openTutorial() {
-            window.open('https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md', '_blank');
+            const isEn = document.documentElement.getAttribute('data-locale') === 'en'
+                || (document.documentElement.lang && document.documentElement.lang.startsWith('en'));
+            const url = isEn
+                ? 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide_EN.md'
+                : 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md';
+            window.open(url, '_blank');
         }
 
         // 添加Toast样式

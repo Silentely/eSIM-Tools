@@ -1,5 +1,7 @@
 # Giffgaff User Guide
 
+> 🌐 [中文版](./User_Guide.md)
+
 > 🎬 Video Tutorial - Giffgaff eSIM Replacement Operation Demo
 
 Your browser does not support video playback. Please [click here](https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720) to download the video.

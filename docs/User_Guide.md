@@ -1,5 +1,7 @@
 # giffgaff 使用教程
 
+> 🌐 [English Version](./User_Guide_EN.md)
+
 > 🎬 视频教程 - giffgaff eSIM更换操作演示
 
 <video controls preload="metadata" width="100%" style="max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">

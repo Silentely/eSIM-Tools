@@ -1,6 +1,7 @@
 /**
  * Giffgaff DOM 管理模块
  */
+import { getCurrentLocale, onLocaleChange } from '../i18n.js';
 
 class DOMManager {
   constructor() {
@@ -68,12 +69,27 @@ class DOMManager {
     this.elements.clearSessionBtn = document.getElementById('clearSessionBtn');
     this.elements.tutorialBtn = document.getElementById('tutorialBtn');
 
-    // 绑定教程按钮点击事件
-    // 说明：优先使用 <a href target="_blank">，确保在 WebView/PWA 或 JS 初始化失败时也能打开教程
-    if (this.elements.tutorialBtn && this.elements.tutorialBtn.tagName !== 'A') {
-      this.elements.tutorialBtn.addEventListener('click', () => {
-        window.open('https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md', '_blank');
-      });
+    // 绑定教程按钮：根据当前语言动态切换教程链接
+    if (this.elements.tutorialBtn) {
+      const updateTutorialHref = () => {
+        const url = getCurrentLocale() === 'en'
+          ? 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide_EN.md'
+          : 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md';
+        if (this.elements.tutorialBtn.tagName === 'A') {
+          this.elements.tutorialBtn.href = url;
+        }
+      };
+      updateTutorialHref();
+      onLocaleChange(updateTutorialHref);
+
+      if (this.elements.tutorialBtn.tagName !== 'A') {
+        this.elements.tutorialBtn.addEventListener('click', () => {
+          const url = getCurrentLocale() === 'en'
+            ? 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide_EN.md'
+            : 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md';
+          window.open(url, '_blank');
+        });
+      }
     }
 
     this.initialized = true;

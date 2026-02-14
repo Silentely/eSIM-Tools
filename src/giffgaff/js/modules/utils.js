@@ -2,7 +2,7 @@
  * 工具函数模块
  * 提供通用的辅助函数
  */
-import { tl } from '../../../js/modules/i18n.js';
+import { tl, getCurrentLocale } from '../../../js/modules/i18n.js';
 import NotificationManager from '../../../js/modules/notification-manager.js';
 
 /**
@@ -210,10 +210,19 @@ export function copyTextFromCode(codeElementId, btnEl) {
 }
 
 /**
+ * 获取当前语言对应的教程链接
+ */
+export function getTutorialUrl() {
+    return getCurrentLocale() === 'en'
+        ? 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide_EN.md'
+        : 'https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md';
+}
+
+/**
  * 打开教程
  */
 export function openTutorial() {
-    window.open('https://github.com/Silentely/eSIM-Tools/blob/main/docs/User_Guide.md', '_blank');
+    window.open(getTutorialUrl(), '_blank');
 }
 
 /**
