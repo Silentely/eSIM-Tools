@@ -2,7 +2,7 @@
 
 > 🌐 [English Version](./User_Guide_EN.md)
 
-> 🎬 视频教程 - giffgaff eSIM更换操作演示
+> 🎬 视频教程 - giffgaff eSIM更换操作演示（视频教程未更新，其中OAuth获取回调url方式请阅读文字教程）
 
 <video controls preload="metadata" width="100%" style="max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
   <source src="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720" type="video/mp4">
