@@ -161,7 +161,9 @@ export class MFAHandler {
             Logger.log(t('giffgaff.mfa.log.swapResponse'), responseData);
             
             if (responseData.errors) {
-                throw new Error(responseData.errors[0].message || t('giffgaff.mfa.errors.genericSendFailed'));
+                const errorObj = responseData.errors[0];
+                const errorMessage = errorObj?.message || errorObj?.error || t('giffgaff.mfa.errors.genericSendFailed');
+                throw new Error(errorMessage);
             }
             
             const data = responseData.data;

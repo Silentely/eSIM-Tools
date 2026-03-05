@@ -47,9 +47,11 @@ export class ESimService {
             }
             
             const data = await response.json();
-            
+
             if (data.errors) {
-                throw new Error(data.errors[0].message);
+                const errorObj = data.errors[0];
+                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
+                throw new Error(errorMessage);
             }
             
             // 保存会员信息
@@ -103,9 +105,11 @@ export class ESimService {
             }
             
             const data = await response.json();
-            
+
             if (data.errors) {
-                throw new Error(data.errors[0].message);
+                const errorObj = data.errors[0];
+                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
+                throw new Error(errorMessage);
             }
             
             // 保存eSIM信息
@@ -166,9 +170,11 @@ export class ESimService {
             }
             
             const swapData = await response.json();
-            
+
             if (swapData.errors) {
-                throw new Error(swapData.errors[0]?.message || t('giffgaff.esim.errors.swapGeneric'));
+                const errorObj = swapData.errors[0];
+                const errorMessage = errorObj?.message || errorObj?.error || t('giffgaff.esim.errors.swapGeneric');
+                throw new Error(errorMessage);
             }
             
             const newSim = swapData?.data?.swapSim?.new;
@@ -222,9 +228,11 @@ export class ESimService {
             }
             
             const data = await response.json();
-            
+
             if (data.errors) {
-                throw new Error(data.errors[0].message);
+                const errorObj = data.errors[0];
+                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
+                throw new Error(errorMessage);
             }
             
             const lpaString = data.data.eSimDownloadToken.lpaString;

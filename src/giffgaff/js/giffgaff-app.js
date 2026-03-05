@@ -22,14 +22,48 @@ import captchaManager from '../../js/modules/captcha-manager.js';
 class GiffgaffApp {
     constructor() {
         this.initialized = false;
+        this.setupGlobalErrorHandlers();
     }
-    
+
+    /**
+     * 设置全局错误处理器
+     */
+    setupGlobalErrorHandlers() {
+        // 处理未捕获的 Promise 拒绝
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('[Giffgaff] Unhandled Promise Rejection:', event.reason);
+
+            // 如果 reason 是普通对象（包含 code 和 message），转换为 Error
+            if (event.reason && typeof event.reason === 'object' && !event.reason.stack) {
+                const errorMessage = event.reason.message || event.reason.error || JSON.stringify(event.reason);
+                const error = new Error(errorMessage);
+                error.code = event.reason.code;
+
+                // 上报到 Sentry
+                if (window.Sentry) {
+                    window.Sentry.captureException(error, {
+                        extra: {
+                            originalReason: event.reason,
+                            reasonType: typeof event.reason
+                        }
+                    });
+                }
+
+                // 阻止默认行为（避免控制台报错）
+                event.preventDefault();
+
+                // 显示用户友好的错误提示
+                showToast(tl('操作失败，请重试或刷新页面'));
+            }
+        });
+    }
+
     /**
      * 初始化应用
      */
     async init() {
         if (this.initialized) return;
-        
+
         console.log(t('giffgaff.app.console.initStart'));
         try {
             await captchaManager.init();
