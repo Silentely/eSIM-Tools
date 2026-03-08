@@ -84,7 +84,8 @@ Thumbs.db
 *~
 .serena
 .ace-tool/
-.omc
+.omc/
+.omx/
 
 # Build outputs
 build/
