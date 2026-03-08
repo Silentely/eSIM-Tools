@@ -443,10 +443,10 @@ export class UIController {
     showESimResult() {
         const state = stateManager.getState();
         if (!state.lpaString) return;
-        
+
         this.elements.resultContainer.classList.add('active');
         this.generateQRCode(state.lpaString);
-        
+
         this.elements.esimInfo.innerHTML = `
             <div class="mb-3">
                 <h5 class="text-primary">${tl('LPA字符串')}</h5>
@@ -465,7 +465,28 @@ export class UIController {
                 ${tl('请立即保存这些信息，页面关闭后将无法再次查看！')}
             </div>
         `;
-        
+
+        // 绑定按钮事件
+        const copyBtn = document.getElementById('copyLpaBtn');
+        const downloadBtn = document.getElementById('downloadQrBtn');
+
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                if (window.copyLPAString) {
+                    window.copyLPAString(state.lpaString, copyBtn);
+                }
+            });
+        }
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                const img = this.elements.qrcode.querySelector('img');
+                if (img && window.downloadQRCode) {
+                    window.downloadQRCode(img.src, 'giffgaff_esim_qrcode.png');
+                }
+            });
+        }
+
         setTimeout(() => {
             this.elements.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 500);

@@ -769,5 +769,6 @@ export const LITERAL_TRANSLATIONS = {
   'LPA字符串为空': 'LPA string is empty',
   'LPA字符串已复制到剪贴板': 'LPA string copied to clipboard',
   '二维码已下载': 'QR code downloaded',
+  '已在新窗口打开二维码，请右键保存': 'QR code opened in new window. Please right-click to save',
   '下载失败，请右键图片另存为': 'Download failed. Please right-click the image and save as',
 };

@@ -49,20 +49,24 @@ export function generateState() {
 export function getTimeUntilServiceOpen() {
     const now = new Date();
 
-    // 获取英国时间
-    const parts = new Intl.DateTimeFormat('en-GB', {
+    // 获取当前英国时间的完整 Date 对象
+    const ukTimeString = now.toLocaleString('en-GB', {
         timeZone: 'Europe/London',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: false
-    }).formatToParts(now);
+    });
 
-    const ukHour = parseInt((parts.find(p => p.type === 'hour') || {}).value || '0', 10);
-    const ukMinute = parseInt((parts.find(p => p.type === 'minute') || {}).value || '0', 10);
-    const ukSecond = parseInt((parts.find(p => p.type === 'second') || {}).value || '0', 10);
+    // 解析英国时间字符串 (格式: "DD/MM/YYYY, HH:MM:SS")
+    const [datePart, timePart] = ukTimeString.split(', ');
+    const [day, month, year] = datePart.split('/').map(Number);
+    const [hour, minute, second] = timePart.split(':').map(Number);
 
-    const currentMinutes = ukHour * 60 + ukMinute;
+    const currentMinutes = hour * 60 + minute;
     const start = 4 * 60 + 30;   // 04:30
     const end = 21 * 60 + 30;    // 21:30
 
@@ -71,18 +75,40 @@ export function getTimeUntilServiceOpen() {
         return null;
     }
 
-    // 计算距离下次开放的时间
-    let targetMinutes;
+    // 构造下次开放时间的英国时区 Date 对象
+    let targetDate;
     if (currentMinutes < start) {
-        // 还没到今天的开放时间
-        targetMinutes = start;
+        // 今天还没到开放时间，目标是今天 04:30
+        targetDate = new Date(Date.UTC(year, month - 1, day, 4, 30, 0));
     } else {
-        // 已经过了今天的开放时间，等到明天
-        targetMinutes = start + 24 * 60; // 第二天的 04:30
+        // 已经过了今天的开放时间，目标是明天 04:30
+        targetDate = new Date(Date.UTC(year, month - 1, day + 1, 4, 30, 0));
     }
 
-    const diffMinutes = targetMinutes - currentMinutes;
-    const diffSeconds = diffMinutes * 60 - ukSecond;
+    // 将目标时间转换为英国时区的实际时间戳
+    const targetUKString = targetDate.toLocaleString('en-GB', {
+        timeZone: 'Europe/London',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+
+    // 重新构造目标时间以获得正确的时间戳
+    const [targetDatePart, targetTimePart] = targetUKString.split(', ');
+    const [targetDay, targetMonth, targetYear] = targetDatePart.split('/').map(Number);
+    const [targetHour, targetMinute, targetSecond] = targetTimePart.split(':').map(Number);
+
+    // 计算当前时间和目标时间的时间戳差值
+    const nowTimestamp = Date.now();
+    const targetTimestamp = new Date(
+        `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}T${String(targetHour).padStart(2, '0')}:${String(targetMinute).padStart(2, '0')}:${String(targetSecond).padStart(2, '0')}`
+    ).getTime();
+
+    const diffSeconds = Math.floor((targetTimestamp - nowTimestamp) / 1000);
 
     const hours = Math.floor(diffSeconds / 3600);
     const minutes = Math.floor((diffSeconds % 3600) / 60);
@@ -339,14 +365,24 @@ export async function downloadQRCode(qrUrl, filename = 'esim-qrcode.png') {
         document.body.appendChild(a);
         a.click();
 
-        // 清理
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        // 延后清理，兼容部分浏览器下载时序
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
 
         // 显示成功提示
         NotificationManager.success(tl('二维码已下载'));
     } catch (error) {
         console.error('Download failed:', error);
-        NotificationManager.error(tl('下载失败，请右键图片另存为'));
+
+        // 失败时回退到打开新窗口
+        try {
+            window.open(qrUrl, '_blank', 'noopener,noreferrer');
+            NotificationManager.info(tl('已在新窗口打开二维码，请右键保存'));
+        } catch (fallbackError) {
+            console.error('Fallback failed:', fallbackError);
+            NotificationManager.error(tl('下载失败，请右键图片另存为'));
+        }
     }
 }

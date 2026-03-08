@@ -25,6 +25,9 @@ import captchaManager from '../../js/modules/captcha-manager.js';
 class GiffgaffApp {
     constructor() {
         this.initialized = false;
+        this.countdownIntervalId = null;
+        this.minuteIntervalId = null;
+        this.minuteTimeoutId = null;
         this.setupGlobalErrorHandlers();
     }
 
@@ -831,6 +834,9 @@ class GiffgaffApp {
      * 初始化服务时间检查
      */
     initServiceTimeCheck() {
+        // 清理已存在的定时器
+        this.clearTimers();
+
         this.checkServiceTime();
         this.updateLoginCardsState();
 
@@ -839,10 +845,10 @@ class GiffgaffApp {
 
         // 对齐到下一分钟整点
         const msToNextMinute = 60000 - (Date.now() % 60000);
-        setTimeout(() => {
+        this.minuteTimeoutId = setTimeout(() => {
             this.checkServiceTime();
             this.updateLoginCardsState();
-            setInterval(() => {
+            this.minuteIntervalId = setInterval(() => {
                 this.checkServiceTime();
                 this.updateLoginCardsState();
             }, 60000);
@@ -850,11 +856,29 @@ class GiffgaffApp {
     }
 
     /**
+     * 清理所有定时器
+     */
+    clearTimers() {
+        if (this.countdownIntervalId) {
+            clearInterval(this.countdownIntervalId);
+            this.countdownIntervalId = null;
+        }
+        if (this.minuteIntervalId) {
+            clearInterval(this.minuteIntervalId);
+            this.minuteIntervalId = null;
+        }
+        if (this.minuteTimeoutId) {
+            clearTimeout(this.minuteTimeoutId);
+            this.minuteTimeoutId = null;
+        }
+    }
+
+    /**
      * 启动倒计时定时器
      */
     startCountdownTimer() {
         // 每秒更新倒计时显示
-        setInterval(() => {
+        this.countdownIntervalId = setInterval(() => {
             if (!isServiceTimeAvailable()) {
                 this.updateCountdownDisplay();
             }
@@ -862,11 +886,12 @@ class GiffgaffApp {
     }
 
     /**
-     * 更新倒计时显示
+     * 格式化倒计时文本
+     * @param {Object} timeUntil - 包含 hours, minutes, seconds 的对象
+     * @returns {string} 格式化后的倒计时文本
      */
-    updateCountdownDisplay() {
-        const timeUntil = getTimeUntilServiceOpen();
-        if (!timeUntil) return;
+    formatCountdownText(timeUntil) {
+        if (!timeUntil) return '';
 
         const { hours, minutes, seconds } = timeUntil;
         const timeParts = [];
@@ -881,12 +906,27 @@ class GiffgaffApp {
             timeParts.push(`${seconds}${tl('秒').replace('{count}', '')}`);
         }
 
-        const countdownText = `<br><strong style="color: #dc2626;">⏰ ${tl('距离开放还有')}${timeParts.join(' ')}</strong>`;
+        return `<br><strong style="color: #dc2626;">⏰ ${tl('距离开放还有')}${timeParts.join(' ')}</strong>`;
+    }
+
+    /**
+     * 更新倒计时显示
+     */
+    updateCountdownDisplay() {
+        const timeUntil = getTimeUntilServiceOpen();
+        if (!timeUntil) return;
+
+        const countdownText = this.formatCountdownText(timeUntil);
         const messageElement = document.getElementById('serviceTimeMessage');
 
         if (messageElement) {
             const baseText = t('giffgaff.app.service.outside');
-            messageElement.innerHTML = baseText + countdownText;
+            const newHTML = baseText + countdownText;
+
+            // 只在内容变化时更新 DOM
+            if (messageElement.innerHTML !== newHTML) {
+                messageElement.innerHTML = newHTML;
+            }
         }
     }
 
@@ -960,24 +1000,7 @@ class GiffgaffApp {
         if (isOutside) {
             // 获取倒计时信息
             const timeUntil = getTimeUntilServiceOpen();
-            let countdownText = '';
-
-            if (timeUntil) {
-                const { hours, minutes, seconds } = timeUntil;
-                const timeParts = [];
-
-                if (hours > 0) {
-                    timeParts.push(`${hours}${tl('小时').replace('{count}', '')}`);
-                }
-                if (minutes > 0) {
-                    timeParts.push(`${minutes}${tl('分钟').replace('{count}', '')}`);
-                }
-                if (seconds > 0 || timeParts.length === 0) {
-                    timeParts.push(`${seconds}${tl('秒').replace('{count}', '')}`);
-                }
-
-                countdownText = `<br><strong style="color: #dc2626;">⏰ ${tl('距离开放还有')}${timeParts.join(' ')}</strong>`;
-            }
+            const countdownText = this.formatCountdownText(timeUntil);
 
             alertElement.className = 'alert alert-warning mb-4';
             iconElement.className = 'fas fa-exclamation-triangle warning';
