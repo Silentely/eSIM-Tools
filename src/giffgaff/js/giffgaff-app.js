@@ -9,12 +9,13 @@ import { oauthHandler } from './modules/oauth-handler.js';
 import { cookieHandler } from './modules/cookie-handler.js';
 import { mfaHandler } from './modules/mfa-handler.js';
 import { esimService } from './modules/esim-service.js';
-import { 
-    isServiceTimeAvailable, 
-    showServiceTimeWarning, 
+import {
+    isServiceTimeAvailable,
+    showServiceTimeWarning,
     copyTextFromCode,
     showToast,
-    openTutorial 
+    openTutorial,
+    getTimeUntilServiceOpen
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
 import captchaManager from '../../js/modules/captcha-manager.js';
@@ -829,13 +830,96 @@ class GiffgaffApp {
      */
     initServiceTimeCheck() {
         this.checkServiceTime();
-        
+        this.updateLoginCardsState();
+
+        // 启动倒计时定时器（每秒更新）
+        this.startCountdownTimer();
+
         // 对齐到下一分钟整点
         const msToNextMinute = 60000 - (Date.now() % 60000);
         setTimeout(() => {
             this.checkServiceTime();
-            setInterval(() => this.checkServiceTime(), 60000);
+            this.updateLoginCardsState();
+            setInterval(() => {
+                this.checkServiceTime();
+                this.updateLoginCardsState();
+            }, 60000);
         }, msToNextMinute);
+    }
+
+    /**
+     * 启动倒计时定时器
+     */
+    startCountdownTimer() {
+        // 每秒更新倒计时显示
+        setInterval(() => {
+            if (!isServiceTimeAvailable()) {
+                this.updateCountdownDisplay();
+            }
+        }, 1000);
+    }
+
+    /**
+     * 更新倒计时显示
+     */
+    updateCountdownDisplay() {
+        const timeUntil = getTimeUntilServiceOpen();
+        if (!timeUntil) return;
+
+        const { hours, minutes, seconds } = timeUntil;
+        const timeParts = [];
+
+        if (hours > 0) {
+            timeParts.push(`${hours}${tl('小时').replace('{count}', '')}`);
+        }
+        if (minutes > 0) {
+            timeParts.push(`${minutes}${tl('分钟').replace('{count}', '')}`);
+        }
+        if (seconds > 0 || timeParts.length === 0) {
+            timeParts.push(`${seconds}${tl('秒').replace('{count}', '')}`);
+        }
+
+        const countdownText = `<br><strong style="color: #dc2626;">⏰ ${tl('距离开放还有')}${timeParts.join(' ')}</strong>`;
+        const messageElement = document.getElementById('serviceTimeMessage');
+
+        if (messageElement) {
+            const baseText = t('giffgaff.app.service.outside');
+            messageElement.innerHTML = baseText + countdownText;
+        }
+    }
+
+    /**
+     * 更新登录卡片状态（禁用/启用）
+     */
+    updateLoginCardsState() {
+        const isAvailable = isServiceTimeAvailable();
+        const oauthCard = document.getElementById('oauthCard');
+        const cookieCard = document.getElementById('cookieCard');
+
+        // 更新卡片状态
+        [oauthCard, cookieCard].forEach(card => {
+            if (!card) return;
+
+            if (isAvailable) {
+                // 服务时间内：启用卡片
+                card.classList.remove('disabled', 'service-time-disabled');
+                card.style.cursor = 'pointer';
+                card.style.opacity = '1';
+                card.style.pointerEvents = 'auto';
+                card.removeAttribute('aria-disabled');
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+            } else {
+                // 服务时间外：禁用卡片
+                card.classList.add('disabled', 'service-time-disabled');
+                card.style.cursor = 'not-allowed';
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
+                card.setAttribute('aria-disabled', 'true');
+                card.removeAttribute('role');
+                card.setAttribute('tabindex', '-1');
+            }
+        });
     }
     
     /**
@@ -843,7 +927,7 @@ class GiffgaffApp {
      */
     checkServiceTime() {
         const now = new Date();
-        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+        const currentTime = now.getHours().toString().padStart(2, '0') + ':' +
                           now.getMinutes().toString().padStart(2, '0');
         const ukTime = new Intl.DateTimeFormat('en-GB', {
             timeZone: 'Europe/London',
@@ -851,7 +935,7 @@ class GiffgaffApp {
             minute: '2-digit',
             hour12: false
         }).format(now);
-        
+
         // 更新时间显示
         const timeElement = document.getElementById('currentTime');
         if (timeElement) {
@@ -860,21 +944,42 @@ class GiffgaffApp {
             timeElement.offsetHeight;
             timeElement.style.animation = 'time-update 0.5s ease-out';
         }
-        
+
         const ukHint = document.getElementById('ukTimeHint');
         if (ukHint) ukHint.textContent = t('giffgaff.app.service.ukTime', { time: ukTime });
-        
+
         // 更新服务时间提示
         const isOutside = !isServiceTimeAvailable();
         const alertElement = document.getElementById('serviceTimeAlert');
         const iconElement = document.getElementById('serviceTimeIcon');
         const messageElement = document.getElementById('serviceTimeMessage');
         const actionMessageElement = document.getElementById('actionMessage');
-        
+
         if (isOutside) {
+            // 获取倒计时信息
+            const timeUntil = getTimeUntilServiceOpen();
+            let countdownText = '';
+
+            if (timeUntil) {
+                const { hours, minutes, seconds } = timeUntil;
+                const timeParts = [];
+
+                if (hours > 0) {
+                    timeParts.push(`${hours}${tl('小时').replace('{count}', '')}`);
+                }
+                if (minutes > 0) {
+                    timeParts.push(`${minutes}${tl('分钟').replace('{count}', '')}`);
+                }
+                if (seconds > 0 || timeParts.length === 0) {
+                    timeParts.push(`${seconds}${tl('秒').replace('{count}', '')}`);
+                }
+
+                countdownText = `<br><strong style="color: #dc2626;">⏰ ${tl('距离开放还有')}${timeParts.join(' ')}</strong>`;
+            }
+
             alertElement.className = 'alert alert-warning mb-4';
             iconElement.className = 'fas fa-exclamation-triangle warning';
-            messageElement.innerHTML = t('giffgaff.app.service.outside');
+            messageElement.innerHTML = t('giffgaff.app.service.outside') + countdownText;
             actionMessageElement.innerHTML = t('giffgaff.app.service.outsideBadge');
             actionMessageElement.className = 'service-time-action-badge warning';
             actionMessageElement.style.display = 'block';

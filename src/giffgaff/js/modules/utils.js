@@ -43,6 +43,55 @@ export function generateState() {
 }
 
 /**
+ * 计算距离下次服务开放的时间
+ * @returns {Object|null} 返回包含小时、分钟、秒的对象，如果当前在服务时间内则返回 null
+ */
+export function getTimeUntilServiceOpen() {
+    const now = new Date();
+
+    // 获取英国时间
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/London',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    }).formatToParts(now);
+
+    const ukHour = parseInt((parts.find(p => p.type === 'hour') || {}).value || '0', 10);
+    const ukMinute = parseInt((parts.find(p => p.type === 'minute') || {}).value || '0', 10);
+    const ukSecond = parseInt((parts.find(p => p.type === 'second') || {}).value || '0', 10);
+
+    const currentMinutes = ukHour * 60 + ukMinute;
+    const start = 4 * 60 + 30;   // 04:30
+    const end = 21 * 60 + 30;    // 21:30
+
+    // 如果在服务时间内，返回 null
+    if (currentMinutes >= start && currentMinutes <= end) {
+        return null;
+    }
+
+    // 计算距离下次开放的时间
+    let targetMinutes;
+    if (currentMinutes < start) {
+        // 还没到今天的开放时间
+        targetMinutes = start;
+    } else {
+        // 已经过了今天的开放时间，等到明天
+        targetMinutes = start + 24 * 60; // 第二天的 04:30
+    }
+
+    const diffMinutes = targetMinutes - currentMinutes;
+    const diffSeconds = diffMinutes * 60 - ukSecond;
+
+    const hours = Math.floor(diffSeconds / 3600);
+    const minutes = Math.floor((diffSeconds % 3600) / 60);
+    const seconds = diffSeconds % 60;
+
+    return { hours, minutes, seconds };
+}
+
+/**
  * 检查是否在服务时间内（英国时间 04:30-21:30）
  */
 export function isServiceTimeAvailable() {
@@ -53,14 +102,14 @@ export function isServiceTimeAvailable() {
         minute: '2-digit',
         hour12: false
     }).formatToParts(now);
-    
+
     const ukHour = parseInt((parts.find(p => p.type === 'hour') || {}).value || '0', 10);
     const ukMinute = parseInt((parts.find(p => p.type === 'minute') || {}).value || '0', 10);
-    
+
     const minutesSinceMidnight = ukHour * 60 + ukMinute;
     const start = 4 * 60 + 30;   // 04:30
     const end = 21 * 60 + 30;    // 21:30
-    
+
     return minutesSinceMidnight >= start && minutesSinceMidnight <= end;
 }
 
