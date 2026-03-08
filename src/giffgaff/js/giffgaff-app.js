@@ -15,7 +15,9 @@ import {
     copyTextFromCode,
     showToast,
     openTutorial,
-    getTimeUntilServiceOpen
+    getTimeUntilServiceOpen,
+    copyLPAString,
+    downloadQRCode
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
 import captchaManager from '../../js/modules/captcha-manager.js';
@@ -1007,5 +1009,7 @@ if (document.readyState === 'loading') {
 // 导出全局函数供HTML内联事件使用
 window.copyTextFromCode = copyTextFromCode;
 window.openTutorial = openTutorial;
+window.copyLPAString = copyLPAString;
+window.downloadQRCode = downloadQRCode;
 
 export default app;

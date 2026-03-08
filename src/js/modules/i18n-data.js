@@ -765,5 +765,9 @@ export const LITERAL_TRANSLATIONS = {
   'Cookie已失效': 'Cookie expired',
   'Cookie已失效，请重新验证。': 'Cookie expired. Please verify again.',
   'Cookie已失效，请重新获取并验证。': 'Cookie expired. Please retrieve and verify again.',
-  'Cookie已失效，请在第一步重新验证。': 'Cookie expired. Re-verify in Step 1.'
+  'Cookie已失效，请在第一步重新验证。': 'Cookie expired. Re-verify in Step 1.',
+  'LPA字符串为空': 'LPA string is empty',
+  'LPA字符串已复制到剪贴板': 'LPA string copied to clipboard',
+  '二维码已下载': 'QR code downloaded',
+  '下载失败，请右键图片另存为': 'Download failed. Please right-click the image and save as',
 };

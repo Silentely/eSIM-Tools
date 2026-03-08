@@ -278,6 +278,75 @@ export function openTutorial() {
  * 检测环境
  */
 export function isNetlifyEnvironment() {
-    return window.location.hostname.includes('cosr.eu.org') || 
+    return window.location.hostname.includes('cosr.eu.org') ||
            window.location.hostname.includes('netlify');
+}
+
+/**
+ * 复制LPA字符串（供全局调用）
+ * @param {string} lpaString - LPA字符串
+ * @param {HTMLElement} btnEl - 按钮元素（可选，用于视觉反馈）
+ */
+export function copyLPAString(lpaString, btnEl) {
+    if (!lpaString) {
+        NotificationManager.error(tl('LPA字符串为空'));
+        return;
+    }
+
+    copyToClipboard(lpaString).then(() => {
+        // 按钮视觉反馈
+        if (btnEl) {
+            const oldHTML = btnEl.innerHTML;
+            btnEl.innerHTML = `<i class="fas fa-check"></i> ${tl('已复制')}`;
+            btnEl.classList.add('btn-success');
+            btnEl.classList.remove('btn-primary');
+
+            setTimeout(() => {
+                btnEl.innerHTML = oldHTML;
+                btnEl.classList.remove('btn-success');
+                btnEl.classList.add('btn-primary');
+            }, 2000);
+        }
+
+        // 显示成功提示
+        NotificationManager.success(tl('LPA字符串已复制到剪贴板'));
+    }).catch((error) => {
+        console.error(tl('复制失败:'), error);
+        NotificationManager.error(tl('复制失败，请手动选择文本复制'));
+    });
+}
+
+/**
+ * 下载二维码图片
+ * @param {string} qrUrl - 二维码图片URL
+ * @param {string} filename - 下载文件名
+ */
+export async function downloadQRCode(qrUrl, filename = 'esim-qrcode.png') {
+    try {
+        // 获取图片数据
+        const response = await fetch(qrUrl);
+        if (!response.ok) {
+            throw new Error('Failed to fetch QR code image');
+        }
+
+        const blob = await response.blob();
+
+        // 创建下载链接
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        // 清理
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // 显示成功提示
+        NotificationManager.success(tl('二维码已下载'));
+    } catch (error) {
+        console.error('Download failed:', error);
+        NotificationManager.error(tl('下载失败，请右键图片另存为'));
+    }
 }

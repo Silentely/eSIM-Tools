@@ -263,32 +263,52 @@ class DOMManager {
    */
   displayESIMResult(state) {
     if (!state.lpaString) return;
-    
+
     // 显示 LPA 字符串
     const lpaElement = document.getElementById('lpaString');
     if (lpaElement) {
       lpaElement.textContent = state.lpaString;
     }
-    
+
     // 生成二维码
     const qrcodeElement = document.getElementById('qrcode');
     if (qrcodeElement) {
       const qrSize = 300;
       const qrUrl = `https://qrcode.show/${encodeURIComponent(state.lpaString)}?size=${qrSize}`;
-      
+
       qrcodeElement.innerHTML = `
-        <img src="${qrUrl}" alt="eSIM QR Code" class="img-fluid" />
+        <img src="${qrUrl}" alt="eSIM QR Code" class="img-fluid" id="esimQRImage" />
         <div class="mt-3">
-          <button class="btn btn-primary" onclick="app.utils.copyToClipboard('${state.lpaString}')">
+          <button class="btn btn-primary" id="copyLPABtn">
             <i class="fas fa-copy"></i> 复制LPA字符串
           </button>
-          <a href="${qrUrl}" download="esim-qrcode.png" class="btn btn-success ms-2">
+          <button class="btn btn-success ms-2" id="downloadQRBtn">
             <i class="fas fa-download"></i> 下载二维码
-          </a>
+          </button>
         </div>
       `;
+
+      // 绑定复制按钮事件
+      const copyBtn = document.getElementById('copyLPABtn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          if (window.copyLPAString) {
+            window.copyLPAString(state.lpaString, copyBtn);
+          }
+        });
+      }
+
+      // 绑定下载按钮事件
+      const downloadBtn = document.getElementById('downloadQRBtn');
+      if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+          if (window.downloadQRCode) {
+            window.downloadQRCode(qrUrl, 'esim-qrcode.png');
+          }
+        });
+      }
     }
-    
+
     // 显示结果区域
     const resultSection = document.getElementById('resultSection');
     if (resultSection) {
