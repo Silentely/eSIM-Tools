@@ -33,6 +33,10 @@ const EXTENSION_ERROR_KEYWORDS = [
   'tronlink',
   'backpack',
   'metamask',
+  'wallet must has at least one account',
+  'wallet must have at least one account',
+  'webkit-masked-url://',
+  'autofillfielddata.autocompletetype.includes',
 ];
 
 function toLowerSafe(value) {
@@ -263,6 +267,10 @@ function initSentry() {
         /tronlink/i,
         /backpack/i,
         /metamask/i,
+        /wallet must has at least one account/i,
+        /wallet must have at least one account/i,
+        /webkit-masked-url/i,
+        /autofillFieldData\.autoCompleteType\.includes/i,
         // 网络相关错误
         /ResizeObserver loop/,
         /Non-Error promise rejection/,
@@ -284,6 +292,7 @@ function initSentry() {
         /^chrome:\/\//i,
         /^moz-extension:\/\//i,
         /^chrome-extension:\/\//i,
+        /^webkit-masked-url:\/\//i,
       ],
 
       // 敏感数据过滤和浏览器扩展错误过滤

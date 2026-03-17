@@ -38,30 +38,80 @@ class GiffgaffApp {
         // 处理未捕获的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
             console.error('[Giffgaff] Unhandled Promise Rejection:', event.reason);
+            const shouldHandleAsCustomError =
+                typeof event.reason === 'string' ||
+                (event.reason && typeof event.reason === 'object' && !event.reason.stack);
+            if (!shouldHandleAsCustomError) return;
 
-            // 如果 reason 是普通对象（包含 code 和 message），转换为 Error
-            if (event.reason && typeof event.reason === 'object' && !event.reason.stack) {
-                const errorMessage = event.reason.message || event.reason.error || JSON.stringify(event.reason);
-                const error = new Error(errorMessage);
-                error.code = event.reason.code;
+            const error = this.normalizeUnhandledRejectionReason(event.reason);
+            if (!error) return;
 
-                // 上报到 Sentry
-                if (window.Sentry) {
-                    window.Sentry.captureException(error, {
-                        extra: {
-                            originalReason: event.reason,
-                            reasonType: typeof event.reason
-                        }
-                    });
-                }
-
-                // 阻止默认行为（避免控制台报错）
+            if (this.isIgnoredUnhandledRejection(error)) {
                 event.preventDefault();
-
-                // 显示用户友好的错误提示
-                showToast(tl('操作失败，请重试或刷新页面'));
+                console.debug('[Giffgaff] Ignored browser noise rejection:', error.message);
+                return;
             }
+
+            // 上报到 Sentry
+            if (window.Sentry) {
+                window.Sentry.captureException(error, {
+                    extra: {
+                        originalReason: event.reason,
+                        reasonType: typeof event.reason
+                    }
+                });
+            }
+
+            // 阻止默认行为（避免控制台报错）
+            event.preventDefault();
+
+            // 显示用户友好的错误提示
+            showToast(tl('操作失败，请重试或刷新页面'));
         });
+    }
+
+    normalizeUnhandledRejectionReason(reason) {
+        if (reason instanceof Error) {
+            return reason;
+        }
+
+        if (typeof reason === 'string') {
+            return new Error(reason);
+        }
+
+        if (reason && typeof reason === 'object') {
+            const errorMessage = reason.message || reason.error || JSON.stringify(reason);
+            const error = new Error(errorMessage || tl('未知错误'));
+            if (reason.code !== undefined) {
+                error.code = reason.code;
+            }
+            if (reason.name) {
+                error.name = reason.name;
+            }
+            if (reason.stack) {
+                error.stack = reason.stack;
+            }
+            return error;
+        }
+
+        return null;
+    }
+
+    isIgnoredUnhandledRejection(error) {
+        const payload = `${error?.message || ''}\n${error?.stack || ''}`.toLowerCase();
+        const ignoredKeywords = [
+            'wallet must has at least one account',
+            'wallet must have at least one account',
+            'autofillfielddata.autocompletetype.includes',
+            'webkit-masked-url://',
+            'chrome-extension://',
+            'moz-extension://',
+            'metamask',
+            'tronlink',
+            'backpack'
+        ];
+
+        return ignoredKeywords.some((keyword) => payload.includes(keyword));
     }
 
     /**

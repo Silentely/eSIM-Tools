@@ -403,9 +403,14 @@ class SimyoApp {
         
         if (copyBtn && !copyBtn.__bound) {
             copyBtn.__bound = true;
-            copyBtn.addEventListener('click', () => {
-                copyToClipboard(lpaString);
-                showToast(t('simyo.app.toast.lpaCopied'));
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await copyToClipboard(lpaString);
+                    showToast(t('simyo.app.toast.lpaCopied'));
+                } catch (error) {
+                    console.warn('[Simyo] Failed to copy LPA string:', error);
+                    showToast(tl('复制失败，请手动选择文本复制'));
+                }
             });
         }
         

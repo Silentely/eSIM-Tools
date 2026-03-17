@@ -45,7 +45,11 @@
     'inpage.js',
     'tronlink',
     'backpack',
-    'metamask'
+    'metamask',
+    'wallet must has at least one account',
+    'wallet must have at least one account',
+    'webkit-masked-url://',
+    'autofillfielddata.autocompletetype.includes'
   ];
 
   function toLowerSafe(value) {
@@ -289,6 +293,10 @@
           /tronlink/i,
           /backpack/i,
           /metamask/i,
+          /wallet must has at least one account/i,
+          /wallet must have at least one account/i,
+          /webkit-masked-url/i,
+          /autofillFieldData\.autoCompleteType\.includes/i,
           /Error invoking post/,
           /Method not found/,
           /turnstile/i,
@@ -299,7 +307,8 @@
           /extensions\//i,
           /^chrome:\/\//i,
           /^moz-extension:\/\//i,
-          /^chrome-extension:\/\//i
+          /^chrome-extension:\/\//i,
+          /^webkit-masked-url:\/\//i
         ],
 
         // 敏感数据过滤
