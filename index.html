@@ -150,12 +150,17 @@
             margin: 0;
         }
 
-        .github-btn{
-            background: #24292e;
-            border: 1px solid rgba(255,255,255,.18);
+        .header-actions{
+            display: flex;
+            gap: var(--s2);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: var(--s3);
+        }
+
+        .github-btn, .kofi-btn{
             font-size: 16px;
-            color:#fff;
-            cursor:pointer;
+            font-weight: 600;
             padding: 10px 18px;
             display:inline-flex;
             align-items:center;
@@ -164,13 +169,18 @@
             transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
             gap: 8px;
             box-shadow: var(--shadow-sm);
-            text-decoration: none;
-            margin-top: var(--s3);
+            text-decoration: none !important;
             outline: none;
             will-change: transform;
+            border: 1px solid rgba(255,255,255,.18);
         }
-        .github-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); text-decoration: none; color:#fff; background:#111; }
-        .github-btn:focus-visible{ outline: none; box-shadow: var(--ring); }
+        .github-btn{ background: #24292e; color:#fff !important; }
+        .github-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); background:#111; }
+        
+        .kofi-btn{ background: #FF5E5B; color:#fff !important; }
+        .kofi-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); background:#e64a47; }
+        
+        .github-btn:focus-visible, .kofi-btn:focus-visible{ outline: none; box-shadow: var(--ring); }
 
         .tools-grid{
             display:grid;
@@ -301,9 +311,14 @@
         <div class="header">
             <h1><i class="fas fa-sim-card" aria-hidden="true"></i> <span class="header-title-text">eSIM 工具集</span></h1>
             <p class="subtitle">轻松管理您的 Giffgaff 与 Simyo eSIM 配置</p>
-            <a href="https://github.com/Silentely/eSIM-Tools" target="_blank" rel="noopener noreferrer" class="github-btn" aria-label="在新窗口打开 GitHub 仓库">
-                <i class="fab fa-github" aria-hidden="true"></i> GitHub
-            </a>
+            <div class="header-actions">
+                <a href="https://github.com/Silentely/eSIM-Tools" target="_blank" rel="noopener noreferrer" class="github-btn" aria-label="在新窗口打开 GitHub 仓库">
+                    <i class="fab fa-github" aria-hidden="true"></i> GitHub
+                </a>
+                <a href="https://ko-fi.com/debug402" target="_blank" rel="noopener noreferrer" class="kofi-btn" aria-label="Support me on Ko-fi">
+                    <i class="fas fa-coffee" aria-hidden="true"></i> <span>Support Me</span>
+                </a>
+            </div>
         </div>
 
         <div class="tools-grid" aria-live="polite">

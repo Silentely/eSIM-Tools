@@ -4,6 +4,71 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* 按钮组与打赏按钮样式 */
+.header-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+.github-btn, .kofi-btn {
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  gap: 8px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  text-decoration: none !important;
+  box-shadow: var(--shadow-sm);
+  will-change: transform;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.github-btn {
+  background: #24292e;
+  color: #fff !important;
+}
+
+.github-btn:hover {
+  background: #111;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.kofi-btn {
+  background: #FF5E5B;
+  color: #fff !important;
+}
+
+.kofi-btn:hover {
+  background: #e64a47;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.github-btn:focus-visible, .kofi-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring-color);
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+  .header-actions {
+    gap: var(--space-2);
+  }
+  .github-btn, .kofi-btn {
+    padding: 8px 14px;
+    font-size: 14px;
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+}
+
 /* 1) Tokens */
 :root {
   /* Palette (brand-neutral defaults; pages override) */

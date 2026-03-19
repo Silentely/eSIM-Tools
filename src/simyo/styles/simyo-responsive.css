@@ -63,7 +63,7 @@
         flex-wrap: nowrap;
     }
 
-    .help-btn, .github-btn {
+    .help-btn, .github-btn, .kofi-btn {
         padding: 8px 16px;
         font-size: 14px;
         min-width: fit-content;
@@ -93,7 +93,7 @@
         width: 100%;
     }
     
-    .help-btn, .github-btn {
+    .help-btn, .github-btn, .kofi-btn {
         padding: 6px 12px;
         font-size: 13px;
         width: fit-content;

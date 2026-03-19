@@ -129,7 +129,7 @@
         flex-wrap: nowrap;
     }
 
-    .login-btn, .github-btn {
+    .login-btn, .github-btn, .kofi-btn {
         padding: 8px 16px;
         font-size: 14px;
         min-width: fit-content;
@@ -162,7 +162,7 @@
         align-items: flex-end;
     }
     
-    .login-btn, .github-btn {
+    .login-btn, .github-btn, .kofi-btn {
         padding: 6px 12px;
         font-size: 13px;
         width: fit-content;
