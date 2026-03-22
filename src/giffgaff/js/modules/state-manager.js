@@ -95,6 +95,44 @@ export class StateManager {
             }
         });
     }
+
+    /**
+     * 安全读取localStorage，避免在受限环境抛出SecurityError
+     */
+    safeStorageGet(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (error) {
+            console.warn(`读取本地存储失败(${key}):`, error);
+            return null;
+        }
+    }
+
+    /**
+     * 安全写入localStorage，避免在受限环境抛出SecurityError
+     */
+    safeStorageSet(key, value) {
+        try {
+            localStorage.setItem(key, value);
+            return true;
+        } catch (error) {
+            console.warn(`写入本地存储失败(${key}):`, error);
+            return false;
+        }
+    }
+
+    /**
+     * 安全删除localStorage，避免在受限环境抛出SecurityError
+     */
+    safeStorageRemove(key) {
+        try {
+            localStorage.removeItem(key);
+            return true;
+        } catch (error) {
+            console.warn(`删除本地存储失败(${key}):`, error);
+            return false;
+        }
+    }
     
     /**
      * 保存会话到localStorage
@@ -115,7 +153,7 @@ export class StateManager {
                 currentStep: this.state.currentStep,
                 timestamp: Date.now()
             };
-            localStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionData));
+            this.safeStorageSet(this.SESSION_KEY, JSON.stringify(sessionData));
         } catch (error) {
             console.error('保存会话失败:', error);
         }
@@ -126,7 +164,7 @@ export class StateManager {
      */
     loadSession() {
         try {
-            const sessionData = localStorage.getItem(this.SESSION_KEY);
+            const sessionData = this.safeStorageGet(this.SESSION_KEY);
             if (!sessionData) return false;
             
             const data = JSON.parse(sessionData);
@@ -134,7 +172,7 @@ export class StateManager {
             
             // 检查是否超时
             if (now - data.timestamp >= this.SESSION_TIMEOUT) {
-                localStorage.removeItem(this.SESSION_KEY);
+                this.safeStorageRemove(this.SESSION_KEY);
                 return false;
             }
             
@@ -158,7 +196,7 @@ export class StateManager {
             return true;
         } catch (error) {
             console.error('恢复会话失败:', error);
-            localStorage.removeItem(this.SESSION_KEY);
+            this.safeStorageRemove(this.SESSION_KEY);
             return false;
         }
     }
@@ -168,16 +206,24 @@ export class StateManager {
      */
     saveCookie(cookie) {
         if (cookie && typeof cookie === 'string') {
-            localStorage.setItem(this.COOKIE_KEY, cookie);
             this.state.cookie = cookie;
+            this.safeStorageSet(this.COOKIE_KEY, cookie);
         }
+    }
+
+    /**
+     * 清除Cookie
+     */
+    removeCookie() {
+        this.state.cookie = '';
+        this.safeStorageRemove(this.COOKIE_KEY);
     }
     
     /**
      * 获取Cookie
      */
     getCookie() {
-        return localStorage.getItem(this.COOKIE_KEY) || this.state.cookie;
+        return this.safeStorageGet(this.COOKIE_KEY) || this.state.cookie;
     }
     
     /**
@@ -203,8 +249,8 @@ export class StateManager {
         };
         
         // 清除存储
-        localStorage.removeItem(this.SESSION_KEY);
-        localStorage.removeItem(this.COOKIE_KEY);
+        this.safeStorageRemove(this.SESSION_KEY);
+        this.safeStorageRemove(this.COOKIE_KEY);
         
         // 清除Cookie
         this.eraseCookie('giffgaff_access_token');

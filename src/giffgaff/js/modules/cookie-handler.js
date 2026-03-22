@@ -141,7 +141,7 @@ export class CookieHandler {
         this.stopValidityMonitor();
         
         // 清除Cookie和令牌
-        localStorage.removeItem('giffgaff_cookie');
+        stateManager.removeCookie();
         stateManager.setState({
             accessToken: '',
             emailSignature: ''
