@@ -48,23 +48,17 @@ export function generateState() {
  */
 export function getTimeUntilServiceOpen() {
     const now = new Date();
-
-    // 获取当前英国时间的完整 Date 对象
-    const ukTimeString = now.toLocaleString('en-GB', {
+    const parts = new Intl.DateTimeFormat('en-GB', {
         timeZone: 'Europe/London',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: false
-    });
+    }).formatToParts(now);
 
-    // 解析英国时间字符串 (格式: "DD/MM/YYYY, HH:MM:SS")
-    const [datePart, timePart] = ukTimeString.split(', ');
-    const [day, month, year] = datePart.split('/').map(Number);
-    const [hour, minute, second] = timePart.split(':').map(Number);
+    const hour = parseInt((parts.find(p => p.type === 'hour') || {}).value || '0', 10);
+    const minute = parseInt((parts.find(p => p.type === 'minute') || {}).value || '0', 10);
+    const second = parseInt((parts.find(p => p.type === 'second') || {}).value || '0', 10);
 
     const currentMinutes = hour * 60 + minute;
     const start = 4 * 60 + 30;   // 04:30
@@ -75,44 +69,20 @@ export function getTimeUntilServiceOpen() {
         return null;
     }
 
-    // 构造下次开放时间的英国时区 Date 对象
-    let targetDate;
+    let diffSeconds;
     if (currentMinutes < start) {
         // 今天还没到开放时间，目标是今天 04:30
-        targetDate = new Date(Date.UTC(year, month - 1, day, 4, 30, 0));
+        diffSeconds = (start - currentMinutes) * 60 - second;
     } else {
         // 已经过了今天的开放时间，目标是明天 04:30
-        targetDate = new Date(Date.UTC(year, month - 1, day + 1, 4, 30, 0));
+        diffSeconds = ((24 * 60 - currentMinutes) + start) * 60 - second;
     }
 
-    // 将目标时间转换为英国时区的实际时间戳
-    const targetUKString = targetDate.toLocaleString('en-GB', {
-        timeZone: 'Europe/London',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-    });
+    const safeDiffSeconds = Math.max(diffSeconds, 0);
 
-    // 重新构造目标时间以获得正确的时间戳
-    const [targetDatePart, targetTimePart] = targetUKString.split(', ');
-    const [targetDay, targetMonth, targetYear] = targetDatePart.split('/').map(Number);
-    const [targetHour, targetMinute, targetSecond] = targetTimePart.split(':').map(Number);
-
-    // 计算当前时间和目标时间的时间戳差值
-    const nowTimestamp = Date.now();
-    const targetTimestamp = new Date(
-        `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}T${String(targetHour).padStart(2, '0')}:${String(targetMinute).padStart(2, '0')}:${String(targetSecond).padStart(2, '0')}`
-    ).getTime();
-
-    const diffSeconds = Math.floor((targetTimestamp - nowTimestamp) / 1000);
-
-    const hours = Math.floor(diffSeconds / 3600);
-    const minutes = Math.floor((diffSeconds % 3600) / 60);
-    const seconds = diffSeconds % 60;
+    const hours = Math.floor(safeDiffSeconds / 3600);
+    const minutes = Math.floor((safeDiffSeconds % 3600) / 60);
+    const seconds = safeDiffSeconds % 60;
 
     return { hours, minutes, seconds };
 }
