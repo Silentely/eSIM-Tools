@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const BuildLogger = require('./logger.js');
+const transpileDistJs = require('./transpile-dist-js.js');
 
 const fs = require('fs');
 const path = require('path');
@@ -71,6 +72,9 @@ async function copyDirectory(source, destination) {
     BuildLogger.log(`📦 复制 ${entry} -> dist/${entry}`);
     await copyEntry(entry);
   }
+
+  BuildLogger.log('🧩 转译 dist/src 下的 JS（目标 Chrome 77）...');
+  await transpileDistJs();
 
   // 注入 Sentry 配置
   BuildLogger.log('🔧 注入 Sentry 配置...');
