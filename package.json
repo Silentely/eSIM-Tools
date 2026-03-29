@@ -93,7 +93,8 @@
   "overrides": {
     "minimatch": "^10.2.3",
     "glob": "^11.1.0",
-    "serialize-javascript": "^7.0.3",
+    "serialize-javascript": "^7.0.5",
+    "path-to-regexp": "^0.1.13",
     "rollup": "^2.80.0"
   }
 }
