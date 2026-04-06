@@ -4,6 +4,12 @@
   "description": "专为Giffgaff和Simyo用户设计的eSIM管理工具集",
   "main": "index.js",
   "scripts": {
+    "hooks:install": "git config core.hooksPath .githooks",
+    "hooks:list": "ls -1 .githooks",
+    "precommit:check": "node scripts/pre-commit-check.js",
+    "prepush:check": "node scripts/pre-push-check.js --mode=full",
+    "prepush:check:fast": "node scripts/pre-push-check.js --mode=fast",
+    "commitmsg:lint": "node scripts/commit-msg-lint.js",
     "prestart": "npm run build",
     "predev": "npm run build",
     "prenetlify-dev": "npm run build",

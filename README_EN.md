@@ -100,10 +100,10 @@ Modern eSIM management toolkit designed for Giffgaff and Simyo users, supporting
    ```bash
    # Windows
    start_simyo_server.bat
-   
+
    # macOS/Linux
    ./start_simyo_server.sh
-   
+
    # Or manually start
    npm start
    ```
@@ -257,7 +257,7 @@ Contributions and suggestions welcome!
 ### How to Participate
 1. 🍴 Fork project repository
 2. 🌿 Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. 💾 Commit changes (`git commit -m 'Add AmazingFeature'`)
+3. 💾 Commit with format (`git commit -m '✨ feat(core): 新增二维码缓存逻辑'`)
 4. 📤 Push branch (`git push origin feature/AmazingFeature`)
 5. 🔃 Create Pull Request
 
@@ -265,6 +265,29 @@ Contributions and suggestions welcome!
 - Follow existing code style
 - Add necessary test cases
 - Update relevant documentation
+
+### Commit Message Rules (emoji + Chinese summary)
+1. Enable repo hooks: `npm run hooks:install`
+2. Format: `<emoji> <type>(optional-scope): <中文描述>`
+3. Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+4. Emoji must match type (for example, `✨` for `feat`, `🐛` for `fix`)
+
+Examples:
+- `✨ feat(auth): 新增登录态自动续期`
+- `🐛 fix(simyo): 修复验证码重试逻辑`
+- `📝 docs(readme): 更新安装说明`
+
+### Current Git Hooks
+- `pre-commit`: formats staged files and runs JS/JSON syntax + smart quotes checks
+- `pre-push`: defaults to fast mode (`pre-commit` + related tests), falls back to full tests when no diff files are detected
+- `prepare-commit-msg`: auto-fills a template when commit message is empty
+- `commit-msg`: validates message format (emoji + type + Chinese summary + mapping)
+
+Useful commands:
+- List hooks: `npm run hooks:list`
+- Run pre-commit checks manually: `npm run precommit:check`
+- Run full pre-push checks manually: `npm run prepush:check`
+- Run fast pre-push checks manually: `npm run prepush:check:fast`
 
 ## 📞 Support and Feedback
 

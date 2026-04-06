@@ -112,10 +112,10 @@
    ```bash
    # Windows
    start_simyo_server.bat
-   
+
    # macOS/Linux
    ./start_simyo_server.sh
-   
+
    # 或手动启动
    npm start
    ```
@@ -269,7 +269,7 @@ open tests/test_simyo_esim.html
 ### 参与方式
 1. 🍴 Fork项目仓库
 2. 🌿 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 💾 提交更改 (`git commit -m 'Add AmazingFeature'`)
+3. 💾 按规范提交 (`git commit -m '✨ feat(core): 新增二维码缓存逻辑'`)
 4. 📤 推送分支 (`git push origin feature/AmazingFeature`)
 5. 🔃 创建Pull Request
 
@@ -277,6 +277,29 @@ open tests/test_simyo_esim.html
 - 遵循现有代码风格
 - 添加必要的测试用例
 - 更新相关文档
+
+### 提交信息规范（emoji + 中文）
+1. 启用仓库钩子：`npm run hooks:install`
+2. 提交格式：`<emoji> <type>(optional-scope): <中文描述>`
+3. type 可选值：`feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`build`、`ci`、`chore`、`revert`
+4. emoji 与 type 需要匹配（例如 `✨` 对应 `feat`，`🐛` 对应 `fix`）
+
+示例：
+- `✨ feat(auth): 新增登录态自动续期`
+- `🐛 fix(simyo): 修复验证码重试逻辑`
+- `📝 docs(readme): 更新安装说明`
+
+### 当前 Git 钩子
+- `pre-commit`：提交前格式化 staged 文件，并执行 JS/JSON 语法检查与智能引号拦截
+- `pre-push`：默认快速模式（`pre-commit` + 相关测试），无差异文件时回退全量测试
+- `prepare-commit-msg`：提交信息为空时自动填充模板
+- `commit-msg`：校验提交信息格式（emoji + type + 中文描述 + 映射关系）
+
+可用命令：
+- 查看钩子列表：`npm run hooks:list`
+- 手动执行提交前检查：`npm run precommit:check`
+- 手动执行推送前全量检查：`npm run prepush:check`
+- 手动执行推送前快速检查：`npm run prepush:check:fast`
 
 ## 📞 支持与反馈
 
