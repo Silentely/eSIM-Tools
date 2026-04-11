@@ -11,6 +11,10 @@ const { execFileSync, spawnSync } = require('child_process');
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 const RELATED_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.json']);
+const PROTECTED_FILES = [
+  'src/giffgaff/giffgaff_complete_esim.html',
+  'src/simyo/simyo_complete_esim.html'
+];
 
 function runGit(args) {
   return execFileSync('git', args, {
@@ -77,6 +81,25 @@ function getRelatedFiles() {
   });
 }
 
+function getTouchedProtectedFiles() {
+  const range = getDiffRange();
+  if (!range) {
+    return [];
+  }
+
+  const output = runGit([
+    'diff',
+    '--name-only',
+    '--diff-filter=ACMR',
+    '-z',
+    range,
+    '--',
+    ...PROTECTED_FILES
+  ]);
+
+  return output.split('\0').filter(Boolean);
+}
+
 function buildSteps(mode) {
   const steps = [
     {
@@ -132,6 +155,17 @@ function runStep(step) {
 function main() {
   const mode = resolveMode();
   console.log(`\n🧭 pre-push 模式: ${mode}`);
+
+  const touchedProtectedFiles = getTouchedProtectedFiles();
+  if (touchedProtectedFiles.length > 0) {
+    console.error('\n❌ pre-push 检查失败：');
+    for (const relPath of touchedProtectedFiles) {
+      console.error(`  - ${relPath}: 该文件受保护，禁止推送包含其改动的提交。`);
+    }
+    console.error('  - 如确需调整，请改为维护对应 modular 版本文件。');
+    process.exit(1);
+  }
+
   const steps = buildSteps(mode);
 
   for (const step of steps) {

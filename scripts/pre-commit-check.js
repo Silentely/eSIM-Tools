@@ -5,7 +5,8 @@
  * 1) 仅处理 staged 文件，安全格式化（LF、行尾空白、文件尾换行）；
  * 2) 检查 staged JS 语法；
  * 3) 检查 staged JSON 语法；
- * 4) 拦截代码文件中的智能引号，避免引号边界问题。
+ * 4) 拦截代码文件中的智能引号，避免引号边界问题；
+ * 5) 保护 legacy 完整版页面，禁止提交其变更。
  */
 
 const fs = require('fs');
@@ -34,6 +35,10 @@ const TEXT_EXTENSIONS = new Set([
 
 const JS_EXTENSIONS = new Set(['.js', '.mjs', '.cjs']);
 const SMART_QUOTES_RE = /[\u2018\u2019\u201C\u201D]/u;
+const PROTECTED_FILES = [
+  'src/giffgaff/giffgaff_complete_esim.html',
+  'src/simyo/simyo_complete_esim.html'
+];
 
 function git(args, options = {}) {
   return execFileSync('git', args, {
@@ -50,6 +55,18 @@ function getStagedFiles() {
     '--name-only',
     '--diff-filter=ACMR',
     '-z'
+  ]);
+  return output.split('\0').filter(Boolean);
+}
+
+function getTouchedProtectedFiles() {
+  const output = git([
+    'diff',
+    '--cached',
+    '--name-only',
+    '-z',
+    '--',
+    ...PROTECTED_FILES
   ]);
   return output.split('\0').filter(Boolean);
 }
@@ -164,6 +181,16 @@ function runChecks(stagedFiles) {
 }
 
 function main() {
+  const touchedProtectedFiles = getTouchedProtectedFiles();
+  if (touchedProtectedFiles.length > 0) {
+    console.error('\n❌ pre-commit 检查失败：');
+    for (const relPath of touchedProtectedFiles) {
+      console.error(`  - ${relPath}: 该文件受保护，禁止提交改动。`);
+    }
+    console.error('  - 如确需调整，请改为维护对应 modular 版本文件。');
+    process.exit(1);
+  }
+
   const stagedFiles = getStagedFiles();
   if (stagedFiles.length === 0) {
     process.exit(0);
