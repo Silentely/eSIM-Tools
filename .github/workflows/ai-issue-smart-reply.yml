@@ -1,0 +1,640 @@
+name: 🤖 AI Issue Smart Reply
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: ai-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  ai-smart-reply:
+    if: vars.AI_ISSUE_REPLY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      AI_USE_EMBED_INDEX: ${{ vars.AI_USE_EMBED_INDEX || 'true' }}
+      AI_AUTO_LABEL: ${{ vars.AI_AUTO_LABEL || 'true' }}
+      AI_ENABLE_DUPLICATE_CHECK: ${{ vars.AI_ENABLE_DUPLICATE_CHECK || 'true' }}
+      AI_ENABLE_PR_SEARCH: ${{ vars.AI_ENABLE_PR_SEARCH || 'true' }}
+      AI_ENABLE_COMMIT_SEARCH: ${{ vars.AI_ENABLE_COMMIT_SEARCH || 'true' }}
+      AI_ONLY_TEMPLATE_TYPES: ${{ vars.AI_ONLY_TEMPLATE_TYPES || 'false' }}
+      AI_MAX_CONTEXT_CHARS: ${{ vars.AI_MAX_CONTEXT_CHARS || '50000' }}
+      AI_MAX_DUP_CANDIDATES: ${{ vars.AI_MAX_DUP_CANDIDATES || '80' }}
+      AI_MAX_PR_CANDIDATES: ${{ vars.AI_MAX_PR_CANDIDATES || '20' }}
+      AI_MAX_COMMIT_CANDIDATES: ${{ vars.AI_MAX_COMMIT_CANDIDATES || '20' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y jq python3 ripgrep
+
+      - name: Prepare issue payload
+        id: issue
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ai_runtime
+
+          cat > .ai_runtime/issue.json <<'JSON'
+          {
+            "number": ${{ github.event.issue.number }},
+            "title": ${{ toJson(github.event.issue.title) }},
+            "body": ${{ toJson(github.event.issue.body || '') }},
+            "author": ${{ toJson(github.event.issue.user.login) }},
+            "url": ${{ toJson(github.event.issue.html_url) }}
+          }
+          JSON
+
+      - name: Stage 1 - classify and rewrite query
+        id: rewrite
+        uses: appleboy/llm-action@v1
+        with:
+          provider: openai
+          api_key: ${{ secrets.LLM_API_KEY }}
+          base_url: ${{ secrets.LLM_BASE_URL }}
+          model: ${{ secrets.LLM_MODEL }}
+          tool_schema: |
+            {
+              "name": "issue_rewrite",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "summary": { "type": "string" },
+                  "issue_type": {
+                    "type": "string",
+                    "enum": ["bug", "enhancement", "question", "documentation", "needs_more_info"]
+                  },
+                  "search_queries": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "keywords": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "components": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "likely_paths": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                },
+                "required": ["summary", "issue_type", "search_queries", "keywords", "components", "likely_paths"]
+              }
+            }
+          system_prompt: |
+            你负责把 Issue 重写成适合仓库检索的查询。
+            输出必须是严格 JSON。
+            search_queries 控制在 3-6 条，keywords 控制在 5-12 条。
+          prompt: |
+            请分析这个 Issue，并输出适合仓库知识库/代码库检索的查询。
+            标题：${{ github.event.issue.title }}
+            正文：
+            ${{ github.event.issue.body }}
+
+      - name: Normalize rewrite result
+        id: rewrite_norm
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .ai_runtime/rewrite_raw.txt <<'EOF'
+          ${{ steps.rewrite.outputs.issue_rewrite }}
+          EOF
+
+          python3 - <<'PY'
+          import json, re, pathlib
+
+          raw = pathlib.Path(".ai_runtime/rewrite_raw.txt").read_text(encoding="utf-8", errors="ignore").strip()
+
+          def parse_json(s):
+              try:
+                  return json.loads(s)
+              except Exception:
+                  m = re.search(r'\{.*\}', s, flags=re.S)
+                  return json.loads(m.group(0)) if m else {}
+
+          d = parse_json(raw) if raw else {}
+          issue_type = d.get("issue_type")
+          if issue_type not in {"bug","enhancement","question","documentation","needs_more_info"}:
+              issue_type = "needs_more_info"
+
+          def clean_list(v, n):
+              if not isinstance(v, list):
+                  return []
+              out = []
+              seen = set()
+              for x in v:
+                  if isinstance(x, str):
+                      s = x.strip()
+                      if s and s.lower() not in seen:
+                          seen.add(s.lower())
+                          out.append(s)
+                  if len(out) >= n:
+                      break
+              return out
+
+          result = {
+              "summary": d.get("summary") if isinstance(d.get("summary"), str) else "",
+              "issue_type": issue_type,
+              "search_queries": clean_list(d.get("search_queries"), 6),
+              "keywords": clean_list(d.get("keywords"), 12),
+              "components": clean_list(d.get("components"), 8),
+              "likely_paths": clean_list(d.get("likely_paths"), 8)
+          }
+
+          pathlib.Path(".ai_runtime/rewrite.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+          print(json.dumps(result, ensure_ascii=False))
+          PY
+
+          echo "json=$(cat .ai_runtime/rewrite.json | jq -c .)" >> "$GITHUB_OUTPUT"
+
+      - name: Optional filter by issue type
+        if: env.AI_ONLY_TEMPLATE_TYPES == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TYPE=$(jq -r '.issue_type' .ai_runtime/rewrite.json)
+          case "$TYPE" in
+            bug|enhancement|documentation) echo "continue" ;;
+            *)
+              echo "Skipping non-target issue type: $TYPE"
+              exit 78
+              ;;
+          esac
+
+      - name: Retrieve context from AI embed index
+        if: env.AI_USE_EMBED_INDEX == 'true'
+        id: retrieve_index
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f ai/index.jsonl ]; then
+            echo "index_missing=true" >> "$GITHUB_OUTPUT"
+            echo "context=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python3 .github/scripts/retrieve_ai_context.py \
+            --index ai/index.jsonl \
+            --rewrite .ai_runtime/rewrite.json \
+            --issue .ai_runtime/issue.json \
+            --max-chars "${AI_MAX_CONTEXT_CHARS}" \
+            > .ai_runtime/index_context.txt
+
+          {
+            echo "context<<EOF"
+            cat .ai_runtime/index_context.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Fallback repository scan
+        if: env.AI_USE_EMBED_INDEX != 'true' || steps.retrieve_index.outputs.index_missing == 'true'
+        id: fallback_scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/retrieve_ai_context.py \
+            --repo-root . \
+            --rewrite .ai_runtime/rewrite.json \
+            --issue .ai_runtime/issue.json \
+            --max-chars "${AI_MAX_CONTEXT_CHARS}" \
+            > .ai_runtime/fallback_context.txt
+
+          {
+            echo "context<<EOF"
+            cat .ai_runtime/fallback_context.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Fetch duplicate candidates
+        if: env.AI_ENABLE_DUPLICATE_CHECK == 'true'
+        id: dupes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh issue list \
+            --state all \
+            --limit "${AI_MAX_DUP_CANDIDATES}" \
+            --json number,title,body,state,updatedAt,url \
+            > .ai_runtime/issues_raw.json
+
+          python3 - <<'PY'
+          import json, pathlib, re
+
+          rewrite = json.loads(pathlib.Path(".ai_runtime/rewrite.json").read_text(encoding="utf-8"))
+          queries = " ".join(rewrite.get("search_queries", [])) + " " + " ".join(rewrite.get("keywords", []))
+          q = set(re.findall(r"[a-z0-9_./:-]{3,}", queries.lower()))
+
+          items = json.loads(pathlib.Path(".ai_runtime/issues_raw.json").read_text(encoding="utf-8"))
+          scored = []
+          for it in items:
+              text = ((it.get("title") or "") + "\n" + (it.get("body") or "")).lower()
+              toks = set(re.findall(r"[a-z0-9_./:-]{3,}", text))
+              inter = len(q & toks)
+              if inter == 0:
+                  continue
+              union = max(len(q | toks), 1)
+              score = inter * 2 + (inter / union) * 100
+              scored.append({
+                  "number": it["number"],
+                  "title": it.get("title", ""),
+                  "state": it.get("state", ""),
+                  "url": it.get("url", ""),
+                  "score": round(score, 2),
+              })
+
+          scored.sort(key=lambda x: (-x["score"], x["number"]))
+          top = scored[:12]
+          pathlib.Path(".ai_runtime/dupes.txt").write_text(
+              "\n".join([f"#{x['number']} [{x['state']}] score={x['score']}: {x['title']}" for x in top]),
+              encoding="utf-8"
+          )
+          PY
+
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/dupes.txt || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Fetch recent PR candidates
+        if: env.AI_ENABLE_PR_SEARCH == 'true'
+        id: prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh pr list \
+            --state all \
+            --limit "${AI_MAX_PR_CANDIDATES}" \
+            --json number,title,body,mergedAt,state,url \
+            > .ai_runtime/prs_raw.json
+
+          python3 - <<'PY'
+          import json, pathlib, re
+
+          rewrite = json.loads(pathlib.Path(".ai_runtime/rewrite.json").read_text(encoding="utf-8"))
+          q = set(re.findall(r"[a-z0-9_./:-]{3,}", " ".join(rewrite.get("search_queries", []) + rewrite.get("keywords", [])).lower()))
+          items = json.loads(pathlib.Path(".ai_runtime/prs_raw.json").read_text(encoding="utf-8"))
+          out = []
+          for it in items:
+              text = ((it.get("title") or "") + "\n" + (it.get("body") or "")).lower()
+              toks = set(re.findall(r"[a-z0-9_./:-]{3,}", text))
+              inter = len(q & toks)
+              if inter <= 0:
+                  continue
+              out.append((inter, it))
+          out.sort(key=lambda x: -x[0])
+
+          lines = []
+          for _, it in out[:8]:
+              lines.append(f"PR #{it['number']} [{it.get('state','')}]: {it.get('title','')} {it.get('url','')}")
+          pathlib.Path(".ai_runtime/prs.txt").write_text("\n".join(lines), encoding="utf-8")
+          PY
+
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/prs.txt || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Fetch recent commit candidates
+        if: env.AI_ENABLE_COMMIT_SEARCH == 'true'
+        id: commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib, re, subprocess
+
+          rewrite = json.loads(pathlib.Path(".ai_runtime/rewrite.json").read_text(encoding="utf-8"))
+          keywords = rewrite.get("keywords", [])[:8]
+
+          try:
+              log = subprocess.check_output(
+                  ["git", "log", "--pretty=format:%H%x09%s", "-n", "200"],
+                  text=True
+              )
+          except Exception:
+              log = ""
+
+          lines = []
+          for row in log.splitlines():
+              if "\t" not in row:
+                  continue
+              sha, subject = row.split("\t", 1)
+              score = 0
+              lower = subject.lower()
+              for k in keywords:
+                  if k.lower() in lower:
+                      score += 1
+              if score > 0:
+                  lines.append((score, f"{sha[:12]} {subject}"))
+
+          lines.sort(key=lambda x: -x[0])
+          pathlib.Path(".ai_runtime/commits.txt").write_text(
+              "\n".join([x[1] for x in lines[:10]]),
+              encoding="utf-8"
+          )
+          PY
+
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/commits.txt || true
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Stage 2 - maintainer-grade triage
+        id: triage
+        uses: appleboy/llm-action@v1
+        with:
+          provider: openai
+          api_key: ${{ secrets.LLM_API_KEY }}
+          base_url: ${{ secrets.LLM_BASE_URL }}
+          model: ${{ secrets.LLM_MODEL }}
+          tool_schema: |
+            {
+              "name": "issue_response",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "summary": { "type": "string" },
+                  "classification": {
+                    "type": "string",
+                    "enum": ["bug", "enhancement", "question", "documentation", "needs_more_info"]
+                  },
+                  "support_status": {
+                    "type": "string",
+                    "enum": ["supported", "partially_supported", "not_supported", "already_fixed_unreleased", "needs_more_info"]
+                  },
+                  "analysis": { "type": "string" },
+                  "solution": { "type": "string" },
+                  "roadmap": { "type": "string" },
+                  "needs_human_followup": { "type": "boolean" },
+                  "duplicate_confidence": {
+                    "type": "string",
+                    "enum": ["low", "medium", "high"]
+                  },
+                  "duplicate_issues": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "labels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["bug", "enhancement", "question", "documentation", "duplicate", "help wanted", "needs more info"]
+                    }
+                  }
+                },
+                "required": ["summary", "classification", "support_status", "analysis", "solution", "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"]
+              }
+            }
+          system_prompt: |
+            你是仓库维护者，只能依据提供的证据做判断。
+            如果引用文件，必须仅引用已经提供的文件路径和行号范围。
+            如果证据不足，明确写需要更多信息。
+            labels 只能输出 1-3 个。
+            输出必须是严格 JSON。
+          prompt: |
+            [Issue]
+            标题：${{ github.event.issue.title }}
+            正文：
+            ${{ github.event.issue.body }}
+
+            [Stage 1 Rewrite]
+            ${{ steps.rewrite_norm.outputs.json }}
+
+            [Retrieved Context]
+            ${{ steps.retrieve_index.outputs.context || steps.fallback_scan.outputs.context }}
+
+            [Duplicate Candidates]
+            ${{ steps.dupes.outputs.candidates }}
+
+            [PR Candidates]
+            ${{ steps.prs.outputs.candidates }}
+
+            [Commit Candidates]
+            ${{ steps.commits.outputs.candidates }}
+
+      - name: Normalize triage result
+        id: triage_norm
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .ai_runtime/triage_raw.txt <<'EOF'
+          ${{ steps.triage.outputs.issue_response }}
+          EOF
+
+          python3 - <<'PY'
+          import json, pathlib, re
+
+          raw = pathlib.Path(".ai_runtime/triage_raw.txt").read_text(encoding="utf-8", errors="ignore").strip()
+
+          def parse_json(s):
+              try:
+                  return json.loads(s)
+              except Exception:
+                  m = re.search(r'\{.*\}', s, flags=re.S)
+                  return json.loads(m.group(0)) if m else {}
+
+          d = parse_json(raw) if raw else {}
+
+          allowed_labels = {"bug","enhancement","question","documentation","duplicate","help wanted","needs more info"}
+          allowed_class = {"bug","enhancement","question","documentation","needs_more_info"}
+          allowed_support = {"supported","partially_supported","not_supported","already_fixed_unreleased","needs_more_info"}
+          allowed_dup = {"low","medium","high"}
+
+          def s(v, default=""):
+              return v if isinstance(v, str) else default
+
+          def b(v, default=False):
+              return v if isinstance(v, bool) else default
+
+          def arr(v):
+              return v if isinstance(v, list) else []
+
+          labels = []
+          seen = set()
+          for x in arr(d.get("labels")):
+              if isinstance(x, str):
+                  t = x.strip().lower()
+                  if t in allowed_labels and t not in seen:
+                      labels.append(t)
+                      seen.add(t)
+
+          classification = s(d.get("classification"), "needs_more_info")
+          if classification not in allowed_class:
+              classification = "needs_more_info"
+
+          if classification != "needs_more_info" and classification not in labels and len(labels) < 3:
+              labels.insert(0, classification)
+
+          result = {
+              "summary": s(d.get("summary"), "AI 未能稳定生成摘要。"),
+              "classification": classification,
+              "support_status": s(d.get("support_status"), "needs_more_info"),
+              "analysis": s(d.get("analysis"), "AI 未能稳定生成分析，请维护者人工复核。"),
+              "solution": s(d.get("solution"), "暂无稳定自动建议。"),
+              "roadmap": s(d.get("roadmap"), ""),
+              "needs_human_followup": b(d.get("needs_human_followup"), True),
+              "duplicate_confidence": s(d.get("duplicate_confidence"), "low"),
+              "duplicate_issues": [x.strip() for x in arr(d.get("duplicate_issues")) if isinstance(x, str) and re.fullmatch(r"#\d+", x.strip())],
+              "labels": labels[:3]
+          }
+
+          if result["support_status"] not in allowed_support:
+              result["support_status"] = "needs_more_info"
+          if result["duplicate_confidence"] not in allowed_dup:
+              result["duplicate_confidence"] = "low"
+          if result["duplicate_confidence"] == "high" and result["duplicate_issues"] and "duplicate" not in result["labels"] and len(result["labels"]) < 3:
+              result["labels"].append("duplicate")
+
+          pathlib.Path(".ai_runtime/triage.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+          print(json.dumps(result, ensure_ascii=False))
+          PY
+
+          echo "json=$(cat .ai_runtime/triage.json | jq -c .)" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update AI comment and labels
+        uses: actions/github-script@v7
+        env:
+          AI_AUTO_LABEL: ${{ env.AI_AUTO_LABEL }}
+          RESULT_JSON: ${{ steps.triage_norm.outputs.json }}
+        with:
+          script: |
+            const marker = "<!-- ai-issue-smart-reply:v3 -->";
+            const result = JSON.parse(process.env.RESULT_JSON || "{}");
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+
+            function supportText(s) {
+              switch (s) {
+                case "supported": return "✅ 当前仓库上下文显示：该行为已支持。";
+                case "partially_supported": return "🟡 当前仓库上下文显示：该行为仅部分支持。";
+                case "not_supported": return "⚠️ 当前仓库上下文显示：当前暂不支持。";
+                case "already_fixed_unreleased": return "🛠️ 当前仓库上下文显示：可能已修复，但未正式发布。";
+                default: return "❓ 当前证据不足，需要更多信息。";
+              }
+            }
+
+            let body = `${marker}
+### 🤖 AI Issue 智能分析
+
+**摘要**
+${result.summary || "暂无"}
+
+**分析**
+${result.analysis || "暂无"}
+
+**建议方案**
+${result.solution || "暂无"}
+
+**状态判断**
+${supportText(result.support_status)}
+
+`;
+
+            if (result.roadmap && result.support_status === "not_supported") {
+              body += `**实现路线**
+${result.roadmap}
+
+`;
+            }
+
+            if (Array.isArray(result.duplicate_issues) && result.duplicate_issues.length > 0) {
+              body += `**可能重复的 Issue**
+- 置信度：${result.duplicate_confidence || "low"}
+- 候选：${result.duplicate_issues.join("、")}
+
+`;
+            }
+
+            if (result.needs_human_followup) {
+              body += `**维护建议**
+建议维护者人工复核后再做最终结论。
+
+`;
+            }
+
+            body += `_此评论由自动化工作流生成，已启用结构化输出、幂等更新、标签白名单和可选索引检索。_`;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number, per_page: 100 }
+            );
+
+            const existing = comments.find(c => typeof c.body === "string" && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body
+              });
+            }
+
+            if (process.env.AI_AUTO_LABEL === "true") {
+              const issue = await github.rest.issues.get({ owner, repo, issue_number });
+              const existingLabels = new Set((issue.data.labels || []).map(l => typeof l === "string" ? l : l.name));
+              const allowed = new Set(["bug","enhancement","question","documentation","duplicate","help wanted","needs more info"]);
+              const desired = Array.isArray(result.labels) ? result.labels : [];
+              const toAdd = desired
+                .map(x => String(x).trim().toLowerCase())
+                .filter(x => allowed.has(x))
+                .filter((x, i, arr) => arr.indexOf(x) === i)
+                .filter(x => !existingLabels.has(x));
+
+              if (toAdd.length > 0) {
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number, labels: toAdd
+                });
+              }
+            }
+
+      - name: Step summary
+        if: always()
+        run: |
+          {
+            echo "## AI Issue Smart Reply"
+            echo ""
+            echo "- Issue: #${{ github.event.issue.number }}"
+            echo "- Index enabled: ${AI_USE_EMBED_INDEX}"
+            echo "- Auto label: ${AI_AUTO_LABEL}"
+            echo "- Duplicate check: ${AI_ENABLE_DUPLICATE_CHECK}"
+            echo "- PR search: ${AI_ENABLE_PR_SEARCH}"
+            echo "- Commit search: ${AI_ENABLE_COMMIT_SEARCH}"
+            echo ""
+            echo "### Rewrite"
+            echo '```json'
+            cat .ai_runtime/rewrite.json || echo '{}'
+            echo '```'
+            echo ""
+            echo "### Triage"
+            echo '```json'
+            cat .ai_runtime/triage.json || echo '{}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

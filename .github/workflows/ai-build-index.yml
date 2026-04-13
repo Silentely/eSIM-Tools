@@ -1,0 +1,91 @@
+name: 🧠 Build AI Index
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '20 3 * * *'
+  push:
+    branches: [main, master]
+    paths:
+      - 'README*'
+      - 'CHANGELOG*'
+      - 'docs/**'
+      - 'src/**'
+      - 'lib/**'
+      - 'app/**'
+      - 'packages/**'
+      - '.github/scripts/build_ai_index.py'
+      - '.github/workflows/ai-build-index.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-index:
+    if: vars.AI_INDEX_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      AI_USE_TRUE_EMBEDDING: ${{ vars.AI_USE_TRUE_EMBEDDING || 'false' }}
+      AI_INDEX_MAX_FILES: ${{ vars.AI_INDEX_MAX_FILES || '1200' }}
+      AI_INDEX_MAX_CHUNK_CHARS: ${{ vars.AI_INDEX_MAX_CHUNK_CHARS || '1800' }}
+      AI_INDEX_COMMIT_RESULTS: ${{ vars.AI_INDEX_COMMIT_RESULTS || 'true' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build lightweight AI index
+        run: |
+          set -euo pipefail
+          mkdir -p ai
+          python3 .github/scripts/build_ai_index.py \
+            --repo-root . \
+            --out ai/index.jsonl \
+            --manifest ai/index_manifest.json \
+            --max-files "${AI_INDEX_MAX_FILES}" \
+            --max-chunk-chars "${AI_INDEX_MAX_CHUNK_CHARS}"
+
+      - name: Build true embedding index
+        if: env.AI_USE_TRUE_EMBEDDING == 'true'
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          EMBEDDING_BASE_URL: ${{ secrets.EMBEDDING_BASE_URL }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_ai_index.py \
+            --repo-root . \
+            --out ai/index.jsonl \
+            --manifest ai/index_manifest.json \
+            --embedding-out ai/embeddings.jsonl \
+            --embedding-api-key "${EMBEDDING_API_KEY}" \
+            --embedding-base-url "${EMBEDDING_BASE_URL}" \
+            --embedding-model "${EMBEDDING_MODEL}" \
+            --max-files "${AI_INDEX_MAX_FILES}" \
+            --max-chunk-chars "${AI_INDEX_MAX_CHUNK_CHARS}"
+
+      - name: Commit updated AI index
+        if: env.AI_INDEX_COMMIT_RESULTS == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ai/index.jsonl ai/index_manifest.json ai/embeddings.jsonl 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "No index changes"
+            exit 0
+          fi
+
+          git commit -m "chore(ai): update repository knowledge index"
+          git push
