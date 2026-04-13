@@ -364,6 +364,25 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Prepare final retrieved context
+        id: final_context
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -s .ai_runtime/index_context.txt ]; then
+            cp .ai_runtime/index_context.txt .ai_runtime/final_context.txt
+          elif [ -s .ai_runtime/fallback_context.txt ]; then
+            cp .ai_runtime/fallback_context.txt .ai_runtime/final_context.txt
+          else
+            : > .ai_runtime/final_context.txt
+          fi
+
+          {
+            echo "context<<EOF"
+            cat .ai_runtime/final_context.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Stage 2 - maintainer-grade triage
         id: triage
         uses: appleboy/llm-action@v1
@@ -426,7 +445,7 @@ jobs:
             ${{ steps.rewrite_norm.outputs.json }}
 
             [Retrieved Context]
-            ${{ steps.retrieve_index.outputs.context || steps.fallback_scan.outputs.context }}
+            ${{ steps.final_context.outputs.context }}
 
             [Duplicate Candidates]
             ${{ steps.dupes.outputs.candidates }}
