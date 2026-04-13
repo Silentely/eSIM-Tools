@@ -46,7 +46,7 @@
   "dependencies": {
     "@sentry/browser": "^10.30.0",
     "@sentry/node": "^10.30.0",
-    "axios": "^1.13.5",
+    "axios": "^1.15.0",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
