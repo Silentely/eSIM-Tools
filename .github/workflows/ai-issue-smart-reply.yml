@@ -38,6 +38,7 @@ jobs:
           fetch-depth: 100
 
       - name: Install dependencies
+        shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update
@@ -105,7 +106,10 @@ jobs:
             search_queries 控制在 3-6 条，keywords 控制在 5-12 条。
           prompt: |
             请分析这个 Issue，并输出适合仓库知识库/代码库检索的查询。
-            标题：${{ github.event.issue.title }}
+
+            标题：
+            ${{ github.event.issue.title }}
+
             正文：
             ${{ github.event.issue.body }}
 
@@ -114,6 +118,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           cat > .ai_runtime/rewrite_raw.txt <<'EOF'
           ${{ steps.rewrite.outputs.issue_rewrite }}
           EOF
@@ -159,7 +164,10 @@ jobs:
               "likely_paths": clean_list(d.get("likely_paths"), 8)
           }
 
-          pathlib.Path(".ai_runtime/rewrite.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+          pathlib.Path(".ai_runtime/rewrite.json").write_text(
+              json.dumps(result, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
           print(json.dumps(result, ensure_ascii=False))
           PY
 
@@ -170,9 +178,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TYPE=$(jq -r '.issue_type' .ai_runtime/rewrite.json)
+          TYPE="$(jq -r '.issue_type' .ai_runtime/rewrite.json)"
           case "$TYPE" in
-            bug|enhancement|documentation) echo "continue" ;;
+            bug|enhancement|documentation)
+              echo "continue"
+              ;;
             *)
               echo "Skipping non-target issue type: $TYPE"
               exit 78
@@ -185,18 +195,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           if [ ! -f ai/index.jsonl ]; then
             echo "index_missing=true" >> "$GITHUB_OUTPUT"
-            echo "context=" >> "$GITHUB_OUTPUT"
-            exit 0
+            : > .ai_runtime/index_context.txt
+          else
+            python3 .github/scripts/retrieve_ai_context.py \
+              --index ai/index.jsonl \
+              --rewrite .ai_runtime/rewrite.json \
+              --issue .ai_runtime/issue.json \
+              --max-chars "${AI_MAX_CONTEXT_CHARS}" \
+              > .ai_runtime/index_context.txt
+            echo "index_missing=false" >> "$GITHUB_OUTPUT"
           fi
-
-          python3 .github/scripts/retrieve_ai_context.py \
-            --index ai/index.jsonl \
-            --rewrite .ai_runtime/rewrite.json \
-            --issue .ai_runtime/issue.json \
-            --max-chars "${AI_MAX_CONTEXT_CHARS}" \
-            > .ai_runtime/index_context.txt
 
           {
             echo "context<<EOF"
@@ -210,6 +221,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           python3 .github/scripts/retrieve_ai_context.py \
             --repo-root . \
             --rewrite .ai_runtime/rewrite.json \
@@ -223,6 +235,26 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Prepare final retrieved context
+        id: final_context
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -s .ai_runtime/index_context.txt ]; then
+            cp .ai_runtime/index_context.txt .ai_runtime/final_context.txt
+          elif [ -s .ai_runtime/fallback_context.txt ]; then
+            cp .ai_runtime/fallback_context.txt .ai_runtime/final_context.txt
+          else
+            : > .ai_runtime/final_context.txt
+          fi
+
+          {
+            echo "context<<EOF"
+            cat .ai_runtime/final_context.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Fetch duplicate candidates
         if: env.AI_ENABLE_DUPLICATE_CHECK == 'true'
         id: dupes
@@ -231,6 +263,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           gh issue list \
             --state all \
             --limit "${AI_MAX_DUP_CANDIDATES}" \
@@ -272,7 +305,20 @@ jobs:
 
           {
             echo "candidates<<EOF"
-            cat .ai_runtime/dupes.txt || true
+            cat .ai_runtime/dupes.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare duplicate candidates fallback
+        if: env.AI_ENABLE_DUPLICATE_CHECK != 'true'
+        id: dupes_disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "No duplicate candidates collected." > .ai_runtime/dupes.txt
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/dupes.txt
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
@@ -284,6 +330,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           gh pr list \
             --state all \
             --limit "${AI_MAX_PR_CANDIDATES}" \
@@ -314,7 +361,20 @@ jobs:
 
           {
             echo "candidates<<EOF"
-            cat .ai_runtime/prs.txt || true
+            cat .ai_runtime/prs.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare PR candidates fallback
+        if: env.AI_ENABLE_PR_SEARCH != 'true'
+        id: prs_disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "No PR candidates collected." > .ai_runtime/prs.txt
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/prs.txt
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
@@ -324,8 +384,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           python3 - <<'PY'
-          import json, pathlib, re, subprocess
+          import json, pathlib, subprocess
 
           rewrite = json.loads(pathlib.Path(".ai_runtime/rewrite.json").read_text(encoding="utf-8"))
           keywords = rewrite.get("keywords", [])[:8]
@@ -360,7 +421,68 @@ jobs:
 
           {
             echo "candidates<<EOF"
-            cat .ai_runtime/commits.txt || true
+            cat .ai_runtime/commits.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare commit candidates fallback
+        if: env.AI_ENABLE_COMMIT_SEARCH != 'true'
+        id: commits_disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "No commit candidates collected." > .ai_runtime/commits.txt
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/commits.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare final duplicate candidates
+        id: final_dupes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -s .ai_runtime/dupes.txt ]; then
+            cp .ai_runtime/dupes.txt .ai_runtime/final_dupes.txt
+          else
+            echo "No duplicate candidates collected." > .ai_runtime/final_dupes.txt
+          fi
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/final_dupes.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare final PR candidates
+        id: final_prs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -s .ai_runtime/prs.txt ]; then
+            cp .ai_runtime/prs.txt .ai_runtime/final_prs.txt
+          else
+            echo "No PR candidates collected." > .ai_runtime/final_prs.txt
+          fi
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/final_prs.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare final commit candidates
+        id: final_commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -s .ai_runtime/commits.txt ]; then
+            cp .ai_runtime/commits.txt .ai_runtime/final_commits.txt
+          else
+            echo "No commit candidates collected." > .ai_runtime/final_commits.txt
+          fi
+          {
+            echo "candidates<<EOF"
+            cat .ai_runtime/final_commits.txt
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
@@ -437,7 +559,9 @@ jobs:
             输出必须是严格 JSON。
           prompt: |
             [Issue]
-            标题：${{ github.event.issue.title }}
+            标题：
+            ${{ github.event.issue.title }}
+
             正文：
             ${{ github.event.issue.body }}
 
@@ -448,19 +572,20 @@ jobs:
             ${{ steps.final_context.outputs.context }}
 
             [Duplicate Candidates]
-            ${{ steps.dupes.outputs.candidates }}
+            ${{ steps.final_dupes.outputs.candidates }}
 
             [PR Candidates]
-            ${{ steps.prs.outputs.candidates }}
+            ${{ steps.final_prs.outputs.candidates }}
 
             [Commit Candidates]
-            ${{ steps.commits.outputs.candidates }}
+            ${{ steps.final_commits.outputs.candidates }}
 
       - name: Normalize triage result
         id: triage_norm
         shell: bash
         run: |
           set -euo pipefail
+
           cat > .ai_runtime/triage_raw.txt <<'EOF'
           ${{ steps.triage.outputs.issue_response }}
           EOF
@@ -529,7 +654,10 @@ jobs:
           if result["duplicate_confidence"] == "high" and result["duplicate_issues"] and "duplicate" not in result["labels"] and len(result["labels"]) < 3:
               result["labels"].append("duplicate")
 
-          pathlib.Path(".ai_runtime/triage.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+          pathlib.Path(".ai_runtime/triage.json").write_text(
+              json.dumps(result, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
           print(json.dumps(result, ensure_ascii=False))
           PY
 
@@ -550,76 +678,106 @@ jobs:
 
             function supportText(s) {
               switch (s) {
-                case "supported": return "✅ 当前仓库上下文显示：该行为已支持。";
-                case "partially_supported": return "🟡 当前仓库上下文显示：该行为仅部分支持。";
-                case "not_supported": return "⚠️ 当前仓库上下文显示：当前暂不支持。";
-                case "already_fixed_unreleased": return "🛠️ 当前仓库上下文显示：可能已修复，但未正式发布。";
-                default: return "❓ 当前证据不足，需要更多信息。";
+                case "supported":
+                  return "✅ 当前仓库上下文显示：该行为已支持。";
+                case "partially_supported":
+                  return "🟡 当前仓库上下文显示：该行为仅部分支持。";
+                case "not_supported":
+                  return "⚠️ 当前仓库上下文显示：当前暂不支持。";
+                case "already_fixed_unreleased":
+                  return "🛠️ 当前仓库上下文显示：可能已修复，但未正式发布。";
+                default:
+                  return "❓ 当前证据不足，需要更多信息。";
               }
             }
 
-            let body = `${marker}
-### 🤖 AI Issue 智能分析
-
-**摘要**
-${result.summary || "暂无"}
-
-**分析**
-${result.analysis || "暂无"}
-
-**建议方案**
-${result.solution || "暂无"}
-
-**状态判断**
-${supportText(result.support_status)}
-
-`;
+            const lines = [
+              marker,
+              "### 🤖 AI Issue 智能分析",
+              "",
+              "**摘要**",
+              result.summary || "暂无",
+              "",
+              "**分析**",
+              result.analysis || "暂无",
+              "",
+              "**建议方案**",
+              result.solution || "暂无",
+              "",
+              "**状态判断**",
+              supportText(result.support_status),
+              ""
+            ];
 
             if (result.roadmap && result.support_status === "not_supported") {
-              body += `**实现路线**
-${result.roadmap}
-
-`;
+              lines.push("**实现路线**");
+              lines.push(result.roadmap);
+              lines.push("");
             }
 
             if (Array.isArray(result.duplicate_issues) && result.duplicate_issues.length > 0) {
-              body += `**可能重复的 Issue**
-- 置信度：${result.duplicate_confidence || "low"}
-- 候选：${result.duplicate_issues.join("、")}
-
-`;
+              lines.push("**可能重复的 Issue**");
+              lines.push(`- 置信度：${result.duplicate_confidence || "low"}`);
+              lines.push(`- 候选：${result.duplicate_issues.join("、")}`);
+              lines.push("");
             }
 
             if (result.needs_human_followup) {
-              body += `**维护建议**
-建议维护者人工复核后再做最终结论。
-
-`;
+              lines.push("**维护建议**");
+              lines.push("建议维护者人工复核后再做最终结论。");
+              lines.push("");
             }
 
-            body += `_此评论由自动化工作流生成，已启用结构化输出、幂等更新、标签白名单和可选索引检索。_`;
+            lines.push("_此评论由自动化工作流生成，已启用结构化输出、幂等更新、标签白名单和可选索引检索。_");
+
+            const body = lines.join("\n");
 
             const comments = await github.paginate(
               github.rest.issues.listComments,
               { owner, repo, issue_number, per_page: 100 }
             );
 
-            const existing = comments.find(c => typeof c.body === "string" && c.body.includes(marker));
+            const existing = comments.find(
+              c => typeof c.body === "string" && c.body.includes(marker)
+            );
 
             if (existing) {
               await github.rest.issues.updateComment({
-                owner, repo, comment_id: existing.id, body
+                owner,
+                repo,
+                comment_id: existing.id,
+                body
               });
             } else {
               await github.rest.issues.createComment({
-                owner, repo, issue_number, body
+                owner,
+                repo,
+                issue_number,
+                body
               });
             }
 
             if (process.env.AI_AUTO_LABEL === "true") {
-              const issue = await github.rest.issues.get({ owner, repo, issue_number });
-              const existingLabels = new Set((issue.data.labels || []).map(l => typeof l === "string" ? l : l.name));
-              const allowed = new Set(["bug","enhancement","question","documentation","duplicate","help wanted","needs more info"]);
+              const issue = await github.rest.issues.get({
+                owner,
+                repo,
+                issue_number
+              });
+
+              const existingLabels = new Set(
+                (issue.data.labels || []).map(l => typeof l === "string" ? l : l.name)
+              );
+
+              const allowed = new Set([
+                "bug",
+                "enhancement",
+                "question",
+                "documentation",
+                "duplicate",
+                "help wanted",
+                "needs more info"
+              ]);
+
               const desired = Array.isArray(result.labels) ? result.labels : [];
               const toAdd = desired
                 .map(x => String(x).trim().toLowerCase())
@@ -629,13 +787,17 @@ ${result.roadmap}
 
               if (toAdd.length > 0) {
                 await github.rest.issues.addLabels({
-                  owner, repo, issue_number, labels: toAdd
+                  owner,
+                  repo,
+                  issue_number,
+                  labels: toAdd
                 });
               }
             }
 
       - name: Step summary
         if: always()
+        shell: bash
         run: |
           {
             echo "## AI Issue Smart Reply"
@@ -649,11 +811,11 @@ ${result.roadmap}
             echo ""
             echo "### Rewrite"
             echo '```json'
-            cat .ai_runtime/rewrite.json || echo '{}'
+            cat .ai_runtime/rewrite.json 2>/dev/null || echo '{}'
             echo '```'
             echo ""
             echo "### Triage"
             echo '```json'
-            cat .ai_runtime/triage.json || echo '{}'
+            cat .ai_runtime/triage.json 2>/dev/null || echo '{}'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

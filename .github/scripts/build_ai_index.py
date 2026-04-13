@@ -7,7 +7,9 @@ import os
 import pathlib
 import re
 import sys
+import time
 import urllib.request
+from typing import Dict, List, Tuple
 
 TEXT_EXTS = {
     ".md", ".mdx", ".rst", ".txt", ".yml", ".yaml", ".json", ".toml", ".ini", ".env",
@@ -20,8 +22,14 @@ IGNORE_DIRS = {
     "__pycache__", ".venv", "venv", "vendor", "target", "out"
 }
 
+MAX_TEXT_PER_CHUNK = 3200
+MAX_SUMMARY_CHARS = 900
+EMBED_BATCH_SIZE = 32
+
+
 def sha1(s: str) -> str:
     return hashlib.sha1(s.encode("utf-8")).hexdigest()
+
 
 def read_text(path: pathlib.Path) -> str:
     try:
@@ -29,12 +37,15 @@ def read_text(path: pathlib.Path) -> str:
     except Exception:
         return ""
 
-def tokenize(text: str):
+
+def tokenize(text: str) -> List[str]:
     return re.findall(r"[A-Za-z0-9_./:#-]{3,}", text.lower())
+
 
 def file_weight(path: str) -> int:
     p = path.lower()
     score = 1
+
     if "readme" in p or "changelog" in p or "/docs/" in p or p.startswith("docs/"):
         score += 5
     if ".env.example" in p or "config" in p or "docker-compose" in p:
@@ -45,30 +56,40 @@ def file_weight(path: str) -> int:
         score += 3
     if "/app/" in p or p.startswith("app/"):
         score += 2
+    if "/lib/" in p or p.startswith("lib/"):
+        score += 2
     if "/tests/" in p or p.startswith("tests/"):
         score += 1
+    if "/.github/" in p or p.startswith(".github/"):
+        score += 2
+
     return score
+
 
 def iter_files(root: pathlib.Path, max_files: int):
     count = 0
     for base, dirs, files in os.walk(root):
         dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
-        for f in files:
+        for f in sorted(files):
             path = pathlib.Path(base) / f
             rel = path.relative_to(root).as_posix()
-            if path.suffix.lower() not in TEXT_EXTS and not f.startswith("README"):
+
+            if path.suffix.lower() not in TEXT_EXTS and not f.startswith("README") and not f.startswith("CHANGELOG"):
                 continue
+
             yield path, rel
             count += 1
             if count >= max_files:
                 return
 
-def chunk_lines(text: str, max_chunk_chars: int):
+
+def chunk_lines(text: str, max_chunk_chars: int) -> List[Tuple[int, int, str]]:
     lines = text.splitlines()
     chunks = []
     buf = []
     start = 1
     cur = 0
+
     for i, line in enumerate(lines, start=1):
         line_len = len(line) + 1
         if buf and cur + line_len > max_chunk_chars:
@@ -81,21 +102,40 @@ def chunk_lines(text: str, max_chunk_chars: int):
                 start = i
             buf.append(line)
             cur += line_len
+
     if buf:
         chunks.append((start, len(lines), "\n".join(buf)))
+
     return chunks
 
-def summarize_chunk(rel, chunk):
-    header = rel
-    first_lines = "\n".join(chunk.splitlines()[:12]).strip()
-    return f"{header}\n{first_lines}"[:800]
 
-def embed_texts(base_url, api_key, model, texts):
+def summarize_chunk(rel: str, chunk: str) -> str:
+    lines = chunk.splitlines()
+    head = "\n".join(lines[:12]).strip()
+    text = f"{rel}\n{head}".strip()
+    return text[:MAX_SUMMARY_CHARS]
+
+
+def build_keywords(text: str, limit: int = 120) -> List[str]:
+    toks = tokenize(text)
+    seen = set()
+    out = []
+    for t in toks:
+        if t not in seen:
+            seen.add(t)
+            out.append(t)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def embed_texts(base_url: str, api_key: str, model: str, texts: List[str]) -> List[List[float]]:
     url = base_url.rstrip("/") + "/embeddings"
     payload = json.dumps({
         "model": model,
         "input": texts
     }).encode("utf-8")
+
     req = urllib.request.Request(
         url,
         data=payload,
@@ -105,9 +145,22 @@ def embed_texts(base_url, api_key, model, texts):
         },
         method="POST"
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:
+
+    with urllib.request.urlopen(req, timeout=180) as resp:
         data = json.loads(resp.read().decode("utf-8"))
-    return [item["embedding"] for item in data["data"]]
+
+    if "data" not in data or not isinstance(data["data"], list):
+        raise RuntimeError("Invalid embedding API response: missing data list")
+
+    vectors = []
+    for item in data["data"]:
+        vec = item.get("embedding")
+        if not isinstance(vec, list):
+            raise RuntimeError("Invalid embedding API response: missing embedding")
+        vectors.append(vec)
+
+    return vectors
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -125,33 +178,43 @@ def main():
     root = pathlib.Path(args.repo_root).resolve()
     out_path = pathlib.Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path = pathlib.Path(args.manifest)
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
 
-    rows = []
-    embedding_rows = []
+    rows: List[Dict] = []
+
+    scanned_files = 0
+    kept_files = 0
 
     for path, rel in iter_files(root, args.max_files):
+        scanned_files += 1
         text = read_text(path)
         if not text.strip():
             continue
 
         chunks = chunk_lines(text, args.max_chunk_chars)
+        if not chunks:
+            continue
+
+        kept_files += 1
         weight = file_weight(rel)
 
         for start, end, chunk in chunks:
-            tokens = tokenize(chunk)
-            if len(tokens) < 3:
+            kws = build_keywords(chunk)
+            if len(kws) < 3:
                 continue
 
+            text_for_store = chunk[:MAX_TEXT_PER_CHUNK]
             row = {
-                "id": sha1(f"{rel}:{start}:{end}:{sha1(chunk)}"),
+                "id": sha1(f"{rel}:{start}:{end}:{sha1(text_for_store)}"),
                 "path": rel,
                 "start_line": start,
                 "end_line": end,
                 "weight": weight,
-                "token_count": len(tokens),
-                "keywords": sorted(list(set(tokens[:120]))),
+                "token_count": len(kws),
+                "keywords": kws,
                 "summary": summarize_chunk(rel, chunk),
-                "text": chunk[:3000]
+                "text": text_for_store
             }
             rows.append(row)
 
@@ -160,21 +223,35 @@ def main():
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     manifest = {
-        "version": 1,
+        "version": 2,
+        "generated_at_unix": int(time.time()),
+        "repo_root": str(root),
+        "scanned_files": scanned_files,
+        "indexed_files": kept_files,
         "chunks": len(rows),
         "max_files": args.max_files,
-        "max_chunk_chars": args.max_chunk_chars
+        "max_chunk_chars": args.max_chunk_chars,
+        "embedding_enabled": bool(args.embedding_out and args.embedding_api_key and args.embedding_base_url and args.embedding_model)
     }
-    pathlib.Path(args.manifest).write_text(
+
+    manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),
         encoding="utf-8"
     )
 
     if args.embedding_out and args.embedding_api_key and args.embedding_base_url and args.embedding_model:
+        emb_out = pathlib.Path(args.embedding_out)
+        emb_out.parent.mkdir(parents=True, exist_ok=True)
+
         texts = []
         metas = []
         for row in rows:
-            texts.append(f"{row['path']} lines {row['start_line']}-{row['end_line']}\n{row['summary']}\n{row['text'][:1200]}")
+            emb_text = (
+                f"{row['path']} lines {row['start_line']}-{row['end_line']}\n"
+                f"{row['summary']}\n"
+                f"{row['text'][:1200]}"
+            )
+            texts.append(emb_text)
             metas.append({
                 "id": row["id"],
                 "path": row["path"],
@@ -183,16 +260,20 @@ def main():
                 "weight": row["weight"]
             })
 
-        emb_out = pathlib.Path(args.embedding_out)
         with emb_out.open("w", encoding="utf-8") as f:
-            batch_size = 32
-            for i in range(0, len(texts), batch_size):
-                batch = texts[i:i+batch_size]
-                vecs = embed_texts(args.embedding_base_url, args.embedding_api_key, args.embedding_model, batch)
-                for meta, vec in zip(metas[i:i+batch_size], vecs):
+            for i in range(0, len(texts), EMBED_BATCH_SIZE):
+                batch = texts[i:i + EMBED_BATCH_SIZE]
+                vecs = embed_texts(
+                    args.embedding_base_url,
+                    args.embedding_api_key,
+                    args.embedding_model,
+                    batch
+                )
+                for meta, vec in zip(metas[i:i + EMBED_BATCH_SIZE], vecs):
                     item = dict(meta)
                     item["embedding"] = vec
                     f.write(json.dumps(item, ensure_ascii=False) + "\n")
+
 
 if __name__ == "__main__":
     main()
