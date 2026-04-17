@@ -1,0 +1,84 @@
+name: Configuration / deployment question
+description: Ask for help configuring or deploying Nexus Terminal
+title: "[question] "
+labels:
+  - deployment
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question.
+
+        Please share the minimum information needed to help.
+        Do not paste passwords, private keys, tokens, or other secrets.
+
+  - type: input
+    id: version
+    attributes:
+      label: Nexus Terminal version
+      placeholder: e.g. v1.0.0
+    validations:
+      required: false
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment method
+      options:
+        - Docker Compose
+        - Source build
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reverse_proxy
+    attributes:
+      label: Reverse proxy
+      options:
+        - nginx
+        - caddy
+        - traefik
+        - none
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to achieve?
+      placeholder: e.g. Deploy behind nginx with websocket support, enable 2FA, connect via RDP, fix CORS for multiple domains
+    validations:
+      required: true
+
+  - type: textarea
+    id: attempt
+    attributes:
+      label: What have you tried already?
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or browser errors
+      description: Optional. Remove secrets first.
+    validations:
+      required: false
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant config (sanitized)
+      description: Optional. Remove passwords, private keys, tokens, and API secrets before pasting.
+      render: yaml
+    validations:
+      required: false

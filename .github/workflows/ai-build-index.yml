@@ -11,15 +11,12 @@ on:
     paths:
       - 'README*'
       - 'CHANGELOG*'
+      - 'doc/**'
       - 'docs/**'
       - 'src/**'
       - 'lib/**'
       - 'app/**'
       - 'packages/**'
-      - '.github/scripts/build_ai_index.py'
-      - '.github/scripts/retrieve_ai_context.py'
-      - '.github/workflows/ai-build-index.yml'
-
 permissions:
   contents: write
 
@@ -34,10 +31,13 @@ jobs:
     timeout-minutes: 25
 
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
       AI_USE_TRUE_EMBEDDING: ${{ vars.AI_USE_TRUE_EMBEDDING || 'false' }}
       AI_INDEX_MAX_FILES: ${{ vars.AI_INDEX_MAX_FILES || '1200' }}
       AI_INDEX_MAX_CHUNK_CHARS: ${{ vars.AI_INDEX_MAX_CHUNK_CHARS || '1800' }}
       AI_INDEX_COMMIT_RESULTS: ${{ vars.AI_INDEX_COMMIT_RESULTS || 'true' }}
+      AI_EMBED_BATCH_SIZE: ${{ vars.AI_EMBED_BATCH_SIZE || '8' }}
+      AI_EMBED_USER_AGENT: ${{ vars.AI_EMBED_USER_AGENT || 'curl/8.7.1' }}
 
     steps:
       - name: Checkout repository
@@ -68,8 +68,78 @@ jobs:
             --max-files "${AI_INDEX_MAX_FILES}" \
             --max-chunk-chars "${AI_INDEX_MAX_CHUNK_CHARS}"
 
+      - name: Probe embedding endpoint with curl
+        if: env.AI_USE_TRUE_EMBEDDING == 'true' && github.event_name != 'push'
+        shell: bash
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          EMBEDDING_BASE_URL: ${{ secrets.EMBEDDING_BASE_URL }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
+        run: |
+          set -euo pipefail
+
+          echo "[probe-curl] base_url=${EMBEDDING_BASE_URL}"
+          echo "[probe-curl] final_url=${EMBEDDING_BASE_URL%/}/embeddings"
+          echo "[probe-curl] model=${EMBEDDING_MODEL}"
+          echo "[probe-curl] user_agent=${AI_EMBED_USER_AGENT}"
+
+          HTTP_CODE=$(curl -sS -o /tmp/embed_probe_body.txt -w "%{http_code}" \
+            "${EMBEDDING_BASE_URL%/}/embeddings" \
+            -H "Authorization: Bearer ${EMBEDDING_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "User-Agent: ${AI_EMBED_USER_AGENT}" \
+            --data "{\"model\":\"${EMBEDDING_MODEL}\",\"input\":[\"hello world\"]}" || true)
+
+          echo "[probe-curl] http_code=${HTTP_CODE}"
+          if [[ ! "${HTTP_CODE}" =~ ^2[0-9][0-9]$ ]]; then
+            echo "[probe-curl] response_preview:"
+            sed -n '1,40p' /tmp/embed_probe_body.txt || true
+          fi
+
+      - name: Probe embedding endpoint with Python
+        if: env.AI_USE_TRUE_EMBEDDING == 'true' && github.event_name != 'push'
+        shell: bash
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          EMBEDDING_BASE_URL: ${{ secrets.EMBEDDING_BASE_URL }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          url = os.environ['EMBEDDING_BASE_URL'].rstrip('/') + '/embeddings'
+          body = json.dumps({
+              'model': os.environ['EMBEDDING_MODEL'],
+              'input': ['hello world'],
+          }).encode('utf-8')
+          headers = {
+              'Authorization': f"Bearer {os.environ['EMBEDDING_API_KEY']}",
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'User-Agent': os.environ.get('AI_EMBED_USER_AGENT', 'curl/8.7.1'),
+          }
+
+          print(f"[probe-py] url={url}")
+
+          req = urllib.request.Request(url, data=body, headers=headers, method='POST')
+          try:
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  _ = resp.read()
+                  print(f"[probe-py] status={getattr(resp, 'status', 'unknown')}")
+          except urllib.error.HTTPError as e:
+              text = e.read().decode('utf-8', errors='replace')
+              print(f"[probe-py] status={e.code}")
+              print(text[:600])
+              raise
+          PY
+
       - name: Build true embedding index
-        if: env.AI_USE_TRUE_EMBEDDING == 'true'
+        if: env.AI_USE_TRUE_EMBEDDING == 'true' && github.event_name != 'push'
         env:
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
           EMBEDDING_BASE_URL: ${{ secrets.EMBEDDING_BASE_URL }}
@@ -91,6 +161,8 @@ jobs:
             --embedding-api-key "${EMBEDDING_API_KEY}" \
             --embedding-base-url "${EMBEDDING_BASE_URL}" \
             --embedding-model "${EMBEDDING_MODEL}" \
+            --embedding-user-agent "${AI_EMBED_USER_AGENT}" \
+            --embed-batch-size "${AI_EMBED_BATCH_SIZE}" \
             --max-files "${AI_INDEX_MAX_FILES}" \
             --max-chunk-chars "${AI_INDEX_MAX_CHUNK_CHARS}"
 
@@ -111,6 +183,8 @@ jobs:
             echo "- True embedding enabled: ${AI_USE_TRUE_EMBEDDING}"
             echo "- Max files: ${AI_INDEX_MAX_FILES}"
             echo "- Max chunk chars: ${AI_INDEX_MAX_CHUNK_CHARS}"
+            echo "- Embed batch size: ${AI_EMBED_BATCH_SIZE}"
+            echo "- Embed user-agent: ${AI_EMBED_USER_AGENT}"
             echo ""
             echo "### Files"
             ls -lah ai || true

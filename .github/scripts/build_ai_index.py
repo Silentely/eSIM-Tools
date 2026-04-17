@@ -2,12 +2,12 @@
 import argparse
 import hashlib
 import json
-import math
 import os
 import pathlib
 import re
 import sys
 import time
+import urllib.error
 import urllib.request
 from typing import Dict, List, Tuple
 
@@ -24,7 +24,8 @@ IGNORE_DIRS = {
 
 MAX_TEXT_PER_CHUNK = 3200
 MAX_SUMMARY_CHARS = 900
-EMBED_BATCH_SIZE = 32
+DEFAULT_EMBED_BATCH_SIZE = 8
+DEFAULT_EMBED_USER_AGENT = "curl/8.7.1"
 
 
 def sha1(s: str) -> str:
@@ -85,8 +86,8 @@ def iter_files(root: pathlib.Path, max_files: int):
 
 def chunk_lines(text: str, max_chunk_chars: int) -> List[Tuple[int, int, str]]:
     lines = text.splitlines()
-    chunks = []
-    buf = []
+    chunks: List[Tuple[int, int, str]] = []
+    buf: List[str] = []
     start = 1
     cur = 0
 
@@ -129,40 +130,67 @@ def build_keywords(text: str, limit: int = 120) -> List[str]:
     return out
 
 
-def embed_texts(base_url: str, api_key: str, model: str, texts: List[str]) -> List[List[float]]:
-    url = base_url.rstrip("/") + "/embeddings"
-    payload = json.dumps({
+def _embed_request(base_url: str, api_key: str, model: str, texts: List[str], user_agent: str) -> List[List[float]]:
+    url = f"{base_url.rstrip('/')}/embeddings"
+    payload_obj = {
         "model": model,
-        "input": texts
-    }).encode("utf-8")
+        "input": texts,
+    }
+    payload = json.dumps(payload_obj, ensure_ascii=False).encode("utf-8")
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": user_agent,
+    }
+
+    print(f"[embed] url={url}")
+    print(f"[embed] model={model}")
+    print(f"[embed] input_count={len(texts)}")
+    print(f"[embed] payload_bytes={len(payload)}")
 
     req = urllib.request.Request(
         url,
         data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        },
-        method="POST"
+        headers=headers,
+        method="POST",
     )
 
-    with urllib.request.urlopen(req, timeout=180) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=180) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+            print(f"[embed] status={getattr(resp, 'status', 'unknown')}")
+            data = json.loads(body)
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")
+        print(f"[embed] HTTPError status={e.code}")
+        print(f"[embed] HTTPError reason={e.reason}")
+        print(f"[embed] HTTPError url={url}")
+        print(f"[embed] HTTPError response_preview={err_body[:600]}")
+        raise
+    except urllib.error.URLError as e:
+        print(f"[embed] URLError reason={e.reason}")
+        print(f"[embed] URLError url={url}")
+        raise
 
     if "data" not in data or not isinstance(data["data"], list):
-        raise RuntimeError("Invalid embedding API response: missing data list")
+        raise RuntimeError(f"Invalid embedding response shape: {json.dumps(data, ensure_ascii=False)[:2000]}")
 
-    vectors = []
-    for item in data["data"]:
-        vec = item.get("embedding")
-        if not isinstance(vec, list):
-            raise RuntimeError("Invalid embedding API response: missing embedding")
-        vectors.append(vec)
+    vectors: List[List[float]] = []
+    for idx, item in enumerate(data["data"]):
+        embedding = item.get("embedding")
+        if not isinstance(embedding, list):
+            raise RuntimeError(f"Invalid embedding item at index {idx}: {json.dumps(item, ensure_ascii=False)[:1000]}")
+        vectors.append(embedding)
 
     return vectors
 
 
-def main():
+def embed_texts(base_url: str, api_key: str, model: str, texts: List[str], user_agent: str = DEFAULT_EMBED_USER_AGENT) -> List[List[float]]:
+    return _embed_request(base_url, api_key, model, texts, user_agent)
+
+
+def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-root", required=True)
     ap.add_argument("--out", required=True)
@@ -171,6 +199,8 @@ def main():
     ap.add_argument("--embedding-api-key", default="")
     ap.add_argument("--embedding-base-url", default="")
     ap.add_argument("--embedding-model", default="")
+    ap.add_argument("--embedding-user-agent", default=DEFAULT_EMBED_USER_AGENT)
+    ap.add_argument("--embed-batch-size", type=int, default=DEFAULT_EMBED_BATCH_SIZE)
     ap.add_argument("--max-files", type=int, default=1200)
     ap.add_argument("--max-chunk-chars", type=int, default=1800)
     args = ap.parse_args()
@@ -182,7 +212,6 @@ def main():
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
 
     rows: List[Dict] = []
-
     scanned_files = 0
     kept_files = 0
 
@@ -214,7 +243,7 @@ def main():
                 "token_count": len(kws),
                 "keywords": kws,
                 "summary": summarize_chunk(rel, chunk),
-                "text": text_for_store
+                "text": text_for_store,
             }
             rows.append(row)
 
@@ -223,7 +252,7 @@ def main():
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     manifest = {
-        "version": 2,
+        "version": 3,
         "generated_at_unix": int(time.time()),
         "repo_root": str(root),
         "scanned_files": scanned_files,
@@ -231,20 +260,21 @@ def main():
         "chunks": len(rows),
         "max_files": args.max_files,
         "max_chunk_chars": args.max_chunk_chars,
-        "embedding_enabled": bool(args.embedding_out and args.embedding_api_key and args.embedding_base_url and args.embedding_model)
+        "embed_batch_size": args.embed_batch_size,
+        "embedding_user_agent": args.embedding_user_agent,
+        "embedding_enabled": bool(
+            args.embedding_out and args.embedding_api_key and args.embedding_base_url and args.embedding_model
+        ),
     }
 
-    manifest_path.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
     if args.embedding_out and args.embedding_api_key and args.embedding_base_url and args.embedding_model:
         emb_out = pathlib.Path(args.embedding_out)
         emb_out.parent.mkdir(parents=True, exist_ok=True)
 
-        texts = []
-        metas = []
+        texts: List[str] = []
+        metas: List[Dict] = []
         for row in rows:
             emb_text = (
                 f"{row['path']} lines {row['start_line']}-{row['end_line']}\n"
@@ -257,19 +287,21 @@ def main():
                 "path": row["path"],
                 "start_line": row["start_line"],
                 "end_line": row["end_line"],
-                "weight": row["weight"]
+                "weight": row["weight"],
             })
 
+        batch_size = max(1, args.embed_batch_size)
         with emb_out.open("w", encoding="utf-8") as f:
-            for i in range(0, len(texts), EMBED_BATCH_SIZE):
-                batch = texts[i:i + EMBED_BATCH_SIZE]
+            for i in range(0, len(texts), batch_size):
+                batch = texts[i:i + batch_size]
                 vecs = embed_texts(
                     args.embedding_base_url,
                     args.embedding_api_key,
                     args.embedding_model,
-                    batch
+                    batch,
+                    args.embedding_user_agent,
                 )
-                for meta, vec in zip(metas[i:i + EMBED_BATCH_SIZE], vecs):
+                for meta, vec in zip(metas[i:i + batch_size], vecs):
                     item = dict(meta)
                     item["embedding"] = vec
                     f.write(json.dumps(item, ensure_ascii=False) + "\n")

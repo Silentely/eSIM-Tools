@@ -1,0 +1,125 @@
+name: Bug report
+description: Report a reproducible problem in Nexus Terminal
+title: "[bug] "
+labels:
+  - bug-candidate
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug in Nexus Terminal.
+
+        Please provide enough detail for reproduction.
+        Do not paste passwords, private keys, tokens, or other secrets.
+
+  - type: input
+    id: version
+    attributes:
+      label: Nexus Terminal version
+      placeholder: e.g. v1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment method
+      options:
+        - Docker Compose
+        - Source build
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reverse_proxy
+    attributes:
+      label: Reverse proxy
+      options:
+        - nginx
+        - caddy
+        - traefik
+        - none
+        - other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected_area
+    attributes:
+      label: Affected area
+      options:
+        - SSH
+        - SFTP
+        - RDP
+        - VNC
+        - Login / Auth / 2FA / Captcha
+        - Web UI / Terminal UI
+        - File manager
+        - Remote gateway
+        - Docker / Deployment
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: e.g. Debian 12, Chrome 135, Node 20, Docker 27
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Configure ...
+        3. Connect to ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / error output
+      description: Include the exact error output if available. Remove secrets first.
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant config (sanitized)
+      description: Optional. Remove passwords, private keys, tokens, and API secrets before pasting.
+      render: yaml
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Include whether the issue still happens without reverse proxy if you tested that.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checks
+      options:
+        - label: I searched existing issues
+          required: true
+        - label: I removed secrets and private credentials from logs/config
+          required: true
