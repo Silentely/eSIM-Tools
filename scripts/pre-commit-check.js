@@ -71,6 +71,39 @@ function getTouchedProtectedFiles() {
   return output.split('\0').filter(Boolean);
 }
 
+function getUpstreamRef() {
+  try {
+    return git([
+      'rev-parse',
+      '--abbrev-ref',
+      '--symbolic-full-name',
+      '@{u}'
+    ]).trim();
+  } catch (_) {
+    return '';
+  }
+}
+
+function syncWithRemote() {
+  const upstreamRef = getUpstreamRef();
+  if (!upstreamRef) {
+    console.log('ℹ️ 当前分支未配置 upstream，跳过远程同步');
+    return;
+  }
+
+  console.log(`🔄 提交前同步远程更新（${upstreamRef}）...`);
+  try {
+    git(['pull', '--rebase', '--autostash', '--quiet'], {
+      stdio: 'inherit'
+    });
+    console.log('✅ 远程更新同步完成');
+  } catch (_) {
+    console.error('\n❌ pre-commit 远程同步失败：');
+    console.error('  - 请先手动执行 `git pull --rebase` 解决冲突后再提交。');
+    process.exit(1);
+  }
+}
+
 function shouldFormat(relPath) {
   const ext = path.extname(relPath).toLowerCase();
   if (TEXT_EXTENSIONS.has(ext)) {
@@ -190,6 +223,8 @@ function main() {
     console.error('  - 如确需调整，请改为维护对应 modular 版本文件。');
     process.exit(1);
   }
+
+  syncWithRemote();
 
   const stagedFiles = getStagedFiles();
   if (stagedFiles.length === 0) {

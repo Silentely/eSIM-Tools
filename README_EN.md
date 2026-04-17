@@ -278,7 +278,7 @@ Examples:
 - `📝 docs(readme): 更新安装说明`
 
 ### Current Git Hooks
-- `pre-commit`: formats staged files and runs JS/JSON syntax + smart quotes checks
+- `pre-commit`: syncs remote updates first (auto `git pull --rebase --autostash` when upstream exists), then formats staged files and runs JS/JSON syntax + smart quotes checks
 - `pre-push`: defaults to fast mode (`pre-commit` + related tests), falls back to full tests when no diff files are detected
 - `prepare-commit-msg`: auto-fills a template when commit message is empty
 - `commit-msg`: validates message format (emoji + type + Chinese summary + mapping)

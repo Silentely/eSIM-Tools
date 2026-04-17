@@ -8,7 +8,7 @@ describe('Giffgaff OAuthManager', () => {
   describe('generateCodeVerifier()', () => {
     it('应该生成有效的 code verifier', () => {
       const verifier = OAuthManager.generateCodeVerifier();
-      
+
       expect(verifier).toBeDefined();
       expect(typeof verifier).toBe('string');
       expect(verifier.length).toBeGreaterThanOrEqual(43);
@@ -20,7 +20,7 @@ describe('Giffgaff OAuthManager', () => {
     it('每次生成的 verifier 应该不同', () => {
       const verifier1 = OAuthManager.generateCodeVerifier();
       const verifier2 = OAuthManager.generateCodeVerifier();
-      
+
       expect(verifier1).not.toBe(verifier2);
     });
   });
@@ -29,7 +29,7 @@ describe('Giffgaff OAuthManager', () => {
     it('应该从 verifier 生成有效的 challenge', async () => {
       const verifier = 'test-verifier-string';
       const challenge = await OAuthManager.generateCodeChallenge(verifier);
-      
+
       expect(challenge).toBeDefined();
       expect(typeof challenge).toBe('string');
       // 检查是否为 base64url 编码
@@ -40,7 +40,7 @@ describe('Giffgaff OAuthManager', () => {
   describe('generateState()', () => {
     it('应该生成有效的 state 参数', () => {
       const state = OAuthManager.generateState();
-      
+
       expect(state).toBeDefined();
       expect(typeof state).toBe('string');
       expect(state.length).toBeGreaterThan(0);
@@ -51,7 +51,7 @@ describe('Giffgaff OAuthManager', () => {
     it('每次生成的 state 应该不同', () => {
       const state1 = OAuthManager.generateState();
       const state2 = OAuthManager.generateState();
-      
+
       expect(state1).not.toBe(state2);
     });
   });
@@ -60,7 +60,7 @@ describe('Giffgaff OAuthManager', () => {
     it('应该构建正确的授权 URL', async () => {
       const verifier = 'test-verifier';
       const url = await OAuthManager.buildAuthorizationUrl(verifier);
-      
+
       expect(url).toContain('https://id.giffgaff.com/oauth/authorize');
       expect(url).toContain('response_type=code');
       expect(url).toContain('client_id=');
@@ -76,36 +76,42 @@ describe('Giffgaff OAuthManager', () => {
     it('应该从标准 URL 提取授权码', () => {
       const callbackUrl = 'https://example.com/callback?code=test-code&state=test-state';
       const code = OAuthManager.extractCodeFromCallback(callbackUrl);
-      
+
       expect(code).toBe('test-code');
     });
 
     it('应该从 giffgaff:// 协议 URL 提取授权码', () => {
       const callbackUrl = 'giffgaff://auth/callback/?code=test-code&state=test-state';
       const code = OAuthManager.extractCodeFromCallback(callbackUrl);
-      
+
       expect(code).toBe('test-code');
     });
 
     it('应该处理编码的授权码', () => {
       const callbackUrl = 'https://example.com/callback?code=test%2Bcode%3D&state=test';
       const code = OAuthManager.extractCodeFromCallback(callbackUrl);
-      
+
       expect(code).toBe('test+code=');
     });
 
     it('应该在没有授权码时返回 null', () => {
       const callbackUrl = 'https://example.com/callback?state=test-state';
       const code = OAuthManager.extractCodeFromCallback(callbackUrl);
-      
+
       expect(code).toBeNull();
     });
 
     it('应该处理无效的 URL', () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const callbackUrl = 'not-a-valid-url';
-      const code = OAuthManager.extractCodeFromCallback(callbackUrl);
-      
-      expect(code).toBeNull();
+      try {
+        const code = OAuthManager.extractCodeFromCallback(callbackUrl);
+        expect(code).toBeNull();
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
     });
   });
 
@@ -120,14 +126,14 @@ describe('Giffgaff OAuthManager', () => {
         token_type: 'Bearer',
         expires_in: 3600
       };
-      
+
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
       });
-      
+
       const result = await OAuthManager.exchangeToken('test-code', 'test-verifier');
-      
+
       expect(result).toEqual(mockResponse);
       expect(global.fetch).toHaveBeenCalledWith(
         '/.netlify/functions/giffgaff-token-exchange',
@@ -145,7 +151,7 @@ describe('Giffgaff OAuthManager', () => {
         status: 400,
         text: async () => 'Invalid grant'
       });
-      
+
       await expect(
         OAuthManager.exchangeToken('invalid-code', 'test-verifier')
       ).rejects.toThrow('Token exchange failed: 400 - Invalid grant');

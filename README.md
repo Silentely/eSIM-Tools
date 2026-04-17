@@ -290,7 +290,7 @@ open tests/test_simyo_esim.html
 - `📝 docs(readme): 更新安装说明`
 
 ### 当前 Git 钩子
-- `pre-commit`：提交前格式化 staged 文件，并执行 JS/JSON 语法检查与智能引号拦截
+- `pre-commit`：提交前先同步远程更新（有 upstream 时自动 `git pull --rebase --autostash`），再格式化 staged 文件并执行 JS/JSON 语法检查与智能引号拦截
 - `pre-push`：默认快速模式（`pre-commit` + 相关测试），无差异文件时回退全量测试
 - `prepare-commit-msg`：提交信息为空时自动填充模板
 - `commit-msg`：校验提交信息格式（emoji + type + 中文描述 + 映射关系）
