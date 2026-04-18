@@ -37,10 +37,6 @@ export function getApiEndpoints() {
         applyNewEsim: isNetlify
             ? "/api/simyo/settings/simcard"
             : "http://localhost:3000/api/simyo/settings/simcard",
-        // 兼容旧版短信验证码流程（仅在服务端仍支持时使用）
-        sendSmsCode: isNetlify
-            ? "/api/simyo/esim/send-sms-code"
-            : "http://localhost:3000/api/simyo/esim/send-sms-code",
         verifyCode: isNetlify
             ? "/api/simyo/esim/verify-code"
             : "http://localhost:3000/api/simyo/esim/verify-code",
