@@ -1,85 +1,96 @@
-# eSIM Tools 🚀
+<div align="center">
+<h1 align="center">eSIM Tools 🚀<br><img align='middle' src='https://anay.cosr.eu.org/?text=@Silentely/eSIM-Tools'></img></h1>
+<img align='middle' src='https://anay.cosr.eu.org/?repo=Silentely/eSIM-Tools'></img>
+<br>
+<img src="https://img.shields.io/github/forks/Silentely/eSIM-Tools?color=orange" alt="GitHub forks">
+<img src="https://img.shields.io/github/issues/Silentely/eSIM-Tools?color=green" alt="GitHub issues">
+<br>
+<img src="https://img.shields.io/github/license/Silentely/eSIM-Tools?color=ff69b4" alt="License">
+<img src="https://img.shields.io/github/languages/code-size/Silentely/eSIM-Tools?color=blueviolet" alt="Code size">
+<img src="https://img.shields.io/github/last-commit/Silentely/eSIM-Tools/main?label=%E4%B8%8A%E6%AC%A1%E6%9B%B4%E6%96%B0&color=success" alt="Last commit">
+<img src="https://api.netlify.com/api/v1/badges/8fc159e2-3996-4e1b-bf9d-1945a3474682/deploy-status" alt="Netlify Status">
+<br>
+</div>
 
-Modern eSIM management toolkit designed for Giffgaff and Simyo users, supporting complete eSIM application, activation, and QR code generation processes.
+A modern eSIM management toolkit for Giffgaff and Simyo users, supporting complete eSIM application, activation, and QR code generation workflows.
 
 [:cn: 中文版本](README.md)
 
 ## ✨ Features
 
 ### 🇬🇧 Giffgaff eSIM Tools
-- **OAuth 2.0 PKCE Authentication** - Secure authentication flow
+- **OAuth 2.0 PKCE Authentication** - Secure authentication workflow
 - **Smart Cookie Login** - Fast login without OAuth
-- **MFA Multi-Factor Authentication** - Email/SMS verification code support
-- **SMS Verification Activation** - Fully automatic eSIM application and activation (✅ Recommended)
-- **GraphQL API Integration** - Complete API call chain
+- **MFA (Multi-Factor Authentication)** - Email/SMS verification code support
+- **SMS Verification Activation** - Fully automated eSIM application and activation (✅ Recommended)
+- **GraphQL API Integration** - Complete API invocation chain
 - **LPA QR Code Generation** - Standard eSIM activation code
 - ~~**Manual Activation Guide**~~ - Discontinued on October 8, 2025
 
 ### 🇳🇱 Simyo eSIM Tools
 - **Account Login Verification** - Dutch phone number format validation
-- **Device Replacement Support** - Complete SIM card replacement process
-- **SMS Verification Code** - Automatic sending and verification processing
-- **Instant QR Code Generation** - One-click generation of scannable activation codes
-- **Installation Confirmation** - Ensures eSIM is correctly activated
+- **Device Replacement Support** - Complete SIM replacement flow
+- **SMS Verification Code** - Automatic send and verification processing
+- **Instant QR Code Generation** - One-click generation of scannable activation code
+- **Installation Confirmation** - Ensures eSIM is activated correctly
 
 ## 🖼️ Interface Preview
 
-> Below are functional screenshots of the main pages for quick understanding of the tool interface and core operation paths.
+> Functional screenshots of key pages are shown below to help you quickly understand the UI and core workflows.
 
-### Home Page
+### Home
 
 ![Home - Feature Overview](./src/assets/images/home-preview.jpg)
 
-### Giffgaff eSIM Tools
+### Giffgaff eSIM Tool
 
 ![Giffgaff - Tool Interface](./src/assets/images/giffgaff-preview.jpg)
 
-### Simyo eSIM Tools
+### Simyo eSIM Tool
 
 ![Simyo - Tool Interface](./src/assets/images/simyo-preview.jpg)
 
 ## 🌐 Online Usage
 
 ### 🚀 Online Service (Recommended)
-**Full Version**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
-- ✅ Supports all eSIM operations and processes
-- ✅ Performance optimized, supports offline usage
+**Full version**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
+- ✅ Supports all eSIM operations and workflows
+- ✅ Performance-optimized with offline support
 - ✅ Regular updates and maintenance
 
 ### 🎁 New User Offers
-- **Simyo Users**: New sign-ups enjoy [extra €5 credit](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
-- **Giffgaff Users**: New sign-ups enjoy [extra £5 credit](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
+- **Simyo users**: New SIM activation gets [extra €5 credit](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
+- **Giffgaff users**: New SIM activation gets [extra £5 credit](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
 
 ## 📋 User Guide
 
-### 🇬🇧 Giffgaff eSIM Application Process (Recommended: SMS Verification Activation)
-1. **Authentication** - OAuth login or Cookie fast login
-2. **Email/SMS Verification** - Enter received MFA verification code
-3. **Get Member Information** - Automatically retrieve account information
-4. **SMS Verification Activation** - Select "SMS Verification Activation" (Recommended)
+### 🇬🇧 Giffgaff eSIM Application Flow (Recommended: SMS Verification Activation)
+1. **Authentication** - OAuth login or Cookie quick login
+2. **Email/SMS Verification** - Enter the received MFA code
+3. **Get Member Info** - Automatically fetch account information
+4. **SMS Verification Activation** - Select "SMS Verification Activation" (recommended)
    - Click "Send Verification Code"
-   - Enter the 6-digit SMS verification code received
-   - System automatically completes booking, exchange, and activation
+   - Enter the 6-digit SMS code received
+   - The system automatically completes booking, exchange, and activation
 5. **Get QR Code** - Automatically generates LPA activation code and QR code
 
-> ✅ **Recommended SMS Verification Activation**: Fully automated process, no manual operation required
+> ✅ **Recommended Activation Method**: SMS verification activation with a fully automated flow and no manual intervention.
 >
-> ⚠️ **Discontinued Feature**: Manual activation method was officially fixed and discontinued by Giffgaff on October 8, 2025
+> ⚠️ **Discontinued Feature**: The manual activation method was officially patched and disabled on October 8, 2025.
 >
-> 📖 **Detailed Tutorial**: See [Giffgaff User Guide](./docs/reference/README_giffgaff_esim.md) for complete图文 and video operation guide
+> 📖 **Detailed Tutorial**: See [Giffgaff User Guide](./docs/User_Guide_EN.md) for complete text, image, and video instructions.
 
-### 🇳🇱 Simyo eSIM Application Process
+### 🇳🇱 Simyo eSIM Application Flow
 1. **Account Login** - Enter Dutch phone number (starting with 06) and password
 2. **Select Service** - New application or device replacement
-3. **Verification Code Processing** - SMS or customer service verification code verification
-4. **Get Configuration** - System generates eSIM configuration information
-5. **Scan to Install** - Use the generated QR code to install on new device
+3. **Verification Code Handling** - Verify via SMS code or customer service code
+4. **Get Configuration** - System generates eSIM configuration details
+5. **Scan to Install** - Install on the new device using the generated QR code
 
 ### 📚 Detailed Documentation
-- **[Giffgaff User Guide](./docs/User_Guide.md)** | [中文版](./docs/User_Guide_EN.md)
-- [Giffgaff Detailed Instructions](./docs/reference/README_giffgaff_esim.md) | [中文版](./docs/reference/README_giffgaff_esim_EN.md)
-- [Simyo Detailed Instructions](./docs/reference/README_simyo_esim.md) | [中文版](./docs/reference/README_simyo_esim_EN.md)
-- [Performance Optimization Guide](./docs/PERFORMANCE.md)
+- **[Giffgaff User Guide](./docs/User_Guide_EN.md)** | [中文](./docs/User_Guide.md)
+- [Giffgaff Detailed Reference](./docs/reference/README_giffgaff_esim_EN.md) | [中文](./docs/reference/README_giffgaff_esim.md)
+- [Simyo Detailed Reference](./docs/reference/README_simyo_esim_EN.md) | [中文](./docs/reference/README_simyo_esim.md)
 
 ## 🚀 Local Deployment
 
@@ -104,60 +115,60 @@ Modern eSIM management toolkit designed for Giffgaff and Simyo users, supporting
    # macOS/Linux
    ./start_simyo_server.sh
 
-   # Or manually start
+   # Or start manually
    npm start
    ```
 
-4. **Access Application**
+4. **Open the App**
    ```
    http://localhost:3000
    ```
 
 ### Requirements
-- **Modern Browser**: Chrome 88+, Firefox 85+, Safari 14+, Edge 88+
-- **Development Environment**: Node.js >= 18.0.0, npm >= 8.0.0 (only needed for local development)
+- **Modern browser**: Chrome 88+, Firefox 85+, Safari 14+, Edge 88+
+- **Development environment**: Node.js >= 18.0.0, npm >= 8.0.0 (required only for local development)
 
 ## 🔧 Technical Architecture
 
-### Frontend Tech Stack
-- **HTML5/CSS3** - Responsive design, modern UI
-- **JavaScript ES6+** - Modular architecture, modern syntax features
+### Frontend Stack
+- **HTML5/CSS3** - Responsive design with modern UI
+- **JavaScript ES6+** - Modular architecture and modern syntax features
 - **Bootstrap 5** - Responsive UI framework
 - **Service Worker** - Offline support and cache optimization
 
 ### Backend Architecture
-- **Production**: Netlify Functions - Serverless functions handling API proxy
+- **Production**: Netlify Functions - Serverless functions for API proxying
 - **Development**: Node.js Express - Local development server
 - **CORS Handling** - Unified cross-origin request solution
-- **Session Management** - Secure local storage and automatic expiration mechanism
+- **Session Management** - Secure local storage and automatic expiry mechanism
 
 ### 🚀 Performance Optimization
-- **Resource Compression**: Webpack + TerserPlugin, compression rate 65%+
+- **Resource Compression**: Webpack + TerserPlugin, 65%+ compression ratio
 - **Service Worker**: Offline caching and network status monitoring
-- **Image Optimization**: WebP format support, automatic compression
-- **Code Splitting**: Automatic separation of third-party libraries, reduced initial loading time
+- **Image Optimization**: WebP support with automatic compression
+- **Code Splitting**: Automatic third-party library splitting to reduce initial load time
 
-> Detailed performance optimization documentation can be found in [PERFORMANCE.md](./docs/PERFORMANCE.md)
+> For performance details, see [PERFORMANCE.md](./docs/PERFORMANCE.md)
 
-### Service Time Information
-- **Giffgaff Service Window**: UK Time 04:30 – 21:30 (Europe/London)
-- **Operations Outside Window**: May fail or be unstable, UI displays local time compared to UK time
+### Service Time Window
+- **Giffgaff service window**: 04:30 - 21:30 UK time (Europe/London)
+- **Outside window**: Operations may fail or become unstable; UI shows local time vs UK time for reference
 
-## 📦 Deployment Methods
+## 📦 Deployment Options
 
 ### 🌟 Recommended: Online Service
-Use hosted version [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
-- No deployment configuration needed, ready to use
+Use the hosted version [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
+- No deployment required, ready to use
 - Automatic updates, stable and reliable
 - Full feature support
 
-### 🔧 Self-hosted: Netlify
+### 🔧 Self-Hosted: Netlify
 1. Fork this repository to your GitHub account
-2. Connect GitHub repository in [Netlify](https://app.netlify.com)
+2. Connect the GitHub repository in [Netlify](https://app.netlify.com)
 3. Build settings:
    - Build command: `echo 'No build needed'`
    - Publish directory: `.`
-4. Deployment complete, get your custom domain
+4. Deployment complete, get your own domain
 
 ### ⚙️ Local Development
 ```bash
@@ -169,42 +180,42 @@ cd eSIM-Tools
 npm install
 npm start
 
-# Access http://localhost:3000
+# Visit http://localhost:3000
 ```
 
-## ❓ Frequently Asked Questions
+## ❓ FAQ
 
-### Giffgaff Related
+### Giffgaff
 **Q: Which activation method is recommended?**
-A: Recommend using "SMS Verification Activation", fully automated process, just enter the SMS verification code to complete all steps.
+A: Use "SMS Verification Activation". It is fully automated and only requires entering the SMS code.
 
 **Q: How long does SMS verification activation take?**
-A: Usually 1-2 minutes. Send verification code → Enter verification code → Automatically complete booking, exchange and activation → Get QR code.
+A: Usually 1-2 minutes. Send code -> Enter code -> Auto booking/exchange/activation -> Get QR code.
 
-**Q: Can manual activation still be used?**
-A: Manual activation method was officially fixed and discontinued by Giffgaff on October 8, 2025. Please use SMS verification activation.
+**Q: Is manual activation still available?**
+A: No. It was officially patched and disabled by Giffgaff on October 8, 2025. Please use SMS verification activation.
 
 **Q: What if I accidentally close the page?**
-A: After re-login, the system will continue from the recoverable node. It is recommended to keep the page open until activation is complete.
+A: After logging in again, the system resumes from recoverable nodes. Keep the page open until activation finishes when possible.
 
-### Simyo Related
+### Simyo
 **Q: Which phone number formats are supported?**
-A: Only Dutch phone numbers (10-digit numbers starting with 06).
+A: Only Dutch mobile numbers (10 digits starting with 06).
 
-**Q: What if I don't receive the verification code?**
-A: You can choose the customer service verification code option, or check SMS blocking settings.
+**Q: What if I cannot receive the verification code?**
+A: You can choose the customer service verification option, or check your SMS blocking settings.
 
 ## ⚠️ Important Notes
 
-### Scope of Application
-- **Giffgaff**: UK users only
-- **Simyo**: Netherlands users only (06 prefix phone numbers)
+### Scope
+- **Giffgaff**: For UK users only
+- **Simyo**: For Netherlands users only (numbers starting with 06)
 
 ### Security and Privacy
-- ✅ All data processing is done locally
-- ✅ Does not store user credential information
-- ✅ Recommended to use in secure network environment
-- ✅ Open source and transparent, code auditable
+- ✅ All data is processed locally
+- ✅ No user credentials are stored
+- ✅ Recommended to use in a secure network environment
+- ✅ Open and transparent source code, auditable by anyone
 
 ## 📁 Project Structure
 
@@ -220,26 +231,26 @@ eSIM-Tools/
 │   └── ⚙️ js/                    # JavaScript modules
 ├── 🌐 netlify/                   # Serverless functions
 │   └── functions/                # API proxy
-├── 📚 docs/                      # Project documentation
+├── 📚 docs/                      # Project documents
 │   ├── guides/                   # User guides
-│   ├── reference/                # Reference documents
+│   ├── reference/                # Reference docs
 │   └── fixes/                    # Issue fixes
 ├── 🧪 tests/                     # Test files
 └── 🛠️ scripts/                   # Deployment scripts
 ```
 
-### Cross-Origin Solutions
-1. **🌟 Recommended**: Use online service [esim.cosr.eu.org](https://esim.cosr.eu.org)
+### CORS Solutions
+1. **🌟 Recommended**: Use the online service [esim.cosr.eu.org](https://esim.cosr.eu.org)
 2. **🔧 Netlify Functions**: Automatic API proxy
 3. **💻 Local Proxy**: Node.js development server
-4. **📖 Detailed Explanation**: [CORS Solution Document](./docs/guides/CORS_SOLUTION.md)
+4. **📖 Detailed Notes**: [CORS Solution Document](./docs/guides/CORS_SOLUTION.md)
 
 ## 🧪 Testing
 
-Project includes comprehensive test suite:
-- **Unit Tests** - Core functions and modules testing
-- **Integration Tests** - API calls and process testing
-- **End-to-End Tests** - Complete user flow verification
+The project includes a complete test suite:
+- **Unit tests** - Core functions and module tests
+- **Integration tests** - API call and workflow tests
+- **End-to-end tests** - Full user flow verification
 
 ```bash
 # Run test suite
@@ -250,25 +261,25 @@ open tests/test_giffgaff_esim.html
 open tests/test_simyo_esim.html
 ```
 
-## 🤝 Contribution Guidelines
+## 🤝 Contributing
 
-Contributions and suggestions welcome!
+Contributions and suggestions are welcome.
 
-### How to Participate
-1. 🍴 Fork project repository
-2. 🌿 Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. 💾 Commit with format (`git commit -m '✨ feat(core): 新增二维码缓存逻辑'`)
-4. 📤 Push branch (`git push origin feature/AmazingFeature`)
-5. 🔃 Create Pull Request
+### How to Contribute
+1. 🍴 Fork the repository
+2. 🌿 Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. 💾 Commit following the convention (`git commit -m '✨ feat(core): 新增二维码缓存逻辑'`)
+4. 📤 Push your branch (`git push origin feature/AmazingFeature`)
+5. 🔃 Open a Pull Request
 
 ### Development Standards
-- Follow existing code style
+- Follow the existing code style
 - Add necessary test cases
-- Update relevant documentation
+- Update related documentation
 
-### Commit Message Rules (emoji + Chinese summary)
-1. Enable repo hooks: `npm run hooks:install`
-2. Format: `<emoji> <type>(optional-scope): <中文描述>`
+### Commit Message Convention (emoji + Chinese)
+1. Enable repository hooks: `npm run hooks:install`
+2. Commit format: `<emoji> <type>(optional-scope): <中文描述>`
 3. Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 4. Emoji must match type (for example, `✨` for `feat`, `🐛` for `fix`)
 
@@ -278,10 +289,10 @@ Examples:
 - `📝 docs(readme): 更新安装说明`
 
 ### Current Git Hooks
-- `pre-commit`: syncs remote updates first (auto `git pull --rebase --autostash` when upstream exists), then formats staged files and runs JS/JSON syntax + smart quotes checks
-- `pre-push`: defaults to fast mode (`pre-commit` + related tests), falls back to full tests when no diff files are detected
-- `prepare-commit-msg`: auto-fills a template when commit message is empty
-- `commit-msg`: validates message format (emoji + type + Chinese summary + mapping)
+- `pre-commit`: Syncs remote updates first (auto `git pull --rebase --autostash` when upstream exists), then formats staged files and runs JS/JSON syntax checks and smart-quote blocking
+- `pre-push`: Defaults to fast mode (`pre-commit` + related tests), falls back to full test suite when no changed files are detected
+- `prepare-commit-msg`: Auto-fills a template when the commit message is empty
+- `commit-msg`: Validates commit message format (emoji + type + Chinese summary + mapping)
 
 Useful commands:
 - List hooks: `npm run hooks:list`
@@ -291,29 +302,31 @@ Useful commands:
 
 ## 📞 Support and Feedback
 
-Having issues or suggestions?
-- 📋 [Submit Issue](https://github.com/Silentely/eSIM-Tools/issues)
+If you encounter issues or have suggestions:
+- 📋 [Submit an Issue](https://github.com/Silentely/eSIM-Tools/issues)
 - 📖 View [Project Documentation](./docs/)
-- 💬 Participate in community discussions
+- 💬 Join community discussions
 
-## 📈 Historical Star Ratings
+## 📈 Star History
 
 ![](https://starchart.cc/Silentely/eSIM-Tools.svg)
 
 ## 📄 License
 
 - All code in this project, unless otherwise stated, is released under the [MIT License](LICENSE).
-- README.MD, wiki and other resources of this project are based on [CC BY-NC-SA 4.0][CC-NC-SA-4.0] which means you can copy and redistribute the content of this project,<br/>
-  but you must also **provide author information and license statement**. At the same time you **cannot use this project for commercial purposes**, according to our narrow interpretation<br/>
-  (additional clause), any **profit-making activities are considered commercial use**.
+- README.md, wiki, and other resources in this project are licensed under [CC BY-NC-SA 4.0][CC-NC-SA-4.0]. This means you may copy and redistribute project content,<br/>
+  but you must also **provide original author attribution and license notice**. At the same time, you **may not use this project for commercial purposes** under our narrow interpretation<br/>
+  (additional clause): any **profit-generating activity is considered commercial use**.
 - Please use this project in compliance with local laws and regulations.
 
 ## ⚖️ Disclaimer
-
-This tool is for learning and personal use only. Please comply with relevant terms of service. The developer is not responsible for any problems arising from the use of this tool. Please use in compliance with local laws and regulations.
+<p align="center">
+  <img src="https://github.com/docker/dockercraft/raw/master/docs/img/contribute.png?raw=true" alt="Contribution illustration">
+</p>
+This tool is for learning and personal use only. Please comply with the relevant terms of service. The developer is not responsible for any issues caused by using this tool. Please use it in accordance with local laws and regulations.
 
 [github-hosts]: https://raw.githubusercontent.com/racaljk/hosts/master/hosts "hosts on Github"
-[CC-NC-SA-4.0]: https://creativecommons.org/licenses/by-nc-sa/4.0/
+[CC-NC-SA-4.0]: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh
 
 <div align="center">
   <sub>Made with ❤️ by <a href="https://github.com/Silentely">Silentely</a></sub>
