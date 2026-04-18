@@ -64,6 +64,78 @@ function isExtensionProviderConflict({
     includesExtensionKeyword(mechanismType);
 }
 
+function isGenericObjectRejectionException(exception = {}) {
+  const mechanismType = toLowerSafe(exception?.mechanism?.type || '');
+  if (mechanismType !== 'onunhandledrejection') return false;
+
+  const exceptionValue = toLowerSafe(exception?.value || '');
+  return exceptionValue.includes('object captured as promise rejection with keys') ||
+    exceptionValue.includes('non-error promise rejection captured with keys');
+}
+
+function collectEventSearchableText(event) {
+  const MAX_DEPTH = 4;
+  const MAX_CHUNKS = 160;
+  const chunks = [];
+  const seen = new Set();
+
+  function pushChunk(value) {
+    if (value === null || value === undefined) return;
+    if (chunks.length >= MAX_CHUNKS) return;
+    chunks.push(String(value));
+  }
+
+  function walk(value, depth = 0) {
+    if (value === null || value === undefined) return;
+    if (chunks.length >= MAX_CHUNKS) return;
+    if (depth > MAX_DEPTH) return;
+
+    const valueType = typeof value;
+    if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
+      pushChunk(value);
+      return;
+    }
+
+    if (valueType !== 'object') return;
+    if (seen.has(value)) return;
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      value.forEach(item => walk(item, depth + 1));
+      return;
+    }
+
+    Object.keys(value).forEach((key) => {
+      if (chunks.length >= MAX_CHUNKS) return;
+      // 优先采集错误链路核心字段，避免遍历过深影响性能
+      if ([
+        'message',
+        'value',
+        'type',
+        'reason',
+        'originalException',
+        'mechanism',
+        'exception',
+        'extra',
+        'breadcrumbs',
+        'data',
+        'filename',
+        'function',
+      ].includes(key)) {
+        walk(value[key], depth + 1);
+        return;
+      }
+
+      if (depth < 2) {
+        walk(value[key], depth + 1);
+      }
+    });
+  }
+
+  walk(event, 0);
+  return chunks.join('\n');
+}
+
 function recordExtensionNoise(source, payload = {}) {
   try {
     const store = window[EXTENSION_NOISE_STORE_KEY] || { count: 0, samples: [] };
@@ -328,6 +400,20 @@ function initSentry() {
                   return null;
                 }
               }
+            }
+          }
+
+          // Sentry 对非 Error rejection 会退化为通用文案，额外从 event 全量字段回溯扩展特征
+          for (const exception of event.exception.values) {
+            if (!isGenericObjectRejectionException(exception)) continue;
+
+            const searchable = collectEventSearchableText(event);
+            if (includesExtensionKeyword(searchable)) {
+              recordExtensionNoise('init-beforeSend-object-rejection', {
+                message: exception?.value,
+                mechanismType: exception?.mechanism?.type || 'onunhandledrejection',
+              });
+              return null;
             }
           }
         }

@@ -134,7 +134,7 @@
 
 **核心方法：**
 - `applyNewEsim()` - 申请新eSIM
-- `sendSmsCode()` - 发送短信验证码
+- `sendSmsCode()` - 兼容旧流程的验证码发送（新版邮箱流程通常不需要单独发送）
 - `verifyCode()` - 验证验证码
 
 **依赖：**
@@ -145,7 +145,7 @@
 ```
 申请新eSIM
     ↓
-发送短信验证码（可选）
+系统发送邮箱验证码
     ↓
 验证验证码
     ↓
@@ -252,13 +252,11 @@ ui-controller.showDeviceChangeOption()
 ```
 用户选择设备更换
     ↓
-simyo-app.handleDeviceChange()
+ui-controller.showDeviceChangeSteps()
     ↓
 device-change-handler.applyNewEsim()
     ├─→ 调用API (api-config)
     └─→ state-manager更新状态
-    ↓
-device-change-handler.sendSmsCode()
     ↓
 用户输入验证码
     ↓
@@ -416,6 +414,6 @@ async functionName(param1) {
 
 ---
 
-**文档版本：** 1.0.0  
-**创建时间：** 2025-11-01  
+**文档版本：** 1.0.0
+**创建时间：** 2025-11-01
 **维护者：** eSIM Tools Team

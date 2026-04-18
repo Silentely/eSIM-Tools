@@ -21,22 +21,26 @@ export const simyoConfig = {
  */
 export function getApiEndpoints() {
     const isNetlify = isNetlifyEnvironment();
-    
+
     return {
         // 认证相关
-        login: isNetlify 
-            ? "/api/simyo/sessions" 
+        login: isNetlify
+            ? "/api/simyo/sessions"
             : "http://localhost:3000/api/simyo/sessions",
-        
+
         // eSIM相关
-        getEsim: isNetlify 
-            ? "/api/simyo/esim/get-by-customer" 
+        getEsim: isNetlify
+            ? "/api/simyo/esim/get-by-customer"
             : "http://localhost:3000/api/simyo/esim/get-by-customer",
-        
+
         // 设备更换相关
         applyNewEsim: isNetlify
             ? "/api/simyo/settings/simcard"
             : "http://localhost:3000/api/simyo/settings/simcard",
+        // 兼容旧版短信验证码流程（仅在服务端仍支持时使用）
+        sendSmsCode: isNetlify
+            ? "/api/simyo/esim/send-sms-code"
+            : "http://localhost:3000/api/simyo/esim/send-sms-code",
         verifyCode: isNetlify
             ? "/api/simyo/esim/verify-code"
             : "http://localhost:3000/api/simyo/esim/verify-code",
@@ -45,12 +49,12 @@ export function getApiEndpoints() {
         availableValidationMethods: isNetlify
             ? "/api/simyo/esim.availableValidationMethods"
             : "http://localhost:3000/api/simyo/esim.availableValidationMethods",
-        
+
         // 安装确认
-        confirmInstall: isNetlify 
-            ? "/api/simyo/esim/reorder-profile-installed" 
+        confirmInstall: isNetlify
+            ? "/api/simyo/esim/reorder-profile-installed"
             : "http://localhost:3000/api/simyo/esim/reorder-profile-installed",
-        
+
         // 二维码服务
         qrcode: "https://qrcode.show/"
     };
@@ -69,11 +73,11 @@ export function createHeaders(includeSession = false, sessionToken = "") {
         'X-Client-Version': simyoConfig.clientVersion,
         'User-Agent': simyoConfig.userAgent
     };
-    
+
     if (includeSession && sessionToken) {
         headers['X-Session-Token'] = sessionToken;
     }
-    
+
     return headers;
 }
 

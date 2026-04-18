@@ -8,7 +8,7 @@ import { uiController } from './modules/ui-controller.js';
 import { authHandler } from './modules/auth-handler.js';
 import { deviceChangeHandler } from './modules/device-change-handler.js';
 import { esimService } from './modules/esim-service.js';
-import { 
+import {
     copyToClipboard,
     showToast,
     openHelp,
@@ -20,54 +20,54 @@ class SimyoApp {
     constructor() {
         this.initialized = false;
     }
-    
+
     /**
      * 初始化应用
      */
     async init() {
         if (this.initialized) return;
-        
+
         console.log(t('simyo.app.console.initStart'));
-        
+
         // 订阅状态变化
         stateManager.subscribe((state) => {
             uiController.updateStatusPanel();
         });
-        
+
         // 绑定事件监听器
         this.bindEventListeners();
-        
+
         // 恢复会话
         const sessionRestored = stateManager.loadSession();
-        
+
         if (sessionRestored) {
             this.handleSessionRestore();
         } else {
             uiController.showSection(1);
         }
-        
+
         // 更新状态显示
         uiController.updateStatusPanel();
-        
+
         this.initialized = true;
         console.log(t('simyo.app.console.initDone'));
     }
-    
+
     /**
      * 绑定所有事件监听器
      */
     bindEventListeners() {
         const { elements } = uiController;
-        
+
         // ===== Step 1: 登录 =====
         elements.loginBtn?.addEventListener('click', () => this.handleLogin());
-        
+
         // ===== 设备更换流程 =====
         this.bindDeviceChangeFlow();
-        
+
         // ===== Step 2: 获取eSIM =====
         elements.getEsimBtn?.addEventListener('click', () => this.handleGetEsim());
-        
+
         // ===== Step 3: 生成二维码 =====
         elements.generateQrBtn?.addEventListener('click', () => this.handleGenerateQR());
 
@@ -79,7 +79,7 @@ class SimyoApp {
 
         // ===== Step 4: 确认安装 =====
         elements.confirmInstallBtn?.addEventListener('click', () => this.handleConfirmInstall());
-        
+
         // ===== 通用操作 =====
         elements.clearSessionBtn?.addEventListener('click', () => this.handleClearSession());
 
@@ -93,7 +93,7 @@ class SimyoApp {
         // 返回按钮
         this.bindBackButtons();
     }
-    
+
     /**
      * 绑定设备更换流程
      */
@@ -104,21 +104,14 @@ class SimyoApp {
             applyBtn.__bound = true;
             applyBtn.addEventListener('click', () => this.handleApplyNewEsim());
         }
-        
-        // 发送短信验证码
-        const sendSmsBtn = document.getElementById('sendSmsBtn');
-        if (sendSmsBtn && !sendSmsBtn.__bound) {
-            sendSmsBtn.__bound = true;
-            sendSmsBtn.addEventListener('click', () => this.handleSendSmsCode());
-        }
-        
+
         // 验证验证码
         const verifyBtn = document.getElementById('verifyCodeBtn');
         if (verifyBtn && !verifyBtn.__bound) {
             verifyBtn.__bound = true;
             verifyBtn.addEventListener('click', () => this.handleVerifyCode());
         }
-        
+
         // 验证码输入监听
         const codeInput = document.getElementById('validationCodeInput');
         if (codeInput && !codeInput.__bound) {
@@ -131,7 +124,7 @@ class SimyoApp {
             });
         }
     }
-    
+
     /**
      * 绑定步骤导航
      */
@@ -148,7 +141,7 @@ class SimyoApp {
             }
         });
     }
-    
+
     /**
      * 绑定返回按钮
      */
@@ -166,9 +159,9 @@ class SimyoApp {
             }
         });
     }
-    
+
     // ===== 事件处理器 =====
-    
+
     /**
      * 处理登录
      */
@@ -213,28 +206,33 @@ class SimyoApp {
             loginBtn.disabled = false;
         }
     }
-    
+
     /**
      * 处理申请新eSIM
      */
     async handleApplyNewEsim() {
         const applyBtn = document.getElementById('applyNewEsimBtn');
         const statusEl = document.getElementById('applyNewEsimStatus');
-        
+
         try {
             applyBtn.innerHTML = `<span class="loading"></span> ${tl('申请中...')}`;
             applyBtn.disabled = true;
-            
+
             uiController.showStatus(statusEl, t('simyo.app.status.applyProcessing'), "success");
-            
+
             const result = await deviceChangeHandler.applyNewEsim();
-            
+
             uiController.showStatus(statusEl, result.message || t('simyo.app.status.applySuccess'), "success");
-            
-            // 启用发送短信按钮
-            const sendSmsBtn = document.getElementById('sendSmsBtn');
-            if (sendSmsBtn) sendSmsBtn.disabled = false;
-            
+
+            // 新版流程使用邮箱验证码：引导用户直接输入验证码
+            const codeInput = document.getElementById('validationCodeInput');
+            const verifyBtn = document.getElementById('verifyCodeBtn');
+            if (codeInput) {
+                codeInput.focus();
+                const hasValidCode = /^\d{6}$/.test(codeInput.value.trim());
+                if (verifyBtn) verifyBtn.disabled = !hasValidCode;
+            }
+
             // 显示下一步提示
             if (result.nextStep) {
                 await delay(3000);
@@ -247,41 +245,7 @@ class SimyoApp {
             applyBtn.disabled = false;
         }
     }
-    
-    /**
-     * 处理发送短信验证码
-     */
-    async handleSendSmsCode() {
-        const sendBtn = document.getElementById('sendSmsBtn');
-        const statusEl = document.getElementById('sendSmsStatus');
-        
-        try {
-            sendBtn.innerHTML = `<span class="loading"></span> ${tl('发送中...')}`;
-            sendBtn.disabled = true;
-            
-            uiController.showStatus(statusEl, t('simyo.app.status.smsProcessing'), "success");
-            
-            const result = await deviceChangeHandler.sendSmsCode();
-            
-            uiController.showStatus(statusEl, result.message || t('simyo.app.status.smsSuccess'), "success");
-            
-            // 启用验证码输入
-            const codeInput = document.getElementById('validationCodeInput');
-            if (codeInput) codeInput.disabled = false;
-            
-            // 显示下一步提示
-            if (result.nextStep) {
-                await delay(3000);
-                uiController.showStatus(statusEl, result.nextStep, "info");
-            }
-        } catch (error) {
-            uiController.showStatus(statusEl, t('simyo.app.error.smsFailed', { message: error.message }), "error");
-        } finally {
-            sendBtn.innerHTML = `<i class="fas fa-sms me-2"></i>${tl('发送验证码到短信')}`;
-            sendBtn.disabled = false;
-        }
-    }
-    
+
     /**
      * 处理验证验证码
      */
@@ -289,19 +253,19 @@ class SimyoApp {
         const verifyBtn = document.getElementById('verifyCodeBtn');
         const statusEl = document.getElementById('verifyCodeStatus');
         const codeInput = document.getElementById('validationCodeInput');
-        
+
         const validationCode = codeInput.value.trim();
-        
+
         try {
             verifyBtn.innerHTML = `<span class="loading"></span> ${tl('验证中...')}`;
             verifyBtn.disabled = true;
-            
+
             uiController.showStatus(statusEl, t('simyo.app.status.verifyProcessing'), "success");
-            
+
             const result = await deviceChangeHandler.verifyCode(validationCode);
-            
+
             uiController.showStatus(statusEl, result.message || t('simyo.app.status.verifySuccess'), "success");
-            
+
             // 显示下一步提示并自动进入获取eSIM步骤
             if (result.nextStep) {
                 await delay(2000);
@@ -317,7 +281,7 @@ class SimyoApp {
             verifyBtn.disabled = true;
         }
     }
-    
+
     /**
      * 处理获取eSIM
      */
@@ -345,7 +309,7 @@ class SimyoApp {
             elements.getEsimBtn.disabled = false;
         }
     }
-    
+
     /**
      * 处理生成二维码（合并获取eSIM和生成二维码）
      */
@@ -393,14 +357,14 @@ class SimyoApp {
             elements.generateQrBtn.disabled = false;
         }
     }
-    
+
     /**
      * 绑定二维码操作按钮
      */
     bindQRActions(lpaString) {
         const copyBtn = document.getElementById('copyLpaBtn');
         const downloadBtn = document.getElementById('downloadQrBtn');
-        
+
         if (copyBtn && !copyBtn.__bound) {
             copyBtn.__bound = true;
             copyBtn.addEventListener('click', async () => {
@@ -413,7 +377,7 @@ class SimyoApp {
                 }
             });
         }
-        
+
         if (downloadBtn && !downloadBtn.__bound) {
             downloadBtn.__bound = true;
             downloadBtn.addEventListener('click', () => {
@@ -421,21 +385,21 @@ class SimyoApp {
             });
         }
     }
-    
+
     /**
      * 处理确认安装
      */
     async handleConfirmInstall() {
         const { elements } = uiController;
-        
+
         try {
             elements.confirmInstallBtn.innerHTML = `<span class="loading"></span> ${tl('确认中...')}`;
             elements.confirmInstallBtn.disabled = true;
-            
+
             uiController.showStatus(elements.confirmStatus, t('simyo.app.status.confirmProcessing'), "success");
-            
+
             const result = await esimService.confirmInstall();
-            
+
             uiController.showStatus(elements.confirmStatus, result.message || t('simyo.app.status.confirmSuccess'), "success");
         } catch (error) {
             uiController.showStatus(elements.confirmStatus, t('simyo.app.error.confirmFailed', { message: error.message }), "error");
@@ -444,7 +408,7 @@ class SimyoApp {
             elements.confirmInstallBtn.disabled = false;
         }
     }
-    
+
     /**
      * 处理清除会话
      */
@@ -455,7 +419,7 @@ class SimyoApp {
             uiController.showStatus(uiController.elements.loginStatus, t('simyo.app.toast.sessionCleared'), "success");
         }
     }
-    
+
     /**
      * 处理会话恢复
      */

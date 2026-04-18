@@ -75,6 +75,94 @@
       includesExtensionKeyword(payload.mechanismType);
   }
 
+  function isGenericObjectRejectionException(exception) {
+    if (!exception || typeof exception !== 'object') return false;
+
+    var mechanismType = toLowerSafe(
+      exception.mechanism && exception.mechanism.type ? exception.mechanism.type : ''
+    );
+    if (mechanismType !== 'onunhandledrejection') return false;
+
+    var exceptionValue = toLowerSafe(exception.value);
+    return exceptionValue.indexOf('object captured as promise rejection with keys') !== -1 ||
+      exceptionValue.indexOf('non-error promise rejection captured with keys') !== -1;
+  }
+
+  function collectEventSearchableText(event) {
+    var MAX_DEPTH = 4;
+    var MAX_CHUNKS = 160;
+    var chunks = [];
+    var seen = [];
+
+    function pushChunk(value) {
+      if (value === null || value === undefined) return;
+      if (chunks.length >= MAX_CHUNKS) return;
+      chunks.push(String(value));
+    }
+
+    function isSeenObject(obj) {
+      for (var i = 0; i < seen.length; i++) {
+        if (seen[i] === obj) return true;
+      }
+      return false;
+    }
+
+    function walk(value, depth) {
+      if (value === null || value === undefined) return;
+      if (chunks.length >= MAX_CHUNKS) return;
+      if (depth > MAX_DEPTH) return;
+
+      var type = typeof value;
+      if (type === 'string' || type === 'number' || type === 'boolean') {
+        pushChunk(value);
+        return;
+      }
+      if (type !== 'object') return;
+
+      if (isSeenObject(value)) return;
+      seen.push(value);
+
+      if (Array.isArray(value)) {
+        for (var i = 0; i < value.length; i++) {
+          walk(value[i], depth + 1);
+          if (chunks.length >= MAX_CHUNKS) return;
+        }
+        return;
+      }
+
+      var keys = Object.keys(value);
+      for (var j = 0; j < keys.length; j++) {
+        var key = keys[j];
+        if (chunks.length >= MAX_CHUNKS) return;
+        // 优先采集错误链路核心字段，避免遍历过深影响性能
+        if (
+          key === 'message' ||
+          key === 'value' ||
+          key === 'type' ||
+          key === 'reason' ||
+          key === 'originalException' ||
+          key === 'mechanism' ||
+          key === 'exception' ||
+          key === 'extra' ||
+          key === 'breadcrumbs' ||
+          key === 'data' ||
+          key === 'filename' ||
+          key === 'function'
+        ) {
+          walk(value[key], depth + 1);
+          continue;
+        }
+
+        if (depth < 2) {
+          walk(value[key], depth + 1);
+        }
+      }
+    }
+
+    walk(event, 0);
+    return chunks.join('\n');
+  }
+
   function recordExtensionNoise(source, payload) {
     try {
       var store = window[EXTENSION_NOISE_STORE_KEY];
@@ -345,6 +433,23 @@
                   });
                   return null;
                 }
+              }
+            }
+
+            // Sentry 对非 Error rejection 会退化为通用文案，额外从 event 全量字段回溯扩展特征
+            for (var k = 0; k < event.exception.values.length; k++) {
+              var candidate = event.exception.values[k] || {};
+              if (!isGenericObjectRejectionException(candidate)) continue;
+
+              var searchable = collectEventSearchableText(event);
+              if (includesExtensionKeyword(searchable)) {
+                recordExtensionNoise('loader-beforeSend-object-rejection', {
+                  message: candidate.value,
+                  mechanismType: candidate.mechanism && candidate.mechanism.type
+                    ? candidate.mechanism.type
+                    : 'onunhandledrejection'
+                });
+                return null;
               }
             }
           }

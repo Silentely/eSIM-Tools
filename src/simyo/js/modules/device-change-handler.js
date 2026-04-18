@@ -12,7 +12,7 @@ export class DeviceChangeHandler {
     constructor() {
         this.apiEndpoints = getApiEndpoints();
     }
-    
+
     /**
      * 查询可用的验证方式
      * @returns {Promise<Object>} 可用的验证方式列表
@@ -92,7 +92,94 @@ export class DeviceChangeHandler {
             throw error;
         }
     }
-    
+
+    /**
+     * 发送验证码（兼容新版邮箱验证与旧版短信验证）
+     * @returns {Promise<Object>} 发送结果
+     */
+    async sendSmsCode() {
+        const sessionToken = stateManager.get('sessionToken');
+
+        if (!sessionToken) {
+            throw new Error(t('simyo.errors.requireLogin'));
+        }
+
+        let methodInfo = null;
+        let methodQueryError = null;
+
+        try {
+            const methodResult = await this.getAvailableValidationMethods();
+            methodInfo = this.detectValidationMethodSupport(methodResult.methods);
+        } catch (error) {
+            // 查询验证方式失败时，允许回退旧版短信接口，避免直接阻断流程
+            methodQueryError = error;
+        }
+
+        // 新版流程通常只需要邮箱验证码，不需要单独发送短信
+        if (methodInfo && !methodInfo.hasSms) {
+            return {
+                success: true,
+                message: methodInfo.hasEmail ? t('simyo.device.emailSent') : t('simyo.device.smsSuccess'),
+            };
+        }
+
+        // 回退旧版短信接口（兼容旧流程）
+        if (!this.apiEndpoints.sendSmsCode) {
+            if (methodQueryError) {
+                throw methodQueryError;
+            }
+            return {
+                success: true,
+                message: t('simyo.device.smsSuccess'),
+            };
+        }
+
+        try {
+            const response = await fetch(this.apiEndpoints.sendSmsCode, {
+                method: 'POST',
+                headers: createHeaders(true, sessionToken),
+            });
+
+            const data = await handleApiResponse(response);
+
+            if (!data.success || !data.result) {
+                throw new Error(data.message || t('simyo.device.smsFailed'));
+            }
+
+            return {
+                success: true,
+                message: data.message || data.result.message || t('simyo.device.smsSuccess'),
+                nextStep: data.result.nextStep,
+            };
+        } catch (error) {
+            console.error(t('simyo.device.log.smsFailed'), error);
+            throw error;
+        }
+    }
+
+    /**
+     * 解析可用验证方式
+     * @param {Array} methods - 后端返回的验证方式列表
+     * @returns {{hasEmail: boolean, hasSms: boolean}}
+     */
+    detectValidationMethodSupport(methods = []) {
+        const normalizedMethods = (Array.isArray(methods) ? methods : [])
+            .map((method) => {
+                if (typeof method === 'string') return method;
+                if (method && typeof method === 'object') {
+                    return method.type || method.method || method.name || '';
+                }
+                return '';
+            })
+            .map(method => String(method).toUpperCase())
+            .filter(Boolean);
+
+        return {
+            hasEmail: normalizedMethods.some(method => method.includes('EMAIL')),
+            hasSms: normalizedMethods.some(method => method.includes('SMS')),
+        };
+    }
+
     /**
      * 验证验证码
      * @param {string} validationCode - 验证码
