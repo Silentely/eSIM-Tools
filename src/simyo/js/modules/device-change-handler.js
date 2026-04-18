@@ -105,33 +105,15 @@ export class DeviceChangeHandler {
         }
 
         let methodInfo = null;
-        let methodQueryError = null;
 
         try {
             const methodResult = await this.getAvailableValidationMethods();
             methodInfo = this.detectValidationMethodSupport(methodResult.methods);
-        } catch (error) {
-            // 查询验证方式失败时，允许回退旧版短信接口，避免直接阻断流程
-            methodQueryError = error;
-        }
-
-        // 新版流程通常只需要邮箱验证码，不需要单独发送短信
-        if (methodInfo && !methodInfo.hasSms) {
-            return {
-                success: true,
-                message: methodInfo.hasEmail ? t('simyo.device.emailSent') : t('simyo.device.smsSuccess'),
-            };
-        }
+        } catch (_) {}
 
         // 回退旧版短信接口（兼容旧流程）
         if (!this.apiEndpoints.sendSmsCode) {
-            if (methodQueryError) {
-                throw methodQueryError;
-            }
-            return {
-                success: true,
-                message: t('simyo.device.smsSuccess'),
-            };
+            throw new Error(t('simyo.device.smsFailed'));
         }
 
         try {
@@ -152,6 +134,13 @@ export class DeviceChangeHandler {
                 nextStep: data.result.nextStep,
             };
         } catch (error) {
+            // 新版流程（邮箱验证）下，发送短信接口可能不存在，此时给出兼容提示
+            if (methodInfo && methodInfo.hasEmail && !methodInfo.hasSms) {
+                return {
+                    success: true,
+                    message: t('simyo.device.emailSent'),
+                };
+            }
             console.error(t('simyo.device.log.smsFailed'), error);
             throw error;
         }
