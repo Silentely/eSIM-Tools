@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "generated_at_unix": 1776443845,
+  "generated_at_unix": 1776485804,
   "repo_root": "/home/runner/work/eSIM-Tools/eSIM-Tools",
   "scanned_files": 149,
   "indexed_files": 149,
@@ -9,5 +9,5 @@
   "max_chunk_chars": 1800,
   "embed_batch_size": 8,
   "embedding_user_agent": "curl/8.7.1",
-  "embedding_enabled": false
+  "embedding_enabled": true
 }
