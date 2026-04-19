@@ -4,7 +4,7 @@
  * commit-msg 校验：
  * 1. 首段必须为 emoji（或 :shortcode:）；
  * 2. 后续遵循 Conventional Commits 头部格式；
- * 3. emoji 与 type 必须匹配；
+ * 3. emoji 与 type 仅要求分别合法，不再强制一一匹配；
  * 4. 描述必须包含中文字符。
  *
  * 格式：<emoji> <type>(optional-scope): <中文描述>
@@ -68,7 +68,7 @@ function fail(message) {
   console.error(`   ${message}\n`);
   console.error('期望格式：');
   console.error('  <emoji> <type>(optional-scope): <中文描述>');
-  console.error('\nemoji 与 type 对应关系：');
+  console.error('\n支持的 emoji（推荐对应关系如下，非强制）：');
   console.error(`  ${ALLOWED_PAIRS_HELP}`);
   console.error('\n示例：');
   console.error('  ✨ feat(auth): 新增登录态自动续期');
@@ -96,18 +96,12 @@ function isEmojiToken(token) {
   return TOKEN_TO_TYPES.has(key);
 }
 
-function validateEmojiTypePair(emojiToken, type) {
+function validateEmojiToken(emojiToken) {
   const key = emojiToken.startsWith(':')
     ? emojiToken.toLowerCase()
     : emojiToken.replace(/\uFE0F/g, '');
-  const allowedTypes = TOKEN_TO_TYPES.get(key);
-
-  if (!allowedTypes || allowedTypes.length === 0) {
+  if (!TOKEN_TO_TYPES.has(key)) {
     fail(`不支持的 emoji：${emojiToken}`);
-  }
-
-  if (!allowedTypes.includes(type)) {
-    fail(`emoji ${emojiToken} 与 type ${type} 不匹配。`);
   }
 }
 
@@ -132,6 +126,7 @@ function validateCommitHeader(header) {
   if (!isEmojiToken(emojiToken)) {
     fail('提交标题需要以受支持的 emoji（或 :shortcode:）开头。');
   }
+  validateEmojiToken(emojiToken);
 
   const matched = conventionalHeader.match(HEADER_PATTERN);
   if (!matched) {
@@ -141,9 +136,6 @@ function validateCommitHeader(header) {
       )} 之一，并遵循 type(scope): subject 格式。`
     );
   }
-
-  const type = matched[1];
-  validateEmojiTypePair(emojiToken, type);
 
   const subject = matched[3].trim();
   if (!/[\u3400-\u9FFF]/u.test(subject)) {

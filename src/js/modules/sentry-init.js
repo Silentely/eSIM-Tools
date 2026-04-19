@@ -37,6 +37,8 @@ const EXTENSION_ERROR_KEYWORDS = [
   'wallet must have at least one account',
   'webkit-masked-url://',
   'autofillfielddata.autocompletetype.includes',
+  'can\'t find variable: currentinset',
+  'can\'t find variable: config',
 ];
 
 function toLowerSafe(value) {
@@ -343,6 +345,8 @@ function initSentry() {
         /wallet must have at least one account/i,
         /webkit-masked-url/i,
         /autofillFieldData\.autoCompleteType\.includes/i,
+        /Can't find variable: currentInset/i,
+        /Can't find variable: CONFIG/i,
         // 网络相关错误
         /ResizeObserver loop/,
         /Non-Error promise rejection/,

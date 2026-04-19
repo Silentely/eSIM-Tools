@@ -6,6 +6,34 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Simyo eSIM 工具，支持设备更换、短信验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。">
 
+    <!-- 运行时兜底：避免 iOS WebView 注入脚本访问未定义全局变量导致崩溃 -->
+    <script>
+        (function initSimyoRuntimeFallbacks() {
+            if (typeof window === 'undefined') return;
+            const globalObject = window;
+
+            // 兜底 currentInset，避免 "Can't find variable: currentInset"
+            const insetValue = Number(globalObject.currentInset);
+            globalObject.currentInset = Number.isFinite(insetValue) ? insetValue : 0;
+
+            // 兜底 CONFIG，避免 "Can't find variable: CONFIG"
+            if (!globalObject.CONFIG || typeof globalObject.CONFIG !== 'object') {
+                globalObject.CONFIG = {};
+            }
+
+            // 保持兼容：把 currentInset 同步到常见配置字段
+            if (typeof globalObject.CONFIG.currentInset === 'undefined') {
+                globalObject.CONFIG.currentInset = globalObject.currentInset;
+            }
+            if (!globalObject.CONFIG.safeArea || typeof globalObject.CONFIG.safeArea !== 'object') {
+                globalObject.CONFIG.safeArea = {};
+            }
+            if (typeof globalObject.CONFIG.safeArea.top === 'undefined') {
+                globalObject.CONFIG.safeArea.top = globalObject.currentInset;
+            }
+        })();
+    </script>
+
     <!-- Sentry 错误监控配置（必须在其他脚本之前） -->
     <!-- 使用外链脚本以符合 CSP 策略 -->
     <script src="/src/js/sentry-config.js"></script>

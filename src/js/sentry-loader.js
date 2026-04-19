@@ -49,7 +49,9 @@
     'wallet must has at least one account',
     'wallet must have at least one account',
     'webkit-masked-url://',
-    'autofillfielddata.autocompletetype.includes'
+    'autofillfielddata.autocompletetype.includes',
+    'can\'t find variable: currentinset',
+    'can\'t find variable: config'
   ];
 
   function toLowerSafe(value) {
@@ -385,6 +387,8 @@
           /wallet must have at least one account/i,
           /webkit-masked-url/i,
           /autofillFieldData\.autoCompleteType\.includes/i,
+          /Can't find variable: currentInset/i,
+          /Can't find variable: CONFIG/i,
           /Error invoking post/,
           /Method not found/,
           /turnstile/i,

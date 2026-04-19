@@ -281,7 +281,7 @@ Contributions and suggestions are welcome.
 1. Enable repository hooks: `npm run hooks:install`
 2. Commit format: `<emoji> <type>(optional-scope): <中文描述>`
 3. Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
-4. Emoji must match type (for example, `✨` for `feat`, `🐛` for `fix`)
+4. Emoji and type do not need strict pairing, but both must be from the supported lists
 
 Examples:
 - `✨ feat(auth): 新增登录态自动续期`
@@ -292,7 +292,7 @@ Examples:
 - `pre-commit`: Syncs remote updates first (auto `git pull --rebase --autostash` when upstream exists), then formats staged files and runs JS/JSON syntax checks and smart-quote blocking
 - `pre-push`: Defaults to fast mode (`pre-commit` + related tests), falls back to full test suite when no changed files are detected
 - `prepare-commit-msg`: Auto-fills a template when the commit message is empty
-- `commit-msg`: Validates commit message format (emoji + type + Chinese summary + mapping)
+- `commit-msg`: Validates commit message format (emoji + type + Chinese summary; no strict emoji-type mapping)
 
 Useful commands:
 - List hooks: `npm run hooks:list`

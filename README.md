@@ -282,7 +282,7 @@ open tests/test_simyo_esim.html
 1. 启用仓库钩子：`npm run hooks:install`
 2. 提交格式：`<emoji> <type>(optional-scope): <中文描述>`
 3. type 可选值：`feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`build`、`ci`、`chore`、`revert`
-4. emoji 与 type 需要匹配（例如 `✨` 对应 `feat`，`🐛` 对应 `fix`）
+4. emoji 与 type 不强制匹配，但都必须来自支持列表
 
 示例：
 - `✨ feat(auth): 新增登录态自动续期`
@@ -293,7 +293,7 @@ open tests/test_simyo_esim.html
 - `pre-commit`：提交前先同步远程更新（有 upstream 时自动 `git pull --rebase --autostash`），再格式化 staged 文件并执行 JS/JSON 语法检查与智能引号拦截
 - `pre-push`：默认快速模式（`pre-commit` + 相关测试），无差异文件时回退全量测试
 - `prepare-commit-msg`：提交信息为空时自动填充模板
-- `commit-msg`：校验提交信息格式（emoji + type + 中文描述 + 映射关系）
+- `commit-msg`：校验提交信息格式（emoji + type + 中文描述，emoji/type 合法即可）
 
 可用命令：
 - 查看钩子列表：`npm run hooks:list`
