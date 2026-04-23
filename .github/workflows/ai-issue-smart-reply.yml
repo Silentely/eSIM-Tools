@@ -5,7 +5,7 @@ on:
     types: [opened]
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   pull-requests: read
 
@@ -30,6 +30,7 @@ jobs:
       AI_MAX_DUP_CANDIDATES: ${{ vars.AI_MAX_DUP_CANDIDATES || '80' }}
       AI_MAX_PR_CANDIDATES: ${{ vars.AI_MAX_PR_CANDIDATES || '20' }}
       AI_MAX_COMMIT_CANDIDATES: ${{ vars.AI_MAX_COMMIT_CANDIDATES || '20' }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout repository
@@ -63,54 +64,134 @@ jobs:
 
       - name: Stage 1 - classify and rewrite query
         id: rewrite
-        uses: appleboy/llm-action@v1
-        with:
-          api_key: ${{ secrets.LLM_API_KEY }}
-          base_url: ${{ secrets.LLM_BASE_URL }}
-          model: ${{ secrets.LLM_MODEL }}
-          tool_schema: |
-            {
-              "name": "issue_rewrite",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "summary": { "type": "string" },
-                  "issue_type": {
-                    "type": "string",
-                    "enum": ["bug", "enhancement", "question", "documentation", "needs_more_info"]
-                  },
-                  "search_queries": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                  },
-                  "keywords": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                  },
-                  "components": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                  },
-                  "likely_paths": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                  }
+        shell: bash
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+        run: |
+          set -euo pipefail
+
+          cat > .ai_runtime/rewrite_schema.json <<'JSON'
+          {
+            "name": "issue_rewrite",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "summary": { "type": "string" },
+                "issue_type": {
+                  "type": "string",
+                  "enum": ["bug", "enhancement", "question", "documentation", "needs_more_info"]
                 },
-                "required": ["summary", "issue_type", "search_queries", "keywords", "components", "likely_paths"]
-              }
+                "search_queries": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "keywords": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "components": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "likely_paths": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "required": ["summary", "issue_type", "search_queries", "keywords", "components", "likely_paths"]
             }
-          system_prompt: |
-            你负责把 Issue 重写成适合仓库检索的查询。
-            输出必须是严格 JSON。
-            search_queries 控制在 3-6 条，keywords 控制在 5-12 条。
-          input_prompt: |
-            请分析这个 Issue，并输出适合仓库知识库/代码库检索的查询。
+          }
+          JSON
 
-            标题：
-            ${{ github.event.issue.title }}
+          cat > .ai_runtime/rewrite_system_prompt.txt <<'EOF'
+          你负责把 Issue 重写成适合仓库检索的查询。
+          输出必须是严格 JSON。
+          search_queries 控制在 3-6 条，keywords 控制在 5-12 条。
+          EOF
 
-            正文：
-            ${{ github.event.issue.body }}
+          cat > .ai_runtime/rewrite_input_prompt.txt <<'EOF'
+          请分析这个 Issue，并输出适合仓库知识库/代码库检索的查询。
+
+          标题：
+          ${{ github.event.issue.title }}
+
+          正文：
+          ${{ github.event.issue.body }}
+          EOF
+
+          python3 - <<'PY'
+          import json, os, pathlib, urllib.request, urllib.error
+
+          base_url = os.environ['LLM_BASE_URL'].rstrip('/')
+          api_key = os.environ['LLM_API_KEY']
+          model = os.environ['LLM_MODEL']
+          system_prompt = pathlib.Path('.ai_runtime/rewrite_system_prompt.txt').read_text(encoding='utf-8')
+          input_prompt = pathlib.Path('.ai_runtime/rewrite_input_prompt.txt').read_text(encoding='utf-8')
+          schema = json.loads(pathlib.Path('.ai_runtime/rewrite_schema.json').read_text(encoding='utf-8'))
+
+          candidates = [
+              (f"{base_url}/chat/completions", {
+                  "model": model,
+                  "temperature": 0.2,
+                  "messages": [
+                      {"role": "system", "content": system_prompt},
+                      {"role": "user", "content": input_prompt},
+                  ],
+                  "tools": [{"type": "function", "function": schema}],
+                  "tool_choice": {"type": "function", "function": {"name": schema['name']}},
+              }, 'chat_tools'),
+              (f"{base_url}/chat/completions", {
+                  "model": model,
+                  "temperature": 0.2,
+                  "response_format": {"type": "json_object"},
+                  "messages": [
+                      {"role": "system", "content": system_prompt + "\n你必须直接输出 JSON 对象，不要输出 markdown。"},
+                      {"role": "user", "content": input_prompt},
+                  ],
+              }, 'chat_json'),
+          ]
+
+          headers = {
+              'Authorization': f'Bearer {api_key}',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'User-Agent': 'github-actions-ai-triage/1.0',
+          }
+
+          last_err = None
+          content = ''
+          mode_used = ''
+          for url, payload, mode in candidates:
+              data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+              req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+              try:
+                  with urllib.request.urlopen(req, timeout=180) as resp:
+                      text = resp.read().decode('utf-8', errors='replace')
+                  obj = json.loads(text)
+                  if mode == 'chat_tools':
+                      msg = (obj.get('choices') or [{}])[0].get('message') or {}
+                      tc = (msg.get('tool_calls') or [{}])[0]
+                      content = ((tc.get('function') or {}).get('arguments')) or ''
+                  else:
+                      content = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                  if content:
+                      mode_used = mode
+                      pathlib.Path('.ai_runtime/rewrite_raw.txt').write_text(content, encoding='utf-8')
+                      break
+              except Exception as e:
+                  last_err = e
+
+          if not content:
+              raise RuntimeError(f'LLM rewrite call failed: {last_err}')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write('issue_rewrite<<EOF\n')
+              f.write(content)
+              f.write('\nEOF\n')
+              f.write(f'mode_used={mode_used}\n')
+          PY
 
       - name: Normalize rewrite result
         id: rewrite_norm
@@ -504,77 +585,157 @@ jobs:
 
       - name: Stage 2 - maintainer-grade triage
         id: triage
-        uses: appleboy/llm-action@v1
-        with:
-          api_key: ${{ secrets.LLM_API_KEY }}
-          base_url: ${{ secrets.LLM_BASE_URL }}
-          model: ${{ secrets.LLM_MODEL }}
-          tool_schema: |
-            {
-              "name": "issue_response",
-              "parameters": {
-                "type": "object",
-                "properties": {
-                  "summary": { "type": "string" },
-                  "classification": {
-                    "type": "string",
-                    "enum": ["bug", "enhancement", "question", "documentation", "needs_more_info"]
-                  },
-                  "support_status": {
-                    "type": "string",
-                    "enum": ["supported", "partially_supported", "not_supported", "already_fixed_unreleased", "needs_more_info"]
-                  },
-                  "analysis": { "type": "string" },
-                  "solution": { "type": "string" },
-                  "roadmap": { "type": "string" },
-                  "needs_human_followup": { "type": "boolean" },
-                  "duplicate_confidence": {
-                    "type": "string",
-                    "enum": ["low", "medium", "high"]
-                  },
-                  "duplicate_issues": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                  },
-                  "labels": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": ["bug", "enhancement", "question", "documentation", "duplicate", "help wanted", "needs more info"]
-                    }
-                  }
+        shell: bash
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+        run: |
+          set -euo pipefail
+
+          cat > .ai_runtime/triage_schema.json <<'JSON'
+          {
+            "name": "issue_response",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "summary": { "type": "string" },
+                "classification": {
+                  "type": "string",
+                  "enum": ["bug", "enhancement", "question", "documentation", "needs_more_info"]
                 },
-                "required": ["summary", "classification", "support_status", "analysis", "solution", "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"]
-              }
+                "support_status": {
+                  "type": "string",
+                  "enum": ["supported", "partially_supported", "not_supported", "already_fixed_unreleased", "needs_more_info"]
+                },
+                "analysis": { "type": "string" },
+                "solution": { "type": "string" },
+                "roadmap": { "type": "string" },
+                "needs_human_followup": { "type": "boolean" },
+                "duplicate_confidence": {
+                  "type": "string",
+                  "enum": ["low", "medium", "high"]
+                },
+                "duplicate_issues": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "labels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["bug", "enhancement", "question", "documentation", "duplicate", "help wanted", "needs more info"]
+                  }
+                }
+              },
+              "required": ["summary", "classification", "support_status", "analysis", "solution", "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"]
             }
-          system_prompt: |
-            你是仓库维护者，只能依据提供的证据做判断。
-            如果引用文件，必须仅引用已经提供的文件路径和行号范围。
-            如果证据不足，明确写需要更多信息。
-            labels 只能输出 1-3 个。
-            输出必须是严格 JSON。
-          input_prompt: |
-            [Issue]
-            标题：
-            ${{ github.event.issue.title }}
+          }
+          JSON
 
-            正文：
-            ${{ github.event.issue.body }}
+          cat > .ai_runtime/triage_system_prompt.txt <<'EOF'
+          你是仓库维护者，只能依据提供的证据做判断。
+          如果引用文件，必须仅引用已经提供的文件路径和行号范围。
+          如果证据不足，明确写需要更多信息。
+          labels 只能输出 1-3 个。
+          输出必须是严格 JSON。
+          EOF
 
-            [Stage 1 Rewrite]
-            ${{ steps.rewrite_norm.outputs.json }}
+          cat > .ai_runtime/triage_input_prompt.txt <<'EOF'
+          [Issue]
+          标题：
+          ${{ github.event.issue.title }}
 
-            [Retrieved Context]
-            ${{ steps.final_context.outputs.context }}
+          正文：
+          ${{ github.event.issue.body }}
 
-            [Duplicate Candidates]
-            ${{ steps.final_dupes.outputs.candidates }}
+          [Stage 1 Rewrite]
+          ${{ steps.rewrite_norm.outputs.json }}
 
-            [PR Candidates]
-            ${{ steps.final_prs.outputs.candidates }}
+          [Retrieved Context]
+          ${{ steps.final_context.outputs.context }}
 
-            [Commit Candidates]
-            ${{ steps.final_commits.outputs.candidates }}
+          [Duplicate Candidates]
+          ${{ steps.final_dupes.outputs.candidates }}
+
+          [PR Candidates]
+          ${{ steps.final_prs.outputs.candidates }}
+
+          [Commit Candidates]
+          ${{ steps.final_commits.outputs.candidates }}
+          EOF
+
+          python3 - <<'PY'
+          import json, os, pathlib, urllib.request, urllib.error
+
+          base_url = os.environ['LLM_BASE_URL'].rstrip('/')
+          api_key = os.environ['LLM_API_KEY']
+          model = os.environ['LLM_MODEL']
+          system_prompt = pathlib.Path('.ai_runtime/triage_system_prompt.txt').read_text(encoding='utf-8')
+          input_prompt = pathlib.Path('.ai_runtime/triage_input_prompt.txt').read_text(encoding='utf-8')
+          schema = json.loads(pathlib.Path('.ai_runtime/triage_schema.json').read_text(encoding='utf-8'))
+
+          candidates = [
+              (f"{base_url}/chat/completions", {
+                  "model": model,
+                  "temperature": 0.2,
+                  "messages": [
+                      {"role": "system", "content": system_prompt},
+                      {"role": "user", "content": input_prompt},
+                  ],
+                  "tools": [{"type": "function", "function": schema}],
+                  "tool_choice": {"type": "function", "function": {"name": schema['name']}},
+              }, 'chat_tools'),
+              (f"{base_url}/chat/completions", {
+                  "model": model,
+                  "temperature": 0.2,
+                  "response_format": {"type": "json_object"},
+                  "messages": [
+                      {"role": "system", "content": system_prompt + "\n你必须直接输出 JSON 对象，不要输出 markdown。"},
+                      {"role": "user", "content": input_prompt},
+                  ],
+              }, 'chat_json'),
+          ]
+
+          headers = {
+              'Authorization': f'Bearer {api_key}',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'User-Agent': 'github-actions-ai-triage/1.0',
+          }
+
+          last_err = None
+          content = ''
+          mode_used = ''
+          for url, payload, mode in candidates:
+              data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+              req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+              try:
+                  with urllib.request.urlopen(req, timeout=240) as resp:
+                      text = resp.read().decode('utf-8', errors='replace')
+                  obj = json.loads(text)
+                  if mode == 'chat_tools':
+                      msg = (obj.get('choices') or [{}])[0].get('message') or {}
+                      tc = (msg.get('tool_calls') or [{}])[0]
+                      content = ((tc.get('function') or {}).get('arguments')) or ''
+                  else:
+                      content = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                  if content:
+                      mode_used = mode
+                      pathlib.Path('.ai_runtime/triage_raw.txt').write_text(content, encoding='utf-8')
+                      break
+              except Exception as e:
+                  last_err = e
+
+          if not content:
+              raise RuntimeError(f'LLM triage call failed: {last_err}')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write('issue_response<<EOF\n')
+              f.write(content)
+              f.write('\nEOF\n')
+              f.write(f'mode_used={mode_used}\n')
+          PY
 
       - name: Normalize triage result
         id: triage_norm
