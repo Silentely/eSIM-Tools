@@ -13,6 +13,11 @@ const entries = [
   'src'
 ];
 
+// 需要额外复制到 dist 根目录的资源（浏览器默认请求 /favicon.ico）
+const rootAssets = [
+  { from: 'src/assets/favicon.ico', to: 'favicon.ico' }
+];
+
 async function removeDist() {
   await fs.promises.rm(distDir, { recursive: true, force: true });
 }
@@ -71,6 +76,18 @@ async function copyDirectory(source, destination) {
   for (const entry of entries) {
     BuildLogger.log(`📦 复制 ${entry} -> dist/${entry}`);
     await copyEntry(entry);
+  }
+
+  // 复制根目录资源（如 favicon.ico）
+  for (const { from, to } of rootAssets) {
+    const srcPath = path.join(projectRoot, from);
+    const destPath = path.join(distDir, to);
+    if (fs.existsSync(srcPath)) {
+      BuildLogger.log(`📎 复制 ${from} -> dist/${to}`);
+      await fs.promises.copyFile(srcPath, destPath);
+    } else {
+      console.warn(`⚠️  根资源不存在: ${from}`);
+    }
   }
 
   BuildLogger.log('🧩 转译 dist/src 下的 JS（目标 Chrome 77）...');

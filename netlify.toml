@@ -128,7 +128,19 @@
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Headers = "Content-Type, Authorization"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-# 处理SPA路由（如果需要）
+# favicon 根路径重定向（浏览器默认请求 /favicon.ico）
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/src/assets/favicon.ico"
+  status = 200
+
+# Netlify Functions 路径排除兜底重定向
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# 处理SPA路由（兜底 404）
 [[redirects]]
   from = "/*"
   to = "/index.html"
