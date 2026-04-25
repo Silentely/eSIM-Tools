@@ -2,6 +2,8 @@
  * Giffgaff 工具函数模块
  */
 
+import { debounce as _debounce, throttle as _throttle } from '../utils.js';
+
 class Utils {
   /**
    * Cookie 操作
@@ -29,7 +31,7 @@ class Utils {
   /**
    * 服务时间检查（英国时间）
    * 英国时间凌晨 4:30 至 晚上 9:30 提供 SIM 交换服务
-   * 返回 true 表示“当前处于服务可用时段”（英国时间 04:30-21:30）
+   * 返回 true 表示"当前处于服务可用时段"（英国时间 04:30-21:30）
    */
   isServiceTimeAvailable() {
     const now = new Date();
@@ -107,9 +109,9 @@ class Utils {
       z-index: 10000;
       animation: slideUp 0.3s ease-out;
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
       toast.style.animation = 'slideDown 0.3s ease-out';
       setTimeout(() => toast.remove(), 300);
@@ -134,7 +136,7 @@ class Utils {
       justify-content: center;
       z-index: 9999;
     `;
-    
+
     overlay.innerHTML = `
       <div class="loading-content" style="
         background: white;
@@ -149,7 +151,7 @@ class Utils {
         <p class="mt-3">${message}</p>
       </div>
     `;
-    
+
     document.body.appendChild(overlay);
     return overlay;
   }
@@ -173,31 +175,14 @@ class Utils {
    * 防抖函数
    */
   debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
+    return _debounce(func, wait);
   }
 
   /**
    * 节流函数
    */
   throttle(func, limit) {
-    let inThrottle;
-    return function() {
-      const args = arguments;
-      const context = this;
-      if (!inThrottle) {
-        func.apply(context, args);
-        inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
-      }
-    };
+    return _throttle(func, limit);
   }
 
   /**
@@ -213,10 +198,10 @@ class Utils {
    */
   showStatus(element, message, type) {
     if (!element) return;
-    
+
     element.textContent = message;
-    element.className = type === 'success' ? 'text-success' : 
-                       type === 'error' ? 'text-danger' : 
+    element.className = type === 'success' ? 'text-success' :
+                       type === 'error' ? 'text-danger' :
                        'text-muted';
     element.style.display = 'block';
   }
@@ -226,7 +211,7 @@ class Utils {
    */
   addAnimationStyles() {
     if (document.getElementById('giffgaff-animations')) return;
-    
+
     const style = document.createElement('style');
     style.id = 'giffgaff-animations';
     style.textContent = `
@@ -240,7 +225,7 @@ class Utils {
           opacity: 1;
         }
       }
-      
+
       @keyframes slideDown {
         from {
           transform: translateX(-50%) translateY(0);
@@ -251,21 +236,21 @@ class Utils {
           opacity: 0;
         }
       }
-      
+
       @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
       }
-      
+
       @keyframes fadeOut {
         from { opacity: 1; }
         to { opacity: 0; }
       }
-      
+
       .fade-in {
         animation: fadeIn 0.3s ease-out;
       }
-      
+
       .fade-out {
         animation: fadeOut 0.3s ease-out;
       }

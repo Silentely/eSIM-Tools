@@ -2,6 +2,7 @@
  * Giffgaff DOM 管理模块
  */
 import { getCurrentLocale, onLocaleChange } from '../i18n.js';
+import HTMLSanitizer from '../html-sanitizer.js';
 
 class DOMManager {
   constructor() {
@@ -14,11 +15,11 @@ class DOMManager {
    */
   init() {
     if (this.initialized) return;
-    
+
     // 步骤元素
     this.elements.steps = document.querySelectorAll('.step');
     this.elements.sections = document.querySelectorAll('.section');
-    
+
     // OAuth 相关
     this.elements.oauthLoginBtn = document.getElementById('oauthLoginBtn');
     this.elements.authUrlDisplay = document.getElementById('authUrlDisplay');
@@ -26,45 +27,45 @@ class DOMManager {
     this.elements.callbackUrl = document.getElementById('callbackUrl');
     this.elements.processCallbackBtn = document.getElementById('processCallbackBtn');
     this.elements.oauthStatus = document.getElementById('oauthStatus');
-    
+
     // Cookie 相关
     this.elements.cookieInput = document.getElementById('cookieInput');
     this.elements.verifyCookieBtn = document.getElementById('verifyCookieBtn');
     this.elements.cookieStatus = document.getElementById('cookieStatus');
-    
+
     // 邮件验证相关
     this.elements.sendEmailBtn = document.getElementById('sendEmailBtn');
     this.elements.emailCode = document.getElementById('emailCode');
     this.elements.verifyEmailBtn = document.getElementById('verifyEmailBtn');
     this.elements.emailStatus = document.getElementById('emailStatus');
     this.elements.emailCodeSection = document.getElementById('emailCodeSection');
-    
+
     // 会员信息相关
     this.elements.getMemberBtn = document.getElementById('getMemberBtn');
     this.elements.memberStatus = document.getElementById('memberStatus');
     this.elements.memberInfo = document.getElementById('memberInfo');
-    
+
     // eSIM 相关
     this.elements.reserveESimBtn = document.getElementById('reserveESimBtn');
     this.elements.reserveStatus = document.getElementById('reserveStatus');
     this.elements.esimInfo = document.getElementById('esimInfo');
     this.elements.getESimTokenBtn = document.getElementById('getESimTokenBtn');
     this.elements.tokenStatus = document.getElementById('tokenStatus');
-    
+
     // 结果显示
     this.elements.resultSection = document.getElementById('resultSection');
     this.elements.qrcode = document.getElementById('qrcode');
     this.elements.lpaString = document.getElementById('lpaString');
-    
+
     // 状态显示
     this.elements.tokenStatus = document.getElementById('tokenStatus');
     this.elements.signatureStatus = document.getElementById('signatureStatus');
     this.elements.sessionStatus = document.getElementById('sessionStatus');
-    
+
     // 服务时间相关
     this.elements.serviceTimeAlert = document.getElementById('serviceTimeAlert');
     this.elements.currentTime = document.getElementById('currentTime');
-    
+
     // 其他
     this.elements.clearSessionBtn = document.getElementById('clearSessionBtn');
     this.elements.tutorialBtn = document.getElementById('tutorialBtn');
@@ -149,10 +150,10 @@ class DOMManager {
   showStatus(elementId, message, type) {
     const element = document.getElementById(elementId) || this.elements[elementId];
     if (!element) return;
-    
+
     element.textContent = message;
-    element.className = type === 'success' ? 'text-success' : 
-                       type === 'error' ? 'text-danger' : 
+    element.className = type === 'success' ? 'text-success' :
+                       type === 'error' ? 'text-danger' :
                        type === 'info' ? 'text-info' :
                        'text-muted';
     element.style.display = 'block';
@@ -164,10 +165,10 @@ class DOMManager {
   navigateToStep(stepNumber) {
     // 更新步骤指示器
     this.updateSteps(stepNumber);
-    
+
     // 显示对应的内容区域
     this.showSection(stepNumber);
-    
+
     // 滚动到顶部
     window.scrollTo(0, 0);
   }
@@ -209,16 +210,16 @@ class DOMManager {
   displayMemberInfo(state) {
     const memberInfo = document.getElementById('memberInfo');
     if (!memberInfo) return;
-    
+
     memberInfo.innerHTML = `
       <div class="info-item">
-        <strong>会员ID:</strong> <span class="text-primary">${state.memberId || 'N/A'}</span>
+        <strong>会员ID:</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.memberId || 'N/A')}</span>
       </div>
       <div class="info-item">
-        <strong>会员名称:</strong> <span class="text-primary">${state.memberName || 'N/A'}</span>
+        <strong>会员名称:</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.memberName || 'N/A')}</span>
       </div>
       <div class="info-item">
-        <strong>手机号码:</strong> <span class="text-primary">${state.phoneNumber || 'N/A'}</span>
+        <strong>手机号码:</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.phoneNumber || 'N/A')}</span>
       </div>
     `;
     memberInfo.style.display = 'block';
@@ -230,31 +231,41 @@ class DOMManager {
   displayESIMInfo(state) {
     const esimInfo = document.getElementById('esimInfo');
     if (!esimInfo) return;
-    
+
     esimInfo.innerHTML = `
       <div class="info-item">
-        <strong>SSN:</strong> 
-        <span class="text-primary" id="displaySSN">${state.esimSSN || 'N/A'}</span>
-        <button class="btn btn-sm btn-outline-primary ms-2" onclick="app.utils.copyToClipboard('${state.esimSSN}')">
+        <strong>SSN:</strong>
+        <span class="text-primary" id="displaySSN">${HTMLSanitizer.escapeHtml(state.esimSSN || 'N/A')}</span>
+        <button class="btn btn-sm btn-outline-primary ms-2" data-copy="${HTMLSanitizer.escapeAttr(state.esimSSN)}">
           <i class="fas fa-copy"></i> 复制
         </button>
       </div>
       <div class="info-item">
-        <strong>激活码:</strong> 
-        <span class="text-primary" id="displayActivationCode">${state.esimActivationCode || 'N/A'}</span>
-        <button class="btn btn-sm btn-outline-primary ms-2" onclick="app.utils.copyToClipboard('${state.esimActivationCode}')">
+        <strong>激活码:</strong>
+        <span class="text-primary" id="displayActivationCode">${HTMLSanitizer.escapeHtml(state.esimActivationCode || 'N/A')}</span>
+        <button class="btn btn-sm btn-outline-primary ms-2" data-copy="${HTMLSanitizer.escapeAttr(state.esimActivationCode)}">
           <i class="fas fa-copy"></i> 复制
         </button>
       </div>
       <div class="info-item">
-        <strong>状态:</strong> 
-        <span class="badge bg-info">${state.esimDeliveryStatus || 'RESERVED'}</span>
+        <strong>状态:</strong>
+        <span class="badge bg-info">${HTMLSanitizer.escapeHtml(state.esimDeliveryStatus || 'RESERVED')}</span>
       </div>
       <div class="alert alert-info mt-3">
         <i class="fas fa-info-circle"></i>
-        已为您预留 eSIM（状态 RESERVED）。请保持本页面开启，前往 <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff 激活页</a> 手动输入上方激活码并点击 “Activate your SIM”，随后确认 “Yes, I want to replace my SIM”。完成后返回本页点击“获取 eSIM Token”继续。
+        已为您预留 eSIM（状态 RESERVED）。请保持本页面开启，前往 <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff 激活页</a> 手动输入上方激活码并点击 "Activate your SIM"，随后确认 "Yes, I want to replace my SIM"。完成后返回本页点击"获取 eSIM Token"继续。
       </div>
     `;
+
+    // 通过 addEventListener 绑定复制按钮，避免内联 onclick 的 XSS 风险
+    esimInfo.querySelectorAll('[data-copy]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (window.app && window.app.utils) {
+          window.app.utils.copyToClipboard(btn.dataset.copy);
+        }
+      });
+    });
+
     esimInfo.style.display = 'block';
   }
 
@@ -329,7 +340,7 @@ class DOMManager {
         tokenStatus.innerHTML = '<i class="fas fa-times-circle text-danger"></i> 未获取';
       }
     }
-    
+
     // 更新签名状态
     const signatureStatus = document.getElementById('signatureStatus');
     if (signatureStatus) {
@@ -339,13 +350,13 @@ class DOMManager {
         signatureStatus.innerHTML = '<i class="fas fa-times-circle text-danger"></i> 未验证';
       }
     }
-    
+
     // 更新会话状态
     const sessionStatus = document.getElementById('sessionStatus');
     if (sessionStatus) {
       if (state.sessionTimestamp) {
         const timeAgo = Math.floor((Date.now() - state.sessionTimestamp) / 60000);
-        sessionStatus.innerHTML = `<i class="fas fa-clock text-info"></i> ${timeAgo}分钟前`;
+        sessionStatus.innerHTML = `<i class="fas fa-clock text-info"></i> ${HTMLSanitizer.escapeHtml(String(timeAgo))}分钟前`;
       } else {
         sessionStatus.innerHTML = '<i class="fas fa-times-circle text-muted"></i> 无会话';
       }
@@ -360,7 +371,7 @@ class DOMManager {
     const pad = (n) => String(n).padStart(2, '0');
     const localTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const ukTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
-    
+
     const timeElement = document.getElementById('currentTime');
     if (timeElement) {
       timeElement.textContent = localTime;
@@ -369,20 +380,20 @@ class DOMManager {
     if (ukHint) {
       ukHint.textContent = `英国时间 ${ukTime}`;
     }
-    
+
     const alertElement = document.getElementById('serviceTimeAlert');
     if (alertElement) {
       if (isAvailable) {
         alertElement.className = 'alert alert-success';
         alertElement.innerHTML = `
           <i class="fas fa-check-circle"></i>
-          <strong>服务可用</strong> - 本地 ${localTime} / 英国 ${ukTime}（服务窗口 04:30-21:30）
+          <strong>服务可用</strong> - 本地 ${HTMLSanitizer.escapeHtml(localTime)} / 英国 ${HTMLSanitizer.escapeHtml(ukTime)}（服务窗口 04:30-21:30）
         `;
       } else {
         alertElement.className = 'alert alert-warning';
         alertElement.innerHTML = `
           <i class="fas fa-exclamation-triangle"></i>
-          <strong>服务时间外</strong> - 本地 ${localTime} / 英国 ${ukTime}
+          <strong>服务时间外</strong> - 本地 ${HTMLSanitizer.escapeHtml(localTime)} / 英国 ${HTMLSanitizer.escapeHtml(ukTime)}
           <br><small>SIM 交换服务窗口：英国时间 04:30 至 21:30。您仍可浏览信息，部分操作可能失败。</small>
         `;
       }
@@ -398,7 +409,7 @@ class DOMManager {
       modal.className = 'modal fade show';
       modal.style.display = 'block';
       modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-      
+
       const now = new Date();
       const localTime = new Intl.DateTimeFormat([], { hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
       const ukTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
@@ -413,7 +424,7 @@ class DOMManager {
             </div>
             <div class="modal-body">
               <p>SIM 交换服务窗口为 <strong>英国时间 04:30 至 21:30</strong>。</p>
-              <p>当前时间：本地 ${localTime} / 英国 ${ukTime}。</p>
+              <p>当前时间：本地 ${HTMLSanitizer.escapeHtml(localTime)} / 英国 ${HTMLSanitizer.escapeHtml(ukTime)}。</p>
               <p>窗口外操作可能失败或不稳定，建议在服务窗口内进行。</p>
               <p class="mb-0"><strong>是否继续操作？</strong></p>
             </div>
@@ -424,14 +435,14 @@ class DOMManager {
           </div>
         </div>
       `;
-      
+
       document.body.appendChild(modal);
-      
+
       const handleChoice = (choice) => {
         modal.remove();
         resolve(choice);
       };
-      
+
       document.getElementById('cancelBtn').onclick = () => handleChoice(false);
       document.getElementById('continueBtn').onclick = () => handleChoice(true);
     });

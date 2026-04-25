@@ -33,9 +33,7 @@ eSIM-Tools 通知系统是一个轻量级的消息通知解决方案，用于在
    - Netlify Serverless Function
    - 提供通知消息查询接口
    - 支持多种查询模式
-   - 主要端点：
-     - `netlify/functions/notifications-internal.js`（前端页面默认使用，带 CORS 头）
-     - `netlify/functions/notifications.js`（通用端点，当前配置为公开接口）
+   - 统一端点：`netlify/functions/notifications.js`（通过 `withAuth` 中间件，配置为公开接口）
 
 4. **样式系统** (`notification.css`)
    - 与Design System完美融合
@@ -92,7 +90,7 @@ NotificationManager.clearAll();
 
 #### 添加新通知
 
-编辑 `netlify/functions/notifications-internal.js`（或 `netlify/functions/notifications.js`，两者结构一致）：
+编辑 `netlify/functions/notifications.js`：
 
 ```javascript
 const NOTIFICATIONS = [
@@ -117,19 +115,16 @@ const NOTIFICATIONS = [
 
 #### API端点
 
-本项目存在两个可用端点，参数与响应结构一致，但用途略有不同：
-
-- `/.netlify/functions/notifications-internal`：前端页面默认使用（`NotificationService.apiUrl`），会返回 CORS 相关响应头
-- `/.netlify/functions/notifications`：通用端点（当前也配置为公开）
+统一端点：`/.netlify/functions/notifications`（通过 `withAuth` 中间件，配置为公开接口无需认证）
 
 **获取所有活跃通知（数组）**
 ```
-GET /.netlify/functions/notifications-internal?mode=all
+GET /.netlify/functions/notifications?mode=all
 ```
 
 **获取最新通知（对象或 null）**
 ```
-GET /.netlify/functions/notifications-internal?mode=latest
+GET /.netlify/functions/notifications?mode=latest
 ```
 
 **响应格式**
@@ -363,7 +358,7 @@ NotificationService.checkAndShowNotifications();
 **检查清单**:
 1. 确认 `notification.css` 已正确引入
 2. 检查浏览器控制台是否有错误
-3. 验证后端API返回正常（Network 面板查看 `/.netlify/functions/notifications-internal?mode=latest`）
+3. 验证后端API返回正常（Network 面板查看 `/.netlify/functions/notifications?mode=latest`）
 4. 确认后端返回的 `data` 非空且 `active=true`
 
 **解决方案**:

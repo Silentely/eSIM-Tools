@@ -8,11 +8,11 @@ import NotificationManager from './notification-manager.js';
 
 class NotificationService {
   constructor() {
-    this.apiUrl = '/.netlify/functions/notifications-internal';
+    this.apiUrl = '/.netlify/functions/notifications';
     this.checkInterval = 5 * 60 * 1000; // 5分钟检查一次
     this.lastCheckTime = 0;
-    // 需求变更：通知在“每次页面加载”时都要显示一次。
-    // 因此这里仅做“本次页面生命周期内去重”，避免定时轮询重复弹出；
+    // 需求变更：通知在"每次页面加载"时都要显示一次。
+    // 因此这里仅做"本次页面生命周期内去重"，避免定时轮询重复弹出；
     // 不再使用 localStorage 进行跨刷新持久化去重。
     this.shownNotifications = new Set();
   }

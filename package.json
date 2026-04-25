@@ -44,6 +44,7 @@
   "author": "eSIM Tools Team",
   "license": "MIT",
   "dependencies": {
+    "@netlify/blobs": "^8.0.0",
     "@sentry/browser": "^10.30.0",
     "@sentry/node": "^10.30.0",
     "axios": "^1.15.0",

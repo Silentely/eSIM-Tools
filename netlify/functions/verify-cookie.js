@@ -7,19 +7,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
 
-// 简单��内存限流（每个函数实例内生效）
-const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5分钟
-const RATE_LIMIT_MAX = 15; // 窗口最大次数
-const requesterHits = new Map(); // ip -> [timestamps]
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const arr = requesterHits.get(ip) || [];
-  const recent = arr.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
-  recent.push(now);
-  requesterHits.set(ip, recent);
-  return recent.length > RATE_LIMIT_MAX;
-}
+const { isRateLimited } = require('./_shared/rate-limiter');
 
 // 输入验证schema
 const verifyCookieSchema = {
@@ -35,14 +23,14 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   // 输入验证
   validateInput(verifyCookieSchema, body);
 
-  // 简单限流
+  // 限流检查（优先使用 Netlify Blobs，降级为内存限流）
   const ip = (event.headers['x-forwarded-for'] || '').split(',')[0] ||
               event.headers['client-ip'] ||
               event.headers['x-real-ip'] ||
               'unknown';
 
-  if (isRateLimited(ip)) {
-    throw new AuthError('��求过于频繁，请稍后再试', 429);
+  if (await isRateLimited(ip)) {
+    throw new AuthError('请求过于频繁，请稍后再试', 429);
   }
 
   const { cookie } = body;

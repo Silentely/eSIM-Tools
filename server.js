@@ -24,6 +24,11 @@ if (!INTERNAL_FUNCTION_KEY) {
     console.error('⚠️  Netlify Functions 将无法正常工作，请修复后重启');
 }
 
+if (!process.env.SIMYO_CLIENT_TOKEN) {
+    console.warn('⚠️  SIMYO_CLIENT_TOKEN 未配置，Simyo 代理请求可能失败');
+    console.warn('💡 请在 .env 文件中设置 SIMYO_CLIENT_TOKEN');
+}
+
 if (!fs.existsSync(STATIC_ROOT)) {
     console.warn(`⚠️  静态目录 ${STATIC_ROOT} 不存在，请先运行 npm run build`);
     console.warn('💡 运行: npm run build');
@@ -97,7 +102,7 @@ function wrapNetlifyFunction(handler) {
             const result = await handler.handler(event, context);
 
             res.status(result.statusCode);
-            
+
             if (result.headers) {
                 Object.entries(result.headers).forEach(([key, value]) => {
                     res.set(key, value);
@@ -133,17 +138,17 @@ app.use('/.netlify/functions/public-config', wrapNetlifyFunction(publicConfig));
 app.use('/api/simyo/*', (req, res) => {
     const targetUrl = `https://appapi.simyo.nl/simyoapi/api/v1${req.path.replace('/api/simyo', '')}`;
     Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
-    
+
     // 设置CORS头（仅允许指定域）
     res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Token, X-Client-Platform, X-Client-Version');
     res.header('Vary', 'Origin');
-    
+
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
-    
+
     // 代理请求
     const axios = require('axios');
     const config = {
@@ -152,17 +157,17 @@ app.use('/api/simyo/*', (req, res) => {
         headers: {
             'Content-Type': 'application/json',
             'User-Agent': req.headers['user-agent'] || 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)',
-            'X-Client-Token': req.headers['x-client-token'] || 'e77b7e2f43db41bb95b17a2a11581a38',
+            'X-Client-Token': req.headers['x-client-token'] || process.env.SIMYO_CLIENT_TOKEN || '',
             'X-Client-Platform': req.headers['x-client-platform'] || 'ios',
             'X-Client-Version': req.headers['x-client-version'] || '4.23.5'
         },
         timeout: 30000
     };
-    
+
     if (req.body && Object.keys(req.body).length > 0) {
         config.data = req.body;
     }
-    
+
     axios(config)
         .then(response => {
             res.status(response.status).json(response.data);

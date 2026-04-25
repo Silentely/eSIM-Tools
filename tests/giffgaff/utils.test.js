@@ -92,22 +92,22 @@ describe('Giffgaff Utils', () => {
     it('应该使用 clipboard API 复制文本', async () => {
       const text = 'test text';
       await Utils.copyToClipboard(text);
-      
+
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(text);
     });
 
     it('应该在 clipboard API 失败时使用降级方案', async () => {
       // 模拟 clipboard API 失败
       navigator.clipboard.writeText.mockRejectedValueOnce(new Error('Failed'));
-      
+
       // 监听 execCommand
       const execCommandSpy = jest.spyOn(document, 'execCommand').mockReturnValue(true);
-      
+
       const result = await Utils.copyToClipboard('test');
-      
+
       expect(result).toBe(true);
       expect(execCommandSpy).toHaveBeenCalledWith('copy');
-      
+
       execCommandSpy.mockRestore();
     });
   });
@@ -116,7 +116,7 @@ describe('Giffgaff Utils', () => {
     it('应该生成正确的二维码 URL', () => {
       const data = 'test data';
       const url = Utils.generateQRCodeURL(data);
-      
+
       expect(url).toContain('https://qrcode.show/');
       expect(url).toContain('size=300');
       expect(url).toContain('data=test%20data');
@@ -126,7 +126,7 @@ describe('Giffgaff Utils', () => {
       const data = 'test';
       const size = 500;
       const url = Utils.generateQRCodeURL(data, size);
-      
+
       expect(url).toContain('size=500x500');
     });
   });
@@ -135,18 +135,18 @@ describe('Giffgaff Utils', () => {
     it('应该格式化时间为 HH:MM', () => {
       const date = new Date('2024-01-01T09:05:00');
       const formatted = Utils.formatTime(date);
-      
+
       expect(formatted).toBe('09:05');
     });
 
     it('应该格式化当前时间', () => {
       const mockDate = new Date('2024-01-01T15:30:00');
       jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
-      
+
       const formatted = Utils.formatTime();
-      
+
       expect(formatted).toBe('15:30');
-      
+
       global.Date.mockRestore();
     });
   });
@@ -157,10 +157,10 @@ describe('Giffgaff Utils', () => {
     it('应该延迟函数执行', () => {
       const mockFn = jest.fn();
       const debouncedFn = Utils.debounce(mockFn, 100);
-      
+
       debouncedFn('test');
       expect(mockFn).not.toHaveBeenCalled();
-      
+
       jest.advanceTimersByTime(100);
       expect(mockFn).toHaveBeenCalledWith('test');
     });
@@ -168,12 +168,12 @@ describe('Giffgaff Utils', () => {
     it('应该取消之前的调用', () => {
       const mockFn = jest.fn();
       const debouncedFn = Utils.debounce(mockFn, 100);
-      
+
       debouncedFn('first');
       jest.advanceTimersByTime(50);
       debouncedFn('second');
       jest.advanceTimersByTime(100);
-      
+
       expect(mockFn).toHaveBeenCalledTimes(1);
       expect(mockFn).toHaveBeenCalledWith('second');
     });
@@ -185,18 +185,29 @@ describe('Giffgaff Utils', () => {
     it('应该限制函数执行频率', () => {
       const mockFn = jest.fn();
       const throttledFn = Utils.throttle(mockFn, 100);
-      
+
+      // 首次调用立即执行
       throttledFn('first');
-      throttledFn('second');
-      throttledFn('third');
-      
       expect(mockFn).toHaveBeenCalledTimes(1);
       expect(mockFn).toHaveBeenCalledWith('first');
-      
+
+      // 节流期间内的调用不会立即执行
+      throttledFn('second');
+      throttledFn('third');
+      expect(mockFn).toHaveBeenCalledTimes(1);
+
+      // 尾部调用机制：计时器到期后执行节流期间最后一次排队的调用
       jest.advanceTimersByTime(100);
-      throttledFn('fourth');
-      
       expect(mockFn).toHaveBeenCalledTimes(2);
+      expect(mockFn).toHaveBeenCalledWith('third');
+
+      // 新调用仍在节流状态，需要再等一个周期
+      throttledFn('fourth');
+      expect(mockFn).toHaveBeenCalledTimes(2);
+
+      // 计时器再次到期，执行尾部调用
+      jest.advanceTimersByTime(100);
+      expect(mockFn).toHaveBeenCalledTimes(3);
       expect(mockFn).toHaveBeenCalledWith('fourth');
     });
   });
@@ -205,7 +216,7 @@ describe('Giffgaff Utils', () => {
     it('应该显示成功状态', () => {
       const element = document.createElement('div');
       Utils.showStatus(element, 'Success message', 'success');
-      
+
       expect(element.textContent).toBe('Success message');
       expect(element.className).toBe('text-success');
       expect(element.style.display).toBe('block');
@@ -214,7 +225,7 @@ describe('Giffgaff Utils', () => {
     it('应该显示错误状态', () => {
       const element = document.createElement('div');
       Utils.showStatus(element, 'Error message', 'error');
-      
+
       expect(element.textContent).toBe('Error message');
       expect(element.className).toBe('text-danger');
     });

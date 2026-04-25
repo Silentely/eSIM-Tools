@@ -3,6 +3,8 @@
  */
 
 import apiManager from './api.js';
+import HTMLSanitizer from '../html-sanitizer.js';
+import SecureStorage from '../secure-storage.js';
 
 class SimyoApp {
   constructor() {
@@ -14,7 +16,7 @@ class SimyoApp {
       esimData: null,
       currentStep: 1
     };
-    
+
     this.initialized = false;
   }
 
@@ -23,7 +25,7 @@ class SimyoApp {
    */
   async init() {
     if (this.initialized) return;
-    
+
     try {
       this.bindEventListeners();
       this.loadSession();
@@ -43,25 +45,25 @@ class SimyoApp {
     if (loginBtn) {
       loginBtn.addEventListener('click', () => this.handleLogin());
     }
-    
+
     // 发送短信验证码
     const sendSmsBtn = document.getElementById('sendSmsBtn');
     if (sendSmsBtn) {
       sendSmsBtn.addEventListener('click', () => this.handleSendSMS());
     }
-    
+
     // 验证短信验证码
     const verifySmsBtn = document.getElementById('verifySmsBtn');
     if (verifySmsBtn) {
       verifySmsBtn.addEventListener('click', () => this.handleVerifySMS());
     }
-    
+
     // 设备更换
     const deviceChangeBtn = document.getElementById('deviceChangeBtn');
     if (deviceChangeBtn) {
       deviceChangeBtn.addEventListener('click', () => this.handleDeviceChange());
     }
-    
+
     // 确认安装
     const confirmInstallBtn = document.getElementById('confirmInstallBtn');
     if (confirmInstallBtn) {
@@ -78,27 +80,27 @@ class SimyoApp {
       const passwordEl = document.getElementById('simyoPassword');
       const username = usernameEl ? usernameEl.value : undefined;
       const password = passwordEl ? passwordEl.value : undefined;
-      
+
       if (!username || !password) {
         this.showStatus('loginStatus', '请输入用户名和密码', 'error');
         return;
       }
-      
+
       this.showStatus('loginStatus', '正在登录...', 'info');
-      
+
       const response = await this.api.login(username, password);
-      
+
       if (response.success) {
         this.state.token = response.token;
         this.state.username = username;
         this.saveSession();
-        
+
         this.showStatus('loginStatus', '登录成功！', 'success');
         this.navigateToStep(2);
       } else {
         throw new Error(response.message || '登录失败');
       }
-      
+
     } catch (error) {
       console.error('登录失败:', error);
       this.showStatus('loginStatus', `登录失败: ${error.message}`, 'error');
@@ -114,11 +116,11 @@ class SimyoApp {
         this.showStatus('smsStatus', '请先登录', 'error');
         return;
       }
-      
+
       this.showStatus('smsStatus', '正在发送验证码...', 'info');
-      
+
       const response = await this.api.sendSMSCode(this.state.token);
-      
+
       if (response.success) {
         this.showStatus('smsStatus', '验证码已发送到您的手机', 'success');
         const smsCodeSection = document.getElementById('smsCodeSection');
@@ -126,7 +128,7 @@ class SimyoApp {
       } else {
         throw new Error(response.message || '发送失败');
       }
-      
+
     } catch (error) {
       console.error('发送短信失败:', error);
       this.showStatus('smsStatus', `发送失败: ${error.message}`, 'error');
@@ -140,23 +142,23 @@ class SimyoApp {
     try {
       const codeEl = document.getElementById('smsCode');
       const code = codeEl ? codeEl.value : undefined;
-      
+
       if (!code) {
         this.showStatus('smsStatus', '请输入验证码', 'error');
         return;
       }
-      
+
       this.showStatus('smsStatus', '正在验证...', 'info');
-      
+
       const response = await this.api.verifyCode(this.state.token, code);
-      
+
       if (response.success) {
         this.showStatus('smsStatus', '验证成功！', 'success');
         this.navigateToStep(3);
       } else {
         throw new Error(response.message || '验证失败');
       }
-      
+
     } catch (error) {
       console.error('验证失败:', error);
       this.showStatus('smsStatus', `验证失败: ${error.message}`, 'error');
@@ -172,22 +174,22 @@ class SimyoApp {
         this.showStatus('deviceStatus', '请先完成认证', 'error');
         return;
       }
-      
+
       this.showStatus('deviceStatus', '正在处理设备更换...', 'info');
-      
+
       const response = await this.api.requestDeviceChange(this.state.token);
-      
+
       if (response.success && response.esimData) {
         this.state.esimData = response.esimData;
         this.displayESIMData(response.esimData);
-        
+
         this.showStatus('deviceStatus', '设备更换成功！', 'success');
         this.saveSession();
         this.navigateToStep(4);
       } else {
         throw new Error(response.message || '设备更换失败');
       }
-      
+
     } catch (error) {
       console.error('设备更换失败:', error);
       this.showStatus('deviceStatus', `处理失败: ${error.message}`, 'error');
@@ -203,18 +205,18 @@ class SimyoApp {
         this.showStatus('installStatus', '请先完成设备更换', 'error');
         return;
       }
-      
+
       this.showStatus('installStatus', '正在确认安装...', 'info');
-      
+
       const response = await this.api.confirmInstallation(this.state.token);
-      
+
       if (response.success) {
         this.showStatus('installStatus', 'eSIM 安装确认成功！', 'success');
         this.showCompletionMessage();
       } else {
         throw new Error(response.message || '确认失败');
       }
-      
+
     } catch (error) {
       console.error('确认安装失败:', error);
       this.showStatus('installStatus', `确认失败: ${error.message}`, 'error');
@@ -227,9 +229,9 @@ class SimyoApp {
   displayESIMData(esimData) {
     const displayElement = document.getElementById('esimDataDisplay');
     if (!displayElement) return;
-    
+
     const qrCodeUrl = `https://qrcode.show/${encodeURIComponent(esimData.lpaString)}?size=300`;
-    
+
     displayElement.innerHTML = `
       <div class="esim-info">
         <h4>您的 eSIM 信息</h4>
@@ -238,13 +240,19 @@ class SimyoApp {
         </div>
         <div class="lpa-string mt-3">
           <strong>LPA 字符串:</strong>
-          <div class="code-display">${esimData.lpaString}</div>
-          <button class="btn btn-primary mt-2" onclick="simyoApp.copyToClipboard('${esimData.lpaString}')">
+          <div class="code-display">${HTMLSanitizer.escapeHtml(esimData.lpaString)}</div>
+          <button class="btn btn-primary mt-2" data-copy-lpa="${HTMLSanitizer.escapeAttr(esimData.lpaString)}">
             <i class="fas fa-copy"></i> 复制
           </button>
         </div>
       </div>
     `;
+
+    // 通过 addEventListener 绑定复制按钮，避免内联 onclick 的 XSS 风险
+    const copyBtn = displayElement.querySelector('[data-copy-lpa]');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => this.copyToClipboard(copyBtn.dataset.copyLpa));
+    }
   }
 
   /**
@@ -269,18 +277,18 @@ class SimyoApp {
    */
   navigateToStep(stepNumber) {
     this.state.currentStep = stepNumber;
-    
+
     // 隐藏所有步骤
     document.querySelectorAll('.simyo-step').forEach(step => {
       step.style.display = 'none';
     });
-    
+
     // 显示当前步骤
     const currentStep = document.getElementById(`simyoStep${stepNumber}`);
     if (currentStep) {
       currentStep.style.display = 'block';
     }
-    
+
     // 更新步骤指示器
     document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
       if (index < stepNumber - 1) {
@@ -301,10 +309,10 @@ class SimyoApp {
   showStatus(elementId, message, type) {
     const element = document.getElementById(elementId);
     if (!element) return;
-    
+
     element.textContent = message;
-    element.className = type === 'success' ? 'text-success' : 
-                       type === 'error' ? 'text-danger' : 
+    element.className = type === 'success' ? 'text-success' :
+                       type === 'error' ? 'text-danger' :
                        type === 'info' ? 'text-info' :
                        'text-muted';
     element.style.display = 'block';
@@ -351,9 +359,9 @@ class SimyoApp {
       z-index: 10000;
       animation: slideUp 0.3s ease-out;
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
       toast.style.animation = 'slideDown 0.3s ease-out';
       setTimeout(() => toast.remove(), 300);
@@ -364,13 +372,12 @@ class SimyoApp {
    * 保存会话
    */
   saveSession() {
-    localStorage.setItem('simyo_session', JSON.stringify({
+    SecureStorage.setItem('simyo_session', {
       token: this.state.token,
       username: this.state.username,
       esimData: this.state.esimData,
-      currentStep: this.state.currentStep,
-      timestamp: Date.now()
-    }));
+      currentStep: this.state.currentStep
+    }, 3600000); // 1 小时 TTL
   }
 
   /**
@@ -378,21 +385,11 @@ class SimyoApp {
    */
   loadSession() {
     try {
-      const sessionData = localStorage.getItem('simyo_session');
-      if (sessionData) {
-        const data = JSON.parse(sessionData);
-        const now = Date.now();
-        const oneHour = 60 * 60 * 1000;
-        
-        // 检查会话是否过期（1小时）
-        if (data.timestamp && (now - data.timestamp) < oneHour) {
-          Object.assign(this.state, data);
-          this.navigateToStep(data.currentStep || 1);
-          return true;
-        } else {
-          // 会话过期，清除
-          localStorage.removeItem('simyo_session');
-        }
+      const data = SecureStorage.getItem('simyo_session');
+      if (data) {
+        Object.assign(this.state, data);
+        this.navigateToStep(data.currentStep || 1);
+        return true;
       }
     } catch (error) {
       console.error('加载会话失败:', error);
