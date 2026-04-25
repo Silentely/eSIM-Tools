@@ -231,10 +231,37 @@ function withAuth(handler, options = {}) {
     const functionName = context.functionName || 'unknown';
 
     try {
-      // 鉴权
-      const auth = authenticate(event);
+      // 鉴权（requireAuth: false 时跳过密钥校验，仅保留 CORS 检查）
+      let auth;
+      if (options.requireAuth === false) {
+        const lower = Object.fromEntries(
+          Object.entries(event.headers || {}).map(([k, v]) => [k.toLowerCase(), v])
+        );
+        const requestOrigin = lower.origin;
 
-      // 预检请求直接返回
+        // CORS 预检请求
+        if (event.httpMethod === 'OPTIONS') {
+          if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
+            throw new AuthError('Origin not allowed', 403);
+          }
+          return {
+            statusCode: 200,
+            headers: createHeaders(requestOrigin),
+            body: ''
+          };
+        }
+
+        // 非预检请求：仅验证来源
+        if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
+          throw new AuthError('Origin not allowed', 403);
+        }
+
+        auth = { authorized: false, origin: requestOrigin, public: true };
+      } else {
+        auth = authenticate(event);
+      }
+
+      // 预检请求直接返回（仅 requireAuth=true 分支到达此处）
       if (auth.preflight) {
         return {
           statusCode: 200,
