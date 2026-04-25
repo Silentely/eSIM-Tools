@@ -6,6 +6,32 @@ const BuildLogger = require('./logger.js');
 
 const distSrcDir = path.join(__dirname, '..', 'dist', 'src');
 const PRESET_ENV = require.resolve('@babel/preset-env');
+const browserslist = require('browserslist');
+
+// 从 browserslist 配置解析目标浏览器
+function resolveBrowserslistTargets() {
+  const query = [
+    'defaults',
+    'Chrome >= 90',
+    'not dead'
+  ];
+  const browsers = browserslist(query);
+  const targets = {};
+  for (const entry of browsers) {
+    const [name, version] = entry.split(' ');
+    const major = parseInt(version.split('.')[0], 10);
+    const mapped = {
+      chrome: 'chrome', firefox: 'firefox', safari: 'safari',
+      edge: 'edge', opera: 'opera', ios: 'ios', samsung: 'samsung',
+      ie: 'ie', android: 'android'
+    };
+    const key = mapped[name];
+    if (key && (!targets[key] || major < targets[key])) {
+      targets[key] = major;
+    }
+  }
+  return targets;
+}
 
 function shouldSkipFile(filePath) {
   const normalized = filePath.split(path.sep).join('/');
@@ -43,7 +69,7 @@ async function transpileFile(filePath) {
     babelrc: false,
     configFile: false,
     presets: [[PRESET_ENV, {
-      targets: { chrome: '77' },
+      targets: resolveBrowserslistTargets(),
       bugfixes: true,
       modules: false
     }]]
@@ -75,7 +101,7 @@ async function transpileDistJs() {
     if (isChanged) changed += 1;
   }
 
-  BuildLogger.success(`JS 转译完成（Chrome 77 目标）：处理 ${files.length} 个文件，更新 ${changed} 个文件`);
+  BuildLogger.success(`JS 转译完成（browserslist 目标）：处理 ${files.length} 个文件，更新 ${changed} 个文件`);
   return { total: files.length, changed };
 }
 

@@ -90,7 +90,7 @@ async function copyDirectory(source, destination) {
     }
   }
 
-  BuildLogger.log('🧩 转译 dist/src 下的 JS（目标 Chrome 77）...');
+  BuildLogger.log('🧩 转译 dist/src 下的 JS（browserslist 目标）...');
   await transpileDistJs();
 
   // 注入 Sentry 配置

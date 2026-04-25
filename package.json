@@ -85,6 +85,11 @@
     "webpack-cli": "^5.1.4",
     "workbox-webpack-plugin": "^7.0.0"
   },
+  "browserslist": [
+    "defaults",
+    "Chrome >= 90",
+    "not dead"
+  ],
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
