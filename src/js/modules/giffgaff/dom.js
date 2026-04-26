@@ -1,7 +1,7 @@
 /**
  * Giffgaff DOM 管理模块
  */
-import { getCurrentLocale, onLocaleChange } from '../i18n.js';
+import { getCurrentLocale, onLocaleChange, tl } from '../i18n.js';
 import HTMLSanitizer from '../html-sanitizer.js';
 
 class DOMManager {
@@ -213,13 +213,13 @@ class DOMManager {
 
     memberInfo.innerHTML = `
       <div class="info-item">
-        <strong>会员ID:</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.memberId || 'N/A')}</span>
+        <strong>${tl('会员ID:')}</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.memberId || 'N/A')}</span>
       </div>
       <div class="info-item">
-        <strong>会员名称:</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.memberName || 'N/A')}</span>
+        <strong>${tl('会员名称:')}</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.memberName || 'N/A')}</span>
       </div>
       <div class="info-item">
-        <strong>手机号码:</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.phoneNumber || 'N/A')}</span>
+        <strong>${tl('手机号码:')}</strong> <span class="text-primary">${HTMLSanitizer.escapeHtml(state.phoneNumber || 'N/A')}</span>
       </div>
     `;
     memberInfo.style.display = 'block';
@@ -237,23 +237,23 @@ class DOMManager {
         <strong>SSN:</strong>
         <span class="text-primary" id="displaySSN">${HTMLSanitizer.escapeHtml(state.esimSSN || 'N/A')}</span>
         <button class="btn btn-sm btn-outline-primary ms-2" data-copy="${HTMLSanitizer.escapeAttr(state.esimSSN)}">
-          <i class="fas fa-copy"></i> 复制
+          <i class="fas fa-copy"></i> ${tl('复制')}
         </button>
       </div>
       <div class="info-item">
-        <strong>激活码:</strong>
+        <strong>${tl('激活码:')}</strong>
         <span class="text-primary" id="displayActivationCode">${HTMLSanitizer.escapeHtml(state.esimActivationCode || 'N/A')}</span>
         <button class="btn btn-sm btn-outline-primary ms-2" data-copy="${HTMLSanitizer.escapeAttr(state.esimActivationCode)}">
-          <i class="fas fa-copy"></i> 复制
+          <i class="fas fa-copy"></i> ${tl('复制')}
         </button>
       </div>
       <div class="info-item">
-        <strong>状态:</strong>
+        <strong>${tl('状态:')}</strong>
         <span class="badge bg-info">${HTMLSanitizer.escapeHtml(state.esimDeliveryStatus || 'RESERVED')}</span>
       </div>
       <div class="alert alert-info mt-3">
         <i class="fas fa-info-circle"></i>
-        已为您预留 eSIM（状态 RESERVED）。请保持本页面开启，前往 <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff 激活页</a> 手动输入上方激活码并点击 "Activate your SIM"，随后确认 "Yes, I want to replace my SIM"。完成后返回本页点击"获取 eSIM Token"继续。
+        ${tl('已为您预留 eSIM（状态 RESERVED）。请保持本页面开启，前往 <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff 激活页</a> 手动输入上方激活码并点击 "Activate your SIM"，随后确认 "Yes, I want to replace my SIM"。完成后返回本页点击"获取 eSIM Token"继续。')}
       </div>
     `;
 
@@ -291,10 +291,10 @@ class DOMManager {
         <img src="${qrUrl}" alt="eSIM QR Code" class="img-fluid" id="esimQRImage" />
         <div class="mt-3">
           <button class="btn btn-primary" id="copyLPABtn">
-            <i class="fas fa-copy"></i> 复制LPA字符串
+            <i class="fas fa-copy"></i> ${tl('复制LPA字符串')}
           </button>
           <button class="btn btn-success ms-2" id="downloadQRBtn">
-            <i class="fas fa-download"></i> 下载二维码
+            <i class="fas fa-download"></i> ${tl('下载二维码')}
           </button>
         </div>
       `;
@@ -335,9 +335,9 @@ class DOMManager {
     const tokenStatus = document.getElementById('tokenStatus');
     if (tokenStatus) {
       if (state.accessToken) {
-        tokenStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i> 已获取';
+        tokenStatus.innerHTML = `<i class="fas fa-check-circle text-success"></i> ${tl('已获取')}`;
       } else {
-        tokenStatus.innerHTML = '<i class="fas fa-times-circle text-danger"></i> 未获取';
+        tokenStatus.innerHTML = `<i class="fas fa-times-circle text-danger"></i> ${tl('未获取')}`;
       }
     }
 
@@ -345,9 +345,9 @@ class DOMManager {
     const signatureStatus = document.getElementById('signatureStatus');
     if (signatureStatus) {
       if (state.emailSignature) {
-        signatureStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i> 已验证';
+        signatureStatus.innerHTML = `<i class="fas fa-check-circle text-success"></i> ${tl('已验证')}`;
       } else {
-        signatureStatus.innerHTML = '<i class="fas fa-times-circle text-danger"></i> 未验证';
+        signatureStatus.innerHTML = `<i class="fas fa-times-circle text-danger"></i> ${tl('未验证')}`;
       }
     }
 
@@ -356,9 +356,9 @@ class DOMManager {
     if (sessionStatus) {
       if (state.sessionTimestamp) {
         const timeAgo = Math.floor((Date.now() - state.sessionTimestamp) / 60000);
-        sessionStatus.innerHTML = `<i class="fas fa-clock text-info"></i> ${HTMLSanitizer.escapeHtml(String(timeAgo))}分钟前`;
+        sessionStatus.innerHTML = `<i class="fas fa-clock text-info"></i> ${tl('分钟前', { count: timeAgo })}`;
       } else {
-        sessionStatus.innerHTML = '<i class="fas fa-times-circle text-muted"></i> 无会话';
+        sessionStatus.innerHTML = `<i class="fas fa-times-circle text-muted"></i> ${tl('无会话')}`;
       }
     }
   }
@@ -378,7 +378,7 @@ class DOMManager {
     }
     const ukHint = document.getElementById('ukTimeHint');
     if (ukHint) {
-      ukHint.textContent = `英国时间 ${ukTime}`;
+      ukHint.textContent = tl('giffgaff.app.service.ukTime', { time: ukTime });
     }
 
     const alertElement = document.getElementById('serviceTimeAlert');
@@ -387,14 +387,14 @@ class DOMManager {
         alertElement.className = 'alert alert-success';
         alertElement.innerHTML = `
           <i class="fas fa-check-circle"></i>
-          <strong>服务可用</strong> - 本地 ${HTMLSanitizer.escapeHtml(localTime)} / 英国 ${HTMLSanitizer.escapeHtml(ukTime)}（服务窗口 04:30-21:30）
+          <strong>${tl('服务可用')}</strong> - ${tl('当前时间')} ${HTMLSanitizer.escapeHtml(localTime)} / UK ${HTMLSanitizer.escapeHtml(ukTime)}（04:30-21:30）
         `;
       } else {
         alertElement.className = 'alert alert-warning';
         alertElement.innerHTML = `
           <i class="fas fa-exclamation-triangle"></i>
-          <strong>服务时间外</strong> - 本地 ${HTMLSanitizer.escapeHtml(localTime)} / 英国 ${HTMLSanitizer.escapeHtml(ukTime)}
-          <br><small>SIM 交换服务窗口：英国时间 04:30 至 21:30。您仍可浏览信息，部分操作可能失败。</small>
+          <strong>${tl('服务时间外')}</strong> - ${tl('当前时间')} ${HTMLSanitizer.escapeHtml(localTime)} / UK ${HTMLSanitizer.escapeHtml(ukTime)}
+          <br><small>${tl('SIM 交换服务窗口：英国时间 04:30 至 21:30。您仍可浏览信息，部分操作可能失败。')}</small>
         `;
       }
     }
@@ -419,18 +419,18 @@ class DOMManager {
           <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
               <h5 class="modal-title">
-                <i class="fas fa-exclamation-triangle"></i> 服务时间警告
+                <i class="fas fa-exclamation-triangle"></i> ${tl('服务时间警告')}
               </h5>
             </div>
             <div class="modal-body">
-              <p>SIM 交换服务窗口为 <strong>英国时间 04:30 至 21:30</strong>。</p>
-              <p>当前时间：本地 ${HTMLSanitizer.escapeHtml(localTime)} / 英国 ${HTMLSanitizer.escapeHtml(ukTime)}。</p>
-              <p>窗口外操作可能失败或不稳定，建议在服务窗口内进行。</p>
-              <p class="mb-0"><strong>是否继续操作？</strong></p>
+              <p>${tl('SIM 交换服务窗口为 <strong>英国时间 04:30 至 21:30</strong>。')}</p>
+              <p>${tl('当前时间')}：${tl('当前时间')} ${HTMLSanitizer.escapeHtml(localTime)} / UK ${HTMLSanitizer.escapeHtml(ukTime)}。</p>
+              <p>${tl('窗口外操作可能失败或不稳定，建议在服务窗口内进行。')}</p>
+              <p class="mb-0"><strong>${tl('是否继续操作？')}</strong></p>
             </div>
             <div class="modal-footer">
-              <button class="btn btn-secondary" id="cancelBtn">取消</button>
-              <button class="btn btn-warning" id="continueBtn">继续</button>
+              <button class="btn btn-secondary" id="cancelBtn">${tl('取消')}</button>
+              <button class="btn btn-warning" id="continueBtn">${tl('继续')}</button>
             </div>
           </div>
         </div>
