@@ -234,22 +234,20 @@ jobs:
               (f"{base_url}/chat/completions", {
                   "model": model,
                   "temperature": 0.2,
-                  "messages": [
-                      {"role": "system", "content": system_prompt},
-                      {"role": "user", "content": input_prompt},
-                  ],
-                  "tools": [{"type": "function", "function": schema}],
-                  "tool_choice": {"type": "function", "function": {"name": schema['name']}},
-              }, 'chat_tools'),
-              (f"{base_url}/chat/completions", {
-                  "model": model,
-                  "temperature": 0.2,
                   "response_format": {"type": "json_object"},
                   "messages": [
                       {"role": "system", "content": system_prompt + "\n你必须直接输出 JSON 对象，不要输出 markdown。"},
                       {"role": "user", "content": input_prompt},
                   ],
               }, 'chat_json'),
+              (f"{base_url}/chat/completions", {
+                  "model": model,
+                  "temperature": 0.2,
+                  "messages": [
+                      {"role": "system", "content": system_prompt + "\n你必须直接输出 JSON 对象，不要输出 markdown 或代码块。"},
+                      {"role": "user", "content": input_prompt + "\n\n请直接输出 JSON，不要包含 ```json 代码块标记。"},
+                  ],
+              }, 'chat_plain'),
           ]
 
           headers = {
@@ -287,19 +285,26 @@ jobs:
                       with urllib.request.urlopen(req, timeout=180) as resp:
                           text = resp.read().decode('utf-8', errors='replace')
                       obj = json.loads(text)
-                      if mode == 'chat_tools':
-                          msg = (obj.get('choices') or [{}])[0].get('message') or {}
-                          tc = (msg.get('tool_calls') or [{}])[0]
-                          raw = ((tc.get('function') or {}).get('arguments')) or ''
-                      else:
-                          raw = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                      raw = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                      # 尝试从 markdown 代码块中提取 JSON
+                      if raw and not raw.strip().startswith('{'):
+                          import re
+                          m = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', raw, re.S)
+                          if m:
+                              raw = m.group(1).strip()
                       if raw and validate_rewrite(raw):
                           content = raw
                           mode_used = mode
                           pathlib.Path('.ai_runtime/rewrite_raw.txt').write_text(content, encoding='utf-8')
                           break
+                  except urllib.error.HTTPError as e:
+                      err_body = e.read().decode('utf-8', errors='replace')[:500]
+                      last_err = f'HTTP {e.code}: {err_body}'
+                      print(f'[attempt {attempt+1}] {mode} 失败: {last_err}')
+                      import time; time.sleep(2)
                   except Exception as e:
                       last_err = e
+                      print(f'[attempt {attempt+1}] {mode} 异常: {e}')
               if content:
                   break
 
@@ -826,6 +831,7 @@ jobs:
                 },
                 "analysis": { "type": "string" },
                 "solution": { "type": "string" },
+                "workaround": { "type": "string" },
                 "error_pattern_summary": { "type": "string" },
                 "related_files": {
                   "type": "array",
@@ -853,7 +859,7 @@ jobs:
                   }
                 }
               },
-              "required": ["summary", "classification", "support_status", "analysis", "solution", "error_pattern_summary", "related_files", "actionable_steps", "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"]
+              "required": ["summary", "classification", "support_status", "analysis", "solution", "workaround", "error_pattern_summary", "related_files", "actionable_steps", "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"]
             }
           }
           JSON
@@ -868,10 +874,11 @@ jobs:
               "- classification: 分类，必须是 bug/enhancement/question/documentation/needs_more_info 之一（必填）\n"
               "- support_status: 支持状态，必须是 supported/partially_supported/not_supported/already_fixed_unreleased/needs_more_info 之一（必填）\n"
               "- analysis: 详细分析问题根因，引用具体的代码路径和逻辑（必填，至少 2 句话）\n"
-              "- solution: 具体的修复方案或建议，包含可执行的步骤（必填，至少 1 句话）\n"
+              "- solution: 详细的修复方案，必须包含：受影响的文件路径、具体的函数/方法名、需要修改的代码逻辑描述、修改后的预期行为。格式示例：\"在 `packages/backend/src/auth/service.ts` 的 `validateToken()` 方法中，第 42 行的过期检查逻辑需要改为...\"（必填，至少 2 句话）\n"
+              "- workaround: 用户可立即执行的临时解决方案，不依赖代码修改或重新部署。例如：修改配置文件参数、设置环境变量、重启服务、手动执行命令等。如果确实没有临时方案则为空字符串（必填）\n"
               "- error_pattern_summary: 错误模式总结，描述从 Issue 中提取的错误类型、发生位置和调用链路（如果存在错误信息则必填，否则为空字符串）\n"
               "- related_files: 相关文件列表，格式如 [\"packages/backend/src/auth/service.ts\"]，列出与问题直接相关的源代码文件（必填，至少 1 个，最多 8 个）\n"
-              "- actionable_steps: 可执行步骤列表，按优先级排列具体的修复或排查步骤（必填，至少 1 步，最多 6 步）\n"
+              "- actionable_steps: 可执行步骤列表，每步必须足够具体以供 AI 编程助手直接执行。格式要求：引用文件路径（如 `src/foo.ts`）、函数名（如 `handleLogin()`）、行号范围、以及需要执行的具体操作（如「将第 15 行的 `==` 改为 `===`」「在 `X` 函数末尾添加空值检查」）。禁止模糊描述如「检查相关代码」「修复问题」。（必填，至少 1 步，最多 6 步）\n"
               "- roadmap: 如果 not_supported，描述实现路线；否则为空字符串\n"
               "- needs_human_followup: 仅当证据明显不足或问题涉及业务决策时设为 true（必填）\n"
               "- duplicate_confidence: 与已有 Issue 的重复程度 low/medium/high（必填）\n"
@@ -892,7 +899,9 @@ jobs:
               "## 判断原则\n\n"
               "- 如果代码上下文中有明确的相关文件和逻辑，大胆给出分析和方案\n"
               "- analysis 中必须引用具体的文件路径（如 `packages/backend/src/auth/service.ts`）和函数名\n"
-              "- solution 中必须包含可执行的修改步骤，指明需要修改的文件和方向\n"
+              "- solution 必须写成「AI 编程助手可直接执行」的粒度：文件路径 + 函数名 + 行号 + 具体修改内容 + 预期结果\n"
+              "- actionable_steps 必须写成可直接执行的指令，每步包含：目标文件、定位方式（行号/函数名/代码模式）、具体操作、验证方式\n"
+              "- workaround 必须提供用户可立即执行的临时规避方法，不依赖代码修改（如配置变更、环境变量、手动操作步骤）\n"
               "- 只有在完全无法判断时才设 needs_human_followup=true\n"
               "- labels 必须从允许的列表中选择，不要自创标签\n"
               "- 输出必须是严格 JSON，不要输出 markdown 或其他文本"
@@ -1039,12 +1048,13 @@ jobs:
                       with urllib.request.urlopen(req, timeout=240) as resp:
                           text = resp.read().decode('utf-8', errors='replace')
                       obj = json.loads(text)
-                      if mode == 'chat_tools':
-                          msg = (obj.get('choices') or [{}])[0].get('message') or {}
-                          tc = (msg.get('tool_calls') or [{}])[0]
-                          raw = ((tc.get('function') or {}).get('arguments')) or ''
-                      else:
-                          raw = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                      raw = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                      # 尝试从 markdown 代码块中提取 JSON
+                      if raw and not raw.strip().startswith('{'):
+                          import re
+                          m = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', raw, re.S)
+                          if m:
+                              raw = m.group(1).strip()
                       if raw and validate_triage(raw):
                           content = raw
                           mode_used = mode
@@ -1052,8 +1062,14 @@ jobs:
                           break
                       elif raw:
                           last_err = f'LLM 返回内容缺少必需字段: {required_fields - set(json.loads(raw).keys()) if isinstance(raw, str) else "parse error"}'
+                  except urllib.error.HTTPError as e:
+                      err_body = e.read().decode('utf-8', errors='replace')[:500]
+                      last_err = f'HTTP {e.code}: {err_body}'
+                      print(f'[attempt {attempt+1}] {mode} 失败: {last_err}')
+                      import time; time.sleep(2)
                   except Exception as e:
                       last_err = e
+                      print(f'[attempt {attempt+1}] {mode} 异常: {e}')
               if content:
                   break
               print(f'第 {attempt+1} 次尝试未通过验证，准备重试...')
@@ -1128,6 +1144,7 @@ jobs:
               "support_status": s(d.get("support_status"), "needs_more_info"),
               "analysis": s(d.get("analysis"), "AI 未能稳定生成分析，请维护者人工复核。"),
               "solution": s(d.get("solution"), "暂无稳定自动建议。"),
+              "workaround": s(d.get("workaround"), ""),
               "error_pattern_summary": s(d.get("error_pattern_summary"), ""),
               "related_files": [x.strip() for x in arr(d.get("related_files")) if isinstance(x, str) and x.strip()][:8],
               "actionable_steps": [x.strip() for x in arr(d.get("actionable_steps")) if isinstance(x, str) and x.strip()][:6],
@@ -1167,7 +1184,7 @@ jobs:
           ISSUE_NUMBER: ${{ steps.issue.outputs.issue_number }}
         with:
           script: |
-            const marker = "<!-- ai-issue-smart-reply:v3 -->";
+            const marker = "<!-- ai-issue-smart-reply:v4 -->";
             const result = JSON.parse(process.env.RESULT_JSON || "{}");
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -1235,6 +1252,13 @@ jobs:
             lines.push(result.solution || "暂无");
             lines.push("");
 
+            // 临时解决方案（workaround）
+            if (result.workaround) {
+              lines.push("#### 🩹 临时解决方案");
+              lines.push(result.workaround);
+              lines.push("");
+            }
+
             // 可执行步骤
             if (Array.isArray(result.actionable_steps) && result.actionable_steps.length > 0) {
               lines.push("#### 🎯 可执行步骤");
@@ -1276,10 +1300,11 @@ jobs:
             lines.push("");
             lines.push("</details>");
             lines.push("");
-            lines.push("_<sub>🤖 此评论由 AI 自动化工作流生成 | 结构化输出 + 幂等更新 + 标签白名单 + 代码上下文检索 + 错误模式分析</sub>_");
+            lines.push("_<sub>🤖 此评论由 AI 自动化工作流生成 | 结构化输出 + 新评论模式 + 标签白名单 + 代码上下文检索 + 错误模式分析 + AI Agent 可消费方案</sub>_");
 
             const body = lines.join("\n");
 
+            // 始终创建新评论（不再编辑旧评论，保留历史分析记录）
             const comments = await github.paginate(
               github.rest.issues.listComments,
               { owner, repo, issue_number, per_page: 100 }
@@ -1289,21 +1314,12 @@ jobs:
               c => typeof c.body === "string" && c.body.includes(marker)
             );
 
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existing.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number,
-                body
-              });
-            }
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body
+            });
 
             if (process.env.AI_AUTO_LABEL === "true") {
               const issue = await github.rest.issues.get({
@@ -1333,11 +1349,7 @@ jobs:
                 "duplicate", "needs more info", "needs-review"
               ];
 
-              const isReAnalyze = existing && existing.body &&
-                existing.body.includes(marker) &&
-                existing.updated_at && (Date.now() - new Date(existing.updated_at).getTime()) < 5 * 60 * 1000;
-
-              // 移除旧的 AI 标签
+              // 重新分析时移除旧的 AI 管理标签（无论是否有旧评论）
               const toRemove = aiManagedLabels.filter(x => existingLabels.has(x));
               if (toRemove.length > 0) {
                 try {
