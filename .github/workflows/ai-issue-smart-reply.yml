@@ -3,6 +3,21 @@ name: 🤖 AI Issue Smart Reply
 on:
   issues:
     types: [opened]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      target_type:
+        description: '目标类型'
+        required: true
+        type: choice
+        options:
+          - issue
+          - pr
+      issue_number:
+        description: 'Issue 或 PR 编号（如 42）'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -10,17 +25,21 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: ai-issue-${{ github.event.issue.number }}
+  group: ai-issue-${{ github.event.issue.number || github.event.inputs.issue_number }}
   cancel-in-progress: false
 
 jobs:
   ai-smart-reply:
-    if: vars.AI_ISSUE_REPLY_ENABLED == 'true'
+    if: |
+      vars.AI_ISSUE_REPLY_ENABLED == 'true' && (
+        github.event_name == 'issues' ||
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/ai-analyze'))
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     env:
-      AI_USE_EMBED_INDEX: ${{ vars.AI_USE_EMBED_INDEX || 'true' }}
       AI_AUTO_LABEL: ${{ vars.AI_AUTO_LABEL || 'true' }}
       AI_ENABLE_DUPLICATE_CHECK: ${{ vars.AI_ENABLE_DUPLICATE_CHECK || 'true' }}
       AI_ENABLE_PR_SEARCH: ${{ vars.AI_ENABLE_PR_SEARCH || 'true' }}
@@ -47,20 +66,101 @@ jobs:
 
       - name: Prepare issue payload
         id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_NUM: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+          TARGET_TYPE: ${{ github.event.inputs.target_type || 'issue' }}
+          AUTO_TITLE: ${{ github.event.issue.title }}
+          AUTO_BODY: ${{ github.event.issue.body || '' }}
+          AUTO_AUTHOR: ${{ github.event.issue.user.login }}
+          AUTO_URL: ${{ github.event.issue.html_url }}
+          EVENT_NAME: ${{ github.event_name }}
+          COMMENT_BODY: ${{ github.event.comment.body || '' }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p .ai_runtime
 
-          cat > .ai_runtime/issue.json <<'JSON'
-          {
-            "number": ${{ github.event.issue.number }},
-            "title": ${{ toJson(github.event.issue.title) }},
-            "body": ${{ toJson(github.event.issue.body || '') }},
-            "author": ${{ toJson(github.event.issue.user.login) }},
-            "url": ${{ toJson(github.event.issue.html_url) }}
-          }
-          JSON
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+
+          input_num = os.environ['INPUT_NUM']
+          target_type = os.environ['TARGET_TYPE']
+          auto_title = os.environ.get('AUTO_TITLE', '')
+          event_name = os.environ.get('EVENT_NAME', '')
+          comment_body = os.environ.get('COMMENT_BODY', '')
+
+          re_analyze = False
+
+          if event_name == 'issue_comment':
+              # 评论触发：通过 gh CLI 获取 issue 数据
+              cmd = ['gh', 'issue', 'view', input_num,
+                     '--json', 'number,title,body,author,url']
+              result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+              d = json.loads(result.stdout)
+              author = d.get('author', {})
+              payload = {
+                  "number": d['number'],
+                  "title": d.get('title', ''),
+                  "body": d.get('body', '') or '',
+                  "author": author.get('login', '') if isinstance(author, dict) else str(author),
+                  "url": d.get('url', ''),
+              }
+              re_analyze = True
+          elif auto_title:
+              # 自动触发：使用事件环境变量
+              payload = {
+                  "number": int(input_num),
+                  "title": auto_title,
+                  "body": os.environ.get('AUTO_BODY', ''),
+                  "author": os.environ.get('AUTO_AUTHOR', ''),
+                  "url": os.environ.get('AUTO_URL', ''),
+              }
+          else:
+              # 手动触发：通过 gh CLI 获取数据
+              cmd = ['gh', 'pr' if target_type == 'pr' else 'issue', 'view', input_num,
+                     '--json', 'number,title,body,author,url']
+              result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+              d = json.loads(result.stdout)
+              author = d.get('author', {})
+              payload = {
+                  "number": d['number'],
+                  "title": d.get('title', ''),
+                  "body": d.get('body', '') or '',
+                  "author": author.get('login', '') if isinstance(author, dict) else str(author),
+                  "url": d.get('url', ''),
+              }
+
+          payload["re_analyze"] = re_analyze
+
+          pathlib.Path('.ai_runtime/issue.json').write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          print(f"成功获取 {target_type} #{input_num}: {payload['title']}")
+          PY
+
+          echo "payload=$(cat .ai_runtime/issue.json | jq -c .)" >> "$GITHUB_OUTPUT"
+          echo "issue_number=$(jq -r '.number' .ai_runtime/issue.json)" >> "$GITHUB_OUTPUT"
+          echo "re_analyze=$(jq -r '.re_analyze' .ai_runtime/issue.json)" >> "$GITHUB_OUTPUT"
+
+      - name: React to /ai-analyze comment
+        if: github.event_name == 'issue_comment' && steps.issue.outputs.re_analyze == 'true'
+        uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.issue_number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        with:
+          script: |
+            const issue_number = parseInt(process.env.ISSUE_NUMBER, 10) || context.issue.number;
+            const comment_id = parseInt(process.env.COMMENT_ID, 10);
+            if (comment_id) {
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id,
+                content: 'rocket'
+              });
+            }
 
       - name: Stage 1 - classify and rewrite query
         id: rewrite
@@ -111,15 +211,14 @@ jobs:
           search_queries 控制在 3-6 条，keywords 控制在 5-12 条。
           EOF
 
-          cat > .ai_runtime/rewrite_input_prompt.txt <<'EOF'
-          请分析这个 Issue，并输出适合仓库知识库/代码库检索的查询。
-
-          标题：
-          ${{ github.event.issue.title }}
-
-          正文：
-          ${{ github.event.issue.body }}
-          EOF
+          python3 -c "
+          import json, pathlib
+          issue = json.loads(pathlib.Path('.ai_runtime/issue.json').read_text(encoding='utf-8'))
+          pathlib.Path('.ai_runtime/rewrite_input_prompt.txt').write_text(
+              '请分析这个 Issue，并输出适合仓库知识库/代码库检索的查询。\n\n标题：\n' + issue.get('title','') + '\n\n正文：\n' + issue.get('body',''),
+              encoding='utf-8'
+          )
+          "
 
           python3 - <<'PY'
           import json, os, pathlib, urllib.request, urllib.error
@@ -163,35 +262,56 @@ jobs:
           last_err = None
           content = ''
           mode_used = ''
-          for url, payload, mode in candidates:
-              data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-              req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+          required_fields = {"summary", "issue_type", "search_queries", "keywords", "components", "likely_paths"}
+
+          def validate_rewrite(s):
               try:
-                  with urllib.request.urlopen(req, timeout=180) as resp:
-                      text = resp.read().decode('utf-8', errors='replace')
-                  obj = json.loads(text)
-                  if mode == 'chat_tools':
-                      msg = (obj.get('choices') or [{}])[0].get('message') or {}
-                      tc = (msg.get('tool_calls') or [{}])[0]
-                      content = ((tc.get('function') or {}).get('arguments')) or ''
-                  else:
-                      content = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
-                  if content:
-                      mode_used = mode
-                      pathlib.Path('.ai_runtime/rewrite_raw.txt').write_text(content, encoding='utf-8')
-                      break
-              except Exception as e:
-                  last_err = e
+                  obj = json.loads(s) if isinstance(s, str) else s
+                  return required_fields.issubset(set(obj.keys()))
+              except Exception:
+                  return False
+
+          for attempt in range(2):
+              for url, payload, mode in candidates:
+                  if attempt > 0:
+                      extra = "\n\n重要：必须输出包含 summary, issue_type, search_queries, keywords, components, likely_paths 全部字段的 JSON。"
+                      payload = dict(payload)
+                      msgs = [dict(m) for m in payload['messages']]
+                      msgs[-1] = dict(msgs[-1])
+                      msgs[-1]['content'] = msgs[-1].get('content', '') + extra
+                      payload['messages'] = msgs
+
+                  data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+                  req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+                  try:
+                      with urllib.request.urlopen(req, timeout=180) as resp:
+                          text = resp.read().decode('utf-8', errors='replace')
+                      obj = json.loads(text)
+                      if mode == 'chat_tools':
+                          msg = (obj.get('choices') or [{}])[0].get('message') or {}
+                          tc = (msg.get('tool_calls') or [{}])[0]
+                          raw = ((tc.get('function') or {}).get('arguments')) or ''
+                      else:
+                          raw = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                      if raw and validate_rewrite(raw):
+                          content = raw
+                          mode_used = mode
+                          pathlib.Path('.ai_runtime/rewrite_raw.txt').write_text(content, encoding='utf-8')
+                          break
+                  except Exception as e:
+                      last_err = e
+              if content:
+                  break
 
           if not content:
               raise RuntimeError(f'LLM rewrite call failed: {last_err}')
 
+          pathlib.Path('.ai_runtime/issue_rewrite.txt').write_text(content, encoding='utf-8')
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
-              f.write('issue_rewrite<<EOF\n')
-              f.write(content)
-              f.write('\nEOF\n')
               f.write(f'mode_used={mode_used}\n')
           PY
+
+          python3 .github/scripts/write_output.py issue_rewrite .ai_runtime/issue_rewrite.txt
 
       - name: Normalize rewrite result
         id: rewrite_norm
@@ -269,88 +389,106 @@ jobs:
               ;;
           esac
 
-      - name: Retrieve context from AI embed index
-        if: env.AI_USE_EMBED_INDEX == 'true'
-        id: retrieve_index
-        shell: bash
-        env:
-          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
-          EMBEDDING_BASE_URL: ${{ secrets.EMBEDDING_BASE_URL }}
-          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
-        run: |
-          set -euo pipefail
-
-          if [ ! -f ai/index.jsonl ]; then
-            echo "index_missing=true" >> "$GITHUB_OUTPUT"
-            : > .ai_runtime/index_context.txt
-          else
-            if [ -f ai/embeddings.jsonl ] && [ -n "${EMBEDDING_API_KEY}" ] && [ -n "${EMBEDDING_BASE_URL}" ] && [ -n "${EMBEDDING_MODEL}" ]; then
-              python3 .github/scripts/retrieve_ai_context.py \
-                --index ai/index.jsonl \
-                --embedding-index ai/embeddings.jsonl \
-                --embedding-api-key "${EMBEDDING_API_KEY}" \
-                --embedding-base-url "${EMBEDDING_BASE_URL}" \
-                --embedding-model "${EMBEDDING_MODEL}" \
-                --rewrite .ai_runtime/rewrite.json \
-                --issue .ai_runtime/issue.json \
-                --max-chars "${AI_MAX_CONTEXT_CHARS}" \
-                > .ai_runtime/index_context.txt
-            else
-              python3 .github/scripts/retrieve_ai_context.py \
-                --index ai/index.jsonl \
-                --rewrite .ai_runtime/rewrite.json \
-                --issue .ai_runtime/issue.json \
-                --max-chars "${AI_MAX_CONTEXT_CHARS}" \
-                > .ai_runtime/index_context.txt
-            fi
-            echo "index_missing=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          {
-            echo "context<<EOF"
-            cat .ai_runtime/index_context.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Fallback repository scan
-        if: env.AI_USE_EMBED_INDEX != 'true' || steps.retrieve_index.outputs.index_missing == 'true'
-        id: fallback_scan
+      - name: Retrieve context from repository scan
+        id: context_scan
         shell: bash
         run: |
           set -euo pipefail
 
-          python3 .github/scripts/retrieve_ai_context.py \
-            --repo-root . \
-            --rewrite .ai_runtime/rewrite.json \
-            --issue .ai_runtime/issue.json \
-            --max-chars "${AI_MAX_CONTEXT_CHARS}" \
-            > .ai_runtime/fallback_context.txt
+          python3 - <<'PY'
+          import json, os, pathlib, re
 
-          {
-            echo "context<<EOF"
-            cat .ai_runtime/fallback_context.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          TEXT_EXTS = {
+              ".md", ".mdx", ".rst", ".txt", ".js", ".jsx", ".ts", ".tsx", ".py", ".go",
+              ".java", ".rs", ".php", ".rb", ".yml", ".yaml", ".json", ".toml", ".sh", ".vue"
+          }
+          IGNORE_DIRS = {
+              ".git", "node_modules", "dist", "build", "coverage", ".next", ".nuxt",
+              "__pycache__", ".venv", "venv", "vendor", "target", "out", ".ai_runtime"
+          }
 
-      - name: Prepare final retrieved context
-        id: final_context
-        shell: bash
-        run: |
-          set -euo pipefail
+          rewrite = json.loads(pathlib.Path(".ai_runtime/rewrite.json").read_text(encoding="utf-8"))
+          issue = json.loads(pathlib.Path(".ai_runtime/issue.json").read_text(encoding="utf-8"))
 
-          if [ -s .ai_runtime/index_context.txt ]; then
-            cp .ai_runtime/index_context.txt .ai_runtime/final_context.txt
-          elif [ -s .ai_runtime/fallback_context.txt ]; then
-            cp .ai_runtime/fallback_context.txt .ai_runtime/final_context.txt
-          else
-            : > .ai_runtime/final_context.txt
-          fi
+          # 构建查询词
+          query_terms = []
+          for key in ("search_queries", "keywords", "components", "likely_paths"):
+              query_terms.extend(rewrite.get(key, []))
+          query_terms.append(issue.get("title", ""))
+          query_terms = [t for t in query_terms if isinstance(t, str) and t.strip()]
 
-          {
-            echo "context<<EOF"
-            cat .ai_runtime/final_context.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          def tokenize(text):
+              return set(re.findall(r"[A-Za-z0-9_./:#-]{3,}", text.lower()))
+
+          q_tokens = tokenize(" ".join(query_terms))
+          max_chars = int(os.environ.get("AI_MAX_CONTEXT_CHARS", "50000"))
+
+          root = pathlib.Path(".")
+          rows = []
+
+          for path in root.rglob("*"):
+              if not path.is_file():
+                  continue
+              rel = path.relative_to(root).as_posix()
+              if any(part in rel for part in IGNORE_DIRS):
+                  continue
+              if path.suffix.lower() not in TEXT_EXTS and not path.name.startswith("README"):
+                  continue
+              try:
+                  text = path.read_text(encoding="utf-8", errors="ignore")
+              except Exception:
+                  continue
+
+              lower = text.lower()
+              score = 0
+              for t in query_terms:
+                  tl = t.lower()
+                  if tl in lower:
+                      score += 2
+                  if tl in rel.lower():
+                      score += 4
+              if score <= 0:
+                  continue
+
+              lines = text.splitlines()
+              for i, line in enumerate(lines):
+                  ls = line.lower()
+                  hit = sum(1 for t in query_terms if t.lower() in ls)
+                  if hit <= 0:
+                      continue
+                  start = max(0, i - 18)
+                  end = min(len(lines), i + 19)
+                  block = "\n".join(f"{j+1:>5}: {lines[j]}" for j in range(start, end))
+                  rows.append({
+                      "path": rel,
+                      "start_line": start + 1,
+                      "end_line": end,
+                      "text": block,
+                      "score": score + hit * 5
+                  })
+
+          rows.sort(key=lambda x: (-x["score"], x["path"], x["start_line"]))
+
+          # 输出去重后的结果
+          parts = []
+          cur = 0
+          seen = set()
+          for row in rows:
+              key = (row["path"], row["start_line"], row["end_line"])
+              if key in seen:
+                  continue
+              seen.add(key)
+              block = f"--- FILE: {row['path']} (lines {row['start_line']}-{row['end_line']}) ---\n{row['text']}\n"
+              if cur + len(block) > max_chars:
+                  break
+              parts.append(block)
+              cur += len(block)
+
+          pathlib.Path(".ai_runtime/final_context.txt").write_text("\n".join(parts), encoding="utf-8")
+          print(f"扫描完成: {len(rows)} 个匹配块, {len(parts)} 个输出, {cur} 字符")
+          PY
+
+          python3 .github/scripts/write_output.py context .ai_runtime/final_context.txt
 
       - name: Fetch duplicate candidates
         if: env.AI_ENABLE_DUPLICATE_CHECK == 'true'
@@ -400,11 +538,7 @@ jobs:
           )
           PY
 
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/dupes.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/dupes.txt
 
       - name: Prepare duplicate candidates fallback
         if: env.AI_ENABLE_DUPLICATE_CHECK != 'true'
@@ -413,11 +547,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "No duplicate candidates collected." > .ai_runtime/dupes.txt
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/dupes.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/dupes.txt
 
       - name: Fetch recent PR candidates
         if: env.AI_ENABLE_PR_SEARCH == 'true'
@@ -456,11 +586,7 @@ jobs:
           pathlib.Path(".ai_runtime/prs.txt").write_text("\n".join(lines), encoding="utf-8")
           PY
 
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/prs.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/prs.txt
 
       - name: Prepare PR candidates fallback
         if: env.AI_ENABLE_PR_SEARCH != 'true'
@@ -469,11 +595,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "No PR candidates collected." > .ai_runtime/prs.txt
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/prs.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/prs.txt
 
       - name: Fetch recent commit candidates
         if: env.AI_ENABLE_COMMIT_SEARCH == 'true'
@@ -516,11 +638,7 @@ jobs:
           )
           PY
 
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/commits.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/commits.txt
 
       - name: Prepare commit candidates fallback
         if: env.AI_ENABLE_COMMIT_SEARCH != 'true'
@@ -529,11 +647,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "No commit candidates collected." > .ai_runtime/commits.txt
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/commits.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/commits.txt
 
       - name: Prepare final duplicate candidates
         id: final_dupes
@@ -545,11 +659,7 @@ jobs:
           else
             echo "No duplicate candidates collected." > .ai_runtime/final_dupes.txt
           fi
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/final_dupes.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/final_dupes.txt
 
       - name: Prepare final PR candidates
         id: final_prs
@@ -561,11 +671,7 @@ jobs:
           else
             echo "No PR candidates collected." > .ai_runtime/final_prs.txt
           fi
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/final_prs.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/final_prs.txt
 
       - name: Prepare final commit candidates
         id: final_commits
@@ -577,11 +683,121 @@ jobs:
           else
             echo "No commit candidates collected." > .ai_runtime/final_commits.txt
           fi
-          {
-            echo "candidates<<EOF"
-            cat .ai_runtime/final_commits.txt
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          python3 .github/scripts/write_output.py candidates .ai_runtime/final_commits.txt
+
+      - name: Collect enriched context for deeper analysis
+        id: enriched
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import json, os, pathlib, re, subprocess
+
+          issue = json.loads(pathlib.Path('.ai_runtime/issue.json').read_text(encoding='utf-8'))
+          rewrite = json.loads(pathlib.Path('.ai_runtime/rewrite.json').read_text(encoding='utf-8'))
+
+          # --- 1. 从 issue body 提取错误模式 ---
+          body = issue.get('body', '') or ''
+          error_patterns = []
+
+          # 提取堆栈跟踪（支持多种语言格式）
+          stacktrace_re = re.compile(
+              r'(?:(?:Traceback|Exception|Error|at\s+\S+\s*\(|File\s+".*?"|.*?Error:.*|.*?Exception:.*|'
+              r'(?:Caused by|Caused):.*|.*?\.java:\d+|.*?\.ts:\d+|.*?\.js:\d+|.*?\.py:\d+|'
+              r'(?:errno|EACCES|ENOENT|ECONNREFUSED|ETIMEDOUT)\s.*|'
+              r'(?:SIGTERM|SIGKILL|SIGSEGV).*|'
+              r'(?:fatal|panic|crash|FATAL|PANIC|CRASH)\s.*))',
+              re.MULTILINE | re.IGNORECASE
+          )
+          for m in stacktrace_re.finditer(body):
+              error_patterns.append(m.group(0).strip())
+
+          # 提取代码块内容
+          code_blocks = re.findall(r'```[\w]*\n(.*?)```', body, re.DOTALL)
+          for block in code_blocks[:5]:
+              stripped = block.strip()
+              if stripped and len(stripped) < 2000:
+                  error_patterns.append(f"[code block] {stripped}")
+
+          # 提取 URL（可能指向日志、截图等）
+          urls = re.findall(r'https?://[^\s\)\]>]+', body)
+
+          # 去重并限制数量
+          seen = set()
+          unique_errors = []
+          for ep in error_patterns:
+              key = ep[:100].lower()
+              if key not in seen:
+                  seen.add(key)
+                  unique_errors.append(ep)
+          error_patterns = unique_errors[:15]
+
+          # --- 2. 读取 likely_paths 指向的文件内容 ---
+          likely_paths = rewrite.get('likely_paths', [])
+          file_contents = {}
+          max_file_chars = 3000  # 每个文件最多 3000 字符
+
+          for fp in likely_paths[:6]:
+              p = pathlib.Path(fp)
+              if not p.is_file():
+                  # 尝试在仓库根目录查找
+                  p = pathlib.Path('.') / fp
+              if p.is_file() and p.stat().st_size < 500_000:
+                  try:
+                      content = p.read_text(encoding='utf-8', errors='replace')
+                      if len(content) > max_file_chars:
+                          content = content[:max_file_chars] + f'\n... [截断，共 {len(content)} 字符]'
+                      file_contents[fp] = content
+                  except Exception:
+                      pass
+
+          # --- 3. 获取相关文件的 git 历史 ---
+          git_history = {}
+          for fp in list(file_contents.keys())[:4]:
+              try:
+                  log = subprocess.check_output(
+                      ['git', 'log', '--pretty=format:%h %ad %s', '--date=short', '-n', '5', '--', fp],
+                      text=True, stderr=subprocess.DEVNULL
+                  )
+                  if log.strip():
+                      git_history[fp] = log.strip().splitlines()
+              except Exception:
+                  pass
+
+          # --- 4. 获取仓库结构概览（顶层目录） ---
+          repo_structure = []
+          try:
+              for item in sorted(pathlib.Path('.').iterdir()):
+                  if item.name.startswith('.'):
+                      continue
+                  if item.is_dir():
+                      repo_structure.append(f"{item.name}/")
+                  else:
+                      repo_structure.append(item.name)
+          except Exception:
+              pass
+
+          enriched = {
+              "error_patterns": error_patterns,
+              "code_blocks_from_issue": [b.strip() for b in code_blocks[:5] if b.strip()],
+              "urls_from_issue": urls[:10],
+              "file_contents": file_contents,
+              "git_history": git_history,
+              "repo_structure": repo_structure[:30],
+          }
+
+          pathlib.Path('.ai_runtime/enriched_context.json').write_text(
+              json.dumps(enriched, ensure_ascii=False, indent=2),
+              encoding='utf-8'
+          )
+
+          # 摘要统计
+          print(f"错误模式: {len(error_patterns)} 条")
+          print(f"读取文件: {len(file_contents)} 个")
+          print(f"Git 历史: {len(git_history)} 个文件")
+          print(f"Issue URL: {len(urls)} 个")
+          PY
 
       - name: Stage 2 - maintainer-grade triage
         id: triage
@@ -610,6 +826,15 @@ jobs:
                 },
                 "analysis": { "type": "string" },
                 "solution": { "type": "string" },
+                "error_pattern_summary": { "type": "string" },
+                "related_files": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "actionable_steps": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
                 "roadmap": { "type": "string" },
                 "needs_human_followup": { "type": "boolean" },
                 "duplicate_confidence": {
@@ -628,42 +853,112 @@ jobs:
                   }
                 }
               },
-              "required": ["summary", "classification", "support_status", "analysis", "solution", "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"]
+              "required": ["summary", "classification", "support_status", "analysis", "solution", "error_pattern_summary", "related_files", "actionable_steps", "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"]
             }
           }
           JSON
 
-          cat > .ai_runtime/triage_system_prompt.txt <<'EOF'
-          你是仓库维护者，只能依据提供的证据做判断。
-          如果引用文件，必须仅引用已经提供的文件路径和行号范围。
-          如果证据不足，明确写需要更多信息。
-          labels 只能输出 1-3 个。
-          输出必须是严格 JSON。
-          EOF
+          python3 - <<'PY'
+          import pathlib
+          prompt = (
+              "你是一位资深仓库维护者。根据提供的 Issue 信息、代码上下文和历史数据，做出专业判断。\n\n"
+              "## 输出要求\n\n"
+              "你必须输出严格的 JSON 对象，包含以下字段（缺一不可）：\n\n"
+              "- summary: 一句话总结 Issue 核心问题（必填）\n"
+              "- classification: 分类，必须是 bug/enhancement/question/documentation/needs_more_info 之一（必填）\n"
+              "- support_status: 支持状态，必须是 supported/partially_supported/not_supported/already_fixed_unreleased/needs_more_info 之一（必填）\n"
+              "- analysis: 详细分析问题根因，引用具体的代码路径和逻辑（必填，至少 2 句话）\n"
+              "- solution: 具体的修复方案或建议，包含可执行的步骤（必填，至少 1 句话）\n"
+              "- error_pattern_summary: 错误模式总结，描述从 Issue 中提取的错误类型、发生位置和调用链路（如果存在错误信息则必填，否则为空字符串）\n"
+              "- related_files: 相关文件列表，格式如 [\"packages/backend/src/auth/service.ts\"]，列出与问题直接相关的源代码文件（必填，至少 1 个，最多 8 个）\n"
+              "- actionable_steps: 可执行步骤列表，按优先级排列具体的修复或排查步骤（必填，至少 1 步，最多 6 步）\n"
+              "- roadmap: 如果 not_supported，描述实现路线；否则为空字符串\n"
+              "- needs_human_followup: 仅当证据明显不足或问题涉及业务决策时设为 true（必填）\n"
+              "- duplicate_confidence: 与已有 Issue 的重复程度 low/medium/high（必填）\n"
+              '- duplicate_issues: 可能重复的 Issue 编号列表，格式如 ["#123"]（必填）\n'
+              "- labels: 1-3 个标签，只能从 bug/enhancement/question/documentation/duplicate/help wanted/needs more info 中选择（必填）\n\n"
+              "## 分析增强指引\n\n"
+              "当「Enriched Context」部分提供以下信息时，你必须充分利用：\n\n"
+              "1. **错误模式 (error_patterns)**：从 Issue 正文中提取的堆栈跟踪、错误消息、异常信息。"
+              "   分析错误类型、发生位置、调用链路，定位根因。\n"
+              "2. **代码块 (code_blocks_from_issue)**：Issue 中附带的代码片段。"
+              "   检查代码逻辑问题、类型错误、API 误用等。\n"
+              "3. **相关文件内容 (file_contents)**：仓库中与 Issue 相关的源代码文件。"
+              "   逐文件分析代码逻辑，引用具体的函数名、行号和代码路径。\n"
+              "4. **Git 历史 (git_history)**：相关文件的最近提交记录。"
+              "   检查是否有最近的变更可能导致了问题，或已有修复但未发布。\n"
+              "5. **仓库结构 (repo_structure)**：仓库顶层目录结构。"
+              "   帮助判断 Issue 涉及的模块和组件。\n\n"
+              "## 判断原则\n\n"
+              "- 如果代码上下文中有明确的相关文件和逻辑，大胆给出分析和方案\n"
+              "- analysis 中必须引用具体的文件路径（如 `packages/backend/src/auth/service.ts`）和函数名\n"
+              "- solution 中必须包含可执行的修改步骤，指明需要修改的文件和方向\n"
+              "- 只有在完全无法判断时才设 needs_human_followup=true\n"
+              "- labels 必须从允许的列表中选择，不要自创标签\n"
+              "- 输出必须是严格 JSON，不要输出 markdown 或其他文本"
+          )
+          pathlib.Path('.ai_runtime/triage_system_prompt.txt').write_text(prompt, encoding='utf-8')
+          PY
 
-          cat > .ai_runtime/triage_input_prompt.txt <<'EOF'
-          [Issue]
+          python3 - <<'PY'
+          import json, pathlib
+          issue = json.loads(pathlib.Path('.ai_runtime/issue.json').read_text(encoding='utf-8'))
+          rewrite_json = pathlib.Path('.ai_runtime/rewrite.json').read_text(encoding='utf-8')
+          context = pathlib.Path('.ai_runtime/final_context.txt').read_text(encoding='utf-8') if pathlib.Path('.ai_runtime/final_context.txt').exists() else ''
+          dupes = pathlib.Path('.ai_runtime/final_dupes.txt').read_text(encoding='utf-8') if pathlib.Path('.ai_runtime/final_dupes.txt').exists() else ''
+          prs = pathlib.Path('.ai_runtime/final_prs.txt').read_text(encoding='utf-8') if pathlib.Path('.ai_runtime/final_prs.txt').exists() else ''
+          commits = pathlib.Path('.ai_runtime/final_commits.txt').read_text(encoding='utf-8') if pathlib.Path('.ai_runtime/final_commits.txt').exists() else ''
+
+          # 读取富化上下文
+          enriched_str = ''
+          enriched_path = pathlib.Path('.ai_runtime/enriched_context.json')
+          if enriched_path.exists():
+              enriched = json.loads(enriched_path.read_text(encoding='utf-8'))
+              parts = []
+              if enriched.get('error_patterns'):
+                  parts.append("[错误模式 - 从 Issue 提取]\n" + "\n---\n".join(enriched['error_patterns']))
+              if enriched.get('code_blocks_from_issue'):
+                  parts.append("[Issue 中的代码块]\n" + "\n---\n".join(enriched['code_blocks_from_issue']))
+              if enriched.get('file_contents'):
+                  fc_lines = []
+                  for fpath, content in enriched['file_contents'].items():
+                      fc_lines.append(f"### {fpath}\n```\n{content}\n```")
+                  parts.append("[相关文件内容]\n" + "\n\n".join(fc_lines))
+              if enriched.get('git_history'):
+                  gh_lines = []
+                  for fpath, history in enriched['git_history'].items():
+                      gh_lines.append(f"### {fpath}\n" + "\n".join(history))
+                  parts.append("[文件 Git 历史]\n" + "\n\n".join(gh_lines))
+              if enriched.get('repo_structure'):
+                  parts.append("[仓库结构]\n" + "\n".join(enriched['repo_structure']))
+              enriched_str = "\n\n".join(parts)
+
+          prompt = f"""[Issue]
           标题：
-          ${{ github.event.issue.title }}
+          {issue.get('title','')}
 
           正文：
-          ${{ github.event.issue.body }}
+          {issue.get('body','')}
 
           [Stage 1 Rewrite]
-          ${{ steps.rewrite_norm.outputs.json }}
+          {rewrite_json}
 
           [Retrieved Context]
-          ${{ steps.final_context.outputs.context }}
+          {context}
+
+          [Enriched Context]
+          {enriched_str}
 
           [Duplicate Candidates]
-          ${{ steps.final_dupes.outputs.candidates }}
+          {dupes}
 
           [PR Candidates]
-          ${{ steps.final_prs.outputs.candidates }}
+          {prs}
 
           [Commit Candidates]
-          ${{ steps.final_commits.outputs.candidates }}
-          EOF
+          {commits}"""
+          pathlib.Path('.ai_runtime/triage_input_prompt.txt').write_text(prompt, encoding='utf-8')
+          PY
 
           python3 - <<'PY'
           import json, os, pathlib, urllib.request, urllib.error
@@ -707,35 +1002,71 @@ jobs:
           last_err = None
           content = ''
           mode_used = ''
-          for url, payload, mode in candidates:
-              data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-              req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+          required_fields = {"summary", "classification", "support_status", "analysis", "solution",
+                             "error_pattern_summary", "related_files", "actionable_steps",
+                             "needs_human_followup", "duplicate_confidence", "duplicate_issues", "labels"}
+
+          def validate_triage(s):
+              """检查内容是否包含 triage 必需字段"""
               try:
-                  with urllib.request.urlopen(req, timeout=240) as resp:
-                      text = resp.read().decode('utf-8', errors='replace')
-                  obj = json.loads(text)
-                  if mode == 'chat_tools':
-                      msg = (obj.get('choices') or [{}])[0].get('message') or {}
-                      tc = (msg.get('tool_calls') or [{}])[0]
-                      content = ((tc.get('function') or {}).get('arguments')) or ''
-                  else:
-                      content = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
-                  if content:
-                      mode_used = mode
-                      pathlib.Path('.ai_runtime/triage_raw.txt').write_text(content, encoding='utf-8')
-                      break
-              except Exception as e:
-                  last_err = e
+                  obj = json.loads(s) if isinstance(s, str) else s
+                  return required_fields.issubset(set(obj.keys()))
+              except Exception:
+                  return False
+
+          # 最多重试 2 次（首次 + 1 次重试）
+          for attempt in range(2):
+              for url, payload, mode in candidates:
+                  # 重试时加入更明确的格式要求
+                  if attempt > 0:
+                      extra = "\n\n重要：你必须输出包含以下全部字段的 JSON：summary, classification, support_status, analysis, solution, error_pattern_summary, related_files, actionable_steps, needs_human_followup, duplicate_confidence, duplicate_issues, labels。缺少任何字段都会导致解析失败。"
+                      if mode == 'chat_tools':
+                          payload = dict(payload)
+                          msgs = [dict(m) for m in payload['messages']]
+                          msgs[-1] = dict(msgs[-1])
+                          msgs[-1]['content'] = msgs[-1].get('content', '') + extra
+                          payload['messages'] = msgs
+                      else:
+                          payload = dict(payload)
+                          msgs = [dict(m) for m in payload['messages']]
+                          msgs[-1] = dict(msgs[-1])
+                          msgs[-1]['content'] = msgs[-1].get('content', '') + extra
+                          payload['messages'] = msgs
+
+                  data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+                  req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+                  try:
+                      with urllib.request.urlopen(req, timeout=240) as resp:
+                          text = resp.read().decode('utf-8', errors='replace')
+                      obj = json.loads(text)
+                      if mode == 'chat_tools':
+                          msg = (obj.get('choices') or [{}])[0].get('message') or {}
+                          tc = (msg.get('tool_calls') or [{}])[0]
+                          raw = ((tc.get('function') or {}).get('arguments')) or ''
+                      else:
+                          raw = ((obj.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+                      if raw and validate_triage(raw):
+                          content = raw
+                          mode_used = mode
+                          pathlib.Path('.ai_runtime/triage_raw.txt').write_text(content, encoding='utf-8')
+                          break
+                      elif raw:
+                          last_err = f'LLM 返回内容缺少必需字段: {required_fields - set(json.loads(raw).keys()) if isinstance(raw, str) else "parse error"}'
+                  except Exception as e:
+                      last_err = e
+              if content:
+                  break
+              print(f'第 {attempt+1} 次尝试未通过验证，准备重试...')
 
           if not content:
-              raise RuntimeError(f'LLM triage call failed: {last_err}')
+              raise RuntimeError(f'LLM triage call failed after retries: {last_err}')
 
+          pathlib.Path('.ai_runtime/issue_response.txt').write_text(content, encoding='utf-8')
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
-              f.write('issue_response<<EOF\n')
-              f.write(content)
-              f.write('\nEOF\n')
               f.write(f'mode_used={mode_used}\n')
           PY
+
+          python3 .github/scripts/write_output.py issue_response .ai_runtime/issue_response.txt
 
       - name: Normalize triage result
         id: triage_norm
@@ -797,12 +1128,20 @@ jobs:
               "support_status": s(d.get("support_status"), "needs_more_info"),
               "analysis": s(d.get("analysis"), "AI 未能稳定生成分析，请维护者人工复核。"),
               "solution": s(d.get("solution"), "暂无稳定自动建议。"),
+              "error_pattern_summary": s(d.get("error_pattern_summary"), ""),
+              "related_files": [x.strip() for x in arr(d.get("related_files")) if isinstance(x, str) and x.strip()][:8],
+              "actionable_steps": [x.strip() for x in arr(d.get("actionable_steps")) if isinstance(x, str) and x.strip()][:6],
               "roadmap": s(d.get("roadmap"), ""),
-              "needs_human_followup": b(d.get("needs_human_followup"), True),
+              "needs_human_followup": b(d.get("needs_human_followup"), False),
               "duplicate_confidence": s(d.get("duplicate_confidence"), "low"),
               "duplicate_issues": [x.strip() for x in arr(d.get("duplicate_issues")) if isinstance(x, str) and re.fullmatch(r"#\d+", x.strip())],
               "labels": labels[:3]
           }
+
+          # 分析或方案为 fallback 默认值时，自动标记需要人工复核
+          if result["analysis"] == "AI 未能稳定生成分析，请维护者人工复核。" or \
+             result["solution"] == "暂无稳定自动建议。":
+              result["needs_human_followup"] = True
 
           if result["support_status"] not in allowed_support:
               result["support_status"] = "needs_more_info"
@@ -825,13 +1164,14 @@ jobs:
         env:
           AI_AUTO_LABEL: ${{ env.AI_AUTO_LABEL }}
           RESULT_JSON: ${{ steps.triage_norm.outputs.json }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.issue_number }}
         with:
           script: |
             const marker = "<!-- ai-issue-smart-reply:v3 -->";
             const result = JSON.parse(process.env.RESULT_JSON || "{}");
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const issue_number = context.issue.number;
+            const issue_number = parseInt(process.env.ISSUE_NUMBER, 10) || context.issue.number;
 
             function supportText(s) {
               switch (s) {
@@ -848,44 +1188,95 @@ jobs:
               }
             }
 
+            function classificationEmoji(c) {
+              switch (c) {
+                case "bug": return "🐛";
+                case "enhancement": return "✨";
+                case "question": return "❓";
+                case "documentation": return "📝";
+                default: return "🔍";
+              }
+            }
+
             const lines = [
               marker,
               "### 🤖 AI Issue 智能分析",
               "",
-              "**摘要**",
+              `> **分类**: ${classificationEmoji(result.classification)} ${result.classification || "unknown"} | **状态**: ${supportText(result.support_status)}`,
+              "",
+              "---",
+              "",
+              "#### 📋 摘要",
               result.summary || "暂无",
-              "",
-              "**分析**",
-              result.analysis || "暂无",
-              "",
-              "**建议方案**",
-              result.solution || "暂无",
-              "",
-              "**状态判断**",
-              supportText(result.support_status),
               ""
             ];
 
+            // 错误模式分析（仅 bug 类型显示）
+            if (result.error_pattern_summary && result.classification === "bug") {
+              lines.push("#### 🔍 错误模式");
+              lines.push(result.error_pattern_summary);
+              lines.push("");
+            }
+
+            // 相关文件
+            if (Array.isArray(result.related_files) && result.related_files.length > 0) {
+              lines.push("#### 📁 相关文件");
+              for (const f of result.related_files) {
+                lines.push(`- \`${f}\``);
+              }
+              lines.push("");
+            }
+
+            lines.push("#### 🔬 分析");
+            lines.push(result.analysis || "暂无");
+            lines.push("");
+
+            lines.push("#### 💡 建议方案");
+            lines.push(result.solution || "暂无");
+            lines.push("");
+
+            // 可执行步骤
+            if (Array.isArray(result.actionable_steps) && result.actionable_steps.length > 0) {
+              lines.push("#### 🎯 可执行步骤");
+              for (let i = 0; i < result.actionable_steps.length; i++) {
+                lines.push(`${i + 1}. ${result.actionable_steps[i]}`);
+              }
+              lines.push("");
+            }
+
             if (result.roadmap && result.support_status === "not_supported") {
-              lines.push("**实现路线**");
+              lines.push("#### 🗺️ 实现路线");
               lines.push(result.roadmap);
               lines.push("");
             }
 
             if (Array.isArray(result.duplicate_issues) && result.duplicate_issues.length > 0) {
-              lines.push("**可能重复的 Issue**");
-              lines.push(`- 置信度：${result.duplicate_confidence || "low"}`);
-              lines.push(`- 候选：${result.duplicate_issues.join("、")}`);
+              lines.push("#### 🔗 可能重复的 Issue");
+              lines.push(`- **置信度**: ${result.duplicate_confidence || "low"}`);
+              lines.push(`- **候选**: ${result.duplicate_issues.join("、")}`);
               lines.push("");
             }
 
             if (result.needs_human_followup) {
-              lines.push("**维护建议**");
+              lines.push("#### ⚠️ 维护建议");
               lines.push("建议维护者人工复核后再做最终结论。");
               lines.push("");
             }
 
-            lines.push("_此评论由自动化工作流生成，已启用结构化输出、幂等更新、标签白名单和可选索引检索。_");
+            lines.push("---");
+            lines.push("<details>");
+            lines.push("<summary>📌 使用说明</summary>");
+            lines.push("");
+            lines.push("| 操作 | 方法 |");
+            lines.push("|------|------|");
+            lines.push("| 🔄 重新分析 | 在评论区输入 `/ai-analyze` |");
+            lines.push("| 🏷️ 自动标签 | 分析结果会自动添加分类标签 |");
+            lines.push("| ⚠️ 需人工复核 | 低置信度分析会自动标记 `needs-review` |");
+            lines.push("| 🔗 重复检测 | 自动搜索相似 Issue 并关联 |");
+            lines.push("");
+            lines.push("</details>");
+            lines.push("");
+            lines.push("_<sub>🤖 此评论由 AI 自动化工作流生成 | 结构化输出 + 幂等更新 + 标签白名单 + 代码上下文检索 + 错误模式分析</sub>_");
 
             const body = lines.join("\n");
 
@@ -932,15 +1323,51 @@ jobs:
                 "documentation",
                 "duplicate",
                 "help wanted",
-                "needs more info"
+                "needs more info",
+                "needs-review"
               ]);
 
+              // AI 管理的标签：重新分析时先移除这些旧标签
+              const aiManagedLabels = [
+                "bug", "enhancement", "question", "documentation",
+                "duplicate", "needs more info", "needs-review"
+              ];
+
+              const isReAnalyze = existing && existing.body &&
+                existing.body.includes(marker) &&
+                existing.updated_at && (Date.now() - new Date(existing.updated_at).getTime()) < 5 * 60 * 1000;
+
+              // 移除旧的 AI 标签
+              const toRemove = aiManagedLabels.filter(x => existingLabels.has(x));
+              if (toRemove.length > 0) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner,
+                    repo,
+                    issue_number,
+                    name: toRemove
+                  });
+                } catch (e) {
+                  // 部分标签可能不存在，忽略错误
+                }
+              }
+
+              // 计算新标签
               const desired = Array.isArray(result.labels) ? result.labels : [];
-              const toAdd = desired
+              let toAdd = desired
                 .map(x => String(x).trim().toLowerCase())
                 .filter(x => allowed.has(x))
-                .filter((x, i, arr) => arr.indexOf(x) === i)
-                .filter(x => !existingLabels.has(x));
+                .filter((x, i, arr) => arr.indexOf(x) === i);
+
+              // 置信度阈值：低置信度时添加 needs-review
+              if (result.needs_human_followup) {
+                if (!toAdd.includes("needs more info")) {
+                  toAdd.push("needs-review");
+                }
+              }
+
+              // 过滤掉已存在的
+              toAdd = toAdd.filter(x => !existingLabels.has(x));
 
               if (toAdd.length > 0) {
                 await github.rest.issues.addLabels({
@@ -959,8 +1386,7 @@ jobs:
           {
             echo "## AI Issue Smart Reply"
             echo ""
-            echo "- Issue: #${{ github.event.issue.number }}"
-            echo "- Index enabled: ${AI_USE_EMBED_INDEX}"
+            echo "- Issue: #$(jq -r '.number' .ai_runtime/issue.json 2>/dev/null || echo 'unknown')"
             echo "- Auto label: ${AI_AUTO_LABEL}"
             echo "- Duplicate check: ${AI_ENABLE_DUPLICATE_CHECK}"
             echo "- PR search: ${AI_ENABLE_PR_SEARCH}"
@@ -969,6 +1395,23 @@ jobs:
             echo "### Rewrite"
             echo '```json'
             cat .ai_runtime/rewrite.json 2>/dev/null || echo '{}'
+            echo '```'
+            echo ""
+            echo "### Enriched Context"
+            echo '```json'
+            python3 -c "
+          import json, pathlib
+          p = pathlib.Path('.ai_runtime/enriched_context.json')
+          if p.exists():
+              d = json.loads(p.read_text())
+              print(json.dumps({
+                  'error_patterns': len(d.get('error_patterns', [])),
+                  'file_contents': list(d.get('file_contents', {}).keys()),
+                  'git_history': list(d.get('git_history', {}).keys()),
+              }, ensure_ascii=False, indent=2))
+          else:
+              print('{}')
+          " 2>/dev/null || echo '{}'
             echo '```'
             echo ""
             echo "### Triage"
