@@ -447,7 +447,7 @@ export const TRANSLATIONS = {
     'simyo.help.device.heading': '🔄 更换设备',
     'simyo.help.device.content': '1. 在Simyo APP中申请更换设备/eSIM<br>2. 发送与接收验证码并在本页处理<br>3. 生成新的安装二维码<br>4. 新设备扫码安装并启用<br>5. 如有需要，执行确认安装步骤',
     'simyo.help.keep.heading': '💰 保号服务',
-    'simyo.help.keep.content': '账户持有人: Simyo<br>IBAN: NL19INGB0007811670<br>金额: 0.01欧元<br>备注: 您的Simyo号码（06开头）',
+    'simyo.help.keep.content': '账户持有人: Simyo<br>IBAN: NL19INGB0007811670<br>金额: 10欧元起<br>备注: 您的Simyo号码（06开头）',
     'simyo.help.close': '关闭帮助'
   },
   en: {
@@ -683,7 +683,7 @@ export const TRANSLATIONS = {
     'simyo.help.device.heading': '🔄 Device change',
     'simyo.help.device.content': '1. Request a device/eSIM change in the Simyo app<br>2. Send and receive verification codes, and process them on this page.<br>3. Generate a fresh installation QR code<br>4. Scan it on the new device and enable the profile<br>5. Run the confirmation step if needed',
     'simyo.help.keep.heading': '💰 Keep your number active',
-    'simyo.help.keep.content': 'Account holder: Simyo<br>IBAN: NL19INGB0007811670<br>Amount: €0.01<br>Reference: Your Simyo number (starts with 06)',
+    'simyo.help.keep.content': 'Account holder: Simyo<br>IBAN: NL19INGB0007811670<br>Amount: €10 minimum<br>Reference: Your Simyo number (starts with 06)',
     'simyo.help.close': 'Close help'
   }
 };

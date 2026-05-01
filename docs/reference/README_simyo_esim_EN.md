@@ -130,11 +130,11 @@ This tool now supports the complete device replacement process, including verifi
 
 ## 💰 Number Preservation Service
 
-Simyo offers low-cost number preservation service with details:
+Simyo offers number preservation service with details:
 
 - **Payee**: ING BANK N.V.
 - **IBAN**: `NL19INGB0007811670`
-- **Amount**: 0.01 Euro
+- **Amount**: 10 Euro minimum
 - **Remarks**: Your Simyo number (complete number starting with 06)
 
 ## ⚠️ Important Notes
@@ -220,7 +220,7 @@ const esimResponse = await fetch('https://appapi.simyo.nl/simyoapi/api/v1/esim/g
 | **API Complexity** | Relatively simple | GraphQL + REST |
 | **Number of Steps** | 4-step process | 5-step process |
 | **Device Replacement** | Dedicated process support | Through SIM swap |
-| **Number Preservation** | 0.01 Euro | According to normal plan |
+| **Number Preservation** | 10 Euro minimum | According to normal plan |
 
 ## 🤝 Contribution Guidelines
 

@@ -130,11 +130,11 @@ const apiEndpoints = {
 
 ## 💰 保号服务
 
-Simyo提供低成本保号服务，详细信息：
+Simyo提供保号服务，详细信息：
 
 - **收款人**: ING BANK N.V.
 - **IBAN**: `NL19INGB0007811670`
-- **金额**: 0.01欧元
+- **金额**: 10欧元起
 - **备注**: 您的Simyo号码（06开头的完整号码）
 
 ## ⚠️ 重要提示
@@ -220,7 +220,7 @@ const esimResponse = await fetch('https://appapi.simyo.nl/simyoapi/api/v1/esim/g
 | **API复杂度** | 相对简单 | GraphQL + REST |
 | **步骤数量** | 4步流程 | 5步流程 |
 | **设备更换** | 支持专门流程 | 通过SIM交换 |
-| **保号成本** | 0.01欧元 | 按正常套餐 |
+| **保号成本** | 10欧元起 | 按正常套餐 |
 
 ## 🤝 贡献指南
 
