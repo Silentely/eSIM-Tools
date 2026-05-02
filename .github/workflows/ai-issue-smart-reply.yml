@@ -738,24 +738,69 @@ jobs:
                   unique_errors.append(ep)
           error_patterns = unique_errors[:15]
 
-          # --- 2. 读取 likely_paths 指向的文件内容 ---
+          # --- 2. 读取 likely_paths 指向的文件内容（关键词定位 + 上下文窗口） ---
           likely_paths = rewrite.get('likely_paths', [])
+          search_terms = []
+          for key in ("search_queries", "keywords", "components"):
+              search_terms.extend(rewrite.get(key, []))
+          search_terms = [t for t in search_terms if isinstance(t, str) and len(t) >= 3]
+
           file_contents = {}
-          max_file_chars = 3000  # 每个文件最多 3000 字符
+          max_file_chars = 8000  # 每个文件最多 8000 字符
+          context_lines = 40  # 关键词命中行前后各取 40 行
 
           for fp in likely_paths[:6]:
               p = pathlib.Path(fp)
               if not p.is_file():
-                  # 尝试在仓库根目录查找
                   p = pathlib.Path('.') / fp
-              if p.is_file() and p.stat().st_size < 500_000:
-                  try:
-                      content = p.read_text(encoding='utf-8', errors='replace')
-                      if len(content) > max_file_chars:
-                          content = content[:max_file_chars] + f'\n... [截断，共 {len(content)} 字符]'
-                      file_contents[fp] = content
-                  except Exception:
-                      pass
+              if not (p.is_file() and p.stat().st_size < 500_000):
+                  continue
+              try:
+                  content = p.read_text(encoding='utf-8', errors='replace')
+              except Exception:
+                  continue
+
+              if len(content) <= max_file_chars:
+                  file_contents[fp] = content
+                  continue
+
+              # 关键词定位：找到匹配行，提取上下文窗口
+              lines = content.splitlines()
+              matched_ranges = []
+              for i, line in enumerate(lines):
+                  ll = line.lower()
+                  if any(t.lower() in ll for t in search_terms):
+                      start = max(0, i - context_lines)
+                      end = min(len(lines), i + context_lines + 1)
+                      matched_ranges.append((start, end))
+
+              if matched_ranges:
+                  # 合并重叠区间
+                  matched_ranges.sort()
+                  merged = [matched_ranges[0]]
+                  for s, e in matched_ranges[1:]:
+                      if s <= merged[-1][1]:
+                          merged[-1] = (merged[-1][0], max(merged[-1][1], e))
+                      else:
+                          merged.append((s, e))
+
+                  # 提取合并后的区间内容
+                  parts = []
+                  cur = 0
+                  for s, e in merged:
+                      if s > cur:
+                          parts.append(f"... [跳过 {s - cur} 行] ...")
+                      parts.append("\n".join(lines[s:e]))
+                      cur = e
+                  if cur < len(lines):
+                      parts.append(f"... [剩余 {len(lines) - cur} 行] ...")
+                  result = "\n".join(parts)
+                  if len(result) > max_file_chars:
+                      result = result[:max_file_chars] + f'\n... [截断，共 {len(content)} 字符]'
+                  file_contents[fp] = result
+              else:
+                  # 无关键词命中，回退到读取前半部分
+                  file_contents[fp] = content[:max_file_chars] + f'\n... [截断，共 {len(content)} 字符]'
 
           # --- 3. 获取相关文件的 git 历史 ---
           git_history = {}
