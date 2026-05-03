@@ -68,19 +68,17 @@ const apiEndpoints = {
 1. Click "Get Member Information"
 2. The system will display your Giffgaff account details
 
-### Step 4: Apply for eSIM
-1. Click "Reserve eSIM" to get a new eSIM (status: RESERVED)
-2. **Important: Keep the page open, do not close or refresh**
-3. Copy the displayed activation code
-4. Go to [Giffgaff Activation Page](https://www.giffgaff.com/activate) to manually activate the eSIM
-5. On the activation page, enter the activation code and click "Activate your SIM"
-6. Verify the information is correct and click "Yes, I want to replace my SIM"
-7. After successful activation, return to this tool and click "I have completed manual activation, continue to next step"
+### Step 4: Activate eSIM via SMS Verification
+1. Click the "SMS Verification Activate" button
+2. The system automatically handles: send SMS code -> verify -> reserve eSIM -> SIM swap
+3. Enter the received SMS verification code and submit
+4. The system will execute the full activation flow automatically (no need to visit the Giffgaff website manually)
+
+> **Note**: Manual activation was disabled on October 8, 2025. Only SMS verification activation is currently supported.
 
 ### Step 5: Get QR Code
-1. Click "Get eSIM Token"
-2. The system will generate the LPA string and QR code
-3. Save the QR code image or copy the LPA string to an eSIM-enabled device
+1. After activation, the system automatically generates the LPA string and QR code
+2. Save the QR code image or copy the LPA string to an eSIM-enabled device
 
 ## ⚠️ Important Notes
 

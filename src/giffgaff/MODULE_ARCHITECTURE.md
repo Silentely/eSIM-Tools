@@ -1,5 +1,7 @@
 # Giffgaff eSIM 工具 - 模块架构说明
 
+> **注意**: 本文档描述的是 `src/giffgaff/` 下的 Legacy 模块架构。新的模块化架构位于 `src/js/modules/giffgaff/`，详见 `src/js/modules/giffgaff/CLAUDE.md`。
+
 ## 🏗️ 架构概览
 
 ```

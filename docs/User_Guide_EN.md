@@ -4,7 +4,7 @@
 
 > 🎬 Video Tutorial - Giffgaff eSIM Replacement Operation Demo（The video tutorial has not been updated. For information on how to obtain the OAuth callback URL, please refer to the text tutorial.）
 
-Your browser does not support video playback. Please [click here](https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720) to download the video.
+Your browser does not support video playback. Please [download the video tutorial](https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720) to watch it locally.
 
 [giffgaff.webm](https://github.com/user-attachments/assets/d4fbd0ff-b8bc-4477-a0c4-45698fe4802c)
 

@@ -119,8 +119,7 @@ A:
 ## 📚 相关文档
 
 - [主要README](../README.md) - 项目总览
-- [部署指南](./DEPLOYMENT_GUIDE.md) - 详细部署说明
-- [前后端架构分析](./FRONTEND_VS_BACKEND_ANALYSIS.md) - 技术架构详解
+- [架构指南](./ARCHITECTURE.md) - 技术架构详解
 
 ## 🔄 从PHP版本迁移
 

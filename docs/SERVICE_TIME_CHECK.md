@@ -149,19 +149,19 @@ function checkServiceTime() {
     const messageElement = document.getElementById('serviceTimeMessage');
     const actionMessageElement = document.getElementById('actionMessage');
     
-    if (isOutsideServiceTime) {
+    if (!inWindow) {
         // 在服务时间外，显示警告
         alertElement.className = 'alert alert-warning mb-4';
         iconElement.className = 'fas fa-exclamation-triangle me-3';
         iconElement.style.color = '#f59e0b';
-        messageElement.innerHTML = 'Giffgaff官方在<strong>凌晨04:30至12:30</strong>之间不提供SIM卡交换服务。';
+        messageElement.innerHTML = '当前时间在服务窗口外（英国时间 04:30–21:30），SIM交换服务不可用。';
         actionMessageElement.innerHTML = '<span style="color: #dc2626; font-weight: 700;">⚠️ 当前时间不能申请eSIM</span>';
     } else {
         // 在服务时间内，显示成功提示
         alertElement.className = 'alert alert-success mb-4';
         iconElement.className = 'fas fa-check-circle me-3';
         iconElement.style.color = '#10b981';
-        messageElement.innerHTML = '当前时间在服务时间内，Giffgaff官方在<strong>凌晨04:30至12:30</strong>之间不提供服务。';
+        messageElement.innerHTML = '当前时间在服务窗口内（英国时间 04:30–21:30），SIM交换服务可用。';
         actionMessageElement.innerHTML = '<span style="color: #059669; font-weight: 700;">✅ 当前时间可以申请eSIM</span>';
     }
 }
@@ -189,8 +189,8 @@ document.addEventListener('DOMContentLoaded', function() {
 6. **突出显示**：重要信息加粗显示，操作提示明确
 
 ### 测试场景
-1. **服务时间外测试**：在凌晨04:30至12:30期间访问页面
-2. **服务时间内测试**：在其他时间段访问页面
-3. **时间边界测试**：在04:30和12:30的边界时间测试
+1. **服务时间外测试**：在英国时间 21:30 至次日 04:30 期间访问页面
+2. **服务时间内测试**：在英国时间 04:30–21:30 期间访问页面
+3. **时间边界测试**：在 04:30 和 21:30 的边界时间测试
 4. **自动更新测试**：观察每分钟的时间更新
 5. **动画效果测试**：验证各种动画效果是否正常

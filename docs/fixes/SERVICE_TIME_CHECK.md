@@ -76,18 +76,18 @@ function checkServiceTime() {
     const iconElement = document.getElementById('serviceTimeIcon');
     const messageElement = document.getElementById('serviceTimeMessage');
     
-    if (isOutsideServiceTime) {
+    if (!inWindow) {
         // 在服务时间外，显示警告
         alertElement.className = 'alert alert-warning mb-4';
         iconElement.className = 'fas fa-exclamation-triangle me-3';
         iconElement.style.color = '#f59e0b';
-        messageElement.innerHTML = 'Giffgaff官方在<strong>凌晨04:30至12:30</strong>之间不提供SIM卡交换服务。<br>请在其他时间段使用本工具进行eSIM申请。';
+        messageElement.innerHTML = '当前时间在服务窗口外（英国时间 04:30–21:30），SIM交换服务不可用。';
     } else {
         // 在服务时间内，显示成功提示
         alertElement.className = 'alert alert-success mb-4';
         iconElement.className = 'fas fa-check-circle me-3';
         iconElement.style.color = '#10b981';
-        messageElement.innerHTML = '当前时间在服务时间内，<strong>当前时间可以申请eSIM</strong>。<br>Giffgaff官方在凌晨04:30至12:30之间不提供服务。';
+        messageElement.innerHTML = '当前时间在服务窗口内（英国时间 04:30–21:30），SIM交换服务可用。';
     }
 }
 ```

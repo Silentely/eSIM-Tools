@@ -82,12 +82,11 @@ google-chrome --user-data-dir=/tmp/chrome_dev_test --disable-web-security
 
 ### 文件结构
 ```
-esim/
-├── simyo_proxy_server.js     # 代理服务器主文件
+eSIM-Tools/
+├── server.js                 # 本地开发服务器 (Express + API代理)
 ├── package.json              # Node.js项目配置
-├── start_simyo_server.sh     # Linux/macOS启动脚本
-├── start_simyo_server.bat    # Windows启动脚本
-└── simyo_complete_esim.html  # 已修改为使用代理的前端页面
+├── netlify/functions/        # 生产环境Serverless函数
+└── src/                      # 前端源代码
 ```
 
 ### API端点映射
@@ -115,7 +114,7 @@ esim/
 ## 🚀 使用步骤
 
 ### 1. 环境准备
-确保已安装Node.js (版本 >= 14.0.0):
+确保已安装Node.js (版本 >= 18.0.0):
 ```bash
 node --version
 npm --version
@@ -163,7 +162,7 @@ npm install
 # 检查版本
 node --version
 
-# 如果版本 < 14.0.0，请升级Node.js
+# 如果版本 < 18.0.0，请升级Node.js
 # 下载地址: https://nodejs.org/
 ```
 

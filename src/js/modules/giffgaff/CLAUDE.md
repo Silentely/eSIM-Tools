@@ -29,7 +29,7 @@
 ## 关键依赖与配置
 
 - **状态管理**: `state.js` - AppState 类 (localStorage 持久化，2小时过期)
-- **OAuth**: `oauth.js` - OAuthManager 类 (PKCE 流程，client_id: `4a05bf219b3985647d9b9a3ba610a9ce`)
+- **OAuth**: `oauth.js` - OAuthManager 类 (PKCE 流程，client_id 通过环境变量 `GIFFGAFF_CLIENT_ID` 配置)
 - **API**: `api.js` - APIManager 类 (GraphQL 代理，MFA 验证)
 - **工具**: `utils.js` - 工具函数 (服务时间检查、剪贴板、Toast)
 - **DOM**: `dom.js` - DOM 操作封装

@@ -131,8 +131,8 @@ GET /.netlify/functions/notifications?mode=latest
 ```json
 {
   "success": true,
-  "data": null,
-  "timestamp": "2025-01-23T12:34:56.789Z"
+  "data": { "id": "...", "message": "...", "type": "success", "timestamp": "...", "active": true, "priority": 1 },
+  "timestamp": "..."
 }
 ```
 
@@ -140,40 +140,6 @@ GET /.netlify/functions/notifications?mode=latest
 
 - `mode=latest` 时：`data` 为单个通知对象或 `null`
 - `mode=all` 时：`data` 为通知对象数组（仅包含 `active=true` 的通知，按 `priority` 升序排列）
-
-**示例：mode=latest（有最新通知时）**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "fix-400-error",
-    "message": "已修复Oauth交换时报错400问题,优化了MFA验证流程",
-    "type": "success",
-    "timestamp": "2025-11-30T10:00:00Z",
-    "active": true,
-    "priority": 1
-  },
-  "timestamp": "2025-11-30T12:34:56.789Z"
-}
-```
-
-**示例：mode=all（返回活跃通知数组）**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "fix-400-error",
-      "message": "已修复Oauth交换时报错400问题,优化了MFA验证流程",
-      "type": "success",
-      "timestamp": "2025-11-30T10:00:00Z",
-      "active": true,
-      "priority": 1
-    }
-  ],
-  "timestamp": "2025-11-30T12:34:56.789Z"
-}
-```
 
 ### 3. 自动化集成
 
@@ -228,50 +194,13 @@ NotificationManager.info('新功能：支持OAuth认证');
 
 ## 部署场景
 
-### 场景1: 修复Bug后通知用户
+在 `netlify/functions/notifications.js` 的 `NOTIFICATIONS` 数组中添加条目，部署后用户访问时自动显示：
 
-1. 修复代码中的Bug
-2. 在 `notifications.js` 中添加通知：
-
-```javascript
-{
-  id: 'fix-mfa-bug-20250123',
-  message: '已修复MFA验证失败问题，请刷新页面',
-  type: 'success',
-  timestamp: new Date().toISOString(),
-  active: true,
-  priority: 1
-}
-```
-
-3. 部署到Netlify
-4. 用户访问时自动显示通知
-
-### 场景2: 新功能上线
-
-```javascript
-{
-  id: 'feature-batch-import',
-  message: '新功能：现在支持批量导入eSIM配置！',
-  type: 'info',
-  timestamp: new Date().toISOString(),
-  active: true,
-  priority: 2
-}
-```
-
-### 场景3: 重要维护通知
-
-```javascript
-{
-  id: 'maintenance-notice',
-  message: '系统将于今晚22:00-23:00进行维护',
-  type: 'warning',
-  timestamp: new Date().toISOString(),
-  active: true,
-  priority: 1
-}
-```
+| 场景 | type | priority | 示例 message |
+|------|------|----------|-------------|
+| Bug修复 | `success` | 1 | 已修复MFA验证失败问题，请刷新页面 |
+| 新功能上线 | `info` | 2 | 新功能：现在支持批量导入eSIM配置！ |
+| 维护通知 | `warning` | 1 | 系统将于今晚22:00-23:00进行维护 |
 
 ---
 

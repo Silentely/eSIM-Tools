@@ -4,7 +4,7 @@
 
 本项目实施了多层安全措施来保护用户数据和系统安全。
 
-## 🔒 安全措施
+## 安全措施
 
 ### 1. 依赖包安全
 
@@ -76,7 +76,7 @@ style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudfla
 - 敏感配置使用环境变量
 - 不在代码中硬编码密钥
 
-## 🛡️ 安全最佳实践
+## 安全最佳实践
 
 ### 开发环境
 1. **定期更新依赖**
@@ -108,7 +108,7 @@ style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudfla
    - 使用自动化工具检查漏洞
    - 定期审查访问日志
 
-## 🚨 安全响应
+## 安全响应
 
 ### 发现漏洞时
 1. 立即评估漏洞严重程度
@@ -121,7 +121,7 @@ style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudfla
 - 提供详细的复现步骤
 - 包含环境信息
 
-## 📋 安全检查清单
+## 安全检查清单
 
 ### 开发前
 - [ ] 运行 `npm audit`
@@ -138,7 +138,7 @@ style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudfla
 - [ ] 审查访问日志
 - [ ] 检查安全配置
 
-## 🔧 安全工具
+## 安全工具
 
 ### 内置工具
 - `npm run security-check`: 自定义安全检查
@@ -150,7 +150,7 @@ style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudfla
 - [OWASP ZAP](https://owasp.org/www-project-zap/): Web应用安全测试
 - [Security Headers](https://securityheaders.com/): 安全头检查
 
-## 📞 安全联系
+## 安全联系
 
 如果您发现安全问题，请：
 1. 通过GitHub Issues报告

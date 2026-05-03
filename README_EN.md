@@ -148,7 +148,7 @@ A modern eSIM management toolkit for Giffgaff and Simyo users, supporting comple
 - **Image Optimization**: WebP support with automatic compression
 - **Code Splitting**: Automatic third-party library splitting to reduce initial load time
 
-> For performance details, see [PERFORMANCE.md](./docs/PERFORMANCE.md)
+> For performance details, see [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
 ### Service Time Window
 - **Giffgaff service window**: 04:30 - 21:30 UK time (Europe/London)
