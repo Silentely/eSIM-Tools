@@ -52,16 +52,17 @@ eSIM-Tools 通知系统是一个轻量级的消息通知解决方案，用于在
 ```javascript
 import NotificationManager from './modules/notification-manager.js';
 
-// 显示成功通知
+// 显示成功通知（默认持续 5000ms）
 NotificationManager.success('操作成功！');
+NotificationManager.success('操作成功！', 10000);  // 自定义持续时间
 
-// 显示警告通知
+// 显示警告通知（默认持续 5000ms）
 NotificationManager.warning('请注意检查输入');
 
-// 显示错误通知
+// 显示错误通知（默认持续 7000ms，比其他类型更长）
 NotificationManager.error('操作失败，请重试');
 
-// 显示信息通知
+// 显示信息通知（默认持续 5000ms）
 NotificationManager.info('这是一条提示信息');
 ```
 
@@ -115,7 +116,7 @@ const NOTIFICATIONS = [
 
 #### API端点
 
-统一端点：`/.netlify/functions/notifications`（通过 `withAuth` 中间件，配置为公开接口无需认证）
+统一端点：`/.netlify/functions/notifications`（通过 `withAuth` 中间件包装，`requireAuth: false` 配置为公开接口，无需 ACCESS_KEY 认证）
 
 **获取所有活跃通知（数组）**
 ```
@@ -370,10 +371,10 @@ try {
 
 ## 安全考虑
 
-1. **XSS防护**: 所有消息通过 `escapeHtml` 转义
-2. **CORS**: API仅允许同源请求
-3. **数据验证**: 严格校验通知格式
-4. **存储**: 当前不持久化存储“已读/已显示”状态（不会写入 localStorage）
+1. **XSS防护**: 通知消息通过 DOM `textContent` 赋值后读取 `innerHTML` 实现转义（`NotificationManager.escapeHtml()`），不依赖外部函数
+2. **CORS**: API 通过 `withAuth` 中间件配置为公开接口（`requireAuth: false`），仅保留来源校验
+3. **数据验证**: 后端严格校验通知格式
+4. **存储**: 当前不持久化存储”已读/已显示”状态（不会写入 localStorage），仅在页面生命周期内通过 `Set` 去重
 
 ---
 
@@ -409,5 +410,5 @@ eSIM-Tools 通知系统提供了一个简单而强大的方式来向用户传达
 
 ---
 
-**最后更新**: 2025-12-12 23:58（UTC+8）
+**最后更新**: 2026-05-03
 **维护者**: eSIM Tools Team

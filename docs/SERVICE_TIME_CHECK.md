@@ -1,196 +1,163 @@
-# Giffgaff服务时间检查功能
+# Giffgaff 服务时间检查功能
 
 ## 功能描述
-为Giffgaff eSIM申请工具添加实时时间检查功能，根据当前时间动态显示服务状态提醒。
+
+为 Giffgaff eSIM 申请工具添加实时时间检查功能，根据英国时间动态显示 SIM 交换服务的可用状态。
+
+## 架构设计
+
+服务时间检查采用模块化架构，职责分离如下：
+
+```
+app.js (编排层)
+  ├── checkServiceTime()         → 调用 utils 和 dom
+  ├── startServiceTimeCheck()    → 初始化 + 每分钟轮询
+  │
+  ├── utils.js (业务逻辑层)
+  │     └── isServiceTimeAvailable()  → 英国时间窗口判断
+  │
+  └── dom.js (视图层)
+        └── updateServiceTimeDisplay() → DOM 更新与渲染
+```
+
+### 文件位置
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| **工具函数** | `src/js/modules/giffgaff/utils.js` | 时间窗口判断逻辑 |
+| **DOM 操作** | `src/js/modules/giffgaff/dom.js` | UI 渲染与更新 |
+| **主控制器** | `src/js/modules/giffgaff/app.js` | 编排与定时轮询 |
 
 ## 实现细节
 
-### 时间逻辑（最新）
+### 时间逻辑
+
 - **服务窗口**：英国时间 04:30–21:30（SIM 交换服务可用）
 - **窗口外**：其余时间段（部分操作可能失败或不稳定）
+- **时区处理**：使用 `Intl.DateTimeFormat` 的 `Europe/London` 时区，自动处理夏令时
 
-### 显示效果
+### 核心实现
 
-#### 服务时间外（窗口外）
-- **样式**：黄色警告框 (`alert-warning`)
-- **图标**：放大警告三角形 (`fa-exclamation-triangle`，1.8em)
-- **消息**：提醒用户不要在此时间段操作申请eSIM
-- **颜色**：橙色警告色 (`#f59e0b`)
-- **动画**：警告脉冲动画 (`warning-pulse`)
-- **操作提示**：红色"⚠️ 当前时间不能申请eSIM"
+#### 1. 时间窗口判断 (`utils.js`)
 
-#### 服务时间内（其他时间段）
-- **样式**：绿色成功框 (`alert-success`)
-- **图标**：放大成功圆圈 (`fa-check-circle`，1.8em)
-- **消息**：提醒用户当前当前时间可以申请eSIM
-- **颜色**：绿色成功色 (`#10b981`)
-- **动画**：成功弹跳动画 (`success-bounce`)
-- **操作提示**：绿色"✅ 当前时间可以申请eSIM"
+```javascript
+/**
+ * 服务时间检查（英国时间）
+ * 英国时间凌晨 4:30 至 晚上 9:30 提供 SIM 交换服务
+ * 返回 true 表示"当前处于服务可用时段"（英国时间 04:30-21:30）
+ */
+isServiceTimeAvailable() {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit'
+  }).formatToParts(now);
+  const hour = Number(parts.find(p => p.type === 'hour')?.value || '0');
+  const minute = Number(parts.find(p => p.type === 'minute')?.value || '0');
 
-#### 时间显示
-- **位置**：右侧独立显示区域
-- **样式**：渐变背景，圆角设计
-- **动画**：脉冲发光效果 (`pulse-glow`)
-- **时间更新**：缩放动画 (`time-update`)
+  // 服务可用区间：04:30 - 21:30（含边界）
+  const afterStart = (hour > 4) || (hour === 4 && minute >= 30);
+  const beforeEnd = (hour < 21) || (hour === 21 && minute <= 30);
+  return afterStart && beforeEnd;
+}
+```
 
-### 功能特性
+#### 2. DOM 渲染 (`dom.js`)
 
-1. **实时时间显示**
-   - 显示当前时间（格式：HH:MM）
-   - 每分钟自动更新
-   - 右侧加粗显示，带时钟图标
+```javascript
+updateServiceTimeDisplay(isAvailable) {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const localTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const ukTime = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(now);
 
-2. **动态状态更新**
-   - 页面加载时立即检查时间
-   - 每分钟自动重新检查并更新状态
+  const timeElement = document.getElementById('currentTime');
+  if (timeElement) {
+    timeElement.textContent = localTime;
+  }
+  const ukHint = document.getElementById('ukTimeHint');
+  if (ukHint) {
+    ukHint.textContent = tl('giffgaff.app.service.ukTime', { time: ukTime });
+  }
 
-3. **视觉反馈**
-   - 不同时间段显示不同的颜色和图标
-   - 清晰的状态指示
-   - 个性化动画效果
+  const alertElement = document.getElementById('serviceTimeAlert');
+  if (alertElement) {
+    if (isAvailable) {
+      alertElement.className = 'alert alert-success';
+      alertElement.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <strong>${tl('服务可用')}</strong> - ${tl('当前时间')} ${HTMLSanitizer.escapeHtml(localTime)} / UK ${HTMLSanitizer.escapeHtml(ukTime)}（04:30-21:30）
+      `;
+    } else {
+      alertElement.className = 'alert alert-warning';
+      alertElement.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>${tl('服务时间外')}</strong> - ${tl('当前时间')} ${HTMLSanitizer.escapeHtml(localTime)} / UK ${HTMLSanitizer.escapeHtml(ukTime)}
+        <br><small>${tl('SIM 交换服务窗口：英国时间 04:30 至 21:30。您仍可浏览信息，部分操作可能失败。')}</small>
+      `;
+    }
+  }
+}
+```
 
-4. **个性化设计**
-   - 图标放大显示（1.8em）
-   - 悬停效果和动画
-   - 渐变背景和阴影效果
+#### 3. 编排与定时轮询 (`app.js`)
 
-### 代码实现
+```javascript
+startServiceTimeCheck() {
+  this.checkServiceTime();
+  // 每分钟检查一次
+  setInterval(() => this.checkServiceTime(), 60000);
+}
 
-#### HTML结构
+checkServiceTime() {
+  const isAvailable = this.utils.isServiceTimeAvailable();
+  this.dom.updateServiceTimeDisplay(isAvailable);
+}
+```
+
+### HTML 结构
+
 ```html
-<div id="serviceTimeAlert" class="alert mb-4">
-    <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center flex-grow-1">
-            <i id="serviceTimeIcon" class="fas me-3" style="font-size: 1.8em;"></i>
-            <div>
-                <strong>服务时间提醒：</strong>
-                <span id="serviceTimeMessage"></span>
-                <div id="actionMessage" class="mt-2" style="font-weight: 600;"></div>
-            </div>
-        </div>
-        <div class="current-time-display">
-            <i class="fas fa-clock me-2" style="color: #6366f1;"></i>
-            <span class="time-label">当前时间：</span>
-            <span id="currentTime" class="time-value"></span>
-        </div>
-    </div>
+<div id="serviceTimeAlert" class="alert mb-4 service-time-alert">
+  <!-- 动态内容由 updateServiceTimeDisplay() 渲染 -->
+  <i id="serviceTimeIcon" class="fas" aria-hidden="true"></i>
+  <div id="serviceTimeMessage" class="service-time-message">
+    <span class="lang-zh">当前时间在服务时间外，Giffgaff官方在英国时间04:30至21:30之间提供SIM交换服务。</span>
+    <span class="lang-en">Outside of service hours. Giffgaff processes SIM swaps between 04:30 and 21:30 UK time.</span>
+  </div>
 </div>
 ```
 
-#### CSS样式
-```css
-/* 时间显示样式 */
-.current-time-display {
-    display: flex;
-    align-items: center;
-    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-    padding: 8px 16px;
-    border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    animation: pulse-glow 2s ease-in-out infinite;
-}
+## 功能特性
 
-.time-value {
-    font-size: 1.1em;
-    font-weight: 700;
-    color: #1e293b;
-    margin-left: 4px;
-    animation: time-update 0.5s ease-out;
-}
-
-/* 动画效果 */
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-    50% { box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3); }
-}
-
-@keyframes time-update {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-@keyframes warning-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-@keyframes success-bounce {
-    0%, 100% { transform: scale(1); }
-    25%, 75% { transform: scale(1.02); }
-}
-```
-
-#### JavaScript函数
-```javascript
-function checkServiceTime() {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
-                      now.getMinutes().toString().padStart(2, '0');
-    
-    // 更新当前时间显示
-    const timeElement = document.getElementById('currentTime');
-    timeElement.textContent = currentTime;
-    // 添加时间更新动画
-    timeElement.style.animation = 'none';
-    timeElement.offsetHeight; // 触发重排
-    timeElement.style.animation = 'time-update 0.5s ease-out';
-    
-    // 服务窗口：英国时间 04:30–21:30
-    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
-    const hour = Number(parts.find(p => p.type === 'hour')?.value || '0');
-    const minute = Number(parts.find(p => p.type === 'minute')?.value || '0');
-    const inWindow = (hour > 4 || (hour === 4 && minute >= 30)) && (hour < 21 || (hour === 21 && minute <= 30));
-    
-    const alertElement = document.getElementById('serviceTimeAlert');
-    const iconElement = document.getElementById('serviceTimeIcon');
-    const messageElement = document.getElementById('serviceTimeMessage');
-    const actionMessageElement = document.getElementById('actionMessage');
-    
-    if (!inWindow) {
-        // 在服务时间外，显示警告
-        alertElement.className = 'alert alert-warning mb-4';
-        iconElement.className = 'fas fa-exclamation-triangle me-3';
-        iconElement.style.color = '#f59e0b';
-        messageElement.innerHTML = '当前时间在服务窗口外（英国时间 04:30–21:30），SIM交换服务不可用。';
-        actionMessageElement.innerHTML = '<span style="color: #dc2626; font-weight: 700;">⚠️ 当前时间不能申请eSIM</span>';
-    } else {
-        // 在服务时间内，显示成功提示
-        alertElement.className = 'alert alert-success mb-4';
-        iconElement.className = 'fas fa-check-circle me-3';
-        iconElement.style.color = '#10b981';
-        messageElement.innerHTML = '当前时间在服务窗口内（英国时间 04:30–21:30），SIM交换服务可用。';
-        actionMessageElement.innerHTML = '<span style="color: #059669; font-weight: 700;">✅ 当前时间可以申请eSIM</span>';
-    }
-}
-```
-
-#### 初始化
-```javascript
-document.addEventListener('DOMContentLoaded', function() {
-    // 初始化服务时间检查
-    checkServiceTime();
-    
-    // 每分钟更新一次时间
-    setInterval(checkServiceTime, 60000);
-});
-```
+1. **模块化架构** - 逻辑、渲染、编排三层分离，便于测试和维护
+2. **国际化支持** - 使用 `tl()` 函数支持中英文切换
+3. **XSS 防护** - 通过 `HTMLSanitizer.escapeHtml()` 转义动态内容
+4. **自动夏令时** - `Intl.DateTimeFormat` 自动处理英国夏令时切换
+5. **双时区显示** - 同时显示本地时间和英国时间，便于用户对比
+6. **实时更新** - 每分钟自动检查并更新状态，无需刷新页面
 
 ## 用户体验
 
-### 优势
-1. **实时反馈**：用户立即知道当前是否当前时间可以申请eSIM
-2. **清晰指示**：通过颜色和图标直观显示状态
-3. **自动更新**：无需刷新页面，时间状态自动更新
-4. **友好提醒**：明确告知服务时间和建议
-5. **个性化设计**：美观的动画和视觉效果
-6. **突出显示**：重要信息加粗显示，操作提示明确
+### 服务时间外（窗口外）
+- **样式**：黄色警告框 (`alert-warning`)
+- **图标**：警告三角形 (`fa-exclamation-triangle`)
+- **消息**：提醒用户当前在服务窗口外，部分操作可能失败
 
-### 测试场景
+### 服务时间内（窗口内）
+- **样式**：绿色成功框 (`alert-success`)
+- **图标**：成功圆圈 (`fa-check-circle`)
+- **消息**：提醒用户当前可以正常申请 eSIM
+
+## 测试场景
+
 1. **服务时间外测试**：在英国时间 21:30 至次日 04:30 期间访问页面
 2. **服务时间内测试**：在英国时间 04:30–21:30 期间访问页面
 3. **时间边界测试**：在 04:30 和 21:30 的边界时间测试
 4. **自动更新测试**：观察每分钟的时间更新
-5. **动画效果测试**：验证各种动画效果是否正常
+5. **夏令时切换测试**：在 BST/GMT 切换期间验证时间判断准确性
+
+---
+
+**最后更新**: 2026-05-03

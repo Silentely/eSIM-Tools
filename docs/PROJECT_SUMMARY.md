@@ -36,7 +36,9 @@ eSIM-Tools/
 │   │   └── modules/
 │   │       ├── giffgaff/               # Giffgaff模块化组件 (app/state/oauth/api/dom/utils)
 │   │       ├── simyo/                  # Simyo模块化组件 (app/api)
-│   │       └── (通用工具: logger, captcha-manager, api-service, html-sanitizer 等)
+│   │       ├── notification-manager.js # Toast通知管理器
+│   │       ├── notification-service.js # 通知服务 (轮询+去重)
+│   │       └── (通用工具: logger, captcha-manager, api-service, html-sanitizer, i18n 等)
 │   ├── giffgaff/                       # Legacy Giffgaff页面 (兼容保留)
 │   │   ├── giffgaff_modular.html
 │   │   ├── js/modules/                 # Legacy模块 (oauth-handler, mfa-handler 等)
@@ -47,7 +49,7 @@ eSIM-Tools/
 │   │   └── styles/                     # Simyo专属样式
 │   └── styles/                         # 全局样式 (design-system, notification 等)
 ├── netlify/
-│   ├── functions/                      # Serverless后端函数 (11个)
+│   ├── functions/                      # Serverless后端函数 (14个)
 │   └── edge-functions/                 # BFF代理层 (密钥注入 + 验证码验证)
 ├── tests/                              # Jest单元测试
 ├── scripts/                            # 构建与质量检查脚本

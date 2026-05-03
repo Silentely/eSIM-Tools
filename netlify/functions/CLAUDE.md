@@ -25,7 +25,7 @@
 | **verify-cookie** | `verify-cookie.js` | POST | 是 | Cookie 验证与 Token 提取 |
 | **health** | `health.js` | GET/POST | 否 | 健康检查 (环境变量检测) |
 | **public-config** | `public-config.js` | GET | 否 | 公共配置下发 (验证码配置) |
-| **notifications** | `notifications.js` | GET | 是 | 通知 API |
+| **notifications** | `notifications.js` | GET | 否 | 通知 API (公开接口，`requireAuth: false`) |
 | **notifications-internal** | `notifications-internal.js` | GET | 否 | 内部通知 API |
 
 ## 对外接口

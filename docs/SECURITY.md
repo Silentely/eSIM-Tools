@@ -31,28 +31,39 @@ app.use(helmet());
 
 #### CORS配置
 ```javascript
-const cors = require('cors');
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://esim.cosr.eu.org';
 app.use(cors({
-  origin: ['https://esim.cosr.eu.org', 'http://localhost:3000'],
-  credentials: true
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // 非浏览器/本地文件放行
+    if (origin === ALLOWED_ORIGIN) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: false
 }));
 ```
 
+> 生产环境通过 Netlify Functions 的 `withAuth` 中间件统一处理 CORS，`ALLOWED_ORIGIN` 从环境变量读取。
+
 ### 3. 内容安全策略 (CSP)
 
-所有HTML文件都配置了严格的CSP策略：
+所有 HTML 文件都配置了严格的 CSP 策略。本地开发服务器 (`server.js`) 中的 Helmet 配置如下：
 
-```html
-<meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com;
-style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
-  font-src 'self' https://cdnjs.cloudflare.com;
-  connect-src 'self' https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com;
-  img-src 'self' data: https:;
-  frame-src 'none';
-">
+```javascript
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      connectSrc: ["'self'", "https://qrcode.show", "https://api.qrserver.com", "https://appapi.simyo.nl", "https://api.giffgaff.com", "https://id.giffgaff.com", "https://publicapi.giffgaff.com", "https://cdn.jsdelivr.net", "https://*.sentry.io"],
+      fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"]
+    }
+  }
+}));
 ```
+
+> 生产环境的 HTML `<meta>` 标签中也配置了 CSP，具体值可能略有差异，请以 `server.js` 中的 Helmet 配置为参考基准。
 
 ### 4. 数据安全
 
