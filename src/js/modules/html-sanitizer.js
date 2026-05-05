@@ -182,7 +182,7 @@ class HTMLSanitizer {
     if (!url) return '';
 
     // 移除 javascript:, data:text/html 等危险协议
-    const dangerousProtocols = /^(javascript|data:text\/html|vbscript):/i;
+    const dangerousProtocols = /^(javascript:|data:text\/html[,:]|vbscript:)/i;
     if (dangerousProtocols.test(url)) {
       console.warn('[HTMLSanitizer] Blocked dangerous URL:', url);
       return '#';
