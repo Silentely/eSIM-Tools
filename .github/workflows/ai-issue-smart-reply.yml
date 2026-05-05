@@ -1028,22 +1028,20 @@ jobs:
               (f"{base_url}/chat/completions", {
                   "model": model,
                   "temperature": 0.2,
-                  "messages": [
-                      {"role": "system", "content": system_prompt},
-                      {"role": "user", "content": input_prompt},
-                  ],
-                  "tools": [{"type": "function", "function": schema}],
-                  "tool_choice": {"type": "function", "function": {"name": schema['name']}},
-              }, 'chat_tools'),
-              (f"{base_url}/chat/completions", {
-                  "model": model,
-                  "temperature": 0.2,
                   "response_format": {"type": "json_object"},
                   "messages": [
                       {"role": "system", "content": system_prompt + "\n你必须直接输出 JSON 对象，不要输出 markdown。"},
                       {"role": "user", "content": input_prompt},
                   ],
               }, 'chat_json'),
+              (f"{base_url}/chat/completions", {
+                  "model": model,
+                  "temperature": 0.2,
+                  "messages": [
+                      {"role": "system", "content": system_prompt + "\n你必须直接输出 JSON 对象，不要输出 markdown 或代码块。"},
+                      {"role": "user", "content": input_prompt + "\n\n请直接输出 JSON，不要包含 ```json 代码块标记。"},
+                  ],
+              }, 'chat_plain'),
           ]
 
           headers = {
@@ -1074,18 +1072,11 @@ jobs:
                   # 重试时加入更明确的格式要求
                   if attempt > 0:
                       extra = "\n\n重要：你必须输出包含以下全部字段的 JSON：summary, classification, support_status, analysis, solution, error_pattern_summary, related_files, actionable_steps, needs_human_followup, duplicate_confidence, duplicate_issues, labels。缺少任何字段都会导致解析失败。"
-                      if mode == 'chat_tools':
-                          payload = dict(payload)
-                          msgs = [dict(m) for m in payload['messages']]
-                          msgs[-1] = dict(msgs[-1])
-                          msgs[-1]['content'] = msgs[-1].get('content', '') + extra
-                          payload['messages'] = msgs
-                      else:
-                          payload = dict(payload)
-                          msgs = [dict(m) for m in payload['messages']]
-                          msgs[-1] = dict(msgs[-1])
-                          msgs[-1]['content'] = msgs[-1].get('content', '') + extra
-                          payload['messages'] = msgs
+                      payload = dict(payload)
+                      msgs = [dict(m) for m in payload['messages']]
+                      msgs[-1] = dict(msgs[-1])
+                      msgs[-1]['content'] = msgs[-1].get('content', '') + extra
+                      payload['messages'] = msgs
 
                   data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
                   req = urllib.request.Request(url, data=data, headers=headers, method='POST')
