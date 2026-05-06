@@ -13,7 +13,12 @@ permissions:
 
 jobs:
   auto-heal:
-    if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.run_attempt == 1 }}
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'failure' &&
+        github.event.workflow_run.run_attempt == 1 &&
+        github.event.workflow_run.head_repository.full_name == github.repository
+      }}
     runs-on: ubuntu-latest
     steps:
       - name: 下载质量报告
@@ -25,6 +30,17 @@ jobs:
           path: quality-report
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 验证报告来源
+        id: verify_source
+        if: steps.download.outcome == 'success'
+        run: |
+          RUN_INFO=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }} --jq '.head_repository.full_name // .head_branch')
+          echo "报告来源: $RUN_INFO"
+          if [ "$RUN_INFO" != "${{ github.repository }}" ] && [ "$RUN_INFO" != "${{ github.event.workflow_run.head_branch }}" ]; then
+            echo "::warning::质量报告来源不匹配，跳过自动修复"
+            echo "need_heal=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: 分析失败原因
         id: failure_info
@@ -72,13 +88,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
       - name: 安装 Node.js 环境
         if: steps.failure_info.outputs.need_heal == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: 重新安装依赖
         if: steps.failure_info.outputs.need_heal == 'true'

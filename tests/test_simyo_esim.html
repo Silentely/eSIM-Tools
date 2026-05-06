@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simyo eSIM 申请工具 - 测试页面</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,12 +13,12 @@
             margin: 0;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 1000px;
             margin: 0 auto;
         }
-        
+
         .test-header {
             background: white;
             padding: 20px;
@@ -26,7 +26,7 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
         }
-        
+
         .test-section {
             background: white;
             padding: 25px;
@@ -34,14 +34,14 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 25px;
         }
-        
+
         .test-section h3 {
             color: #ff6b00;
             border-bottom: 2px solid #ff6b00;
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
-        
+
         .test-case {
             border: 1px solid #e9ecef;
             border-radius: 8px;
@@ -49,12 +49,12 @@
             margin-bottom: 15px;
             background: #f8f9fa;
         }
-        
+
         .test-case h5 {
             color: #212529;
             margin-bottom: 10px;
         }
-        
+
         .test-status {
             display: inline-block;
             padding: 4px 12px;
@@ -63,27 +63,27 @@
             font-weight: bold;
             margin-left: 10px;
         }
-        
+
         .test-status.pending {
             background: #ffeaa7;
             color: #2d3436;
         }
-        
+
         .test-status.running {
             background: #74b9ff;
             color: white;
         }
-        
+
         .test-status.passed {
             background: #00b894;
             color: white;
         }
-        
+
         .test-status.failed {
             background: #e17055;
             color: white;
         }
-        
+
         .btn-test {
             background: linear-gradient(to right, #ff6b00, #ffffff);
             border: none;
@@ -94,12 +94,12 @@
             transition: all 0.3s;
             margin: 5px;
         }
-        
+
         .btn-test:hover {
             background: linear-gradient(to right, #ffffff, #ff6b00);
             transform: translateY(-2px);
         }
-        
+
         .test-log {
             background: #2d3436;
             color: #ddd;
@@ -111,21 +111,21 @@
             overflow-y: auto;
             margin-top: 15px;
         }
-        
+
         .log-entry {
             margin-bottom: 5px;
         }
-        
+
         .log-info { color: #74b9ff; }
         .log-success { color: #00b894; }
         .log-error { color: #e17055; }
         .log-warning { color: #fdcb6e; }
-        
+
         .progress {
             height: 25px;
             margin: 20px 0;
         }
-        
+
         .summary-card {
             background: linear-gradient(135deg, #ff6b00, #ffffff);
             color: #212529;
@@ -134,11 +134,11 @@
             text-align: center;
             font-weight: bold;
         }
-        
+
         .test-controls {
             margin-bottom: 20px;
         }
-        
+
         .mock-data {
             background: #f1f3f4;
             border: 1px solid #dee2e6;
@@ -146,12 +146,12 @@
             padding: 15px;
             margin-top: 15px;
         }
-        
+
         .mock-data h6 {
             color: #6c757d;
             margin-bottom: 10px;
         }
-        
+
         .mock-input {
             width: 100%;
             padding: 8px 12px;
@@ -169,7 +169,7 @@
             <h1><i class="fas fa-vial text-warning"></i> Simyo eSIM 申请工具 - 综合测试</h1>
             <p class="mb-0">此测试页面用于验证Simyo eSIM申请流程的每个步骤和功能点</p>
         </div>
-        
+
         <!-- 测试控制面板 -->
         <div class="test-section">
             <h3><i class="fas fa-cogs"></i> 测试控制面板</h3>
@@ -190,15 +190,15 @@
                     <i class="fas fa-trash"></i> 清空日志
                 </button>
             </div>
-            
+
             <!-- 总体进度 -->
             <div class="progress">
-                <div id="overallProgress" class="progress-bar progress-bar-striped" 
+                <div id="overallProgress" class="progress-bar progress-bar-striped"
                      role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                     0%
                 </div>
             </div>
-            
+
             <!-- 测试摘要 -->
             <div id="testSummary" class="summary-card">
                 <div class="row">
@@ -217,7 +217,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- 模拟数据配置 -->
         <div class="test-section">
             <h3><i class="fas fa-database"></i> 模拟数据配置</h3>
@@ -225,28 +225,28 @@
                 <div class="col-md-6">
                     <div class="mock-data">
                         <h6>Simyo 账户</h6>
-                        <input type="text" class="mock-input" id="mockPhoneNumber" 
+                        <input type="text" class="mock-input" id="mockPhoneNumber"
                                placeholder="手机号码" value="0613123712">
-                        <input type="text" class="mock-input" id="mockPassword" 
+                        <input type="text" class="mock-input" id="mockPassword"
                                placeholder="密码" value="test_password">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mock-data">
                         <h6>API 响应</h6>
-                        <input type="text" class="mock-input" id="mockSessionToken" 
+                        <input type="text" class="mock-input" id="mockSessionToken"
                                placeholder="会话令牌" value="mock_session_token_123">
-                        <input type="text" class="mock-input" id="mockActivationCode" 
+                        <input type="text" class="mock-input" id="mockActivationCode"
                                placeholder="激活码" value="1$esim.simyo.nl$mock_activation_123">
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- 单元测试 -->
         <div class="test-section">
             <h3><i class="fas fa-cubes"></i> 单元测试</h3>
-            
+
             <div class="test-case">
                 <h5>手机号验证测试 <span id="phone-validation-status" class="test-status pending">待执行</span></h5>
                 <p>测试荷兰手机号格式验证功能</p>
@@ -254,7 +254,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>API请求头生成测试 <span id="headers-generation-status" class="test-status pending">待执行</span></h5>
                 <p>测试Simyo API请求头的正确生成</p>
@@ -262,7 +262,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>LPA字符串格式测试 <span id="lpa-format-status" class="test-status pending">待执行</span></h5>
                 <p>测试LPA激活码的格式生成</p>
@@ -270,7 +270,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>UI组件测试 <span id="ui-components-status" class="test-status pending">待执行</span></h5>
                 <p>测试步骤指示器和状态显示组件</p>
@@ -279,11 +279,11 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- 集成测试 -->
         <div class="test-section">
             <h3><i class="fas fa-link"></i> 集成测试</h3>
-            
+
             <div class="test-case">
                 <h5>登录流程集成测试 <span id="login-integration-status" class="test-status pending">待执行</span></h5>
                 <p>测试完整的Simyo账户登录流程</p>
@@ -291,7 +291,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>eSIM获取集成测试 <span id="esim-get-integration-status" class="test-status pending">待执行</span></h5>
                 <p>测试eSIM信息获取的完整流程</p>
@@ -299,7 +299,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>二维码生成集成测试 <span id="qr-integration-status" class="test-status pending">待执行</span></h5>
                 <p>测试eSIM二维码生成和显示流程</p>
@@ -307,7 +307,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>安装确认集成测试 <span id="confirm-integration-status" class="test-status pending">待执行</span></h5>
                 <p>测试eSIM安装确认的API调用</p>
@@ -316,11 +316,11 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- 端到端测试 -->
         <div class="test-section">
             <h3><i class="fas fa-route"></i> 端到端测试</h3>
-            
+
             <div class="test-case">
                 <h5>完整eSIM申请流程 <span id="e2e-complete-status" class="test-status pending">待执行</span></h5>
                 <p>模拟用户从登录到获取eSIM二维码的完整流程</p>
@@ -328,7 +328,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>错误处理测试 <span id="e2e-error-status" class="test-status pending">待执行</span></h5>
                 <p>测试各种错误情况下的处理和用户提示</p>
@@ -336,7 +336,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>设备更换场景测试 <span id="e2e-device-swap-status" class="test-status pending">待执行</span></h5>
                 <p>测试设备更换时的eSIM重新配置流程</p>
@@ -345,11 +345,11 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- 性能测试 -->
         <div class="test-section">
             <h3><i class="fas fa-tachometer-alt"></i> 性能测试</h3>
-            
+
             <div class="test-case">
                 <h5>API响应时间测试 <span id="performance-api-status" class="test-status pending">待执行</span></h5>
                 <p>测试Simyo API的响应时间</p>
@@ -357,7 +357,7 @@
                     <i class="fas fa-play"></i> 运行测试
                 </button>
             </div>
-            
+
             <div class="test-case">
                 <h5>内存使用测试 <span id="performance-memory-status" class="test-status pending">待执行</span></h5>
                 <p>监控应用的内存使用情况</p>
@@ -366,7 +366,7 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- 测试日志 -->
         <div class="test-section">
             <h3><i class="fas fa-file-alt"></i> 测试日志</h3>
@@ -446,7 +446,7 @@
                 const logEntry = document.createElement('div');
                 logEntry.className = `log-entry log-${type}`;
                 logEntry.textContent = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
-                
+
                 this.logElement.appendChild(logEntry);
                 this.logElement.scrollTop = this.logElement.scrollHeight;
             }
@@ -456,8 +456,8 @@
                 const statusElement = document.getElementById(testId);
                 if (statusElement) {
                     statusElement.className = `test-status ${status}`;
-                    statusElement.textContent = status === 'running' ? '运行中' : 
-                                              status === 'passed' ? '通过' : 
+                    statusElement.textContent = status === 'running' ? '运行中' :
+                                              status === 'passed' ? '通过' :
                                               status === 'failed' ? '失败' : '待执行';
                 }
             }
@@ -467,13 +467,13 @@
                 document.getElementById('totalTests').textContent = this.results.total;
                 document.getElementById('passedTests').textContent = this.results.passed;
                 document.getElementById('failedTests').textContent = this.results.failed;
-                
+
                 if (this.results.endTime && this.results.startTime) {
                     const duration = this.results.endTime - this.results.startTime;
                     document.getElementById('executionTime').textContent = `${duration}ms`;
                 }
-                
-                const progress = this.results.total > 0 ? 
+
+                const progress = this.results.total > 0 ?
                     Math.round(((this.results.passed + this.results.failed) / this.results.total) * 100) : 0;
                 const progressBar = document.getElementById('overallProgress');
                 progressBar.style.width = `${progress}%`;
@@ -484,7 +484,7 @@
             async runTest(testName, testFunction) {
                 this.log(`开始执行测试: ${testName}`);
                 this.updateTestStatus(testName.toLowerCase().replace(/\s+/g, '-') + '-status', 'running');
-                
+
                 try {
                     const result = await testFunction();
                     this.results.passed++;
@@ -562,13 +562,13 @@
                 // 测试有效的荷兰手机号
                 testFramework.assertTrue(mockValidatePhoneNumber('0613123712'), 'Should accept valid Dutch mobile number');
                 testFramework.assertTrue(mockValidatePhoneNumber('0687654321'), 'Should accept another valid number');
-                
+
                 // 测试无效的手机号
                 testFramework.assertFalse(mockValidatePhoneNumber('1234567890'), 'Should reject number not starting with 06');
                 testFramework.assertFalse(mockValidatePhoneNumber('06123'), 'Should reject too short number');
                 testFramework.assertFalse(mockValidatePhoneNumber('061234567890'), 'Should reject too long number');
                 testFramework.assertFalse(mockValidatePhoneNumber(''), 'Should reject empty string');
-                
+
                 await testFramework.sleep(300);
                 return true;
             });
@@ -582,12 +582,12 @@
                 testFramework.assertTrue('X-Client-Platform' in headers1, 'Should include platform');
                 testFramework.assertTrue('X-Client-Version' in headers1, 'Should include version');
                 testFramework.assertFalse('X-Session-Token' in headers1, 'Should not include session token');
-                
+
                 // 测试包含会话令牌的请求头
                 const headers2 = mockCreateHeaders(true);
                 testFramework.assertTrue('X-Session-Token' in headers2, 'Should include session token');
                 testFramework.assertEqual(headers2['X-Client-Platform'], 'ios', 'Should set correct platform');
-                
+
                 await testFramework.sleep(400);
                 return true;
             });
@@ -597,11 +597,11 @@
             await testFramework.runTest('lpa-format', async () => {
                 const testActivationCode = '1$esim.simyo.nl$test_activation_123';
                 const lpaString = mockGenerateLPA(testActivationCode);
-                
+
                 testFramework.assertTrue(lpaString.startsWith('LPA:'), 'LPA string should start with LPA:');
                 testFramework.assertTrue(lpaString.includes(testActivationCode), 'Should contain activation code');
                 testFramework.assertEqual(lpaString, `LPA:${testActivationCode}`, 'Should format correctly');
-                
+
                 await testFramework.sleep(200);
                 return true;
             });
@@ -645,18 +645,18 @@
         async function testLoginIntegration() {
             await testFramework.runTest('login-integration', async () => {
                 testFramework.log('模拟Simyo登录流程');
-                
+
                 const phoneNumber = document.getElementById('mockPhoneNumber').value;
                 const password = document.getElementById('mockPassword').value;
-                
+
                 testFramework.assertTrue(mockValidatePhoneNumber(phoneNumber), 'Phone number should be valid');
                 testFramework.assertTrue(password.length > 0, 'Password should not be empty');
-                
+
                 // 模拟API调用
                 await testFramework.sleep(800);
                 const loginResponse = testFramework.mockAPIResponses.login.success;
                 testFramework.assertTrue(loginResponse.result.sessionToken !== null, 'Should receive session token');
-                
+
                 return true;
             });
         }
@@ -664,13 +664,13 @@
         async function testEsimGetIntegration() {
             await testFramework.runTest('esim-get-integration', async () => {
                 testFramework.log('模拟eSIM获取流程');
-                
+
                 // 模拟获取eSIM信息
                 await testFramework.sleep(600);
                 const esimResponse = testFramework.mockAPIResponses.getEsim.success;
                 testFramework.assertTrue(esimResponse.result.activationCode !== null, 'Should get activation code');
                 testFramework.assertTrue(esimResponse.result.activationCode.includes('esim.simyo.nl'), 'Activation code should contain Simyo domain');
-                
+
                 return true;
             });
         }
@@ -678,16 +678,16 @@
         async function testQRIntegration() {
             await testFramework.runTest('qr-integration', async () => {
                 testFramework.log('模拟二维码生成流程');
-                
+
                 const mockActivationCode = document.getElementById('mockActivationCode').value;
                 const lpaString = mockGenerateLPA(mockActivationCode);
-                
+
                 testFramework.assertTrue(lpaString.startsWith('LPA:'), 'Should generate valid LPA string');
-                
+
                 // 模拟二维码URL生成
                 const qrUrl = `https://qrcode.show/${encodeURIComponent(lpaString)}?size=300`;
                 testFramework.assertTrue(qrUrl.includes('qrcode.show'), 'Should generate QR code URL');
-                
+
                 await testFramework.sleep(500);
                 return true;
             });
@@ -696,12 +696,12 @@
         async function testConfirmIntegration() {
             await testFramework.runTest('confirm-integration', async () => {
                 testFramework.log('模拟安装确认流程');
-                
+
                 // 模拟确认安装API调用
                 await testFramework.sleep(700);
                 const confirmResponse = testFramework.mockAPIResponses.confirmInstall.success;
                 testFramework.assertTrue(confirmResponse.result.success === true, 'Should confirm installation successfully');
-                
+
                 return true;
             });
         }
@@ -710,23 +710,23 @@
         async function testCompleteFlow() {
             await testFramework.runTest('e2e-complete', async () => {
                 testFramework.log('执行完整Simyo eSIM申请流程');
-                
+
                 // 步骤1: 账户登录
                 testFramework.log('步骤1: 账户登录');
                 await testFramework.sleep(500);
-                
+
                 // 步骤2: 获取eSIM
                 testFramework.log('步骤2: 获取eSIM信息');
                 await testFramework.sleep(600);
-                
+
                 // 步骤3: 生成二维码
                 testFramework.log('步骤3: 生成eSIM二维码');
                 await testFramework.sleep(400);
-                
+
                 // 步骤4: 确认安装
                 testFramework.log('步骤4: 确认安装（可选）');
                 await testFramework.sleep(500);
-                
+
                 testFramework.log('完整流程执行成功', 'success');
                 return true;
             });
@@ -735,14 +735,14 @@
         async function testErrorHandling() {
             await testFramework.runTest('e2e-error', async () => {
                 testFramework.log('测试错误处理机制');
-                
+
                 // 测试无效手机号
                 testFramework.assertFalse(mockValidatePhoneNumber('invalid'), 'Should reject invalid phone number');
-                
+
                 // 测试API错误响应
                 const errorResponse = testFramework.mockAPIResponses.login.error;
                 testFramework.assertTrue(errorResponse.error !== null, 'Should handle API errors');
-                
+
                 // 测试空激活码
                 try {
                     const emptyLPA = mockGenerateLPA('');
@@ -750,7 +750,7 @@
                 } catch (error) {
                     // 这是预期的行为
                 }
-                
+
                 testFramework.log('错误处理测试完成', 'success');
                 return true;
             });
@@ -759,23 +759,23 @@
         async function testDeviceSwapFlow() {
             await testFramework.runTest('e2e-device-swap', async () => {
                 testFramework.log('测试设备更换流程');
-                
+
                 // 模拟设备更换场景
                 testFramework.log('场景：用户在APP中申请设备更换');
                 await testFramework.sleep(300);
-                
+
                 testFramework.log('步骤1: 重新登录获取新会话');
                 await testFramework.sleep(400);
-                
+
                 testFramework.log('步骤2: 获取更新的eSIM配置');
                 await testFramework.sleep(500);
-                
+
                 testFramework.log('步骤3: 生成新设备用的二维码');
                 await testFramework.sleep(300);
-                
+
                 testFramework.log('步骤4: 确认新设备安装');
                 await testFramework.sleep(400);
-                
+
                 testFramework.log('设备更换流程测试完成', 'success');
                 return true;
             });
@@ -785,24 +785,24 @@
         async function testAPIPerformance() {
             await testFramework.runTest('performance-api', async () => {
                 testFramework.log('测试Simyo API响应时间');
-                
+
                 const apiTests = [
                     { name: 'Login API', delay: 600 },
                     { name: 'Get eSIM API', delay: 500 },
                     { name: 'Confirm Install API', delay: 700 },
                     { name: 'QR Generation', delay: 300 }
                 ];
-                
+
                 for (const test of apiTests) {
                     const startTime = performance.now();
                     await testFramework.sleep(test.delay);
                     const endTime = performance.now();
                     const duration = endTime - startTime;
-                    
+
                     testFramework.log(`${test.name}: ${Math.round(duration)}ms`);
                     testFramework.assertTrue(duration < 1500, `${test.name} should respond within 1.5s`);
                 }
-                
+
                 return true;
             });
         }
@@ -810,20 +810,20 @@
         async function testMemoryUsage() {
             await testFramework.runTest('performance-memory', async () => {
                 testFramework.log('监控内存使用');
-                
+
                 if (performance.memory) {
                     const memory = performance.memory;
                     testFramework.log(`Used: ${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB`);
                     testFramework.log(`Total: ${Math.round(memory.totalJSHeapSize / 1024 / 1024)}MB`);
                     testFramework.log(`Limit: ${Math.round(memory.jsHeapSizeLimit / 1024 / 1024)}MB`);
-                    
+
                     // 检查内存使用是否合理（小于100MB）
                     const usedMB = memory.usedJSHeapSize / 1024 / 1024;
                     testFramework.assertTrue(usedMB < 100, 'Memory usage should be under 100MB');
                 } else {
                     testFramework.log('Performance.memory API not available', 'warning');
                 }
-                
+
                 return true;
             });
         }
@@ -832,7 +832,7 @@
         async function runAllTests() {
             testFramework.log('开始执行所有Simyo eSIM测试', 'info');
             testFramework.results = { total: 0, passed: 0, failed: 0, startTime: performance.now() };
-            
+
             try {
                 await runUnitTests();
                 await runIntegrationTests();
@@ -842,7 +842,7 @@
             } catch (error) {
                 testFramework.log(`测试执行出错: ${error.message}`, 'error');
             }
-            
+
             testFramework.results.endTime = performance.now();
             testFramework.updateSummary();
             testFramework.log('所有测试执行完成', 'info');
@@ -851,52 +851,52 @@
         async function runUnitTests() {
             testFramework.log('=== 开始单元测试 ===', 'info');
             testFramework.results.total += 4;
-            
+
             await testPhoneValidation();
             await testHeadersGeneration();
             await testLPAFormat();
             await testUIComponents();
-            
+
             testFramework.updateSummary();
         }
 
         async function runIntegrationTests() {
             testFramework.log('=== 开始集成测试 ===', 'info');
             testFramework.results.total += 4;
-            
+
             await testLoginIntegration();
             await testEsimGetIntegration();
             await testQRIntegration();
             await testConfirmIntegration();
-            
+
             testFramework.updateSummary();
         }
 
         async function runE2ETests() {
             testFramework.log('=== 开始端到端测试 ===', 'info');
             testFramework.results.total += 3;
-            
+
             await testCompleteFlow();
             await testErrorHandling();
             await testDeviceSwapFlow();
-            
+
             testFramework.updateSummary();
         }
 
         function clearLogs() {
             testFramework.logElement.innerHTML = '<div class="log-entry log-info">[INFO] 日志已清空</div>';
-            
+
             // 重置所有测试状态
             const statusElements = document.querySelectorAll('.test-status');
             statusElements.forEach(element => {
                 element.className = 'test-status pending';
                 element.textContent = '待执行';
             });
-            
+
             // 重置摘要
             testFramework.results = { total: 0, passed: 0, failed: 0 };
             testFramework.updateSummary();
-            
+
             // 重置进度条
             const progressBar = document.getElementById('overallProgress');
             progressBar.style.width = '0%';

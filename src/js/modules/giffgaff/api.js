@@ -1,4 +1,5 @@
 import Logger from '../logger.js';
+import secureStorage from '../secure-storage.js';
 
 /**
  * Giffgaff API 交互模块
@@ -73,34 +74,34 @@ class APIManager {
         headers: this.attachCaptchaHeaders({ ...baseHeaders }),
         body: JSON.stringify(makeBody())
       });
-      
+
       // 如果响应成功，直接返回结果
       if (response.ok) {
         const json = await response.json();
         Logger.log('[API] sendMFAChallenge: ok', { hasRef: !!json?.ref });
         return json;
       }
-      
+
       // 如果是401错误，可能是令牌过期
       const errorData = await response.json();
       console.warn('令牌可能过期，尝试重新验证cookie', errorData);
-      
+
       // 检查是否是令牌过期错误
-      if (response.status === 401 && 
-          errorData?.details?.error === 'invalid_token' && 
+      if (response.status === 401 &&
+          errorData?.details?.error === 'invalid_token' &&
           errorData?.details?.error_description === 'Access token expired') {
-        
+
         // 尝试使用本地存储的cookie重新验证
           const cookie = cookieValue;
           if (cookie) {
             Logger.log('尝试使用cookie重新验证');
             const cookieVerifyResult = await this.verifyCookie(cookie);
-          
+
           if (cookieVerifyResult.success && cookieVerifyResult.accessToken) {
             // 更新全局令牌
             const newAccessToken = cookieVerifyResult.accessToken;
             Logger.log('使用cookie重新验证成功，更新令牌');
-            
+
             // 使用新令牌重新发送MFA请求
             const newResponse = await fetch(this.endpoints.mfaChallenge, {
               method: 'POST',
@@ -115,7 +116,7 @@ class APIManager {
                 preferredChannels: ['EMAIL']
               }))
             });
-            
+
             if (newResponse.ok) {
               // 返回数据并更新状态
               const result = await newResponse.json();
@@ -130,7 +131,7 @@ class APIManager {
           }
         }
       }
-      
+
       // 如果无法刷新令牌或其他错误，抛出原始错误
       if (errorData && errorData.needReLogin) {
         throw new Error('登录过期，请重新使用Cookie登录');
@@ -236,7 +237,7 @@ class APIManager {
 
     const data = await response.json();
     Logger.log('[API] graphqlQuery: ok', { op, hasErrors: !!data?.errors });
-    
+
     if (data.errors) {
       throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
     }
@@ -340,8 +341,8 @@ class APIManager {
     try {
       const esim = data?.data?.reserveESim?.esim;
       if (esim) {
-        localStorage.setItem('gg_esim_activationCode', esim.activationCode || '');
-        localStorage.setItem('gg_esim_ssn', esim.ssn || '');
+        secureStorage.setItem('gg_esim_activationCode', esim.activationCode || '');
+        secureStorage.setItem('gg_esim_ssn', esim.ssn || '');
       }
     } catch (_) {}
     Logger.log('[API] reserveESIM: ok', { hasESIM: !!data?.data?.reserveESim?.esim });
@@ -375,7 +376,7 @@ class APIManager {
     const data = await this.graphqlQuery(accessToken, query, variables);
     try {
       const lpa = data?.data?.eSimDownloadToken?.lpaString;
-      if (lpa) localStorage.setItem('gg_esim_lpa', lpa);
+      if (lpa) secureStorage.setItem('gg_esim_lpa', lpa);
     } catch (_) {}
     Logger.log('[API] getESIMToken: ok', { hasLPA: !!data?.data?.eSimDownloadToken?.lpaString });
     return data;

@@ -8,7 +8,8 @@ describe('Giffgaff AppState', () => {
   beforeEach(() => {
     // 重置状态
     AppState.reset();
-    localStorage.clear();
+    // secureStorage 使用 sessionStorage，测试环境需要清理
+    sessionStorage.clear();
   });
 
   describe('reset()', () => {
@@ -17,10 +18,10 @@ describe('Giffgaff AppState', () => {
       AppState.accessToken = 'test-token';
       AppState.memberId = 'test-member';
       AppState.currentStep = 3;
-      
+
       // 重置
       AppState.reset();
-      
+
       // 验证
       expect(AppState.accessToken).toBeNull();
       expect(AppState.memberId).toBeNull();
@@ -29,38 +30,45 @@ describe('Giffgaff AppState', () => {
   });
 
   describe('saveSession()', () => {
-    it('应该将状态保存到 localStorage', () => {
+    it('应该将状态保存到 sessionStorage (通过 secureStorage)', () => {
       // 设置状态
       AppState.accessToken = 'test-token';
       AppState.memberId = 'test-member';
       AppState.currentStep = 2;
-      
+
       // 保存
       AppState.saveSession();
-      
-      // 验证
-      const savedData = JSON.parse(localStorage.getItem('giffgaff_session'));
-      expect(savedData.accessToken).toBe('test-token');
-      expect(savedData.memberId).toBe('test-member');
-      expect(savedData.currentStep).toBe(2);
-      expect(savedData.timestamp).toBeDefined();
+
+      // 验证：secureStorage 包装格式 {value, expires, timestamp}
+      const raw = sessionStorage.getItem('giffgaff_session');
+      expect(raw).not.toBeNull();
+      const wrapper = JSON.parse(raw);
+      expect(wrapper.value.accessToken).toBe('test-token');
+      expect(wrapper.value.memberId).toBe('test-member');
+      expect(wrapper.value.currentStep).toBe(2);
+      expect(wrapper.timestamp).toBeDefined();
     });
   });
 
   describe('loadSession()', () => {
-    it('应该从 localStorage 加载有效会话', () => {
-      // 准备会话数据
+    it('应该从 sessionStorage 加载有效会话', () => {
+      // 准备会话数据（使用 secureStorage 包装格式）
       const sessionData = {
         accessToken: 'saved-token',
         memberId: 'saved-member',
         currentStep: 3,
         timestamp: Date.now()
       };
-      localStorage.setItem('giffgaff_session', JSON.stringify(sessionData));
-      
+      const wrapper = {
+        value: sessionData,
+        expires: Date.now() + 7200000,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('giffgaff_session', JSON.stringify(wrapper));
+
       // 加载
       const result = AppState.loadSession();
-      
+
       // 验证
       expect(result).toBe(true);
       expect(AppState.accessToken).toBe('saved-token');
@@ -69,20 +77,25 @@ describe('Giffgaff AppState', () => {
     });
 
     it('应该拒绝过期的会话', () => {
-      // 准备过期会话（3小时前）
+      // 准备过期会话（3小时前，已过期）
       const sessionData = {
         accessToken: 'old-token',
         timestamp: Date.now() - (3 * 60 * 60 * 1000)
       };
-      localStorage.setItem('giffgaff_session', JSON.stringify(sessionData));
-      
+      const wrapper = {
+        value: sessionData,
+        expires: Date.now() - 1000,
+        timestamp: Date.now() - (3 * 60 * 60 * 1000)
+      };
+      sessionStorage.setItem('giffgaff_session', JSON.stringify(wrapper));
+
       // 加载
       const result = AppState.loadSession();
-      
+
       // 验证
       expect(result).toBe(false);
       expect(AppState.accessToken).toBeNull();
-      expect(localStorage.getItem('giffgaff_session')).toBeNull();
+      expect(sessionStorage.getItem('giffgaff_session')).toBeNull();
     });
   });
 
@@ -90,19 +103,19 @@ describe('Giffgaff AppState', () => {
     it('应该根据状态返回正确的步骤', () => {
       // 初始状态
       expect(AppState.getTargetStep()).toBe(1);
-      
+
       // 有 accessToken
       AppState.accessToken = 'token';
       expect(AppState.getTargetStep()).toBe(2);
-      
+
       // 有 emailSignature
       AppState.emailSignature = 'signature';
       expect(AppState.getTargetStep()).toBe(4);
-      
+
       // 有 esimSSN
       AppState.esimSSN = 'ssn';
       expect(AppState.getTargetStep()).toBe(5);
-      
+
       // 有 lpaString
       AppState.lpaString = 'lpa';
       expect(AppState.getTargetStep()).toBe(6);
@@ -114,12 +127,12 @@ describe('Giffgaff AppState', () => {
       // 设置会话
       AppState.accessToken = 'token';
       AppState.saveSession();
-      
+
       // 清除
       AppState.clearSession();
-      
+
       // 验证
-      expect(localStorage.getItem('giffgaff_session')).toBeNull();
+      expect(sessionStorage.getItem('giffgaff_session')).toBeNull();
       expect(AppState.accessToken).toBeNull();
       expect(AppState.currentStep).toBe(1);
     });

@@ -1,4 +1,5 @@
 import { t } from '../../../js/modules/i18n.js';
+import secureStorage from '../../../js/modules/secure-storage.js';
 
 /**
  * Simyo状态管理模块
@@ -12,33 +13,33 @@ export class StateManager {
             sessionToken: "",
             phoneNumber: "",
             password: "",
-            
+
             // eSIM相关
             activationCode: "",
             validationCode: "",
-            
+
             // 模式控制
             isDeviceChange: false,
-            
+
             // 步骤控制
             currentStep: 1,
-            
+
             // 时间戳
             timestamp: 0
         };
-        
+
         this.listeners = [];
         this.SESSION_KEY = 'simyo_session';
         this.SESSION_TIMEOUT = 5 * 60 * 1000; // 5分钟
     }
-    
+
     /**
      * 获取完整状态
      */
     getState() {
         return { ...this.state };
     }
-    
+
     /**
      * 批量更新状态
      */
@@ -47,14 +48,14 @@ export class StateManager {
         this.notifyListeners();
         this.saveSession();
     }
-    
+
     /**
      * 获取单个状态值
      */
     get(key) {
         return this.state[key];
     }
-    
+
     /**
      * 设置单个状态值
      */
@@ -63,7 +64,7 @@ export class StateManager {
         this.notifyListeners();
         this.saveSession();
     }
-    
+
     /**
      * 订阅状态变化
      */
@@ -73,7 +74,7 @@ export class StateManager {
             this.listeners = this.listeners.filter(l => l !== listener);
         };
     }
-    
+
     /**
      * 通知所有监听器
      */
@@ -86,7 +87,7 @@ export class StateManager {
             }
         });
     }
-    
+
     /**
      * 保存会话到localStorage
      */
@@ -101,29 +102,29 @@ export class StateManager {
                 currentStep: this.state.currentStep,
                 timestamp: Date.now()
             };
-            localStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionData));
+            secureStorage.setItem(this.SESSION_KEY, sessionData);
         } catch (error) {
             console.error(t('simyo.state.log.saveFailed'), error);
         }
     }
-    
+
     /**
      * 从localStorage加载会话
      */
     loadSession() {
         try {
-            const sessionData = localStorage.getItem(this.SESSION_KEY);
+            const sessionData = secureStorage.getItem(this.SESSION_KEY);
             if (!sessionData) return false;
-            
-            const data = JSON.parse(sessionData);
+
+            const data = typeof sessionData === 'string' ? JSON.parse(sessionData) : sessionData;
             const now = Date.now();
-            
+
             // 检查是否超时
             if (now - data.timestamp >= this.SESSION_TIMEOUT) {
-                localStorage.removeItem(this.SESSION_KEY);
+                secureStorage.removeItem(this.SESSION_KEY);
                 return false;
             }
-            
+
             // 恢复状态
             this.state = {
                 ...this.state,
@@ -135,7 +136,7 @@ export class StateManager {
                 currentStep: data.currentStep || 1,
                 timestamp: data.timestamp
             };
-            
+
             this.notifyListeners();
             return true;
         } catch (error) {
@@ -144,7 +145,7 @@ export class StateManager {
             return false;
         }
     }
-    
+
     /**
      * 清除会话
      */
@@ -160,12 +161,12 @@ export class StateManager {
             currentStep: 1,
             timestamp: 0
         };
-        
+
         // 清除存储
-        localStorage.removeItem(this.SESSION_KEY);
-        sessionStorage.removeItem('simyo_temp_data');
-        sessionStorage.removeItem('simyo_resumed_once');
-        
+        secureStorage.removeItem(this.SESSION_KEY);
+        secureStorage.removeItem('simyo_temp_data');
+        secureStorage.removeItem('simyo_resumed_once');
+
         this.notifyListeners();
     }
 }

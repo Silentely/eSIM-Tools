@@ -15,7 +15,7 @@ export function generateCodeVerifier() {
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
-    
+
     return verifier.length >= 43 ? verifier.substr(0, 128) : verifier + 'a'.repeat(43 - verifier.length);
 }
 
@@ -126,21 +126,21 @@ export function showServiceTimeWarning() {
                 </p>
                 <div style="display: flex; gap: 10px; justify-content: center;">
                     <button id="continueAnyway" style="
-                        background: #dc2626; 
-                        color: white; 
-                        border: none; 
-                        padding: 10px 20px; 
-                        border-radius: 8px; 
+                        background: #dc2626;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 8px;
                         cursor: pointer;
                         font-weight: 600;
                         transition: all 0.3s ease;
                     " onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">${tl('仍要继续')}</button>
                     <button id="cancelOperation" style="
-                        background: #6b7280; 
-                        color: white; 
-                        border: none; 
-                        padding: 10px 20px; 
-                        border-radius: 8px; 
+                        background: #6b7280;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 8px;
                         cursor: pointer;
                         font-weight: 600;
                         transition: all 0.3s ease;
@@ -148,7 +148,7 @@ export function showServiceTimeWarning() {
                 </div>
             </div>
         `;
-        
+
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
@@ -162,7 +162,7 @@ export function showServiceTimeWarning() {
             justify-content: center;
             z-index: 10000;
         `;
-        
+
         const modalContent = document.createElement('div');
         modalContent.style.cssText = `
             background: white;
@@ -173,20 +173,20 @@ export function showServiceTimeWarning() {
             animation: modalSlideIn 0.3s ease-out;
         `;
         modalContent.innerHTML = warningMessage;
-        
+
         modal.appendChild(modalContent);
         document.body.appendChild(modal);
-        
+
         document.getElementById('continueAnyway').addEventListener('click', () => {
             document.body.removeChild(modal);
             resolve(true);
         });
-        
+
         document.getElementById('cancelOperation').addEventListener('click', () => {
             document.body.removeChild(modal);
             resolve(false);
         });
-        
+
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 document.body.removeChild(modal);
@@ -229,10 +229,10 @@ export function showToast(message) {
 export function copyTextFromCode(codeElementId, btnEl) {
     const el = document.getElementById(codeElementId);
     if (!el) return;
-    
+
     const text = (el.textContent || '').trim();
     if (!text) return;
-    
+
     copyToClipboard(text).then(() => {
         if (btnEl) {
             // 按钮视觉反馈保留，增强用户体验
@@ -274,8 +274,9 @@ export function openTutorial() {
  * 检测环境
  */
 export function isNetlifyEnvironment() {
-    return window.location.hostname.includes('cosr.eu.org') ||
-           window.location.hostname.includes('netlify');
+    const hostname = window.location.hostname;
+    return hostname === 'esim.cosr.eu.org' ||
+           hostname.endsWith('.netlify.app');
 }
 
 /**

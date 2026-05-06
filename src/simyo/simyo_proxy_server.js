@@ -7,9 +7,31 @@ const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
+const { URL } = require('url');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+/**
+ * 日志安全：过滤换行符，防止日志注入攻击
+ */
+function sanitizeLog(value) {
+  if (typeof value !== 'string') return String(value);
+  return value.replace(/[\r\n]/g, '_');
+}
+
+/**
+ * SSRF 防护：验证目标 URL 是否在允许的域名白名单中
+ */
+const ALLOWED_HOSTS = ['appapi.simyo.nl'];
+function isAllowedTarget(urlStr) {
+  try {
+    const parsed = new URL(urlStr);
+    return ALLOWED_HOSTS.includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
 
 // Simyo API配置
 const SIMYO_CONFIG = {
@@ -32,7 +54,7 @@ app.use(express.static(path.join(__dirname)));
 
 // 日志中间件
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    console.log(`${new Date().toISOString()} - ${req.method} ${sanitizeLog(req.url)}`);
     next();
 });
 
@@ -53,7 +75,7 @@ function createProxyHeaders(sessionToken = null) {
 app.post('/api/simyo/sessions', async (req, res) => {
     try {
         const { phoneNumber, password } = req.body;
-        
+
         if (!phoneNumber || !password) {
             return res.status(400).json({
                 success: false,
@@ -71,8 +93,8 @@ app.post('/api/simyo/sessions', async (req, res) => {
             });
         }
 
-        console.log(`尝试登录: ${phoneNumber}`);
-        
+        console.log(`尝试登录: ${sanitizeLog(phoneNumber)}`);
+
         const response = await fetch(`${SIMYO_CONFIG.baseUrl}/sessions`, {
             method: 'POST',
             headers: createProxyHeaders(),
@@ -83,9 +105,9 @@ app.post('/api/simyo/sessions', async (req, res) => {
         });
 
         const data = await response.json();
-        
+
         if (response.ok && data.result && data.result.sessionToken) {
-            console.log(`登录成功: ${phoneNumber}`);
+            console.log(`登录成功: ${sanitizeLog(phoneNumber)}`);
             res.json({
                 success: true,
                 result: {
@@ -95,7 +117,7 @@ app.post('/api/simyo/sessions', async (req, res) => {
                 }
             });
         } else {
-            console.log(`登录失败: ${phoneNumber} - ${JSON.stringify(data)}`);
+            console.log(`登录失败: ${sanitizeLog(phoneNumber)} - ${sanitizeLog(JSON.stringify(data))}`);
             res.status(response.status).json({
                 success: false,
                 error: data.error || 'LOGIN_FAILED',
@@ -116,7 +138,7 @@ app.post('/api/simyo/sessions', async (req, res) => {
 app.get('/api/simyo/esim', async (req, res) => {
     try {
         const sessionToken = req.headers['x-session-token'];
-        
+
         if (!sessionToken) {
             return res.status(401).json({
                 success: false,
@@ -125,15 +147,15 @@ app.get('/api/simyo/esim', async (req, res) => {
             });
         }
 
-        console.log(`获取eSIM信息，会话令牌: ${sessionToken.substring(0, 10)}...`);
-        
+        console.log(`获取eSIM信息，会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
+
         const response = await fetch(`${SIMYO_CONFIG.baseUrl}/esim/get-by-customer`, {
             method: 'GET',
             headers: createProxyHeaders(sessionToken)
         });
 
         const data = await response.json();
-        
+
         if (response.ok && data.result) {
             console.log(`eSIM信息获取成功`);
             res.json({
@@ -147,7 +169,7 @@ app.get('/api/simyo/esim', async (req, res) => {
                 }
             });
         } else {
-            console.log(`eSIM信息获取失败: ${JSON.stringify(data)}`);
+            console.log(`eSIM信息获取失败: ${sanitizeLog(JSON.stringify(data))}`);
             res.status(response.status).json({
                 success: false,
                 error: data.error || 'ESIM_FETCH_FAILED',
@@ -168,7 +190,7 @@ app.get('/api/simyo/esim', async (req, res) => {
 app.get('/api/simyo/esim/get-by-customer', async (req, res) => {
     try {
         const sessionToken = req.headers['x-session-token'];
-        
+
         if (!sessionToken) {
             return res.status(401).json({
                 success: false,
@@ -177,15 +199,15 @@ app.get('/api/simyo/esim/get-by-customer', async (req, res) => {
             });
         }
 
-        console.log(`获取eSIM信息 (get-by-customer)，会话令牌: ${sessionToken.substring(0, 10)}...`);
-        
+        console.log(`获取eSIM信息 (get-by-customer)，会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
+
         const response = await fetch(`${SIMYO_CONFIG.baseUrl}/esim/get-by-customer`, {
             method: 'GET',
             headers: createProxyHeaders(sessionToken)
         });
 
         const data = await response.json();
-        
+
         if (response.ok && data.result) {
             console.log(`eSIM信息获取成功 (get-by-customer)`);
             res.json({
@@ -199,7 +221,7 @@ app.get('/api/simyo/esim/get-by-customer', async (req, res) => {
                 }
             });
         } else {
-            console.log(`eSIM信息获取失败 (get-by-customer): ${JSON.stringify(data)}`);
+            console.log(`eSIM信息获取失败 (get-by-customer): ${sanitizeLog(JSON.stringify(data))}`);
             res.status(response.status).json({
                 success: false,
                 error: data.error || 'ESIM_FETCH_FAILED',
@@ -220,7 +242,7 @@ app.get('/api/simyo/esim/get-by-customer', async (req, res) => {
 app.post('/api/simyo/esim/apply-new-esim', async (req, res) => {
     try {
         const sessionToken = req.headers['x-session-token'];
-        
+
         if (!sessionToken) {
             return res.status(401).json({
                 success: false,
@@ -229,8 +251,8 @@ app.post('/api/simyo/esim/apply-new-esim', async (req, res) => {
             });
         }
 
-        console.log(`申请新eSIM（设备更换），会话令牌: ${sessionToken.substring(0, 10)}...`);
-        
+        console.log(`申请新eSIM（设备更换），会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
+
         // 注意：这个API端点可能需要根据实际情况调整
         // 从现有的simyo.html可以看出，这个功能可能需要在APP中完成
         res.json({
@@ -255,7 +277,7 @@ app.post('/api/simyo/esim/apply-new-esim', async (req, res) => {
 app.post('/api/simyo/esim/send-sms-code', async (req, res) => {
     try {
         const sessionToken = req.headers['x-session-token'];
-        
+
         if (!sessionToken) {
             return res.status(401).json({
                 success: false,
@@ -264,8 +286,8 @@ app.post('/api/simyo/esim/send-sms-code', async (req, res) => {
             });
         }
 
-        console.log(`发送验证码到短信，会话令牌: ${sessionToken.substring(0, 10)}...`);
-        
+        console.log(`发送验证码到短信，会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
+
         // 注意：这个API端点可能需要根据实际情况调整
         // 从现有的simyo.html可以看出，这个功能可能也需要特殊处理
         res.json({
@@ -291,7 +313,7 @@ app.post('/api/simyo/esim/verify-code', async (req, res) => {
     try {
         const sessionToken = req.headers['x-session-token'];
         const { validationCode } = req.body;
-        
+
         if (!sessionToken) {
             return res.status(401).json({
                 success: false,
@@ -308,8 +330,8 @@ app.post('/api/simyo/esim/verify-code', async (req, res) => {
             });
         }
 
-        console.log(`验证验证码: ${validationCode}，会话令牌: ${sessionToken.substring(0, 10)}...`);
-        
+        console.log(`验证验证码: ${sanitizeLog(validationCode)}，会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
+
         // 注意：这个API端点可能需要根据实际情况调整
         // 实际的验证码验证逻辑需要调用Simyo的相关API
         res.json({
@@ -335,7 +357,7 @@ app.post('/api/simyo/esim/verify-code', async (req, res) => {
 app.post('/api/simyo/esim/reorder-profile-installed', async (req, res) => {
     try {
         const sessionToken = req.headers['x-session-token'];
-        
+
         if (!sessionToken) {
             return res.status(401).json({
                 success: false,
@@ -344,15 +366,15 @@ app.post('/api/simyo/esim/reorder-profile-installed', async (req, res) => {
             });
         }
 
-        console.log(`确认eSIM安装，会话令牌: ${sessionToken.substring(0, 10)}...`);
-        
+        console.log(`确认eSIM安装，会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
+
         const response = await fetch(`${SIMYO_CONFIG.baseUrl}/esim/reorder-profile-installed`, {
             method: 'POST',
             headers: createProxyHeaders(sessionToken)
         });
 
         const data = await response.json();
-        
+
         if (response.ok) {
             console.log(`eSIM安装确认成功`);
             res.json({
@@ -364,7 +386,7 @@ app.post('/api/simyo/esim/reorder-profile-installed', async (req, res) => {
                 }
             });
         } else {
-            console.log(`eSIM安装确认失败: ${JSON.stringify(data)}`);
+            console.log(`eSIM安装确认失败: ${sanitizeLog(JSON.stringify(data))}`);
             res.status(response.status).json({
                 success: false,
                 error: data.error || 'CONFIRM_INSTALL_FAILED',
@@ -428,11 +450,11 @@ app.listen(PORT, () => {
    - POST /api/simyo/verify-code    - 验证验证码
    - POST /api/simyo/confirm-install - 确认eSIM安装
    - GET  /api/health               - 健康检查
-   
+
 💡 使用说明:
    1. 访问 http://localhost:${PORT} 打开Simyo eSIM工具
    2. 或者直接访问API端点进行测试
-   
+
 ⚠️  注意: 请确保已安装 express, cors, node-fetch 依赖
     `);
 });

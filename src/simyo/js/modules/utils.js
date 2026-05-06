@@ -56,13 +56,13 @@ export function showToast(message) {
             ${message}
         </div>
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.classList.add('show');
     }, 10);
-    
+
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
@@ -80,22 +80,22 @@ export function openHelp() {
     const helpContent = `
         <div style="max-width: 600px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
             <h3 style="color: #ff6b00; margin-bottom: 20px;"><i class="fas fa-question-circle"></i> ${t('simyo.help.title')}</h3>
-            
+
             <h5>${t('simyo.help.setup.heading')}</h5>
             <p>${t('simyo.help.setup.content')}</p>
-            
+
             <h5>${t('simyo.help.device.heading')}</h5>
             <p>${t('simyo.help.device.content')}</p>
-            
+
             <h5>${t('simyo.help.keep.heading')}</h5>
             <p>${t('simyo.help.keep.content')}</p>
-            
+
             <button type="button" data-action="close-help" style="margin-top: 20px; padding: 10px 20px; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer;">
                 ${t('simyo.help.close')}
             </button>
         </div>
     `;
-    
+
     const overlay = document.createElement('div');
     overlay.dataset.helpOverlay = 'simyo-help';
     overlay.style.cssText = `
@@ -118,9 +118,11 @@ export function openHelp() {
  * @returns {boolean} 是否为Netlify环境
  */
 export function isNetlifyEnvironment() {
-    return window.location.hostname.includes('netlify') || 
-           window.location.hostname.includes('cosr.eu.org') ||
-           window.location.hostname.includes('yyxx.com');
+    const hostname = window.location.hostname;
+    return hostname === 'esim.cosr.eu.org' ||
+           hostname.endsWith('.netlify.app') ||
+           hostname === 'yyxx.com' ||
+           hostname.endsWith('.yyxx.com');
 }
 
 /**

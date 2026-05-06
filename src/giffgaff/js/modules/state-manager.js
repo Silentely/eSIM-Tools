@@ -2,6 +2,7 @@
  * 状态管理模块
  * 负责应用状态的集中管理、持久化和恢复
  */
+import secureStorage from '../../../js/modules/secure-storage.js';
 
 export class StateManager {
     constructor() {
@@ -9,45 +10,45 @@ export class StateManager {
             // OAuth相关
             accessToken: "",
             codeVerifier: "",
-            
+
             // Cookie相关
             cookie: "",
-            
+
             // MFA相关
             emailCodeRef: "",
             emailSignature: "",
-            
+
             // 会员信息
             memberId: "",
             memberName: "",
             phoneNumber: "",
-            
+
             // eSIM相关
             esimSSN: "",
             esimActivationCode: "",
             esimDeliveryStatus: "",
             lpaString: "",
-            
+
             // 模式
             isDeviceChange: true,
-            
+
             // 步骤控制
             currentStep: 1
         };
-        
+
         this.listeners = [];
         this.SESSION_KEY = 'giffgaff_session';
         this.COOKIE_KEY = 'giffgaff_cookie';
         this.SESSION_TIMEOUT = 2 * 60 * 60 * 1000; // 2小时
     }
-    
+
     /**
      * 获取状态
      */
     getState() {
         return { ...this.state };
     }
-    
+
     /**
      * 更新状态
      */
@@ -56,14 +57,14 @@ export class StateManager {
         this.notifyListeners();
         this.saveSession();
     }
-    
+
     /**
      * 获取单个状态值
      */
     get(key) {
         return this.state[key];
     }
-    
+
     /**
      * 设置单个状态值
      */
@@ -72,7 +73,7 @@ export class StateManager {
         this.notifyListeners();
         this.saveSession();
     }
-    
+
     /**
      * 订阅状态变化
      */
@@ -82,7 +83,7 @@ export class StateManager {
             this.listeners = this.listeners.filter(l => l !== listener);
         };
     }
-    
+
     /**
      * 通知所有监听器
      */
@@ -133,7 +134,7 @@ export class StateManager {
             return false;
         }
     }
-    
+
     /**
      * 保存会话到localStorage
      */
@@ -153,29 +154,29 @@ export class StateManager {
                 currentStep: this.state.currentStep,
                 timestamp: Date.now()
             };
-            this.safeStorageSet(this.SESSION_KEY, JSON.stringify(sessionData));
+            secureStorage.setItem(this.SESSION_KEY, sessionData);
         } catch (error) {
             console.error('保存会话失败:', error);
         }
     }
-    
+
     /**
      * 从localStorage加载会话
      */
     loadSession() {
         try {
-            const sessionData = this.safeStorageGet(this.SESSION_KEY);
+            const sessionData = secureStorage.getItem(this.SESSION_KEY);
             if (!sessionData) return false;
-            
-            const data = JSON.parse(sessionData);
+
+            const data = typeof sessionData === 'string' ? JSON.parse(sessionData) : sessionData;
             const now = Date.now();
-            
+
             // 检查是否超时
             if (now - data.timestamp >= this.SESSION_TIMEOUT) {
                 this.safeStorageRemove(this.SESSION_KEY);
                 return false;
             }
-            
+
             // 恢复状态
             this.state = {
                 ...this.state,
@@ -191,7 +192,7 @@ export class StateManager {
                 isDeviceChange: typeof data.isDeviceChange === 'boolean' ? data.isDeviceChange : true,
                 currentStep: data.currentStep || 1
             };
-            
+
             this.notifyListeners();
             return true;
         } catch (error) {
@@ -200,7 +201,7 @@ export class StateManager {
             return false;
         }
     }
-    
+
     /**
      * 保存Cookie
      */
@@ -218,14 +219,14 @@ export class StateManager {
         this.state.cookie = '';
         this.safeStorageRemove(this.COOKIE_KEY);
     }
-    
+
     /**
      * 获取Cookie
      */
     getCookie() {
         return this.safeStorageGet(this.COOKIE_KEY) || this.state.cookie;
     }
-    
+
     /**
      * 清除会话
      */
@@ -247,18 +248,18 @@ export class StateManager {
             isDeviceChange: true,
             currentStep: 1
         };
-        
+
         // 清除存储
-        this.safeStorageRemove(this.SESSION_KEY);
-        this.safeStorageRemove(this.COOKIE_KEY);
-        
+        secureStorage.removeItem(this.SESSION_KEY);
+        secureStorage.removeItem(this.COOKIE_KEY);
+
         // 清除Cookie
         this.eraseCookie('giffgaff_access_token');
         this.eraseCookie('giffgaff_session');
-        
+
         this.notifyListeners();
     }
-    
+
     /**
      * Cookie操作辅助函数
      */
@@ -266,7 +267,7 @@ export class StateManager {
         const expires = days ? `; expires=${new Date(Date.now() + days * 864e5).toUTCString()}` : '';
         document.cookie = `${name}=${value || ''}${expires}; path=/`;
     }
-    
+
     getCookieValue(name) {
         const nameEQ = name + '=';
         const ca = document.cookie.split(';');
@@ -277,7 +278,7 @@ export class StateManager {
         }
         return null;
     }
-    
+
     eraseCookie(name) {
         document.cookie = `${name}=; Max-Age=-99999999; path=/`;
     }

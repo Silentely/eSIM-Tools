@@ -63,6 +63,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const staticMiddleware = express.static(STATIC_ROOT, { fallthrough: true, index: false });
+
+// 全局限流：每 IP 每分钟最多 200 次请求
+const { createRateLimiter } = require('./src/js/middleware/validation.js');
+app.use(createRateLimiter({ windowMs: 60000, maxRequests: 200 }));
 app.use((req, res, next) => {
     if (!['GET', 'HEAD'].includes(req.method)) {
         return next();
@@ -205,9 +209,12 @@ htmlRoutes.forEach(({ url, file }) => {
 // 错误处理
 app.use((err, req, res, next) => {
     console.error('Server Error:', err);
+    const safeMessage = process.env.NODE_ENV === 'development'
+        ? String(err.message || '').replace(/[<>"'&]/g, '')
+        : '服务器内部错误';
     res.status(500).json({
         error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? err.message : '服务器内部错误'
+        message: safeMessage
     });
 });
 

@@ -70,13 +70,13 @@ async function handleApiRequest(request) {
   try {
     // 尝试网络请求
     const networkResponse = await fetch(request);
-    
+
     // 如果成功，缓存响应
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     // 网络失败，尝试从缓存获取
@@ -84,7 +84,7 @@ async function handleApiRequest(request) {
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // 返回离线页面
     return caches.match('/index.html');
   }
@@ -93,7 +93,7 @@ async function handleApiRequest(request) {
 // 处理静态资源 - 缓存优先策略
 async function handleStaticRequest(request) {
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     // 在后台更新缓存
     fetch(request).then(response => {
@@ -105,10 +105,10 @@ async function handleStaticRequest(request) {
     }).catch(() => {
       // 忽略更新失败
     });
-    
+
     return cachedResponse;
   }
-  
+
   // 缓存中没有，尝试网络请求
   try {
     const response = await fetch(request);
@@ -125,11 +125,16 @@ async function handleStaticRequest(request) {
 
 // 消息处理 - 用于与主线程通信
 self.addEventListener('message', event => {
+  // 验证消息来源，防止跨域 postMessage 攻击
+  if (event.origin && event.origin !== self.location.origin) {
+    return;
+  }
+
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
+
   if (event.data && event.data.type === 'GET_VERSION') {
     event.ports[0].postMessage({ version: CACHE_NAME });
   }
-}); 
+});

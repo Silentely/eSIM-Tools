@@ -32,8 +32,8 @@
     <link rel="icon" href="/src/assets/favicon.ico" type="image/x-icon">
 
     <!-- 关键CSS优先：preload 后备 rel=stylesheet -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
-    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"></noscript>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous"></noscript>
     <!-- Font Awesome：直接引入，避免 onload 触发器被 CSP 阻断导致样式未生效 -->
     <link rel="stylesheet" href="/src/assets/fontawesome/all.min.css">
     <!-- Font Awesome 资源路径（woff2）在 /src/assets/fontawesome/，确保已发布且 CSP 允许 font-src 'self' -->
@@ -301,7 +301,7 @@
 
     <!-- Google tag (gtag.js) 延迟加载 -->
     <script type="module" src="/src/js/captcha-client.js"></script>
-    <script defer src="https://www.googletagmanager.com/gtag/js?id=G-HGX38HMNL1"></script>
+    <script defer src="https://www.googletagmanager.com/gtag/js?id=G-HGX38HMNL1" integrity="sha384-NF9+d4/j/t6u+oaMBVAN5fH6PhjpwA5QS+SqlQSW2gEcp8M9N6EXbvBqLW8zLqDq" crossorigin="anonymous"></script>
 </head>
 <body aria-label="eSIM 工具选择">
     <div class="main-container" role="region" aria-label="eSIM 工具选择">

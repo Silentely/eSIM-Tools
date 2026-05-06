@@ -1,6 +1,7 @@
 /**
  * Giffgaff 应用状态管理模块
  */
+import secureStorage from '../secure-storage.js';
 
 class AppState {
   constructor() {
@@ -12,25 +13,25 @@ class AppState {
     this.codeVerifier = null;
     this.oauthState = null;
     this.accessToken = null;
-    
+
     // MFA相关
     this.emailCodeRef = null;
     this.emailSignature = null;
-    
+
     // 会员信息
     this.memberId = null;
     this.memberName = null;
     this.phoneNumber = null;
-    
+
     // eSIM信息
     this.esimSSN = null;
     this.esimActivationCode = null;
     this.esimDeliveryStatus = null;
     this.lpaString = null;
-    
+
     // 步骤控制
     this.currentStep = 1;
-    
+
     // 会话信息
     this.sessionTimestamp = null;
   }
@@ -53,19 +54,19 @@ class AppState {
       currentStep: this.currentStep,
       timestamp: Date.now()
     };
-    
-    localStorage.setItem('giffgaff_session', JSON.stringify(sessionData));
+
+    secureStorage.setItem('giffgaff_session', sessionData);
   }
 
   // 从 localStorage 加载会话
   loadSession() {
     try {
-      const sessionData = localStorage.getItem('giffgaff_session');
+      const sessionData = secureStorage.getItem('giffgaff_session');
       if (sessionData) {
-        const data = JSON.parse(sessionData);
+        const data = typeof sessionData === 'string' ? JSON.parse(sessionData) : sessionData;
         const now = Date.now();
         const twoHours = 2 * 60 * 60 * 1000; // 2小时的毫秒数
-        
+
         // 检查会话是否过期
         if (data.timestamp && (now - data.timestamp) < twoHours) {
           Object.assign(this, data);
@@ -84,7 +85,7 @@ class AppState {
 
   // 清除会话
   clearSession() {
-    localStorage.removeItem('giffgaff_session');
+    secureStorage.removeItem('giffgaff_session');
     this.reset();
   }
 
