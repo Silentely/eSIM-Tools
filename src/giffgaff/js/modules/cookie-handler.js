@@ -13,7 +13,7 @@ export class CookieHandler {
         this.CHECK_INTERVAL = 5 * 60 * 1000; // 5分钟
         this.apiEndpoints = getApiEndpoints();
     }
-    
+
     /**
      * 验证Cookie
      */
@@ -24,28 +24,28 @@ export class CookieHandler {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cookie })
             });
-            
+
             if (!response.ok) {
                 if (response.status === 401) {
                     return { valid: false, message: tl('Cookie已失效') };
                 }
                 throw new Error(t('giffgaff.cookie.verifyFailed', { status: response.status }));
             }
-            
+
             const result = await response.json();
-            
-            const looksLikeJwt = typeof result.accessToken === 'string' && 
-                                result.accessToken.includes('.') && 
+
+            const looksLikeJwt = typeof result.accessToken === 'string' &&
+                                result.accessToken.includes('.') &&
                                 result.accessToken.length > 200;
-            
+
             if (result.success && result.valid && looksLikeJwt) {
                 // 保存访问令牌和Cookie
                 stateManager.set('accessToken', result.accessToken);
                 stateManager.saveCookie(cookie);
-                
+
                 // 启动有效性监控
                 this.startValidityMonitor();
-                
+
                 return {
                     valid: true,
                     accessToken: result.accessToken,
@@ -65,7 +65,7 @@ export class CookieHandler {
             throw error;
         }
     }
-    
+
     /**
      * 检查Cookie有效性
      */
@@ -75,13 +75,13 @@ export class CookieHandler {
             if (!storedCookie) {
                 return { skipped: true };
             }
-            
+
             const response = await fetch(this.apiEndpoints.cookieVerify, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cookie: storedCookie })
             });
-            
+
             if (!response.ok) {
                 if (response.status === 401) {
                     this.handleCookieExpired();
@@ -89,9 +89,9 @@ export class CookieHandler {
                 }
                 return { transientError: true };
             }
-            
+
             const result = await response.json();
-            
+
             if (result && result.success && result.valid) {
                 // 刷新访问令牌
                 if (result.accessToken) {
@@ -99,31 +99,31 @@ export class CookieHandler {
                 }
                 return { valid: true };
             }
-            
+
             this.handleCookieExpired();
             return { valid: false };
         } catch (err) {
             console.error(t('giffgaff.cookie.log.checkError'), err);
-            return { transientError: true, error: err?.message };
+            return { transientError: true, error: err && err.message };
         }
     }
-    
+
     /**
      * 启动Cookie有效性监控
      */
     startValidityMonitor() {
         const hasCookie = !!stateManager.getCookie();
         if (!hasCookie || this.validityTimer) return;
-        
+
         // 立即检查一次
         this.checkCookieValidity();
-        
+
         // 定期检查
         this.validityTimer = setInterval(() => {
             this.checkCookieValidity();
         }, this.CHECK_INTERVAL);
     }
-    
+
     /**
      * 停止Cookie有效性监控
      */
@@ -133,27 +133,27 @@ export class CookieHandler {
             this.validityTimer = null;
         }
     }
-    
+
     /**
      * 处理Cookie过期
      */
     handleCookieExpired() {
         this.stopValidityMonitor();
-        
+
         // 清除Cookie和令牌
         stateManager.removeCookie();
         stateManager.setState({
             accessToken: '',
             emailSignature: ''
         });
-        
+
         // 触发过期事件
         const event = new CustomEvent('cookieExpired', {
             detail: { message: tl('Cookie已失效，请重新验证。') }
         });
         window.dispatchEvent(event);
     }
-    
+
     /**
      * 页面可见性变化处理
      */

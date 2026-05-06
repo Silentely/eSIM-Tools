@@ -13,14 +13,14 @@ export class MFAHandler {
     constructor() {
         this.apiEndpoints = getApiEndpoints();
     }
-    
+
     /**
      * 发送MFA验证码
      */
     async sendMFAChallenge(channel = 'EMAIL') {
         try {
             const state = stateManager.getState();
-            
+
             const response = await fetch(this.apiEndpoints.mfaChallenge, {
                 method: 'POST',
                 headers: {
@@ -34,19 +34,19 @@ export class MFAHandler {
                     preferredChannels: channel === 'TEXT' ? ['TEXT'] : ['EMAIL']
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error(t('giffgaff.mfa.errors.requestFailed', { status: response.status }));
             }
-            
+
             const data = await response.json();
-            
+
             // 检查令牌是否被刷新
             if (data._tokenRefreshed && data._newAccessToken) {
                 Logger.log(t('giffgaff.mfa.log.tokenRefreshed'));
                 stateManager.set('accessToken', data._newAccessToken);
             }
-            
+
             if (data && data.ref) {
                 stateManager.set('emailCodeRef', data.ref);
                 return {
@@ -62,7 +62,7 @@ export class MFAHandler {
             throw error;
         }
     }
-    
+
     /**
      * 验证MFA验证码
      */
@@ -70,15 +70,15 @@ export class MFAHandler {
         try {
             const state = stateManager.getState();
             const ref = state.emailCodeRef;
-            
+
             if (!ref) {
                 throw new Error(t('giffgaff.mfa.errors.missingRef'));
             }
-            
+
             if (!/^\d{6}$/.test(code)) {
                 throw new Error(t('giffgaff.mfa.errors.invalidFormat'));
             }
-            
+
             const response = await fetch(this.apiEndpoints.mfaValidation, {
                 method: 'POST',
                 headers: {
@@ -92,7 +92,7 @@ export class MFAHandler {
                     code
                 })
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(t('giffgaff.mfa.errors.verifyFailed', {
@@ -100,9 +100,9 @@ export class MFAHandler {
                     message: errorText
                 }));
             }
-            
+
             const data = await response.json();
-            
+
             if (data.signature) {
                 stateManager.set('emailSignature', data.signature);
                 return {
@@ -118,17 +118,17 @@ export class MFAHandler {
             throw error;
         }
     }
-    
+
     /**
      * 发送SIM交换MFA验证码
      */
     async sendSimSwapMFAChallenge() {
         try {
             const state = stateManager.getState();
-            
+
             const response = await fetch(this.apiEndpoints.graphql, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': state.accessToken ? `Bearer ${state.accessToken}` : undefined
                 },
@@ -148,7 +148,7 @@ export class MFAHandler {
                     }`
                 }])
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(t('giffgaff.mfa.errors.swapSendFailed', {
@@ -156,23 +156,23 @@ export class MFAHandler {
                     message: errorText
                 }));
             }
-            
+
             const responseData = await response.json();
             Logger.log(t('giffgaff.mfa.log.swapResponse'), responseData);
-            
+
             if (responseData.errors) {
                 const errorObj = responseData.errors[0];
-                const errorMessage = errorObj?.message || errorObj?.error || t('giffgaff.mfa.errors.genericSendFailed');
+                const errorMessage = (errorObj && errorObj.message) || (errorObj && errorObj.error) || t('giffgaff.mfa.errors.genericSendFailed');
                 throw new Error(errorMessage);
             }
-            
+
             const data = responseData.data;
             if (!data || !data.simSwapMfaChallenge || !data.simSwapMfaChallenge.ref) {
                 throw new Error(t('giffgaff.mfa.errors.invalidRef'));
             }
-            
+
             stateManager.set('emailCodeRef', data.simSwapMfaChallenge.ref);
-            
+
             return {
                 success: true,
                 ref: data.simSwapMfaChallenge.ref,
