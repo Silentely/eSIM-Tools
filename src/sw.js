@@ -7,8 +7,6 @@ const DYNAMIC_CACHE = 'dynamic-v2.1.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/src/giffgaff/giffgaff_complete_esim.html',
-  '/src/simyo/simyo_complete_esim.html',
   '/src/styles/design-system.css',
   '/netlify/functions/auto-activate-esim.js',
   '/netlify/functions/giffgaff-graphql.js',

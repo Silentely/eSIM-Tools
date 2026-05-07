@@ -415,7 +415,7 @@ app.get('/api/health', (req, res) => {
 
 // 提供静态文件服务
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'simyo_complete_esim.html'));
+    res.sendFile(path.join(__dirname, 'simyo_modular.html'));
 });
 
 // 错误处理中间件

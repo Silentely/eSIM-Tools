@@ -11,10 +11,7 @@ const { execFileSync, spawnSync } = require('child_process');
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 const RELATED_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.json']);
-const PROTECTED_FILES = [
-  'src/giffgaff/giffgaff_complete_esim.html',
-  'src/simyo/simyo_complete_esim.html'
-];
+const PROTECTED_FILES = [];
 
 function runGit(args) {
   return execFileSync('git', args, {
@@ -82,6 +79,7 @@ function getRelatedFiles() {
 }
 
 function getTouchedProtectedFiles() {
+  if (PROTECTED_FILES.length === 0) return [];
   const range = getDiffRange();
   if (!range) {
     return [];

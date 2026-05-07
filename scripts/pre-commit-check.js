@@ -35,10 +35,7 @@ const TEXT_EXTENSIONS = new Set([
 
 const JS_EXTENSIONS = new Set(['.js', '.mjs', '.cjs']);
 const SMART_QUOTES_RE = /[\u2018\u2019\u201C\u201D]/u;
-const PROTECTED_FILES = [
-  'src/giffgaff/giffgaff_complete_esim.html',
-  'src/simyo/simyo_complete_esim.html'
-];
+const PROTECTED_FILES = [];
 
 function git(args, options = {}) {
   return execFileSync('git', args, {
@@ -214,7 +211,7 @@ function runChecks(stagedFiles) {
 }
 
 function main() {
-  const touchedProtectedFiles = getTouchedProtectedFiles();
+  const touchedProtectedFiles = PROTECTED_FILES.length > 0 ? getTouchedProtectedFiles() : [];
   if (touchedProtectedFiles.length > 0) {
     console.error('\n❌ pre-commit 检查失败：');
     for (const relPath of touchedProtectedFiles) {

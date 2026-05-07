@@ -2,9 +2,7 @@
 /**
  * Legacy 页面冻结校验
  *
- * 目标：确保 /giffgaff-legacy 与 /simyo-legacy 对应的「旧页面源文件」不会被误改动。
- * - /giffgaff-legacy -> src/giffgaff/giffgaff_complete_esim.html
- * - /simyo-legacy    -> src/simyo/simyo_complete_esim.html
+ * 校验 legacy-freeze.json 中声明的冻结文件是否被修改。
  *
  * 用法：
  * - 校验（默认）：node scripts/verify-legacy-frozen.js
@@ -64,8 +62,7 @@ function main() {
   const fileMap = baseline.files || {};
   const fileEntries = Object.entries(fileMap);
   if (fileEntries.length === 0) {
-    console.error('[Legacy Freeze] ✗ 基线 files 为空，无法校验');
-    process.exitCode = 1;
+    console.log('[Legacy Freeze] ✓ 无 legacy 冻结文件，跳过校验');
     return;
   }
 

@@ -187,15 +187,11 @@ app.use('/api/simyo/*', (req, res) => {
 // 路由配置
 const htmlRoutes = [
     { url: '/giffgaff', file: 'src/giffgaff/giffgaff_modular.html' },
-    { url: '/giffgaff-legacy', file: 'src/giffgaff/giffgaff_complete_esim.html' },
     { url: '/simyo', file: 'src/simyo/simyo_modular.html' },
-    { url: '/simyo-legacy', file: 'src/simyo/simyo_complete_esim.html' },
     { url: '/simyo-static', file: 'src/simyo/simyo_static.html' },
     // 兼容静态路径访问（与 Netlify 重写保持一致）
     { url: '/src/giffgaff/giffgaff_modular.html', file: 'src/giffgaff/giffgaff_modular.html' },
-    { url: '/src/giffgaff/giffgaff_complete_esim.html', file: 'src/giffgaff/giffgaff_complete_esim.html' },
     { url: '/src/simyo/simyo_modular.html', file: 'src/simyo/simyo_modular.html' },
-    { url: '/src/simyo/simyo_complete_esim.html', file: 'src/simyo/simyo_complete_esim.html' },
     { url: '/src/simyo/simyo_static.html', file: 'src/simyo/simyo_static.html' },
     { url: '/', file: 'index.html' }
 ];

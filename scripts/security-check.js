@@ -143,8 +143,8 @@ function checkSecurityConfig() {
   // 检查Content Security Policy
   const htmlFiles = [
     'index.html',
-    'src/giffgaff/giffgaff_complete_esim.html',
-    'src/simyo/simyo_complete_esim.html'
+    'src/giffgaff/giffgaff_modular.html',
+    'src/simyo/simyo_modular.html'
   ];
 
   htmlFiles.forEach(file => {
