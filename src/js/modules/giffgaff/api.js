@@ -54,7 +54,7 @@ class APIManager {
    */
   async sendMFAChallenge(accessToken) {
     Logger.log('[API] sendMFAChallenge: start', { hasToken: !!accessToken });
-    const cookieValue = (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : null) || undefined;
+    const cookieValue = secureStorage.getItem('giffgaff_cookie') || undefined;
     const baseHeaders = {
       'Content-Type': 'application/json',
       ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
@@ -186,7 +186,7 @@ class APIManager {
     const resp = await fetch(this.endpoints.smsActivate, {
       method: 'POST',
       headers: this.attachCaptchaHeaders({ 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) }),
-      body: JSON.stringify(this.extendCaptchaPayload({ ref, code, accessToken, cookie: cookie || (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : undefined), memberId, ssn, activationCode }))
+      body: JSON.stringify(this.extendCaptchaPayload({ ref, code, accessToken, cookie: cookie || secureStorage.getItem('giffgaff_cookie') || undefined, memberId, ssn, activationCode }))
     });
     if (!resp.ok) {
       const t = await resp.text();
@@ -214,7 +214,7 @@ class APIManager {
       headers: this.attachCaptchaHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` }),
       body: JSON.stringify(this.extendCaptchaPayload({
         accessToken,
-        cookie: (typeof localStorage !== 'undefined' ? localStorage.getItem('giffgaff_cookie') : null) || undefined,
+        cookie: secureStorage.getItem('giffgaff_cookie') || undefined,
         mfaSignature: mfaSignature || undefined,
         query,
         variables

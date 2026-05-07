@@ -161,11 +161,27 @@ export class StateManager {
     }
 
     /**
-     * 从localStorage加载会话
+     * 从存储加载会话（优先 secureStorage，回退 localStorage 并迁移）
      */
     loadSession() {
         try {
-            const sessionData = secureStorage.getItem(this.SESSION_KEY);
+            let sessionData = secureStorage.getItem(this.SESSION_KEY);
+
+            // 回退：从 localStorage 读取旧版会话数据并迁移到 secureStorage
+            if (!sessionData) {
+                const legacyData = this.safeStorageGet(this.SESSION_KEY);
+                if (legacyData) {
+                    try {
+                        sessionData = typeof legacyData === 'string' ? JSON.parse(legacyData) : legacyData;
+                        // 迁移到 secureStorage 并清理旧数据
+                        secureStorage.setItem(this.SESSION_KEY, sessionData);
+                        this.safeStorageRemove(this.SESSION_KEY);
+                    } catch (_) {
+                        sessionData = null;
+                    }
+                }
+            }
+
             if (!sessionData) return false;
 
             const data = typeof sessionData === 'string' ? JSON.parse(sessionData) : sessionData;
@@ -173,6 +189,7 @@ export class StateManager {
 
             // 检查是否超时
             if (now - data.timestamp >= this.SESSION_TIMEOUT) {
+                secureStorage.removeItem(this.SESSION_KEY);
                 this.safeStorageRemove(this.SESSION_KEY);
                 return false;
             }
@@ -208,7 +225,7 @@ export class StateManager {
     saveCookie(cookie) {
         if (cookie && typeof cookie === 'string') {
             this.state.cookie = cookie;
-            this.safeStorageSet(this.COOKIE_KEY, cookie);
+            secureStorage.setItem(this.COOKIE_KEY, cookie);
         }
     }
 
@@ -221,10 +238,20 @@ export class StateManager {
     }
 
     /**
-     * 获取Cookie
+     * 获取Cookie（优先 secureStorage，回退 localStorage 并迁移）
      */
     getCookie() {
-        return this.safeStorageGet(this.COOKIE_KEY) || this.state.cookie;
+        let cookie = secureStorage.getItem(this.COOKIE_KEY);
+        // 回退：从 localStorage 读取旧版 cookie 并迁移到 secureStorage
+        if (!cookie) {
+            const legacyCookie = this.safeStorageGet(this.COOKIE_KEY);
+            if (legacyCookie) {
+                secureStorage.setItem(this.COOKIE_KEY, legacyCookie);
+                this.safeStorageRemove(this.COOKIE_KEY);
+                cookie = legacyCookie;
+            }
+        }
+        return cookie || this.state.cookie;
     }
 
     /**
@@ -249,9 +276,13 @@ export class StateManager {
             currentStep: 1
         };
 
-        // 清除存储
+        // 清除 secureStorage（sessionStorage）
         secureStorage.removeItem(this.SESSION_KEY);
         secureStorage.removeItem(this.COOKIE_KEY);
+
+        // 同步清理 localStorage 中的旧数据，防止残留
+        this.safeStorageRemove(this.SESSION_KEY);
+        this.safeStorageRemove(this.COOKIE_KEY);
 
         // 清除Cookie
         this.eraseCookie('giffgaff_access_token');
