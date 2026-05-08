@@ -6,11 +6,32 @@ import Logger from './logger.js';
  * 防御 XSS 攻击窃取敏感数据
  */
 
+/**
+ * 安全探测 Web Storage API 可用性
+ * 在跨域 iframe、sandbox 上下文或用户禁用存储时，
+ * 直接读取 sessionStorage/localStorage 属性可能抛出 SecurityError，
+ * typeof 检查无法安全拦截此类异常。
+ * @param {'sessionStorage'|'localStorage'} kind - 存储类型
+ * @returns {Storage|null} 可用的存储对象，或 null
+ */
+function safeGetStorage(kind) {
+  try {
+    const storage = window[kind];
+    // 写入测试：某些浏览器在隐身模式下返回对象但实际拒绝读写
+    const testKey = `__storage_test_${kind}__`;
+    storage.setItem(testKey, '1');
+    storage.removeItem(testKey);
+    return storage;
+  } catch (e) {
+    return null;
+  }
+}
+
 class SecureStorage {
   constructor() {
     // 优先使用 sessionStorage (关闭浏览器即清除)
     // 若需跨标签页共享，可使用 localStorage，但必须加过期时间
-    this.storage = typeof sessionStorage !== 'undefined' ? sessionStorage : null;
+    this.storage = safeGetStorage('sessionStorage');
     this.fallbackStorage = new Map(); // 内存降级
   }
 
@@ -115,15 +136,16 @@ class SecureStorage {
    * @param {string} key - 键名
    */
   migrateFromLocalStorage(key) {
-    if (typeof localStorage === 'undefined') return;
-
     try {
-      const oldValue = localStorage.getItem(key);
+      const local = safeGetStorage('localStorage');
+      if (!local) return;
+
+      const oldValue = local.getItem(key);
       if (oldValue) {
         // 迁移数据（不带过期时间，视为短期数据）
         this.setItem(key, oldValue, 1800000); // 30分钟
         // 清除旧数据
-        localStorage.removeItem(key);
+        local.removeItem(key);
         Logger.log(`[SecureStorage] Migrated ${key} from localStorage`);
       }
     } catch (error) {
@@ -144,18 +166,25 @@ class SecureStorage {
 const secureStorage = new SecureStorage();
 
 // 自动迁移已知的敏感数据键
-if (typeof window !== 'undefined') {
-  const SENSITIVE_KEYS = [
-    'giffgaff_cookie',
-    'gg_esim_activationCode',
-    'gg_esim_lpa',
-    'gg_esim_iccid',
-    'gg_esim_eid',
-    'gg_access_token'
-  ];
+// 顶层执行必须包裹 try-catch，防止受限上下文（iframe/sandbox/隐私设置）
+// 导致 sessionStorage/localStorage 访问异常未被捕获
+try {
+  if (typeof window !== 'undefined') {
+    const SENSITIVE_KEYS = [
+      'giffgaff_cookie',
+      'gg_esim_activationCode',
+      'gg_esim_lpa',
+      'gg_esim_iccid',
+      'gg_esim_eid',
+      'gg_access_token'
+    ];
 
-  // 页面加载时自动迁移
-  secureStorage.migrateAll(SENSITIVE_KEYS);
+    // 页面加载时自动迁移
+    secureStorage.migrateAll(SENSITIVE_KEYS);
+  }
+} catch (e) {
+  // 降级到内存存储，模块仍可正常使用
+  console.warn('[SecureStorage] Module-level initialization failed:', e.message);
 }
 
 export default secureStorage;

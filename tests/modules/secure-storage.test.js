@@ -125,4 +125,84 @@ describe('SecureStorage', () => {
       expect(store.getItem('bad')).toBeNull();
     });
   });
+
+  describe('受限环境降级', () => {
+    let originalSessionStorage;
+    let originalLocalStorage;
+
+    beforeEach(() => {
+      originalSessionStorage = Object.getOwnPropertyDescriptor(window, 'sessionStorage');
+      originalLocalStorage = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    });
+
+    afterEach(() => {
+      if (originalSessionStorage) {
+        Object.defineProperty(window, 'sessionStorage', originalSessionStorage);
+      } else {
+        delete window.sessionStorage;
+      }
+      if (originalLocalStorage) {
+        Object.defineProperty(window, 'localStorage', originalLocalStorage);
+      } else {
+        delete window.localStorage;
+      }
+    });
+
+    it('应该在 sessionStorage 访问被拒时降级到内存存储', () => {
+      // 模拟 SecurityError：属性读取抛异常
+      Object.defineProperty(window, 'sessionStorage', {
+        get() {
+          throw new DOMException('Access is denied', 'SecurityError');
+        },
+        configurable: true
+      });
+
+      // 直接构造新实例，构造函数内部调用 safeGetStorage 会捕获异常
+      const SecureStorageClass = store.constructor;
+      const restricted = new SecureStorageClass();
+
+      expect(restricted.storage).toBeNull();
+      restricted.setItem('key', 'value');
+      expect(restricted.getItem('key')).toBe('value');
+      expect(restricted.fallbackStorage.has('key')).toBe(true);
+    });
+
+    it('应该在 localStorage 访问被拒时跳过迁移', () => {
+      Object.defineProperty(window, 'localStorage', {
+        get() {
+          throw new DOMException('Access is denied', 'SecurityError');
+        },
+        configurable: true
+      });
+
+      // migrateFromLocalStorage 内部调用 safeGetStorage 会捕获异常
+      expect(() => store.migrateFromLocalStorage('any_key')).not.toThrow();
+    });
+
+    it('应该在 sessionStorage 写入失败时降级到内存', () => {
+      // 模拟 sessionStorage.setItem 拒绝写入
+      store.storage = {
+        getItem: jest.fn(() => null),
+        setItem: jest.fn(() => {
+          throw new DOMException('Quota exceeded', 'QuotaExceededError');
+        }),
+        removeItem: jest.fn()
+      };
+
+      // 迁移数据：localStorage 读取成功，但 sessionStorage 写入失败
+      const local = {
+        getItem: jest.fn(() => 'old_value'),
+        setItem: jest.fn(),
+        removeItem: jest.fn()
+      };
+      Object.defineProperty(window, 'localStorage', {
+        get: () => local,
+        configurable: true
+      });
+
+      store.migrateFromLocalStorage('test_key');
+      // 数据应降级到 fallbackStorage
+      expect(store.fallbackStorage.has('test_key')).toBe(true);
+    });
+  });
 });
