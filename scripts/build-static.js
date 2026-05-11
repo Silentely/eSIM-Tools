@@ -15,7 +15,8 @@ const entries = [
 
 // 需要额外复制到 dist 根目录的资源（浏览器默认请求 /favicon.ico）
 const rootAssets = [
-  { from: 'src/assets/favicon.ico', to: 'favicon.ico' }
+  { from: 'src/assets/favicon.ico', to: 'favicon.ico' },
+  { from: 'llms.txt', to: 'llms.txt' }
 ];
 
 async function removeDist() {

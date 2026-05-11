@@ -1,0 +1,44 @@
+# eSIM-Tools
+
+> 第三方开源 Web 工具集，为 Giffgaff 和 Simyo 用户提供 eSIM 申请、配置和管理功能。支持 OAuth 2.0 PKCE 认证、MFA 多因素验证、GraphQL API 集成、eSIM QR 码自动生成。
+
+重要说明：
+
+- 本工具为非官方第三方工具，使用可能违反运营商服务条款
+- 所有数据处理均在本地浏览器完成，不上传敏感信息
+- Giffgaff 激活时间窗口：UK 时间 4:30am - 9:30pm
+- Simyo 服务地区：荷兰 (NL)
+
+## 功能
+
+- [Giffgaff eSIM 工具](https://esim.cosr.eu.org/giffgaff): OAuth 认证、MFA 验证、GraphQL API 调用、eSIM QR 码生成
+- [Simyo eSIM 工具](https://esim.cosr.eu.org/simyo): 登录验证、设备更换、SMS/iDEAL 验证、eSIM 激活
+
+## 设备兼容性
+
+- Apple: iPhone XS/XR 及更新、iPhone SE 2 及更新
+- Android: Samsung Galaxy S20+、Google Pixel 3+、部分 OnePlus/华为
+- 检查方法：拨号盘输入 `*#06#`，显示 EID 则支持 eSIM
+
+## API 资源
+
+- [API 目录](https://esim.cosr.eu.org/.well-known/api-catalog): RFC 9727 API 发现
+- [OAuth 保护资源](https://esim.cosr.eu.org/.well-known/oauth-protected-resource): RFC 9728 认证元数据
+- [MCP 服务器卡片](https://esim.cosr.eu.org/.well-known/mcp/server-card.json): SEP-1649 Agent 发现
+
+## 技术栈
+
+- 前端：原生 JavaScript (ES2021+)，无框架设计
+- 后端：Netlify Functions (Node.js) + Edge Functions (Deno)
+- 认证：OAuth 2.0 PKCE + GraphQL
+- 部署：Netlify JAMstack
+
+## 文档
+
+- [GitHub 仓库](https://github.com/Silentely/eSIM-Tools): 源代码与 issue 跟踪
+- [README](https://github.com/Silentely/eSIM-Tools/blob/main/README.md): 项目说明与使用指南
+
+## Optional
+
+- [站点地图](https://esim.cosr.eu.org/sitemap.xml): 所有页面列表
+- [Agent Skills 索引](https://esim.cosr.eu.org/.well-known/agent-skills/index.json): Agent 技能发现
