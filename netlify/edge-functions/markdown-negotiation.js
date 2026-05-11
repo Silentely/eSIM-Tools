@@ -11,52 +11,52 @@ function htmlToMarkdown(html) {
 
   let md = html;
 
-  // 移除 script 和 style 标签及其内容
-  md = md.replace(/<script[\s\S]*?<\/script>/gi, '');
-  md = md.replace(/<style[\s\S]*?<\/style>/gi, '');
+  // 第一步：移除危险标签及其内容（带空格的结束标签也要匹配）
+  md = md.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '');
+  md = md.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
 
   // 移除 HTML 注释
   md = md.replace(/<!--[\s\S]*?-->/g, '');
 
   // 标题转换
-  md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
-  md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
-  md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
-  md = md.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n');
-  md = md.replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n');
-  md = md.replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n');
+  md = md.replace(/<h1\b[^>]*>(.*?)<\/h1\s*>/gi, '# $1\n\n');
+  md = md.replace(/<h2\b[^>]*>(.*?)<\/h2\s*>/gi, '## $1\n\n');
+  md = md.replace(/<h3\b[^>]*>(.*?)<\/h3\s*>/gi, '### $1\n\n');
+  md = md.replace(/<h4\b[^>]*>(.*?)<\/h4\s*>/gi, '#### $1\n\n');
+  md = md.replace(/<h5\b[^>]*>(.*?)<\/h5\s*>/gi, '##### $1\n\n');
+  md = md.replace(/<h6\b[^>]*>(.*?)<\/h6\s*>/gi, '###### $1\n\n');
 
   // 链接转换
-  md = md.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+  md = md.replace(/<a\b[^>]*href="([^"]*)"[^>]*>(.*?)<\/a\s*>/gi, '[$2]($1)');
 
   // 图片转换
-  md = md.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)');
-  md = md.replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)');
+  md = md.replace(/<img\b[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)');
+  md = md.replace(/<img\b[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)');
 
   // 粗体和斜体
-  md = md.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
-  md = md.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
-  md = md.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
-  md = md.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
+  md = md.replace(/<strong\b[^>]*>(.*?)<\/strong\s*>/gi, '**$1**');
+  md = md.replace(/<b\b[^>]*>(.*?)<\/b\s*>/gi, '**$1**');
+  md = md.replace(/<em\b[^>]*>(.*?)<\/em\s*>/gi, '*$1*');
+  md = md.replace(/<i\b[^>]*>(.*?)<\/i\s*>/gi, '*$1*');
 
   // 代码块
-  md = md.replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, '\n```\n$1\n```\n');
-  md = md.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, '\n```\n$1\n```\n');
-  md = md.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
+  md = md.replace(/<pre\b[^>]*><code\b[^>]*>([\s\S]*?)<\/code\s*><\/pre\s*>/gi, '\n```\n$1\n```\n');
+  md = md.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre\s*>/gi, '\n```\n$1\n```\n');
+  md = md.replace(/<code\b[^>]*>(.*?)<\/code\s*>/gi, '`$1`');
 
   // 列表
-  md = md.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+  md = md.replace(/<li\b[^>]*>(.*?)<\/li\s*>/gi, '- $1\n');
 
   // 段落和换行
   md = md.replace(/<br\s*\/?>/gi, '\n');
-  md = md.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
-  md = md.replace(/<div[^>]*>(.*?)<\/div>/gi, '$1\n');
-  md = md.replace(/<section[^>]*>([\s\S]*?)<\/section>/gi, '$1\n');
+  md = md.replace(/<p\b[^>]*>(.*?)<\/p\s*>/gi, '$1\n\n');
+  md = md.replace(/<div\b[^>]*>(.*?)<\/div\s*>/gi, '$1\n');
+  md = md.replace(/<section\b[^>]*>([\s\S]*?)<\/section\s*>/gi, '$1\n');
 
   // 移除剩余 HTML 标签
   md = md.replace(/<[^>]+>/g, '');
 
-  // HTML 实体解码
+  // HTML 实体解码（安全顺序，避免双重解码）
   md = md.replace(/&amp;/g, '&');
   md = md.replace(/&lt;/g, '<');
   md = md.replace(/&gt;/g, '>');
