@@ -1,0 +1,8 @@
+# eSIM-Tools - 搜索引擎爬虫指令
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /.netlify/
+Disallow: /src/
+
+Sitemap: https://esim.cosr.eu.org/sitemap.xml
