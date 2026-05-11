@@ -125,6 +125,12 @@
   to = "/src/assets/favicon.ico"
   status = 200
 
+# OG 社交分享图片重定向
+[[redirects]]
+  from = "/og-image.png"
+  to = "/src/assets/og-image.png"
+  status = 200
+
 # Netlify Functions 路径排除兜底重定向
 [[redirects]]
   from = "/.netlify/functions/*"
