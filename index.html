@@ -462,16 +462,17 @@
             border-radius: var(--radius-lg);
             padding: var(--s3) var(--s4);
         }
-        .glossary-item dt{
+        .glossary-term{
             font-weight: 700;
             font-size: .9rem;
             color: var(--brand-start);
             margin-bottom: var(--s1);
         }
-        .glossary-item dd{
+        .glossary-desc{
             font-size: .85rem;
             color: var(--text-muted);
             line-height: 1.5;
+            margin: 0;
         }
 
         /* FAQ */
@@ -720,28 +721,28 @@
             <h2 id="glossary-title" class="section-title"><i class="fas fa-book" aria-hidden="true"></i> 技术术语说明</h2>
             <div class="glossary-grid">
                 <div class="glossary-item">
-                    <dt>OAuth 2.0 PKCE</dt>
-                    <dd>一种安全的授权协议，允许第三方应用在无需存储密钥的情况下访问用户数据</dd>
+                    <p class="glossary-term">OAuth 2.0 PKCE</p>
+                    <p class="glossary-desc">一种安全的授权协议，允许第三方应用在无需存储密钥的情况下访问用户数据</p>
                 </div>
                 <div class="glossary-item">
-                    <dt>GraphQL</dt>
-                    <dd>一种 API 查询语言，比 REST 更灵活高效地获取所需数据</dd>
+                    <p class="glossary-term">GraphQL</p>
+                    <p class="glossary-desc">一种 API 查询语言，比 REST 更灵活高效地获取所需数据</p>
                 </div>
                 <div class="glossary-item">
-                    <dt>LPA String</dt>
-                    <dd>本地配置文件激活字符串，包含 eSIM 下载所需的服务器地址和激活码</dd>
+                    <p class="glossary-term">LPA String</p>
+                    <p class="glossary-desc">本地配置文件激活字符串，包含 eSIM 下载所需的服务器地址和激活码</p>
                 </div>
                 <div class="glossary-item">
-                    <dt>SM-DP+</dt>
-                    <dd>订阅管理数据准备服务器，负责安全地存储和分发 eSIM 配置文件</dd>
+                    <p class="glossary-term">SM-DP+</p>
+                    <p class="glossary-desc">订阅管理数据准备服务器，负责安全地存储和分发 eSIM 配置文件</p>
                 </div>
                 <div class="glossary-item">
-                    <dt>MFA</dt>
-                    <dd>多因素认证，通过多种方式验证用户身份，提高账户安全性</dd>
+                    <p class="glossary-term">MFA</p>
+                    <p class="glossary-desc">多因素认证，通过多种方式验证用户身份，提高账户安全性</p>
                 </div>
                 <div class="glossary-item">
-                    <dt>EID</dt>
-                    <dd>eSIM 的唯一标识号码，可在拨号盘输入 *#06# 查看</dd>
+                    <p class="glossary-term">EID</p>
+                    <p class="glossary-desc">eSIM 的唯一标识号码，可在拨号盘输入 *#06# 查看</p>
                 </div>
             </div>
         </section>

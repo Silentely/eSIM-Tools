@@ -7,8 +7,8 @@ gtag('js', new Date());
 gtag('config', 'G-HGX38HMNL1');
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 仅对卡片元素应用 reveal，降低动画工作量
-  const cards = document.querySelectorAll('.tool-card.reveal');
+  // 对所有 reveal 元素应用入场动画
+  const revealElements = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
-    cards.forEach(el => io.observe(el));
+    revealElements.forEach(el => io.observe(el));
   } else {
-    cards.forEach(el => el.classList.add('show'));
+    revealElements.forEach(el => el.classList.add('show'));
   }
 
   // 点击跟踪（可选）
