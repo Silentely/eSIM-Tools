@@ -12,6 +12,10 @@
 <br>
 </div>
 
+<p align="center">
+  <img src="src/assets/og-image.png" alt="eSIM Tools - Giffgaff & Simyo eSIM 在线管理工具" width="600">
+</p>
+
 专为Giffgaff和Simyo用户设计的现代化eSIM管理工具集，支持完整的eSIM申请、激活和二维码生成流程。
 
 [:us: English Version](README_EN.md)

@@ -12,6 +12,10 @@
 <br>
 </div>
 
+<p align="center">
+  <img src="src/assets/og-image.png" alt="eSIM Tools - Giffgaff & Simyo eSIM Online Management" width="600">
+</p>
+
 A modern eSIM management toolkit for Giffgaff and Simyo users, supporting complete eSIM application, activation, and QR code generation workflows.
 
 [:cn: 中文版本](README.md)
