@@ -97,6 +97,10 @@ async function copyDirectory(source, destination) {
   BuildLogger.log('🔧 注入 Sentry 配置...');
   require('./inject-sentry-config.js');
 
+  // 生成 AI Agent 元数据文件
+  BuildLogger.log('🤖 生成 Agent 元数据...');
+  require('./generate-agent-metadata.js');
+
   BuildLogger.success(' 静态资源构建完成，输出目录 dist/');
 })().catch(err => {
   console.error('构建静态资源失败:', err);

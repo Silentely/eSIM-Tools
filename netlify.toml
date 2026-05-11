@@ -72,6 +72,11 @@
   path = "/bff/*"
   function = "bff-proxy"
 
+# Markdown for Agents：检测 Accept: text/markdown 请求
+[[edge_functions]]
+  path = "/"
+  function = "markdown-negotiation"
+
 [[redirects]]
   from = "/api/giffgaff/*"
   to = "https://api.giffgaff.com/:splat"
@@ -143,6 +148,18 @@
     # 生产 CSP：移除 unsafe-inline，基于 nonce/hash 的策略（页面模板需注入 nonce）
     # 如暂无模板注入机制，可先允许外链受信源并避免内联脚本
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://*.sentry.io https://cdn.jsdelivr.net; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; manifest-src 'self';"
+
+# Agent 发现 Link 响应头 (RFC 8288)
+[[headers]]
+  for = "/"
+  [headers.values]
+    Link = "</.well-known/api-catalog>; rel=\"api-catalog\", </.well-known/oauth-protected-resource>; rel=\"oauth-protected-resource\", </.well-known/mcp/server-card.json>; rel=\"mcp-server-card\", </.well-known/agent-skills/index.json>; rel=\"agent-skills\""
+
+# Markdown for Agents 支持头部
+[[headers]]
+  for = "/"
+  [headers.values]
+    Vary = "Accept"
 
 [[headers]]
   for = "/manifest.webmanifest"
