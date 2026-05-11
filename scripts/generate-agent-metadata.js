@@ -144,19 +144,23 @@ function generateOAuthProtectedResource() {
 }
 
 /**
- * 生成 MCP Server Card (SEP-1649)
+ * 生成 MCP Server Card (SEP-2127)
  */
 function generateMcpServerCard() {
   return JSON.stringify({
-    name: 'eSIM Tools MCP Server',
-    description: 'eSIM management tools for Giffgaff and Simyo users',
+    $schema: 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json',
+    name: 'esim-tools/server',
     version: '2.0.0',
-    homepage: SITE_URL,
+    title: 'eSIM Tools MCP Server',
+    description: 'eSIM management tools for Giffgaff and Simyo users - OAuth authentication, MFA verification, and eSIM activation',
+    websiteUrl: SITE_URL,
     repository: 'https://github.com/Silentely/eSIM-Tools',
-    transport: {
-      type: 'http',
-      url: `${SITE_URL}/bff/`
-    },
+    remotes: [
+      {
+        type: 'http',
+        url: `${SITE_URL}/bff/`
+      }
+    ],
     capabilities: {
       tools: [
         {
@@ -169,6 +173,40 @@ function generateMcpServerCard() {
         }
       ]
     }
+  }, null, 2);
+}
+
+/**
+ * 生成 OAuth Authorization Server Metadata (RFC 8414)
+ * Giffgaff 使用外部 OpenID Connect 提供商
+ */
+function generateOAuthDiscovery() {
+  return JSON.stringify({
+    issuer: 'https://id.giffgaff.com',
+    authorization_endpoint: 'https://id.giffgaff.com/authorize',
+    token_endpoint: 'https://id.giffgaff.com/token',
+    jwks_uri: 'https://id.giffgaff.com/.well-known/jwks.json',
+    revocation_endpoint: 'https://id.giffgaff.com/revoke',
+    scopes_supported: [
+      'openid',
+      'profile',
+      'email'
+    ],
+    response_types_supported: [
+      'code'
+    ],
+    grant_types_supported: [
+      'authorization_code',
+      'refresh_token'
+    ],
+    token_endpoint_auth_methods_supported: [
+      'client_secret_basic',
+      'client_secret_post'
+    ],
+    code_challenge_methods_supported: [
+      'S256'
+    ],
+    service_documentation: `${SITE_URL}/docs/api`
   }, null, 2);
 }
 
@@ -236,6 +274,12 @@ async function main() {
   await writeFile(
     path.join(distDir, '.well-known', 'oauth-protected-resource'),
     generateOAuthProtectedResource()
+  );
+
+  // .well-known/openid-configuration (OAuth Discovery)
+  await writeFile(
+    path.join(distDir, '.well-known', 'openid-configuration'),
+    generateOAuthDiscovery()
   );
 
   // .well-known/mcp/server-card.json
