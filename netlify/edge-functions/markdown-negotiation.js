@@ -109,14 +109,14 @@ const HOME_MARKDOWN = `# eSIM Tools - Giffgaff & Simyo eSIM 管理工具
 4. 通过 SMS 短信或 iDEAL 支付验证身份
 5. 确认新设备并生成 eSIM 配置
 
-**注意**: Simyo 不使用 QR 码，通过 Mijn Simyo App 完成激活
+**注意**: 本工具支持生成 eSIM QR 码，简化 Simyo 激活流程
 
 ## 与官方 App 对比
 
 | 对比项 | 本工具 | 官方 App |
 |--------|--------|----------|
 | 操作平台 | 浏览器 Web 端 | 仅移动端 App |
-| QR 码生成 | 自动生成 | 部分支持 |
+| QR 码生成 | 自动生成 | Simyo 不支持（本工具可生成） |
 | 官方支持 | 非官方 | 官方支持 |
 | 服务条款 | 可能违反 | 符合条款 |
 
@@ -136,8 +136,8 @@ A: 通常几分钟内完成，最长可能需要 1 小时。
 **Q: 是否支持在海外激活 eSIM？**
 A: Giffgaff 有 UK 时间窗口限制，Simyo 主要面向荷兰本地用户。
 
-**Q: 为什么 Simyo 不使用 QR 码？**
-A: Simyo 使用 Mijn Simyo App 进行 eSIM 管理，通过 App 内直接激活。
+**Q: Simyo 支持 QR 码激活吗？**
+A: Simyo 官方 App 不支持 QR 码激活，但本工具可以生成 eSIM QR 码，让您通过扫描方式快速完成激活。
 
 **Q: 使用这个工具安全吗？**
 A: 所有数据处理均在本地浏览器完成。但使用第三方工具可能违反运营商服务条款。
