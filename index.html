@@ -297,6 +297,249 @@
             .github-btn{ padding: 9px 14px; font-size: 14px; }
             .tool-btn{ padding: 10px 18px; font-size: .95rem; }
         }
+
+        /* GEO 优化内容区块 */
+        .info-section{
+            margin-top: var(--s6);
+            text-align: left;
+        }
+        .section-title{
+            font-size: clamp(1.3rem, 2.5vw, 1.6rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--s3);
+            display: flex;
+            align-items: center;
+            gap: var(--s2);
+        }
+        .section-title i{ color: var(--primary, var(--brand-start)); }
+        .section-desc{
+            color: var(--text-muted);
+            margin-bottom: var(--s4);
+        }
+
+        /* 设备兼容性 */
+        .compat-grid{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--s3);
+            margin-bottom: var(--s3);
+        }
+        @media (max-width: 600px){ .compat-grid{ grid-template-columns: 1fr; } }
+        .compat-card{
+            background: color-mix(in oklab, var(--surface) 95%, transparent);
+            border-radius: var(--radius-lg);
+            padding: var(--s4);
+            border: 1px solid color-mix(in oklab, var(--brand-start) 20%, transparent);
+        }
+        .compat-card h3{
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: var(--s2);
+            color: var(--text-primary);
+        }
+        .compat-card p{
+            font-size: .9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .compat-check{
+            background: color-mix(in oklab, var(--accent-ok) 10%, transparent);
+            padding: var(--s3);
+            border-radius: var(--radius-lg);
+            font-size: .9rem;
+        }
+        .compat-check code{
+            background: rgba(0,0,0,.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* 使用教程 */
+        .tutorial-grid{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--s4);
+        }
+        @media (max-width: 700px){ .tutorial-grid{ grid-template-columns: 1fr; } }
+        .tutorial-card{
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: var(--s4);
+            border-left: 4px solid;
+        }
+        .giffgaff-tutorial{ border-left-color: #ff6b00; }
+        .simyo-tutorial{ border-left-color: #e74c3c; }
+        .tutorial-card h3{
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: var(--s3);
+            color: var(--text-primary);
+        }
+        .tutorial-steps{
+            padding-left: var(--s4);
+            margin-bottom: var(--s3);
+        }
+        .tutorial-steps li{
+            font-size: .9rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--s1);
+            line-height: 1.5;
+        }
+        .tutorial-note{
+            font-size: .85rem;
+            color: var(--text-muted);
+            background: color-mix(in oklab, var(--accent-warn) 10%, transparent);
+            padding: var(--s2) var(--s3);
+            border-radius: var(--radius-lg);
+        }
+
+        /* 对比表格 */
+        .compare-table-wrapper{
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        .compare-table{
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            font-size: .9rem;
+        }
+        .compare-table th{
+            background: color-mix(in oklab, var(--brand-start) 10%, transparent);
+            padding: var(--s3);
+            font-weight: 700;
+            text-align: left;
+            color: var(--text-primary);
+        }
+        .compare-table td{
+            padding: var(--s3);
+            border-bottom: 1px solid color-mix(in oklab, #ecf0f1 80%, transparent);
+            color: var(--text-secondary);
+        }
+        .compare-table tr:last-child td{ border-bottom: none; }
+        .text-success{ color: var(--accent-ok); }
+        .text-warning{ color: var(--accent-warn); }
+
+        /* 地区限制 */
+        .region-grid{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--s3);
+        }
+        @media (max-width: 600px){ .region-grid{ grid-template-columns: 1fr; } }
+        .region-card{
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: var(--s4);
+            border: 1px solid color-mix(in oklab, var(--brand-start) 15%, transparent);
+        }
+        .region-card h3{
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: var(--s2);
+            color: var(--text-primary);
+        }
+        .region-card p{
+            font-size: .9rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--s1);
+        }
+        .region-card strong{ color: var(--text-primary); }
+
+        /* 术语表 */
+        .glossary-grid{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--s3);
+        }
+        @media (max-width: 800px){ .glossary-grid{ grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px){ .glossary-grid{ grid-template-columns: 1fr; } }
+        .glossary-item{
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: var(--s3) var(--s4);
+        }
+        .glossary-item dt{
+            font-weight: 700;
+            font-size: .9rem;
+            color: var(--brand-start);
+            margin-bottom: var(--s1);
+        }
+        .glossary-item dd{
+            font-size: .85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* FAQ */
+        .faq-list{
+            display: flex;
+            flex-direction: column;
+            gap: var(--s2);
+        }
+        .faq-item{
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .faq-item summary{
+            padding: var(--s3) var(--s4);
+            font-weight: 600;
+            font-size: .95rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background var(--duration-fast) var(--ease-standard);
+        }
+        .faq-item summary:hover{
+            background: color-mix(in oklab, var(--brand-start) 5%, transparent);
+        }
+        .faq-item p{
+            padding: 0 var(--s4) var(--s3);
+            font-size: .9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* 安全声明 */
+        .disclaimer-content{
+            display: flex;
+            flex-direction: column;
+            gap: var(--s3);
+        }
+        .disclaimer-item{
+            display: flex;
+            align-items: flex-start;
+            gap: var(--s3);
+            padding: var(--s4);
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+        }
+        .disclaimer-item i{
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .disclaimer-item.warning{ border-left: 4px solid var(--accent-warn); }
+        .disclaimer-item.warning i{ color: var(--accent-warn); }
+        .disclaimer-item.info{ border-left: 4px solid var(--brand-start); }
+        .disclaimer-item.info i{ color: var(--brand-start); }
+        .disclaimer-item.success{ border-left: 4px solid var(--accent-ok); }
+        .disclaimer-item.success i{ color: var(--accent-ok); }
+        .disclaimer-item strong{
+            display: block;
+            font-size: .95rem;
+            margin-bottom: var(--s1);
+            color: var(--text-primary);
+        }
+        .disclaimer-item p{
+            font-size: .9rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
     </style>
 
     <!-- Google tag (gtag.js) 延迟加载 -->
@@ -364,6 +607,203 @@
                 </a>
             </section>
         </div>
+
+        <!-- 设备兼容性 -->
+        <section class="info-section reveal" aria-labelledby="compat-title">
+            <h2 id="compat-title" class="section-title"><i class="fas fa-mobile-alt" aria-hidden="true"></i> 设备兼容性</h2>
+            <p class="section-desc">使用前请确认您的设备支持 eSIM 功能</p>
+            <div class="compat-grid">
+                <div class="compat-card">
+                    <h3><i class="fab fa-apple" aria-hidden="true"></i> Apple</h3>
+                    <p>iPhone XS / XR 及更新机型<br>iPhone SE 2 及更新机型</p>
+                </div>
+                <div class="compat-card">
+                    <h3><i class="fab fa-android" aria-hidden="true"></i> Android</h3>
+                    <p>Samsung Galaxy S20 及更新<br>Google Pixel 3 及更新<br>部分 OnePlus、华为机型</p>
+                </div>
+            </div>
+            <p class="compat-check"><strong>检查方法：</strong>在手机拨号盘输入 <code>*#06#</code>，如显示 EID 号码则支持 eSIM</p>
+        </section>
+
+        <!-- 使用教程 -->
+        <section class="info-section reveal" aria-labelledby="tutorial-title">
+            <h2 id="tutorial-title" class="section-title"><i class="fas fa-book-open" aria-hidden="true"></i> 使用教程</h2>
+            <div class="tutorial-grid">
+                <div class="tutorial-card giffgaff-tutorial">
+                    <h3>Giffgaff eSIM 激活流程</h3>
+                    <ol class="tutorial-steps">
+                        <li>点击「使用 Giffgaff 工具」进入工具页面</li>
+                        <li>使用 Giffgaff 账号完成 OAuth 登录授权</li>
+                        <li>输入邮箱验证码完成身份验证</li>
+                        <li>完成 MFA 多因素认证（如已启用）</li>
+                        <li>查询会员资格并选择 eSIM 操作</li>
+                        <li>获取 eSIM 下载码或扫描 QR 码激活</li>
+                    </ol>
+                    <p class="tutorial-note"><i class="fas fa-clock" aria-hidden="true"></i> 激活时间窗口：UK 时间 4:30am - 9:30pm</p>
+                </div>
+                <div class="tutorial-card simyo-tutorial">
+                    <h3>Simyo eSIM 管理流程</h3>
+                    <ol class="tutorial-steps">
+                        <li>点击「使用 Simyo 工具」进入工具页面</li>
+                        <li>使用 Simyo 账号完成登录验证</li>
+                        <li>选择设备更换或 eSIM 激活</li>
+                        <li>通过 SMS 短信或 iDEAL 支付验证身份</li>
+                        <li>确认新设备并生成 eSIM 配置</li>
+                    </ol>
+                    <p class="tutorial-note"><i class="fas fa-info-circle" aria-hidden="true"></i> Simyo 不使用 QR 码，通过 Mijn Simyo App 完成激活</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 与官方流程对比 -->
+        <section class="info-section reveal" aria-labelledby="compare-title">
+            <h2 id="compare-title" class="section-title"><i class="fas fa-balance-scale" aria-hidden="true"></i> 与官方 App 对比</h2>
+            <div class="compare-table-wrapper">
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>对比项</th>
+                            <th>本工具</th>
+                            <th>官方 App</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>操作平台</td>
+                            <td><i class="fas fa-check text-success"></i> 浏览器 Web 端</td>
+                            <td>仅移动端 App</td>
+                        </tr>
+                        <tr>
+                            <td>QR 码生成</td>
+                            <td><i class="fas fa-check text-success"></i> 自动生成</td>
+                            <td>部分支持</td>
+                        </tr>
+                        <tr>
+                            <td>认证方式</td>
+                            <td>OAuth 2.0 PKCE</td>
+                            <td>App 内置登录</td>
+                        </tr>
+                        <tr>
+                            <td>官方支持</td>
+                            <td><i class="fas fa-exclamation-triangle text-warning"></i> 非官方</td>
+                            <td><i class="fas fa-check text-success"></i> 官方支持</td>
+                        </tr>
+                        <tr>
+                            <td>服务条款</td>
+                            <td><i class="fas fa-exclamation-triangle text-warning"></i> 可能违反</td>
+                            <td><i class="fas fa-check text-success"></i> 符合条款</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 地区与时间限制 -->
+        <section class="info-section reveal" aria-labelledby="region-title">
+            <h2 id="region-title" class="section-title"><i class="fas fa-globe-europe" aria-hidden="true"></i> 地区与时间限制</h2>
+            <div class="region-grid">
+                <div class="region-card">
+                    <h3><i class="fas fa-clock" aria-hidden="true"></i> Giffgaff</h3>
+                    <p>激活时间窗口：<strong>UK 时间 4:30am - 9:30pm</strong></p>
+                    <p>请在非工作时间内尝试激活可能失败</p>
+                </div>
+                <div class="region-card">
+                    <h3><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Simyo</h3>
+                    <p>服务地区：<strong>荷兰 (NL)</strong></p>
+                    <p>仅支持荷兰本地 SIM 卡用户</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 技术术语解释 -->
+        <section class="info-section reveal" aria-labelledby="glossary-title">
+            <h2 id="glossary-title" class="section-title"><i class="fas fa-book" aria-hidden="true"></i> 技术术语说明</h2>
+            <div class="glossary-grid">
+                <div class="glossary-item">
+                    <dt>OAuth 2.0 PKCE</dt>
+                    <dd>一种安全的授权协议，允许第三方应用在无需存储密钥的情况下访问用户数据</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>GraphQL</dt>
+                    <dd>一种 API 查询语言，比 REST 更灵活高效地获取所需数据</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>LPA String</dt>
+                    <dd>本地配置文件激活字符串，包含 eSIM 下载所需的服务器地址和激活码</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>SM-DP+</dt>
+                    <dd>订阅管理数据准备服务器，负责安全地存储和分发 eSIM 配置文件</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>MFA</dt>
+                    <dd>多因素认证，通过多种方式验证用户身份，提高账户安全性</dd>
+                </div>
+                <div class="glossary-item">
+                    <dt>EID</dt>
+                    <dd>eSIM 的唯一标识号码，可在拨号盘输入 *#06# 查看</dd>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ 常见问题 -->
+        <section class="info-section reveal" aria-labelledby="faq-title">
+            <h2 id="faq-title" class="section-title"><i class="fas fa-question-circle" aria-hidden="true"></i> 常见问题</h2>
+            <div class="faq-list">
+                <details class="faq-item">
+                    <summary>无法接收 SMS 短信验证码怎么办？</summary>
+                    <p>对于 Simyo 用户，可以选择 iDEAL 支付方式作为替代验证方案。如果仍然无法接收短信，请检查手机号码是否正确，或联系运营商确认短信服务状态。</p>
+                </details>
+                <details class="faq-item">
+                    <summary>eSIM 激活需要多长时间？</summary>
+                    <p>通常在几分钟内完成，最长可能需要 1 小时。如果超过 1 小时仍未激活成功，请检查网络连接或重新尝试。</p>
+                </details>
+                <details class="faq-item">
+                    <summary>是否支持在海外激活 eSIM？</summary>
+                    <p>Giffgaff 的 eSIM 激活有 UK 时间窗口限制（4:30am - 9:30pm UK 时间）。Simyo 主要面向荷兰本地用户，海外激活可能受限。</p>
+                </details>
+                <details class="faq-item">
+                    <summary>为什么 Simyo 不使用 QR 码？</summary>
+                    <p>Simyo 使用 Mijn Simyo App 进行 eSIM 管理，通过 App 内直接激活而非 QR 码扫描。这是 Simyo 的特殊流程，与其他运营商不同。</p>
+                </details>
+                <details class="faq-item">
+                    <summary>使用这个工具安全吗？</summary>
+                    <p>本工具在本地浏览器运行，所有数据处理均在本地进行。但请注意：使用第三方工具可能违反运营商服务条款，建议使用非主力号码进行测试。</p>
+                </details>
+                <details class="faq-item">
+                    <summary>激活失败怎么办？</summary>
+                    <p>请检查：1) 设备是否支持 eSIM；2) 网络连接是否正常；3) 是否在运营商服务时间内；4) 账号状态是否正常。如问题持续，请联系运营商客服。</p>
+                </details>
+            </div>
+        </section>
+
+        <!-- 安全声明 -->
+        <section class="info-section reveal" aria-labelledby="disclaimer-title">
+            <h2 id="disclaimer-title" class="section-title"><i class="fas fa-shield-alt" aria-hidden="true"></i> 安全声明</h2>
+            <div class="disclaimer-content">
+                <div class="disclaimer-item warning">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    <div>
+                        <strong>第三方工具风险</strong>
+                        <p>本工具为非官方第三方工具，使用可能违反运营商服务条款。请自行评估风险。</p>
+                    </div>
+                </div>
+                <div class="disclaimer-item info">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <div>
+                        <strong>建议使用非主力号码</strong>
+                        <p>为避免影响正常通信，建议使用备用号码进行测试和激活操作。</p>
+                    </div>
+                </div>
+                <div class="disclaimer-item success">
+                    <i class="fas fa-lock" aria-hidden="true"></i>
+                    <div>
+                        <strong>数据安全</strong>
+                        <p>所有数据处理均在本地浏览器完成，不上传任何敏感信息到服务器。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <footer class="footer" aria-label="免责声明与隐私说明">
             <p>

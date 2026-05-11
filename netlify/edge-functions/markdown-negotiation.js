@@ -72,28 +72,90 @@ function htmlToMarkdown(html) {
 }
 
 // 主页的 Markdown 版本
-const HOME_MARKDOWN = `# eSIM Tools
+const HOME_MARKDOWN = `# eSIM Tools - Giffgaff & Simyo eSIM 管理工具
 
-eSIM 管理工具集，支持 Giffgaff 与 Simyo 的 eSIM 申请与管理。
+第三方开源 Web 工具，为 Giffgaff 和 Simyo 用户提供 eSIM 申请、配置和管理功能。
 
-## 功能
+## 核心功能
 
-- **Giffgaff eSIM**: OAuth 认证、MFA 验证、eSIM 激活
-- **Simyo eSIM**: 登录、设备更换、eSIM 激活
-- **QR 码生成**: eSIM 配置二维码生成与扫描
+- **Giffgaff eSIM**: OAuth 2.0 PKCE 认证、MFA 多因素验证、GraphQL API 集成、自动生成 eSIM QR 码
+- **Simyo eSIM**: 登录验证、设备更换、SMS/iDEAL 验证、eSIM 激活
+- **QR 码生成**: eSIM 配置二维码自动生成与扫描
 
-## 快速开始
+## 设备兼容性
 
-### Giffgaff 用户
-1. 访问 [Giffgaff eSIM 管理](/giffgaff)
-2. 使用 Giffgaff 账号登录
-3. 完成 MFA 验证
-4. 选择 eSIM 操作
+支持 eSIM 的设备：
+- **Apple**: iPhone XS/XR 及更新机型、iPhone SE 2 及更新
+- **Android**: Samsung Galaxy S20+、Google Pixel 3+、部分 OnePlus/华为
 
-### Simyo 用户
-1. 访问 [Simyo eSIM 管理](/simyo)
-2. 使用 Simyo 账号登录
-3. 选择设备更换或激活
+检查方法：在手机拨号盘输入 \`*#06#\`，如显示 EID 号码则支持 eSIM
+
+## Giffgaff eSIM 激活流程
+
+1. 点击「使用 Giffgaff 工具」进入工具页面
+2. 使用 Giffgaff 账号完成 OAuth 登录授权
+3. 输入邮箱验证码完成身份验证
+4. 完成 MFA 多因素认证（如已启用）
+5. 查询会员资格并选择 eSIM 操作
+6. 获取 eSIM 下载码或扫描 QR 码激活
+
+**激活时间窗口**: UK 时间 4:30am - 9:30pm
+
+## Simyo eSIM 管理流程
+
+1. 点击「使用 Simyo 工具」进入工具页面
+2. 使用 Simyo 账号完成登录验证
+3. 选择设备更换或 eSIM 激活
+4. 通过 SMS 短信或 iDEAL 支付验证身份
+5. 确认新设备并生成 eSIM 配置
+
+**注意**: Simyo 不使用 QR 码，通过 Mijn Simyo App 完成激活
+
+## 与官方 App 对比
+
+| 对比项 | 本工具 | 官方 App |
+|--------|--------|----------|
+| 操作平台 | 浏览器 Web 端 | 仅移动端 App |
+| QR 码生成 | 自动生成 | 部分支持 |
+| 官方支持 | 非官方 | 官方支持 |
+| 服务条款 | 可能违反 | 符合条款 |
+
+## 地区与时间限制
+
+- **Giffgaff**: 激活时间窗口 UK 时间 4:30am - 9:30pm
+- **Simyo**: 服务地区荷兰 (NL)，仅支持荷兰本地用户
+
+## 常见问题
+
+**Q: 无法接收 SMS 短信验证码怎么办？**
+A: Simyo 用户可选择 iDEAL 支付方式作为替代验证方案。
+
+**Q: eSIM 激活需要多长时间？**
+A: 通常几分钟内完成，最长可能需要 1 小时。
+
+**Q: 是否支持在海外激活 eSIM？**
+A: Giffgaff 有 UK 时间窗口限制，Simyo 主要面向荷兰本地用户。
+
+**Q: 为什么 Simyo 不使用 QR 码？**
+A: Simyo 使用 Mijn Simyo App 进行 eSIM 管理，通过 App 内直接激活。
+
+**Q: 使用这个工具安全吗？**
+A: 所有数据处理均在本地浏览器完成。但使用第三方工具可能违反运营商服务条款。
+
+## 技术术语说明
+
+- **OAuth 2.0 PKCE**: 安全的授权协议，允许第三方应用访问用户数据
+- **GraphQL**: 灵活的 API 查询语言
+- **LPA String**: 本地配置文件激活字符串
+- **SM-DP+**: 订阅管理数据准备服务器
+- **MFA**: 多因素认证
+- **EID**: eSIM 唯一标识号码
+
+## 安全声明
+
+- 本工具为非官方第三方工具，使用可能违反运营商服务条款
+- 建议使用非主力号码进行测试和激活操作
+- 所有数据处理均在本地浏览器完成，不上传任何敏感信息
 
 ## API 文档
 
