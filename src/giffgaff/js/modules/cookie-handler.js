@@ -104,7 +104,7 @@ export class CookieHandler {
             return { valid: false };
         } catch (err) {
             console.error(t('giffgaff.cookie.log.checkError'), err);
-            return { transientError: true, error: err && err.message };
+            return { transientError: true, error: err?.message };
         }
     }
 

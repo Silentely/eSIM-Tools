@@ -50,7 +50,7 @@ export class ESimService {
 
             if (data.errors) {
                 const errorObj = data.errors[0];
-                const errorMessage = (errorObj && errorObj.message) || (errorObj && errorObj.error) || JSON.stringify(errorObj);
+                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
                 throw new Error(errorMessage);
             }
 
@@ -108,7 +108,7 @@ export class ESimService {
 
             if (data.errors) {
                 const errorObj = data.errors[0];
-                const errorMessage = (errorObj && errorObj.message) || (errorObj && errorObj.error) || JSON.stringify(errorObj);
+                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
                 throw new Error(errorMessage);
             }
 
@@ -177,7 +177,7 @@ export class ESimService {
                 throw new Error(errorMessage);
             }
 
-            const newSim = swapData && swapData.data && swapData.data.swapSim && swapData.data.swapSim.new;
+            const newSim = swapData?.data?.swapSim?.new;
             if (!newSim || !newSim.ssn) {
                 throw new Error(t('giffgaff.esim.errors.swapMissingSim'));
             }
@@ -231,7 +231,7 @@ export class ESimService {
 
             if (data.errors) {
                 const errorObj = data.errors[0];
-                const errorMessage = (errorObj && errorObj.message) || (errorObj && errorObj.error) || JSON.stringify(errorObj);
+                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
                 throw new Error(errorMessage);
             }
 

@@ -98,7 +98,7 @@ class GiffgaffApp {
     }
 
     isIgnoredUnhandledRejection(error) {
-        const payload = `${(error && error.message) || ''}\n${(error && error.stack) || ''}`.toLowerCase();
+        const payload = `${error?.message ?? ''}\n${error?.stack ?? ''}`.toLowerCase();
         const ignoredKeywords = [
             'wallet must has at least one account',
             'wallet must have at least one account',
@@ -686,7 +686,7 @@ class GiffgaffApp {
         const codeInput = document.getElementById('smsInlineCode');
         const statusEl = document.getElementById('smsInlineStatus');
 
-        const code = ((codeInput && codeInput.value) || '').trim();
+        const code = (codeInput?.value ?? '').trim();
 
         if (!/^\d{6}$/.test(code)) {
             uiController.showStatus(statusEl, tl('请输入6位数字验证码'), 'error');
@@ -719,8 +719,8 @@ class GiffgaffApp {
         const activationInput = document.getElementById('manualActivationCode');
         const ssnInput = document.getElementById('manualSSN');
 
-        const activationCode = ((activationInput && activationInput.value) || '').trim();
-        const ssn = ((ssnInput && ssnInput.value) || '').trim();
+        const activationCode = (activationInput?.value ?? '').trim();
+        const ssn = (ssnInput?.value ?? '').trim();
 
         if (!activationCode) {
             const statusEl = document.getElementById('esimReserveStatus');
