@@ -18,7 +18,7 @@
 ## 📁 文件说明
 
 ### 主要文件
-- **`giffgaff_complete_esim.html`** - 完整的eSIM设备更换工具（生产版本）
+- **`giffgaff_modular.html`** - eSIM设备更换工具（生产版本，模块化架构）
 - **`test_giffgaff_esim.html`** - 综合测试页面（开发/测试版本）
 - **`Giffgaff-swap-esim.json`** - 原始Postman脚本（参考文档）
 - **`giffgaff.html`** - 原有的简化版本（参考）

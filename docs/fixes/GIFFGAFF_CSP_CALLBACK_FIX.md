@@ -23,18 +23,18 @@ Refused to connect to 'https://id.giffgaff.com/auth/oauth/token' because it viol
 
 ```html
 <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self'; 
-  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; 
-  style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; 
-  font-src 'self' https://cdnjs.cloudflare.com; 
-  connect-src 'self' 
-    https://qrcode.show 
-    https://api.qrserver.com 
-    https://appapi.simyo.nl 
-    https://api.giffgaff.com 
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+  style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+  font-src 'self' https://cdnjs.cloudflare.com;
+  connect-src 'self'
+    https://qrcode.show
+    https://api.qrserver.com
+    https://appapi.simyo.nl
+    https://api.giffgaff.com
     https://id.giffgaff.com           ← 新增
     https://publicapi.giffgaff.com;   ← 新增
-  img-src 'self' data: https:; 
+  img-src 'self' data: https:;
   frame-src 'none';
 ">
 ```
@@ -84,7 +84,7 @@ if (callbackUrl.startsWith('giffgaff://')) {
 
 ## 📋 修复的文件
 
-### `giffgaff_complete_esim.html`
+### `giffgaff_modular.html`
 
 1. **CSP配置** (第6行)
    - 添加了完整的Content Security Policy
@@ -178,7 +178,7 @@ console.log('解析到的状态:', state);
 
 ---
 
-**注意**: 
+**注意**:
 1. 如果仍有问题，请检查浏览器控制台的详细错误信息
 2. OAuth授权码有时间限制，需要及时处理回调
 3. 确保复制的回调URL完整且未被截断

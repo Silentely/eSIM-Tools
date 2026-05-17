@@ -31,21 +31,15 @@ sed -i '' 's|../webfonts/|./|g' src/assets/fontawesome/all.min.css
 <link rel="stylesheet" href="/src/assets/fontawesome/all.min.css">
 ```
 
-**src/giffgaff/giffgaff_complete_esim.html:**
+**src/giffgaff/giffgaff_modular.html:**
 ```html
-<!-- 修改前 -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<!-- 修改后 -->
+<!-- 已通过外部样式表加载 Font Awesome -->
 <link rel="stylesheet" href="/src/assets/fontawesome/all.min.css">
 ```
 
-**src/simyo/simyo_complete_esim.html:**
+**src/simyo/simyo_modular.html:**
 ```html
-<!-- 修改前 -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<!-- 修改后 -->
+<!-- 已通过外部样式表加载 Font Awesome -->
 <link rel="stylesheet" href="/src/assets/fontawesome/all.min.css">
 ```
 
@@ -80,4 +74,4 @@ src/assets/fontawesome/
 ## 注意事项
 - 确保字体文件路径正确
 - 定期更新Font Awesome版本
-- 在生产环境中验证图标显示 
+- 在生产环境中验证图标显示

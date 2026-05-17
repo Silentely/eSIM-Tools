@@ -18,7 +18,7 @@ This is a complete web application that allows existing Giffgaff subscribers to 
 ## 📁 File Description
 
 ### Main Files
-- **`giffgaff_complete_esim.html`** - Complete eSIM Device Change Tool (Production Version)
+- **`giffgaff_modular.html`** - eSIM Device Change Tool (Production Version, Modular Architecture)
 - **`test_giffgaff_esim.html`** - Comprehensive Test Page (Development/Test Version)
 - **`Giffgaff-swap-esim.json`** - Original Postman Script (Reference Document)
 - **`giffgaff.html`**** - Original Simplified Version (Reference)
