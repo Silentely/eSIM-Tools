@@ -2,11 +2,11 @@
 
 ## 🔍 问题描述
 
-在使用Simyo eSIM申请工具时，遇到了CORS（跨域资源共享）错误：
+在使用 Simyo eSIM 工具时，遇到了CORS（跨域资源共享）错误：
 
 ```
-Access to fetch at 'https://appapi.simyo.nl/simyoapi/api/v1/sessions' from origin 'null' 
-has been blocked by CORS policy: Response to preflight request doesn't pass access control check: 
+Access to fetch at 'https://appapi.simyo.nl/simyoapi/api/v1/sessions' from origin 'null'
+has been blocked by CORS policy: Response to preflight request doesn't pass access control check:
 No 'Access-Control-Allow-Origin' header is present on the requested resource.
 ```
 
@@ -57,7 +57,7 @@ npm start
 ### 方案2: 浏览器插件（临时方案）
 
 安装CORS浏览器插件，如：
-- Chrome: "CORS Unblock" 
+- Chrome: "CORS Unblock"
 - Firefox: "CORS Everywhere"
 
 ⚠️ **注意**: 此方案有安全风险，仅建议开发测试使用
@@ -69,7 +69,7 @@ npm start
 # Windows
 chrome.exe --user-data-dir=/tmp/chrome_dev_test --disable-web-security --disable-features=VizDisplayCompositor
 
-# macOS  
+# macOS
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --user-data-dir=/tmp/chrome_dev_test --disable-web-security
 
 # Linux
@@ -137,7 +137,7 @@ npm start
 打开浏览器访问: http://localhost:3000
 
 ### 4. 使用Simyo工具
-现在可以正常使用Simyo eSIM申请功能，CORS问题已解决！
+现在可以正常使用 Simyo eSIM 功能，CORS问题已解决！
 
 ## 🔧 故障排除
 

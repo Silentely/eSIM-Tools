@@ -14,9 +14,9 @@ export class DeviceChangeHandler {
     }
 
     /**
-     * 申请新eSIM（支持邮箱验证）
+     * 请求设备更换（支持邮箱验证）
      * @param {string} validationMethod - 验证方式 (默认: EMAIL)
-     * @returns {Promise<Object>} 申请结果
+     * @returns {Promise<Object>} 请求结果
      */
     async applyNewEsim(validationMethod = 'EMAIL') {
         const sessionToken = stateManager.get('sessionToken');

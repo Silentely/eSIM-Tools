@@ -51,9 +51,9 @@ After successful verification, you will be automatically redirected to the third
 
 ![Get Member Information](image/107.jpg)
 
-Click "Get Member Information" to go to the fourth step of applying/activating eSIM:
+Click "Get Member Information" to go to the fourth step of converting/activating eSIM:
 
-![Apply/Activate eSIM](image/114.jpg)
+![Convert/Activate eSIM](image/114.jpg)
 
 ## 5. Select and Activate eSIM
 

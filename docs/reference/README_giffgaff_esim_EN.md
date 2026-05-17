@@ -1,10 +1,10 @@
-# Giffgaff eSIM Application Tool
+# Giffgaff eSIM Tool
 > QR code provider: Prefer `https://qrcode.show/`, and keep `quickchart.io` and `chart.googleapis.com` as alternatives.
-A complete eSIM application web tool built based on the Giffgaff-swap-esim.json Postman script.
+A complete eSIM device change web tool built based on the Giffgaff-swap-esim.json Postman script.
 
 ## 🚀 Project Overview
 
-This is a complete web application that allows users to apply for and obtain Giffgaff eSIM directly through a browser, without using mobile apps or complex API tools.
+This is a complete web application that allows existing Giffgaff subscribers to convert their physical SIM to eSIM directly through a browser, without using mobile apps or complex API tools.
 
 ### Core Features
 - ✅ OAuth 2.0 PKCE Authentication Process
@@ -18,7 +18,7 @@ This is a complete web application that allows users to apply for and obtain Gif
 ## 📁 File Description
 
 ### Main Files
-- **`giffgaff_complete_esim.html`** - Complete eSIM Application Tool (Production Version)
+- **`giffgaff_complete_esim.html`** - Complete eSIM Device Change Tool (Production Version)
 - **`test_giffgaff_esim.html`** - Comprehensive Test Page (Development/Test Version)
 - **`Giffgaff-swap-esim.json`** - Original Postman Script (Reference Document)
 - **`giffgaff.html`**** - Original Simplified Version (Reference)
@@ -45,7 +45,7 @@ This is a complete web application that allows users to apply for and obtain Gif
 ```javascript
 const apiEndpoints = {
     mfaChallenge: "https://id.giffgaff.com/v4/mfa/challenge/me",
-    mfaValidation: "https://id.giffgaff.com/v4/mfa/validation", 
+    mfaValidation: "https://id.giffgaff.com/v4/mfa/validation",
     graphql: "https://publicapi.giffgaff.com/gateway/graphql",
     qrcode: "https://qrcode.show/"
 };

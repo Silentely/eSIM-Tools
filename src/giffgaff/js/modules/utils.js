@@ -117,7 +117,7 @@ export function showServiceTimeWarning() {
         const warningMessage = `
             <div style="text-align: center; padding: 20px;">
                 <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
-                <h4 style="color: #dc2626; margin-bottom: 15px;">${tl('非SIM申请服务时间')}</h4>
+                <h4 style="color: #dc2626; margin-bottom: 15px;">${tl('非 eSIM 服务时间')}</h4>
                 <p style="color: #374151; margin-bottom: 20px; line-height: 1.6;">
                     ${tl('服务窗口提示')}
                 </p>

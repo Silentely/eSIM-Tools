@@ -1,10 +1,10 @@
-# Giffgaff eSIM 申请工具
+# Giffgaff eSIM 工具
 > 二维码供应商：优先 `https://qrcode.show/`，并保留 `quickchart.io` 与 `chart.googleapis.com` 作为备选。
-基于Giffgaff-swap-esim.json Postman脚本构建的完整eSIM申请网页工具。
+基于Giffgaff-swap-esim.json Postman脚本构建的完整eSIM设备更换网页工具。
 
 ## 🚀 项目概述
 
-这是一个完整的Web应用程序，允许用户通过浏览器直接申请和获取Giffgaff eSIM，无需使用移动应用或复杂的API工具。
+这是一个完整的Web应用程序，允许已有 Giffgaff 号码的用户通过浏览器将物理 SIM 转换为 eSIM，无需使用移动应用或复杂的API工具。
 
 ### 核心功能
 - ✅ OAuth 2.0 PKCE 认证流程
@@ -18,7 +18,7 @@
 ## 📁 文件说明
 
 ### 主要文件
-- **`giffgaff_complete_esim.html`** - 完整的eSIM申请工具（生产版本）
+- **`giffgaff_complete_esim.html`** - 完整的eSIM设备更换工具（生产版本）
 - **`test_giffgaff_esim.html`** - 综合测试页面（开发/测试版本）
 - **`Giffgaff-swap-esim.json`** - 原始Postman脚本（参考文档）
 - **`giffgaff.html`** - 原有的简化版本（参考）
@@ -45,7 +45,7 @@
 ```javascript
 const apiEndpoints = {
     mfaChallenge: "https://id.giffgaff.com/v4/mfa/challenge/me",
-    mfaValidation: "https://id.giffgaff.com/v4/mfa/validation", 
+    mfaValidation: "https://id.giffgaff.com/v4/mfa/validation",
     graphql: "https://publicapi.giffgaff.com/gateway/graphql",
     qrcode: "https://qrcode.show/"
 };

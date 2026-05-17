@@ -238,7 +238,7 @@ app.get('/api/simyo/esim/get-by-customer', async (req, res) => {
     }
 });
 
-// 3. 申请新eSIM（设备更换）(匹配前端调用的端点)
+// 3. 请求设备更换(匹配前端调用的端点)
 app.post('/api/simyo/esim/apply-new-esim', async (req, res) => {
     try {
         const sessionToken = req.headers['x-session-token'];
@@ -251,20 +251,20 @@ app.post('/api/simyo/esim/apply-new-esim', async (req, res) => {
             });
         }
 
-        console.log(`申请新eSIM（设备更换），会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
+        console.log(`请求设备更换，会话令牌: ${sanitizeLog(sessionToken.substring(0, 10))}...`);
 
         // 注意：这个API端点可能需要根据实际情况调整
         // 从现有的simyo.html可以看出，这个功能可能需要在APP中完成
         res.json({
             success: true,
             result: {
-                message: '请在Simyo APP中申请更换设备/eSIM，填写验证码后进入下一界面但不要继续操作，然后返回此工具继续',
+                message: '请在 Simyo APP 中发起设备更换，填写验证码后进入下一界面但不要继续操作，然后返回此工具继续',
                 status: 'PENDING_APP_OPERATION',
                 nextStep: '在APP中操作完成后，请点击"发送验证码到短信"或直接输入从客服获取的验证码'
             }
         });
     } catch (error) {
-        console.error('申请新eSIM错误:', error);
+        console.error('设备更换请求错误:', error);
         res.status(500).json({
             success: false,
             error: 'SERVER_ERROR',
@@ -337,7 +337,7 @@ app.post('/api/simyo/esim/verify-code', async (req, res) => {
         res.json({
             success: true,
             result: {
-                message: '验证码验证成功，设备更换申请已完成',
+                message: '验证码验证成功，设备更换已完成',
                 status: 'VERIFIED',
                 validationCode: validationCode,
                 nextStep: '现在可以获取新的eSIM配置并生成二维码'
@@ -445,7 +445,7 @@ app.listen(PORT, () => {
 📋 API端点:
    - POST /api/simyo/login          - 登录Simyo账户
    - GET  /api/simyo/esim           - 获取eSIM信息
-   - POST /api/simyo/apply-new-esim - 申请新eSIM（设备更换）
+   - POST /api/simyo/apply-new-esim - 请求设备更换
    - POST /api/simyo/send-sms-code  - 发送验证码到短信
    - POST /api/simyo/verify-code    - 验证验证码
    - POST /api/simyo/confirm-install - 确认eSIM安装

@@ -23,7 +23,7 @@
     <!-- CSP策略 -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://*.sentry.io; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com;">
 
-    <title>Giffgaff eSIM 申请工具</title>
+    <title>Giffgaff eSIM 工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#ffcc00">
     <link rel="icon" href="/src/assets/favicon.ico" type="image/x-icon">
@@ -105,12 +105,12 @@
         <!-- 页面标题 -->
         <div class="page-title reveal">
             <h1>
-                <span class="lang-zh">Giffgaff eSIM 申请工具</span>
-                <span class="lang-en">Giffgaff eSIM Application Tool</span>
+                <span class="lang-zh">Giffgaff eSIM 工具</span>
+                <span class="lang-en">Giffgaff eSIM Tool</span>
             </h1>
             <p>
-                <span class="lang-zh">将您的实体SIM卡无缝转换为eSIM</span>
-                <span class="lang-en">Convert your physical SIM to an eSIM seamlessly</span>
+                <span class="lang-zh">将您的实体 SIM 卡转换为 eSIM，或在设备间切换 eSIM</span>
+                <span class="lang-en">Convert your physical SIM to eSIM, or switch eSIM between devices</span>
             </p>
             <div id="modeBadge" class="mode-badge" style="display:none" aria-live="polite">
                 <i class="fas fa-exchange-alt" aria-hidden="true"></i>
@@ -266,7 +266,7 @@
             <div class="step" data-step="4">
                 <div class="step-number">4</div>
                 <div class="step-text">
-                    <span class="lang-zh">申请eSIM</span>
+                    <span class="lang-zh">转换 eSIM</span>
                     <span class="lang-en">Reserve eSIM</span>
                 </div>
             </div>
@@ -576,11 +576,11 @@
             </div>
         </div>
 
-        <!-- 步骤4: 申请eSIM -->
+        <!-- 步骤4: 转换 eSIM -->
         <div id="step4" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
-                    <i class="fas fa-sim-card"></i> 第四步：申请/激活 eSIM
+                    <i class="fas fa-sim-card"></i> 第四步：转换/激活 eSIM
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
@@ -665,7 +665,7 @@
                         <!-- 已有激活码快捷入口 -->
                         <div class="mt-3">
                             <button id="manualEsimInputToggle" class="btn btn-link p-0" type="button">
-                                我已完成预定eSIM申请（已有激活码/SSN）
+                                我已完成 eSIM 预订（已有激活码/SSN）
                             </button>
                             <div id="manualEsimInputSection" class="card card-body mt-2" style="display: none;">
                                 <a href="https://www.giffgaff.com/activate" target="_blank" class="btn btn-link p-0 ms-2 mb-3" style="font-size: 0.9rem;">

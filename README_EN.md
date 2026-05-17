@@ -16,7 +16,7 @@
   <img src="src/assets/og-image.png" alt="eSIM Tools - Giffgaff & Simyo eSIM Online Management" width="600">
 </p>
 
-A modern eSIM management toolkit for Giffgaff and Simyo users, supporting complete eSIM application, activation, and QR code generation workflows.
+A modern eSIM management toolkit for existing Giffgaff and Simyo subscribers, supporting physical SIM to eSIM conversion, device changes, and QR code generation.
 
 [:cn: 中文版本](README.md)
 
@@ -26,7 +26,7 @@ A modern eSIM management toolkit for Giffgaff and Simyo users, supporting comple
 - **OAuth 2.0 PKCE Authentication** - Secure authentication workflow
 - **Smart Cookie Login** - Fast login without OAuth
 - **MFA (Multi-Factor Authentication)** - Email/SMS verification code support
-- **SMS Verification Activation** - Fully automated eSIM application and activation (✅ Recommended)
+- **SMS Verification Activation** - Fully automated eSIM conversion and activation (✅ Recommended)
 - **GraphQL API Integration** - Complete API invocation chain
 - **LPA QR Code Generation** - Standard eSIM activation code
 - ~~**Manual Activation Guide**~~ - Discontinued on October 8, 2025
@@ -62,13 +62,15 @@ A modern eSIM management toolkit for Giffgaff and Simyo users, supporting comple
 - ✅ Performance-optimized with offline support
 - ✅ Regular updates and maintenance
 
+> ⚠️ **Scope**: This tool is for existing Giffgaff or Simyo subscribers only. It supports eSIM device changes and physical SIM to eSIM conversion — not new number registration. To get a new eSIM, Giffgaff users can obtain the QR code via third-party modified APK/modules and scan it directly; Simyo users should use the official app.
+
 ### 🎁 New User Offers
 - **Simyo users**: New SIM activation gets [extra €5 credit](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
 - **Giffgaff users**: New SIM activation gets [extra £5 credit](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
 
 ## 📋 User Guide
 
-### 🇬🇧 Giffgaff eSIM Application Flow (Recommended: SMS Verification Activation)
+### 🇬🇧 Giffgaff eSIM Conversion Flow (Recommended: SMS Verification Activation)
 1. **Authentication** - OAuth login or Cookie quick login
 2. **Email/SMS Verification** - Enter the received MFA code
 3. **Get Member Info** - Automatically fetch account information
@@ -84,9 +86,9 @@ A modern eSIM management toolkit for Giffgaff and Simyo users, supporting comple
 >
 > 📖 **Detailed Tutorial**: See [Giffgaff User Guide](./docs/User_Guide_EN.md) for complete text, image, and video instructions.
 
-### 🇳🇱 Simyo eSIM Application Flow
+### 🇳🇱 Simyo eSIM Device Change Flow
 1. **Account Login** - Enter Dutch phone number (starting with 06) and password
-2. **Select Service** - New application or device replacement
+2. **Select Service** - Device change or retrieve existing eSIM
 3. **Verification Code Handling** - Verify via SMS code or customer service code
 4. **Get Configuration** - System generates eSIM configuration details
 5. **Scan to Install** - Install on the new device using the generated QR code
@@ -212,8 +214,8 @@ A: You can choose the customer service verification option, or check your SMS bl
 ## ⚠️ Important Notes
 
 ### Scope
-- **Giffgaff**: For UK users only
-- **Simyo**: For Netherlands users only (numbers starting with 06)
+- **Giffgaff**: For existing UK subscribers — supports physical SIM to eSIM conversion and device changes. New users must obtain a number and eSIM QR code through official or third-party means first.
+- **Simyo**: For existing Netherlands subscribers (06-prefixed numbers) — supports device changes. New users must register through official channels first.
 
 ### Security and Privacy
 - ✅ All data is processed locally

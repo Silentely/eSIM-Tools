@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://id.giffgaff.com" crossorigin>
     <link rel="preconnect" href="https://publicapi.giffgaff.com" crossorigin>
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com;">
-    <title>Giffgaff eSIM 申请工具</title>
+    <title>Giffgaff eSIM 工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#ffcc00">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -749,8 +749,8 @@
 
         <!-- 页面标题 -->
         <div class="page-title reveal">
-            <h1>Giffgaff eSIM 申请工具</h1>
-            <p>将您的实体SIM卡无缝转换为eSIM</p>
+            <h1>Giffgaff eSIM 工具</h1>
+            <p>将您的实体 SIM 卡转换为 eSIM，或在设备间切换 eSIM</p>
             <div id="modeBadge" class="mode-badge" style="display:none" aria-live="polite">
                 <i class="fas fa-exchange-alt" aria-hidden="true"></i> 设备更换模式
             </div>
@@ -851,7 +851,7 @@
             </div>
             <div class="step" data-step="4">
                 <div class="step-number">4</div>
-                <div class="step-text">申请eSIM</div>
+                <div class="step-text">转换 eSIM</div>
             </div>
             <div class="step" data-step="5">
                 <div class="step-number">5</div>
@@ -1082,11 +1082,11 @@
             </div>
         </div>
 
-        <!-- 步骤4: 申请eSIM -->
+        <!-- 步骤4: 转换 eSIM -->
         <div id="step4" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
-                        <i class="fas fa-sim-card"></i> 第四步：申请/激活 eSIM
+                        <i class="fas fa-sim-card"></i> 第四步：转换/激活 eSIM
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
@@ -1198,7 +1198,7 @@
                         <!-- 已有激活码/SSN 的快捷入口 -->
                         <div class="mt-3">
                             <button id="manualEsimInputToggle" class="btn btn-link p-0" type="button">
-                                我已完成预定eSIM申请（已有激活码/SSN或已在官网完成交换激活）
+                                我已完成 eSIM 预订（已有激活码/SSN或已在官网完成交换激活）
                             </button>
                             <div id="manualEsimInputSection" class="card card-body mt-2" style="display: none;">
                                 <!-- 移动后的“前往激活页面”按钮 -->
@@ -1732,13 +1732,13 @@
             // 更新eSIM状态：要求具备基本前置（至少拿到 memberId）才展示 RESERVED/ACTIVE 等
             const hasPrerequisite = !!appState.memberId;
             const delivery = hasPrerequisite
-                ? (appState.esimDeliveryStatus || (appState.esimActivationCode ? 'RESERVED' : '未申请'))
-                : '未申请';
+                ? (appState.esimDeliveryStatus || (appState.esimActivationCode ? 'RESERVED' : '未处理'))
+                : '未处理';
             const phoneSuffix = appState.phoneNumber ? `/${appState.phoneNumber}` : '';
-            const esimStatusText = (hasPrerequisite && delivery && delivery !== '未申请') ? `${delivery}${phoneSuffix}` : '未申请';
+            const esimStatusText = (hasPrerequisite && delivery && delivery !== '未处理') ? `${delivery}${phoneSuffix}` : '未处理';
             elements.statusEsimStatus.textContent = esimStatusText;
-            elements.statusEsimStatus.className = (hasPrerequisite && delivery && delivery !== '未申请') ? 'status-value connected' : 'status-value disconnected';
-            if (hasPrerequisite && delivery && delivery !== '未申请') {
+            elements.statusEsimStatus.className = (hasPrerequisite && delivery && delivery !== '未处理') ? 'status-value connected' : 'status-value disconnected';
+            if (hasPrerequisite && delivery && delivery !== '未处理') {
                 addTooltip(elements.statusEsimStatus, esimStatusText);
             } else {
                 removeTooltip(elements.statusEsimStatus);
@@ -2109,13 +2109,13 @@
                 const warningMessage = `
                     <div style="text-align: center; padding: 20px;">
                         <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
-                        <h4 style="color: #dc2626; margin-bottom: 15px;">非SIM申请服务时间</h4>
+                        <h4 style="color: #dc2626; margin-bottom: 15px;">非 eSIM 服务时间</h4>
                         <p style="color: #374151; margin-bottom: 20px; line-height: 1.6;">
                             服务窗口：<strong>英国时间 04:30–21:30</strong><br>
-                            建议在窗口内进行 eSIM 申请与交换。
+                            建议在窗口内进行 eSIM 转换与交换。
                         </p>
                         <p style="color: #dc2626; font-weight: 600; margin-bottom: 20px;">
-                            ❌ 如果继续操作将导致申请失败！
+                            ❌ 如果继续操作将导致转换失败！
                         </p>
                         <div style="display: flex; gap: 10px; justify-content: center;">
                             <button id="continueAnyway" style="
@@ -3331,7 +3331,7 @@
             }, 500);
         }
 
-        // 手动输入已申请的 eSIM 信息
+        // 手动输入已预订的 eSIM 信息
         (function bindManualEsimInputs(){
             const toggleBtn = document.getElementById('manualEsimInputToggle');
             const section = document.getElementById('manualEsimInputSection');
@@ -3559,7 +3559,7 @@
                 alertElement.className = 'alert alert-warning mb-4';
                 iconElement.className = 'fas fa-exclamation-triangle warning';
                 messageElement.innerHTML = '当前时间在服务时间外，Giffgaff官方的服务窗口为<strong>英国时间 04:30–21:30</strong>';
-                actionMessageElement.innerHTML = '❌ 当前时间不能申请eSIM';
+                actionMessageElement.innerHTML = '❌ 当前时间不能操作 eSIM';
                 actionMessageElement.className = 'service-time-action-badge warning';
                 actionMessageElement.style.display = 'block';
             } else {
@@ -3567,7 +3567,7 @@
                 alertElement.className = 'alert alert-success mb-4';
                 iconElement.className = 'fas fa-check-circle success';
                 messageElement.innerHTML = '当前时间在Giffgaff官方服务时间内（<strong>英国时间 04:30–21:30</strong>）';
-                actionMessageElement.innerHTML = '✅ 当前时间可以申请eSIM';
+                actionMessageElement.innerHTML = '✅ 当前时间可以操作 eSIM';
                 actionMessageElement.className = 'service-time-action-badge success';
                 actionMessageElement.style.display = 'block';
             }
@@ -3601,7 +3601,7 @@
                     if (gate) gate.style.display = 'none';
                 });
             })();
-            console.log('Giffgaff eSIM申请工具已加载');
+            console.log('Giffgaff eSIM 工具已加载');
 
             // 初始化服务时间检查（立即渲染一次）
             checkServiceTime();
@@ -3921,7 +3921,7 @@
 
         .service-time-action {
           font-weight: 800;
-          font-size: 18px; /* “✅ 当前时间可以申请eSIM/❌ 当前时间不能申请eSIM”更大一号 */
+          font-size: 18px; /* “✅ 当前时间可以操作 eSIM/❌ 当前时间不能操作 eSIM”更大一号 */
           line-height: 1.3;
         }
         .center-action {

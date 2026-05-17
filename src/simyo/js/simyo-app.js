@@ -98,7 +98,7 @@ class SimyoApp {
      * 绑定设备更换流程
      */
     bindDeviceChangeFlow() {
-        // 申请新eSIM
+        // 请求设备更换
         const applyBtn = document.getElementById('applyNewEsimBtn');
         if (applyBtn && !applyBtn.__bound) {
             applyBtn.__bound = true;
@@ -208,14 +208,14 @@ class SimyoApp {
     }
 
     /**
-     * 处理申请新eSIM
+     * 处理设备更换请求
      */
     async handleApplyNewEsim() {
         const applyBtn = document.getElementById('applyNewEsimBtn');
         const statusEl = document.getElementById('applyNewEsimStatus');
 
         try {
-            applyBtn.innerHTML = `<span class="loading"></span> ${tl('申请中...')}`;
+            applyBtn.innerHTML = `<span class="loading"></span> ${tl('处理中...')}`;
             applyBtn.disabled = true;
 
             uiController.showStatus(statusEl, t('simyo.app.status.applyProcessing'), "success");
@@ -241,7 +241,7 @@ class SimyoApp {
         } catch (error) {
             uiController.showStatus(statusEl, t('simyo.app.error.applyFailed', { message: error.message }), "error");
         } finally {
-            applyBtn.innerHTML = `<i class="fas fa-plus me-2"></i>${tl('申请新eSIM')}`;
+            applyBtn.innerHTML = `<i class="fas fa-plus me-2"></i>${tl('请求设备更换')}`;
             applyBtn.disabled = false;
         }
     }

@@ -29,7 +29,7 @@ export class UIController {
         return {
             steps: document.querySelectorAll('.step'),
             sections: document.querySelectorAll('.section'),
-            
+
             // 状态显示元素
             statusMode: document.getElementById('statusMode'),
             statusSessionToken: document.getElementById('statusSessionToken'),
@@ -39,7 +39,7 @@ export class UIController {
             statusLpaString: document.getElementById('statusLpaString'),
             clearSessionBtn: document.getElementById('clearSessionBtn'),
             modeBadge: document.getElementById('modeBadge'),
-            
+
             // Step 1 - Login
             phoneNumber: document.getElementById('phoneNumber'),
             password: document.getElementById('password'),
@@ -53,20 +53,20 @@ export class UIController {
             getEsimBtn: document.getElementById('getEsimBtn'),
             esimStatus: document.getElementById('esimStatus'),
             esimInfo: document.getElementById('esimInfo'),
-            
+
             // Step 3 - Generate QR
             generateQrBtn: document.getElementById('generateQrBtn'),
             qrStatus: document.getElementById('qrStatus'),
             resultContainer: document.getElementById('resultContainer'),
             qrcode: document.getElementById('qrcode'),
             activationInfo: document.getElementById('activationInfo'),
-            
+
             // Step 4 - Confirm Install
             confirmInstallBtn: document.getElementById('confirmInstallBtn'),
             confirmStatus: document.getElementById('confirmStatus')
         };
     }
-    
+
     /**
      * 显示状态消息
      */
@@ -78,7 +78,7 @@ export class UIController {
         element.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
         element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    
+
     /**
      * 更新步骤指示器
      */
@@ -96,7 +96,7 @@ export class UIController {
             }
         });
     }
-    
+
     /**
      * 显示指定步骤
      */
@@ -178,13 +178,13 @@ export class UIController {
         stateManager.setState({ isDeviceChange: false });
         this.showSection(3); // 显示生成二维码步骤（第三步）
     }
-    
+
     /**
      * 更新状态面板显示
      */
     updateStatusPanel() {
         const state = stateManager.getState();
-        
+
         // 模式显示
         if (this.elements.statusMode) {
             if (state.isDeviceChange) {
@@ -195,11 +195,11 @@ export class UIController {
                 this.elements.statusMode.className = 'status-value connected';
             }
         }
-        
+
         if (this.elements.modeBadge) {
             this.elements.modeBadge.style.display = state.isDeviceChange ? 'inline-flex' : 'none';
         }
-        
+
         // Session Token
         if (state.sessionToken) {
             this.elements.statusSessionToken.textContent = state.sessionToken;
@@ -210,7 +210,7 @@ export class UIController {
             this.elements.statusSessionToken.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusSessionToken);
         }
-        
+
         // 验证码状态
         if (state.validationCode) {
             this.elements.statusValidationCode.textContent = tl('已发送');
@@ -219,16 +219,16 @@ export class UIController {
             this.elements.statusValidationCode.textContent = tl('未发送');
             this.elements.statusValidationCode.className = 'status-value disconnected';
         }
-        
+
         // eSIM状态
         if (state.activationCode) {
-            this.elements.statusEsimStatus.textContent = tl('已申请');
+            this.elements.statusEsimStatus.textContent = tl('已处理');
             this.elements.statusEsimStatus.className = 'status-value connected';
         } else {
-            this.elements.statusEsimStatus.textContent = tl('未申请');
+            this.elements.statusEsimStatus.textContent = tl('未处理');
             this.elements.statusEsimStatus.className = 'status-value disconnected';
         }
-        
+
         // 激活码
         if (state.activationCode) {
             this.elements.statusActivationCode.textContent = state.activationCode;
@@ -239,7 +239,7 @@ export class UIController {
             this.elements.statusActivationCode.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusActivationCode);
         }
-        
+
         // LPA字符串
         if (state.activationCode) {
             this.elements.statusLpaString.textContent = tl('已获取');
@@ -249,34 +249,34 @@ export class UIController {
             this.elements.statusLpaString.className = 'status-value disconnected';
         }
     }
-    
+
     /**
      * 添加Tooltip
      */
     addTooltip(element, fullText) {
         if (!element || !fullText) return;
-        
+
         const isTruncated = element.scrollWidth > element.clientWidth;
         if (!isTruncated) return;
-        
+
         this.removeTooltip(element);
-        
+
         const tooltip = document.createElement('div');
         tooltip.className = 'tooltip';
         tooltip.textContent = fullText;
         tooltip.setAttribute('role', 'tooltip');
         tooltip.setAttribute('aria-hidden', 'true');
-        
+
         const onEnter = (e) => this.showTooltipElement(tooltip, e);
         const onLeave = () => this.hideTooltipElement(tooltip);
-        
+
         element.addEventListener('mouseenter', onEnter);
         element.addEventListener('mouseleave', onLeave);
         element.style.cursor = 'help';
-        
+
         this.tooltips.set(element, { tooltip, onEnter, onLeave });
     }
-    
+
     /**
      * 移除Tooltip
      */
@@ -292,34 +292,34 @@ export class UIController {
         }
         if (element) element.style.cursor = 'default';
     }
-    
+
     /**
      * 显示Tooltip元素
      */
     showTooltipElement(tooltip, event) {
         if (!tooltip) return;
-        
+
         document.body.appendChild(tooltip);
-        
+
         const rect = event.target.getBoundingClientRect();
         const tooltipRect = tooltip.getBoundingClientRect();
-        
+
         let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
         let top = rect.bottom + 4;
-        
+
         if (left < 10) left = 10;
         if (left + tooltipRect.width > window.innerWidth - 10) {
             left = window.innerWidth - tooltipRect.width - 10;
         }
-        
+
         tooltip.style.left = left + 'px';
         tooltip.style.top = top + 'px';
-        
+
         setTimeout(() => {
             tooltip.classList.add('show');
         }, 100);
     }
-    
+
     /**
      * 隐藏Tooltip元素
      */
@@ -332,7 +332,7 @@ export class UIController {
             }
         }, 300);
     }
-    
+
     /**
      * 生成二维码
      */
@@ -361,7 +361,7 @@ export class UIController {
         img.style.borderRadius = '12px';
         img.style.maxWidth = `${size}px`;
         img.setAttribute('loading', 'lazy');
-        
+
         img.onerror = () => {
             if (vendorIdx < vendors.length - 1) {
                 vendorIdx += 1;
@@ -377,7 +377,7 @@ export class UIController {
         tooltip.style.background = 'none';
         tooltip.style.boxShadow = 'none';
         tooltip.style.willChange = 'transform';
-        
+
         const largeImg = document.createElement('img');
         const setLargeSrc = () => { largeImg.src = vendors[vendorIdx](400, data); };
         setLargeSrc();
@@ -393,7 +393,7 @@ export class UIController {
         this.elements.qrcode.innerHTML = '';
         this.elements.qrcode.appendChild(container);
     }
-    
+
     /**
      * 显示eSIM信息
      */
@@ -410,7 +410,7 @@ export class UIController {
             </div>
         `;
     }
-    
+
     /**
      * 显示二维码结果
      */
@@ -438,20 +438,20 @@ export class UIController {
             </div>
         `;
     }
-    
+
     /**
      * 下载二维码
      */
     downloadQRCode() {
         const img = this.elements.qrcode.querySelector('img');
         if (!img) return;
-        
+
         const link = document.createElement('a');
         link.href = img.src;
         link.download = 'simyo_esim_qrcode.png';
         link.click();
     }
-    
+
     /**
      * 重置UI
      */

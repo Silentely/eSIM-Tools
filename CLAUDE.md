@@ -17,7 +17,7 @@
 
 ## 项目愿景
 
-eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为 Giffgaff 和 Simyo 用户提供 eSIM 申请、配置和管理的完整工具链。项目采用无框架原生 JavaScript + Serverless 后端，通过 Netlify 全球边缘网络部署。
+eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simyo 号码的用户提供 eSIM 转换、设备更换和管理的完整工具链。项目采用无框架原生 JavaScript + Serverless 后端，通过 Netlify 全球边缘网络部署。
 
 **生产环境**: https://esim.cosr.eu.org
 **仓库地址**: https://github.com/Silentely/eSIM-Tools

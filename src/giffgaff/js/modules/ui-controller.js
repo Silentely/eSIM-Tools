@@ -11,7 +11,7 @@ export class UIController {
         this.elements = this.initElements();
         this.tooltips = new Map();
     }
-    
+
     /**
      * 初始化DOM元素引用
      */
@@ -19,7 +19,7 @@ export class UIController {
         return {
             steps: document.querySelectorAll('.step'),
             sections: document.querySelectorAll('.section'),
-            
+
             // 状态显示元素
             statusMode: document.getElementById('statusMode'),
             statusAccessToken: document.getElementById('statusAccessToken'),
@@ -30,12 +30,12 @@ export class UIController {
             statusLpaString: document.getElementById('statusLpaString'),
             clearSessionBtn: document.getElementById('clearSessionBtn'),
             modeBadge: document.getElementById('modeBadge'),
-            
+
             // Step 1 - 登录方式选择
             loginMethodStatus: document.getElementById('loginMethodStatus'),
             oauthLoginSection: document.getElementById('oauthLoginSection'),
             cookieLoginSection: document.getElementById('cookieLoginSection'),
-            
+
             // OAuth相关
             oauthLoginBtn: document.getElementById('oauthLoginBtn'),
             oauthStatus: document.getElementById('oauthStatus'),
@@ -43,12 +43,12 @@ export class UIController {
             callbackUrl: document.getElementById('callbackUrl'),
             processCallbackBtn: document.getElementById('processCallbackBtn'),
             callbackStatus: document.getElementById('callbackStatus'),
-            
+
             // Cookie相关
             cookieInput: document.getElementById('cookieInput'),
             verifyCookieBtn: document.getElementById('verifyCookieBtn'),
             cookieStatus: document.getElementById('cookieStatus'),
-            
+
             // Step 2 - Email verification
             sendEmailBtn: document.getElementById('sendEmailBtn'),
             emailStatus: document.getElementById('emailStatus'),
@@ -56,29 +56,29 @@ export class UIController {
             emailCode: document.getElementById('emailCode'),
             verifyEmailBtn: document.getElementById('verifyEmailBtn'),
             emailVerifyStatus: document.getElementById('emailVerifyStatus'),
-            
+
             // Step 3 - Member info
             getMemberBtn: document.getElementById('getMemberBtn'),
             memberStatus: document.getElementById('memberStatus'),
             memberInfo: document.getElementById('memberInfo'),
-            
+
             // Step 4 - eSIM reservation
             reserveESimBtn: document.getElementById('reserveESimBtn'),
             esimReserveStatus: document.getElementById('esimReserveStatus'),
-            
+
             // Step 5 - Get eSIM token and QR
             getESimTokenBtn: document.getElementById('getESimTokenBtn'),
             tokenStatus: document.getElementById('tokenStatus'),
             resultContainer: document.getElementById('resultContainer'),
             qrcode: document.getElementById('qrcode'),
             esimInfo: document.getElementById('esimInfo'),
-            
+
             // Auto activation
             autoActivateBtn: document.getElementById('autoActivateBtn'),
             autoActivateStatus: document.getElementById('autoActivateStatus')
         };
     }
-    
+
     /**
      * 显示状态消息
      */
@@ -90,7 +90,7 @@ export class UIController {
         element.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
         element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    
+
     /**
      * 更新步骤指示器
      */
@@ -108,7 +108,7 @@ export class UIController {
             }
         });
     }
-    
+
     /**
      * 显示指定步骤
      */
@@ -120,7 +120,7 @@ export class UIController {
                 section.classList.remove('active');
             }
         });
-        
+
         // 进入第2步时重置验证码UI
         if (stepNumber === 2) {
             if (this.elements.emailStatus) {
@@ -133,11 +133,11 @@ export class UIController {
             const codeInput = document.getElementById('emailCode');
             if (codeInput) codeInput.value = '';
         }
-        
+
         stateManager.set('currentStep', stepNumber);
         this.updateSteps(stepNumber);
     }
-    
+
     /**
      * 选择登录方式
      */
@@ -152,13 +152,13 @@ export class UIController {
             this.showStatus(this.elements.loginMethodStatus, tl('已选择Cookie登录方式'), "success");
         }
     }
-    
+
     /**
      * 更新状态面板显示
      */
     updateStatusPanel() {
         const state = stateManager.getState();
-        
+
         // 模式显示
         if (this.elements.statusMode) {
             if (state.isDeviceChange) {
@@ -169,11 +169,11 @@ export class UIController {
                 this.elements.statusMode.className = 'status-value connected';
             }
         }
-        
+
         if (this.elements.modeBadge) {
             this.elements.modeBadge.style.display = state.isDeviceChange ? 'inline-flex' : 'none';
         }
-        
+
         // Access Token
         if (state.accessToken) {
             this.elements.statusAccessToken.textContent = state.accessToken;
@@ -184,7 +184,7 @@ export class UIController {
             this.elements.statusAccessToken.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusAccessToken);
         }
-        
+
         // MFA签名
         if (state.emailSignature) {
             this.elements.statusMfaSignature.textContent = state.emailSignature;
@@ -195,7 +195,7 @@ export class UIController {
             this.elements.statusMfaSignature.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusMfaSignature);
         }
-        
+
         // 会员ID
         if (state.memberId) {
             this.elements.statusMemberId.textContent = state.memberId;
@@ -206,32 +206,32 @@ export class UIController {
             this.elements.statusMemberId.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusMemberId);
         }
-        
+
         // eSIM状态
         const hasPrerequisite = !!state.memberId;
         const delivery = hasPrerequisite
-            ? (state.esimDeliveryStatus || (state.esimActivationCode ? 'RESERVED' : tl('未申请')))
-            : tl('未申请');
+            ? (state.esimDeliveryStatus || (state.esimActivationCode ? 'RESERVED' : tl('未处理')))
+            : tl('未处理');
         const phoneSuffix = state.phoneNumber ? `/${state.phoneNumber}` : '';
-        const esimStatusText = (hasPrerequisite && delivery && delivery !== tl('未申请'))
+        const esimStatusText = (hasPrerequisite && delivery && delivery !== tl('未处理'))
             ? `${delivery}${phoneSuffix}`
-            : tl('未申请');
-        
+            : tl('未处理');
+
         this.elements.statusEsimStatus.textContent = esimStatusText;
-        this.elements.statusEsimStatus.className = (hasPrerequisite && delivery && delivery !== tl('未申请'))
-            ? 'status-value connected' 
+        this.elements.statusEsimStatus.className = (hasPrerequisite && delivery && delivery !== tl('未处理'))
+            ? 'status-value connected'
             : 'status-value disconnected';
 
-        if (hasPrerequisite && delivery && delivery !== tl('未申请')) {
+        if (hasPrerequisite && delivery && delivery !== tl('未处理')) {
             this.addTooltip(this.elements.statusEsimStatus, esimStatusText);
         } else {
             this.removeTooltip(this.elements.statusEsimStatus);
         }
-        
+
         // 激活码
         if (state.memberId && state.esimActivationCode) {
-            const text = state.esimSSN 
-                ? `${state.esimActivationCode}/${state.esimSSN}` 
+            const text = state.esimSSN
+                ? `${state.esimActivationCode}/${state.esimSSN}`
                 : state.esimActivationCode;
             this.elements.statusActivationCode.textContent = text;
             this.elements.statusActivationCode.className = 'status-value connected';
@@ -241,7 +241,7 @@ export class UIController {
             this.elements.statusActivationCode.className = 'status-value disconnected';
             this.removeTooltip(this.elements.statusActivationCode);
         }
-        
+
         // LPA字符串
         if (state.lpaString) {
             this.elements.statusLpaString.textContent = tl('已获取');
@@ -253,34 +253,34 @@ export class UIController {
             this.removeTooltip(this.elements.statusLpaString);
         }
     }
-    
+
     /**
      * 添加Tooltip
      */
     addTooltip(element, fullText, forceShow = false) {
         if (!element || !fullText) return;
-        
+
         const isTruncated = element.scrollWidth > element.clientWidth;
         if (!forceShow && !isTruncated) return;
-        
+
         this.removeTooltip(element);
-        
+
         const tooltip = document.createElement('div');
         tooltip.className = 'tooltip';
         tooltip.textContent = fullText;
         tooltip.setAttribute('role', 'tooltip');
         tooltip.setAttribute('aria-hidden', 'true');
-        
+
         const onEnter = (e) => this.showTooltipElement(tooltip, e);
         const onLeave = () => this.hideTooltipElement(tooltip);
-        
+
         element.addEventListener('mouseenter', onEnter);
         element.addEventListener('mouseleave', onLeave);
         element.style.cursor = 'help';
-        
+
         this.tooltips.set(element, { tooltip, onEnter, onLeave });
     }
-    
+
     /**
      * 移除Tooltip
      */
@@ -296,34 +296,34 @@ export class UIController {
         }
         element.style.cursor = 'default';
     }
-    
+
     /**
      * 显示Tooltip元素
      */
     showTooltipElement(tooltip, event) {
         if (!tooltip) return;
-        
+
         document.body.appendChild(tooltip);
-        
+
         const rect = event.target.getBoundingClientRect();
         const tooltipRect = tooltip.getBoundingClientRect();
-        
+
         let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
         let top = rect.bottom + 4;
-        
+
         if (left < 10) left = 10;
         if (left + tooltipRect.width > window.innerWidth - 10) {
             left = window.innerWidth - tooltipRect.width - 10;
         }
-        
+
         tooltip.style.left = left + 'px';
         tooltip.style.top = top + 'px';
-        
+
         setTimeout(() => {
             tooltip.classList.add('show');
         }, 100);
     }
-    
+
     /**
      * 隐藏Tooltip元素
      */
@@ -336,7 +336,7 @@ export class UIController {
             }
         }, 300);
     }
-    
+
     /**
      * 显示会员信息
      */
@@ -354,7 +354,7 @@ export class UIController {
             </div>
         `;
     }
-    
+
     /**
      * 显示eSIM信息和激活指导
      */
@@ -364,20 +364,20 @@ export class UIController {
         const displayActivationCode = document.getElementById('displayActivationCode');
         const displaySSN = document.getElementById('displaySSN');
         const esimStatusTitle = document.getElementById('esimStatusTitle');
-        
+
         if (esimInfoDisplay && displayActivationCode && displaySSN) {
             displayActivationCode.textContent = state.esimActivationCode || tl('未获取');
             displaySSN.textContent = state.esimSSN || tl('未获取');
-            
+
             if (esimStatusTitle) {
                 const deliveryStatus = state.esimDeliveryStatus || 'RESERVED';
                 esimStatusTitle.textContent = tl('您的eSIM信息（状态：{status}）', { status: deliveryStatus });
             }
-            
+
             esimInfoDisplay.style.display = 'block';
         }
     }
-    
+
     /**
      * 生成二维码
      */
@@ -404,7 +404,7 @@ export class UIController {
         img.style.border = '5px solid white';
         img.style.borderRadius = '12px';
         img.style.maxWidth = `${size}px`;
-        
+
         img.onerror = () => {
             if (vendorIdx < vendors.length - 1) {
                 vendorIdx += 1;
@@ -420,7 +420,7 @@ export class UIController {
         tooltip.style.background = 'none';
         tooltip.style.boxShadow = 'none';
         tooltip.style.willChange = 'transform';
-        
+
         const largeImg = document.createElement('img');
         largeImg.style.width = '400px';
         largeImg.style.height = '400px';
@@ -436,7 +436,7 @@ export class UIController {
         this.elements.qrcode.innerHTML = '';
         this.elements.qrcode.appendChild(container);
     }
-    
+
     /**
      * 显示eSIM结果
      */
@@ -491,20 +491,20 @@ export class UIController {
             this.elements.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 500);
     }
-    
+
     /**
      * 下载二维码
      */
     downloadQRCode() {
         const img = this.elements.qrcode.querySelector('img');
         if (!img) return;
-        
+
         const link = document.createElement('a');
         link.href = img.src;
         link.download = 'giffgaff_esim_qrcode.png';
         link.click();
     }
-    
+
     /**
      * 重置UI
      */
@@ -528,7 +528,7 @@ export class UIController {
                 btn.disabled = false;
             }
         });
-        
+
         this.showSection(1);
         this.updateSteps(1);
     }

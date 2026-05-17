@@ -78,7 +78,7 @@ function htmlToMarkdown(html) {
 // 主页的 Markdown 版本
 const HOME_MARKDOWN = `# eSIM Tools - Giffgaff & Simyo eSIM 管理工具
 
-第三方开源 Web 工具，为 Giffgaff 和 Simyo 用户提供 eSIM 申请、配置和管理功能。
+第三方开源 Web 工具，为已有 Giffgaff 和 Simyo 号码的用户提供 eSIM 转换、设备更换和管理功能。
 
 ## 核心功能
 

@@ -1,10 +1,10 @@
-# Simyo NL eSIM Application Tool
+# Simyo NL eSIM Tool
 
-A complete eSIM application web tool built based on the Simyo ESIM V2.postman_collection.json Postman script.
+A complete eSIM device change web tool built based on the Simyo ESIM V2.postman_collection.json Postman script.
 
 ## 🚀 Project Overview
 
-This is a web application designed specifically for Simyo NL (Netherlands) users that allows users to apply for and manage Simyo eSIM directly through a browser, without using mobile apps or complex API tools.
+This is a web application designed specifically for Simyo NL (Netherlands) users that allows existing Simyo subscribers to manage eSIM device changes directly through a browser, without using mobile apps or complex API tools.
 
 ### Core Features
 - ✅ Simyo Account Authentication Login
@@ -18,7 +18,7 @@ This is a web application designed specifically for Simyo NL (Netherlands) users
 ## 📁 File Description
 
 ### Main Files
-- **`simyo_complete_esim.html`** - Complete Simyo eSIM Application Tool (Production Version)
+- **`simyo_complete_esim.html`** - Complete Simyo eSIM Device Change Tool (Production Version)
 - **`test_simyo_esim.html`** - Comprehensive Test Page (Development/Test Version)
 - **`Simyo ESIM V2.postman_collection.json`** - Original Postman Script (Reference Document)
 - **`simyo.html`** - Original Simplified Version (Reference)
@@ -83,7 +83,7 @@ This tool now supports the complete device replacement process, including verifi
    - After successful login, select the "Replace Device" option
 
 3. **Complete Device Replacement Process**
-   - **Step 2.1: Apply for New eSIM** - Notify the Simyo system that you want to replace your device
+   - **Step 2.1: Request Device Change** - Notify the Simyo system that you want to replace your device
    - **Step 2.2: Send Verification Code (Optional)** - Execute this step if you can receive SMS
    - **Step 2.3: Confirm Verification Code** - Enter the 6-digit verification code received
 
@@ -101,9 +101,9 @@ This tool now supports the complete device replacement process, including verifi
 
 #### Method 2: Combined with APP Usage (Traditional Method)
 
-1. **Apply for Device Replacement/eSIM in Simyo APP**
+1. **Request device change in the Simyo APP**
    - Open the official Simyo APP
-   - Select "Replace Device" or "Apply for eSIM"
+   - Select "Replace Device"
    - Fill in the received verification code
    - **Stay on the next interface, do not continue operating**
 
@@ -147,7 +147,7 @@ Simyo offers number preservation service with details:
 
 ### Device Replacement Special Notes
 - Please follow the process strictly when replacing devices
-- Do not continue operating in the APP after applying, immediately use this tool
+- Do not continue operating in the APP after requesting device change, immediately use this tool
 - Non-native eSIM devices need to send `install` and `enabled` notifications
 
 ### System Requirements

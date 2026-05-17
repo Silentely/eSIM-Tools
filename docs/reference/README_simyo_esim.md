@@ -1,10 +1,10 @@
-# Simyo NL eSIM 申请工具
+# Simyo NL eSIM 工具
 
-基于Simyo ESIM V2.postman_collection.json Postman脚本构建的完整eSIM申请网页工具。
+基于Simyo ESIM V2.postman_collection.json Postman脚本构建的完整eSIM设备更换网页工具。
 
 ## 🚀 项目概述
 
-这是一个专为Simyo NL（荷兰）用户设计的Web应用程序，允许用户通过浏览器直接申请和管理Simyo eSIM，无需使用移动应用或复杂的API工具。
+这是一个专为Simyo NL（荷兰）用户设计的Web应用程序，允许已有 Simyo 号码的用户通过浏览器管理 eSIM 设备更换，无需使用移动应用或复杂的API工具。
 
 ### 核心功能
 - ✅ Simyo账户认证登录
@@ -18,7 +18,7 @@
 ## 📁 文件说明
 
 ### 主要文件
-- **`simyo_complete_esim.html`** - 完整的Simyo eSIM申请工具（生产版本）
+- **`simyo_complete_esim.html`** - 完整的 Simyo eSIM 设备更换工具（生产版本）
 - **`test_simyo_esim.html`** - 综合测试页面（开发/测试版本）
 - **`Simyo ESIM V2.postman_collection.json`** - 原始Postman脚本（参考文档）
 - **`simyo.html`** - 原有的简化版本（参考）
@@ -83,7 +83,7 @@ const apiEndpoints = {
    - 登录成功后，选择"更换设备"选项
 
 3. **完成设备更换流程**
-   - **步骤2.1：申请新eSIM** - 通知Simyo系统您要更换设备
+   - **步骤2.1：请求设备更换** - 通知Simyo系统您要更换设备
    - **步骤2.2：发送验证码（可选）** - 如果能接收短信则执行此步骤
    - **步骤2.3：确认验证码** - 输入收到的6位数字验证码
 
@@ -101,9 +101,9 @@ const apiEndpoints = {
 
 #### 方式二：结合APP使用（传统方式）
 
-1. **在Simyo APP中申请更换设备/eSIM**
+1. **在 Simyo APP 中发起设备更换**
    - 打开官方Simyo APP
-   - 选择"更换设备"或"申请eSIM"
+   - 选择"更换设备"
    - 填写收到的验证码
    - **进入下一界面后停留，不要继续操作**
 
@@ -147,7 +147,7 @@ Simyo提供保号服务，详细信息：
 
 ### 设备更换特别说明
 - 更换设备时请严格按照流程操作
-- 在APP中申请后不要继续操作，立即使用本工具
+- 在APP中发起设备更换后不要继续操作，立即使用本工具
 - 非原生eSIM设备需要发送`install`和`enabled`通知
 
 ### 系统要求

@@ -49,7 +49,7 @@
     <!-- CSP策略 -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://challenges.cloudflare.com https://*.sentry.io; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com;">
 
-    <title>Simyo NL eSIM 申请工具</title>
+    <title>Simyo NL eSIM 工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#ff6b00">
     <link rel="icon" href="/src/assets/favicon.ico" type="image/x-icon">
@@ -123,7 +123,7 @@
         <!-- 页面标题 -->
         <div class="page-title reveal">
             <h1>
-                <span class="lang-zh">Simyo NL eSIM 申请工具</span>
+                <span class="lang-zh">Simyo NL eSIM 工具</span>
                 <span class="lang-en">Simyo NL eSIM Tool</span>
             </h1>
             <p>
@@ -175,7 +175,7 @@
                             <span class="lang-zh">eSIM状态:</span>
                             <span class="lang-en">eSIM status:</span>
                         </span>
-                        <span id="statusEsimStatus" class="status-value disconnected">未申请</span>
+                        <span id="statusEsimStatus" class="status-value disconnected">未处理</span>
                     </div>
                     <div class="status-item">
                         <span class="status-label">
@@ -210,7 +210,7 @@
             <p>
                 <strong class="lang-zh">更换设备：</strong>
                 <strong class="lang-en">Device change:</strong>
-                <span class="lang-zh">在APP中申请更换设备后，验证码将发送到邮箱，使用本工具完成验证并生成二维码</span>
+                <span class="lang-zh">在APP中发起设备更换后，验证码将发送到邮箱，使用本工具完成验证并生成二维码</span>
                 <span class="lang-en">Request a device change in the app, check your email for the code, then use this tool to verify and generate a QR code</span>
             </p>
             <p>
@@ -222,7 +222,7 @@
             <p class="text-dark fw-bold">
                 <strong class="lang-zh">⚠️ 重要提示：</strong>
                 <strong class="lang-en">⚠️ Important:</strong>
-                <span class="lang-zh">Session Token 有效期仅为 5 分钟，请尽快完成申请和获取操作</span>
+                <span class="lang-zh">Session Token 有效期仅为 5 分钟，请尽快完成设备更换和获取操作</span>
                 <span class="lang-en">Session Token is valid for only 5 minutes. Please complete the process quickly</span>
             </p>
         </div>
@@ -330,8 +330,8 @@
                         </p>
                         <ol class="mb-0">
                             <li>
-                                <span class="lang-zh">点击"申请新eSIM"，系统会自动发送验证码到您的注册邮箱</span>
-                                <span class="lang-en">Click "Apply for new eSIM" - a code will be sent to your registered email</span>
+                                <span class="lang-zh">点击"请求设备更换"，系统会自动发送验证码到您的注册邮箱</span>
+                                <span class="lang-en">Click "Request device change" - a code will be sent to your registered email</span>
                             </li>
                             <li>
                                 <span class="lang-zh">检查您的邮箱，获取6位数字验证码</span>
@@ -344,21 +344,21 @@
                         </ol>
                     </div>
 
-                    <!-- Step 2.1: 申请新eSIM -->
+                    <!-- Step 2.1: 请求设备更换 -->
                     <div class="mb-4">
                         <h5>
-                            <span class="lang-zh">2.1 申请新eSIM</span>
-                            <span class="lang-en">2.1 Request a new eSIM</span>
+                            <span class="lang-zh">2.1 请求设备更换</span>
+                            <span class="lang-en">2.1 Request device change</span>
                         </h5>
                         <p>
-                            <span class="lang-zh">点击申请后，验证码将自动发送到您的注册邮箱</span>
+                            <span class="lang-zh">点击后，验证码将自动发送到您的注册邮箱</span>
                             <span class="lang-en">After applying, a verification code will be sent to your registered email automatically.</span>
                         </p>
                         <div class="btn-group">
                             <button class="btn btn-primary" id="applyNewEsimBtn">
                                 <i class="fas fa-plus me-2"></i>
-                                <span class="lang-zh">申请新eSIM</span>
-                                <span class="lang-en">Apply for new eSIM</span>
+                                <span class="lang-zh">请求设备更换</span>
+                                <span class="lang-en">Request device change</span>
                             </button>
                         </div>
                         <div id="applyNewEsimStatus" class="status" role="status" aria-live="polite"></div>
@@ -498,7 +498,7 @@
                             <strong class="lang-en">You MUST install the eSIM on your device BEFORE clicking "Confirm Installation"!</strong>
                         </p>
                         <p class="mb-0">
-                            <span class="lang-zh">⚠️ 如果未安装就点击确认，二维码将失效，您需要重新申请并生成新的二维码！</span>
+                            <span class="lang-zh">⚠️ 如果未安装就点击确认，二维码将失效，您需要重新请求设备更换并生成新的二维码！</span>
                             <span class="lang-en">⚠️ If you confirm without installing, the QR code will become invalid and you'll need to request a new one!</span>
                         </p>
                     </div>

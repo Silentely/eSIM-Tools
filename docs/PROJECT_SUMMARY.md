@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-eSIM工具集是一个专为Giffgaff和Simyo用户设计的eSIM管理工具集，旨在简化eSIM的申请、配置和管理过程。该项目包含两个主要工具：
+eSIM工具集是一个专为Giffgaff和Simyo用户设计的eSIM管理工具集，旨在简化已有用户的 eSIM 转换、配置和管理过程。该项目包含两个主要工具：
 
 1. **Giffgaff eSIM工具** - 支持完整的OAuth认证、MFA验证和GraphQL API调用
 2. **Simyo eSIM工具** - 提供简化的登录验证、设备更换和验证码处理功能

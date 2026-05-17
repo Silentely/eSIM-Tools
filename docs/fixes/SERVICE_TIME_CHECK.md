@@ -1,7 +1,7 @@
 # Giffgaff服务时间检查功能
 
 ## 功能描述
-为Giffgaff eSIM申请工具添加实时时间检查功能，根据当前时间动态显示服务状态提醒。
+为 Giffgaff eSIM 工具添加实时时间检查功能，根据当前时间动态显示服务状态提醒。
 
 ## 实现细节
 
@@ -14,13 +14,13 @@
 #### 服务时间外（窗口外）
 - **样式**：黄色警告框 (`alert-warning`)
 - **图标**：警告三角形 (`fa-exclamation-triangle`)
-- **消息**：提醒用户不要在此时间段操作申请eSIM
+- **消息**：提醒用户不要在此时间段操作 eSIM
 - **颜色**：橙色警告色 (`#f59e0b`)
 
 #### 服务时间内（其他时间段）
 - **样式**：绿色成功框 (`alert-success`)
 - **图标**：成功圆圈 (`fa-check-circle`)
-- **消息**：提醒用户当前当前时间可以申请eSIM
+- **消息**：提醒用户当前时间可以操作 eSIM
 - **颜色**：绿色成功色 (`#10b981`)
 
 ### 功能特性
@@ -60,22 +60,22 @@ function checkServiceTime() {
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
-    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+    const currentTime = now.getHours().toString().padStart(2, '0') + ':' +
                       now.getMinutes().toString().padStart(2, '0');
-    
+
     // 更新当前时间显示
     document.getElementById('currentTime').textContent = currentTime;
-    
+
     // 服务窗口：英国时间 04:30–21:30
     const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
     const hour = Number(parts.find(p => p.type === 'hour')?.value || '0');
     const minute = Number(parts.find(p => p.type === 'minute')?.value || '0');
     const inWindow = (hour > 4 || (hour === 4 && minute >= 30)) && (hour < 21 || (hour === 21 && minute <= 30));
-    
+
     const alertElement = document.getElementById('serviceTimeAlert');
     const iconElement = document.getElementById('serviceTimeIcon');
     const messageElement = document.getElementById('serviceTimeMessage');
-    
+
     if (!inWindow) {
         // 在服务时间外，显示警告
         alertElement.className = 'alert alert-warning mb-4';
@@ -97,7 +97,7 @@ function checkServiceTime() {
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化服务时间检查
     checkServiceTime();
-    
+
     // 每分钟更新一次时间
     setInterval(checkServiceTime, 60000);
 });
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
 ## 用户体验
 
 ### 优势
-1. **实时反馈**：用户立即知道当前是否当前时间可以申请eSIM
+1. **实时反馈**：用户立即知道当前是否可以操作 eSIM
 2. **清晰指示**：通过颜色和图标直观显示状态
 3. **自动更新**：无需刷新页面，时间状态自动更新
 4. **友好提醒**：明确告知服务时间和建议

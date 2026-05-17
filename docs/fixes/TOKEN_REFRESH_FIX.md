@@ -2,7 +2,7 @@
 
 ## 问题描述
 
-在使用Giffgaff eSIM申请流程时，用户通过Cookie登录成功后，在后续步骤（特别是MFA挑战请求）中会遇到令牌过期的问题：
+在使用 Giffgaff eSIM 转换流程时，用户通过Cookie登录成功后，在后续步骤（特别是MFA挑战请求）中会遇到令牌过期的问题：
 
 ```
 {
@@ -40,20 +40,20 @@
     try {
       // 尝试使用现有令牌
       const response = await fetch(this.endpoints.mfaChallenge, {...});
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // 如果是401错误，可能是令牌过期
-      if (response.status === 401 && 
+      if (response.status === 401 &&
           errorData?.details?.error === 'invalid_token') {
-        
+
         // 尝试使用本地存储的cookie重新验证
         const cookie = localStorage.getItem('giffgaff_cookie');
         if (cookie) {
           const cookieVerifyResult = await this.verifyCookie(cookie);
-          
+
           if (cookieVerifyResult.success) {
             // 使用新令牌重新发送请求...
           }
@@ -77,12 +77,12 @@
       const cookieVerifyResponse = await axios.post(
         'https://esim.cosr.eu.org/.netlify/functions/verify-cookie',
         { cookie },
-        { 
+        {
           headers: { 'Content-Type': 'application/json' },
           timeout: 30000
         }
       );
-      
+
       if (cookieVerifyResponse.data && cookieVerifyResponse.data.success) {
         accessToken = cookieVerifyResponse.data.accessToken;
         console.log('Successfully obtained access token from cookie');
@@ -105,7 +105,7 @@
    - 后端：如果提供了Cookie但没有有效令牌，自动使用Cookie获取新令牌
 3. 验证MFA验证码时，同样应用令牌刷新机制
 
-这种双重保障机制确保了即使令牌过期，系统也能自动刷新并继续完成eSIM申请流程，无需用户重新登录。
+这种双重保障机制确保了即使令牌过期，系统也能自动刷新并继续完成 eSIM 转换流程，无需用户重新登录。
 
 ## 技术细节
 

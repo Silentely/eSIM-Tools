@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simyo eSIM 申请工具 - 测试页面</title>
+    <title>Simyo eSIM 工具 - 测试页面</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
     <style>
@@ -166,8 +166,8 @@
     <div class="container">
         <!-- 测试标题 -->
         <div class="test-header">
-            <h1><i class="fas fa-vial text-warning"></i> Simyo eSIM 申请工具 - 综合测试</h1>
-            <p class="mb-0">此测试页面用于验证Simyo eSIM申请流程的每个步骤和功能点</p>
+            <h1><i class="fas fa-vial text-warning"></i> Simyo eSIM 工具 - 综合测试</h1>
+            <p class="mb-0">此测试页面用于验证 Simyo eSIM 设备更换流程的每个步骤和功能点</p>
         </div>
 
         <!-- 测试控制面板 -->
@@ -322,7 +322,7 @@
             <h3><i class="fas fa-route"></i> 端到端测试</h3>
 
             <div class="test-case">
-                <h5>完整eSIM申请流程 <span id="e2e-complete-status" class="test-status pending">待执行</span></h5>
+                <h5>完整 eSIM 设备更换流程 <span id="e2e-complete-status" class="test-status pending">待执行</span></h5>
                 <p>模拟用户从登录到获取eSIM二维码的完整流程</p>
                 <button class="btn btn-sm btn-outline-primary" onclick="testCompleteFlow()">
                     <i class="fas fa-play"></i> 运行测试
@@ -709,7 +709,7 @@
         // 端到端测试函数
         async function testCompleteFlow() {
             await testFramework.runTest('e2e-complete', async () => {
-                testFramework.log('执行完整Simyo eSIM申请流程');
+                testFramework.log('执行完整 Simyo eSIM 设备更换流程');
 
                 // 步骤1: 账户登录
                 testFramework.log('步骤1: 账户登录');
@@ -761,7 +761,7 @@
                 testFramework.log('测试设备更换流程');
 
                 // 模拟设备更换场景
-                testFramework.log('场景：用户在APP中申请设备更换');
+                testFramework.log('场景：用户在APP中发起设备更换');
                 await testFramework.sleep(300);
 
                 testFramework.log('步骤1: 重新登录获取新会话');
