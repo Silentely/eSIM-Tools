@@ -8,9 +8,9 @@
 
 ### 核心功能
 - ✅ OAuth 2.0 PKCE 认证流程
-- ✅ 邮件验证码(MFA)验证
+- ✅ 邮件/短信验证码(MFA)验证
 - ✅ GraphQL API 完整集成
-- ✅ eSIM 预订和手动激活指导
+- ✅ 短信验证码自动激活 eSIM（推荐）
 - ✅ eSIM 下载码生成和二维码显示
 - ✅ 响应式设计，支持移动设备
 - ✅ 完整的错误处理和用户体验优化
@@ -19,7 +19,7 @@
 
 ### 主要文件
 - **`giffgaff_modular.html`** - eSIM设备更换工具（生产版本，模块化架构）
-- **`test_giffgaff_esim.html`** - 综合测试页面（开发/测试版本）
+- **`tests/test_giffgaff_esim.html`** - 综合测试页面（开发/测试版本）
 - **`Giffgaff-swap-esim.json`** - 原始Postman脚本（参考文档）
 - **`giffgaff.html`** - 原有的简化版本（参考）
 

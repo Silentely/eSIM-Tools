@@ -19,7 +19,7 @@ This is a web application designed specifically for Simyo NL (Netherlands) users
 
 ### Main Files
 - **`simyo_modular.html`** - Simyo eSIM Device Change Tool (Production Version, Modular Architecture)
-- **`test_simyo_esim.html`** - Comprehensive Test Page (Development/Test Version)
+- **`tests/test_simyo_esim.html`** - Comprehensive Test Page (Development/Test Version)
 - **`Simyo ESIM V2.postman_collection.json`** - Original Postman Script (Reference Document)
 - **`simyo.html`** - Original Simplified Version (Reference)
 

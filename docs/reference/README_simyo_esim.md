@@ -19,7 +19,7 @@
 
 ### 主要文件
 - **`simyo_modular.html`** - Simyo eSIM 设备更换工具（生产版本，模块化架构）
-- **`test_simyo_esim.html`** - 综合测试页面（开发/测试版本）
+- **`tests/test_simyo_esim.html`** - 综合测试页面（开发/测试版本）
 - **`Simyo ESIM V2.postman_collection.json`** - 原始Postman脚本（参考文档）
 - **`simyo.html`** - 原有的简化版本（参考）
 

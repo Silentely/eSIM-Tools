@@ -8,9 +8,9 @@ This is a complete web application that allows existing Giffgaff subscribers to 
 
 ### Core Features
 - ✅ OAuth 2.0 PKCE Authentication Process
-- ✅ Email Verification Code (MFA) Verification
+- ✅ Email/SMS Verification Code (MFA) Verification
 - ✅ GraphQL API Full Integration
-- ✅ eSIM Reservation and Manual Activation Guidance
+- ✅ SMS Verification Code Auto-activation (Recommended)
 - ✅ eSIM Download Code Generation and QR Code Display
 - ✅ Responsive Design, Mobile Device Support
 - ✅ Complete Error Handling and User Experience Optimization
@@ -19,7 +19,7 @@ This is a complete web application that allows existing Giffgaff subscribers to 
 
 ### Main Files
 - **`giffgaff_modular.html`** - eSIM Device Change Tool (Production Version, Modular Architecture)
-- **`test_giffgaff_esim.html`** - Comprehensive Test Page (Development/Test Version)
+- **`tests/test_giffgaff_esim.html`** - Comprehensive Test Page (Development/Test Version)
 - **`Giffgaff-swap-esim.json`** - Original Postman Script (Reference Document)
 - **`giffgaff.html`**** - Original Simplified Version (Reference)
 

@@ -114,15 +114,8 @@
    npm install
    ```
 
-3. **启动代理服务器**
+3. **启动开发服务器**
    ```bash
-   # Windows
-   start_simyo_server.bat
-
-   # macOS/Linux
-   ./start_simyo_server.sh
-
-   # 或手动启动
    npm start
    ```
 
