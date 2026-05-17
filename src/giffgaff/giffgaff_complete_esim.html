@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://api.giffgaff.com" crossorigin>
     <link rel="preconnect" href="https://id.giffgaff.com" crossorigin>
     <link rel="preconnect" href="https://publicapi.giffgaff.com" crossorigin>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://cdnjs.cloudflare.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com;">
     <title>Giffgaff eSIM 申请工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#ffcc00">
@@ -23,7 +23,7 @@
     <link rel="preload" href="/src/styles/animations.css" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="/src/styles/design-system.css"></noscript>
     <noscript><link rel="stylesheet" href="/src/styles/animations.css"></noscript>
-    
+
     <style>
         :root {
             --primary: #ffcc00;
@@ -34,7 +34,7 @@
             --dark: #212529;
             --gray: #6c757d;
         }
-        
+
         body {
             /* 采用与 Simyo 相近的品牌暖色渐变，偏黄橙，保证对比度与可读性 */
             background: linear-gradient(135deg, #fff7e6 0%, #ffefcc 40%, #ffe8b3 100%);
@@ -44,12 +44,12 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
         }
-        
+
         .container {
             max-width: 900px;
             margin: 0 auto;
         }
-        
+
         .app-header {
             display: flex;
             justify-content: space-between;
@@ -62,18 +62,18 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .logo-container {
             display: flex;
             align-items: center;
         }
-        
+
         .app-icon {
             font-size: 24px;
             margin-right: 10px;
             color: #ffcc00;
         }
-        
+
         .app-title {
             font-size: 24px;
             font-weight: bold;
@@ -83,7 +83,7 @@
             -webkit-text-fill-color: transparent;
             color: transparent; /* 兼容性回退 */
         }
-        
+
         .login-btn {
             background: linear-gradient(to right, #ffcc00, #ffffff);
             border: none;
@@ -103,7 +103,7 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-        
+
         .login-btn:hover {
             background: linear-gradient(to right, #ffffff, #ffcc00);
             transform: translateY(-2px);
@@ -131,7 +131,7 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-        
+
         .github-btn:hover {
             background: linear-gradient(to right, #666666, #333333);
             transform: translateY(-2px);
@@ -139,12 +139,12 @@
             border-color: rgba(51, 51, 51, 0.5);
             color: #ffffff;
         }
-        
+
         .page-title {
             text-align: center;
             margin: 30px 0 40px;
         }
-        
+
         .page-title h1 {
             font-size: 32px;
             font-weight: 800;
@@ -152,13 +152,13 @@
             letter-spacing: -0.5px;
             color: #212529;
         }
-        
+
         .page-title p {
             color: rgba(33, 37, 41, 0.7);
             font-size: 18px;
             margin-top: 8px;
         }
-        
+
         .step-indicator {
             display: flex;
             justify-content: space-between;
@@ -172,7 +172,7 @@
             border: 1px solid rgba(0,0,0,0.06);
             box-shadow: 0 4px 14px rgba(0,0,0,0.08);
         }
-        
+
         .step {
             display: flex;
             flex-direction: column;
@@ -181,7 +181,7 @@
             width: 120px;
             position: relative;
         }
-        
+
         .step-number {
             width: 56px;
             height: 56px;
@@ -197,21 +197,21 @@
             border: 2px solid rgba(255, 193, 7, 0.55);
             box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.18);
         }
-        
+
         .step.active .step-number {
             background: linear-gradient(135deg, #ffcc00, #ffd84d);
             color: white;
             box-shadow: 0 6px 16px rgba(255, 193, 7, 0.45);
             border-color: rgba(255, 193, 7, 0.8);
         }
-        
+
         .step-text {
             font-size: 14px;
             text-align: center;
             color: #212529;
             font-weight: 500;
         }
-        
+
         .card {
             background: rgba(255, 255, 255, 0.9);
             border-radius: 16px;
@@ -221,13 +221,13 @@
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
             border: 1px solid rgba(255, 204, 0, 0.5);
         }
-        
+
         .card-header {
             background: rgba(255, 204, 0, 0.1);
             padding: 20px 25px;
@@ -238,17 +238,17 @@
             align-items: center;
             border-bottom: 1px solid rgba(255, 204, 0, 0.2);
         }
-        
+
         .card-header i {
             margin-right: 12px;
             font-size: 28px;
             color: #ffcc00;
         }
-        
+
         .card-body {
             padding: 30px;
         }
-        
+
         .form-label {
             display: block;
             margin-bottom: 15px;
@@ -256,7 +256,7 @@
             font-size: 17px;
             color: #212529;
         }
-        
+
         textarea, input {
             width: 100%;
             padding: 16px 18px;
@@ -268,25 +268,25 @@
             transition: all 0.3s ease;
             box-sizing: border-box;
         }
-        
+
         textarea {
             min-height: 120px;
             resize: vertical;
         }
-        
+
         textarea:focus, input:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.2);
             background: rgba(255, 255, 255, 1);
         }
-        
+
         .btn-group {
             display: flex;
             gap: 15px;
             margin-top: 25px;
         }
-        
+
         .btn {
             padding: 16px 25px;
             border: none;
@@ -301,25 +301,25 @@
             gap: 10px;
             flex: 1;
         }
-        
+
         .btn-primary {
             background: linear-gradient(to right, #ffcc00, #ffffff);
             color: #212529;
         }
-        
+
         .btn-primary:hover {
             background: linear-gradient(to right, #ffffff, #ffcc00);
             transform: translateY(-3px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
         }
-        
+
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
         }
-        
+
         .status {
             margin-top: 25px;
             padding: 18px 20px;
@@ -330,48 +330,48 @@
             border-left: 4px solid transparent;
             color: #212529;
         }
-        
+
         .status.active {
             display: block;
             animation: fadeIn 0.4s ease;
         }
-        
+
         .status.success {
             border-left: 4px solid var(--primary);
         }
-        
+
         .status.error {
             border-left: 4px solid var(--warning);
         }
-        
+
         .section {
             display: none;
             animation: slideIn 0.5s ease;
         }
-        
+
         .section.active {
             display: block;
         }
-        
+
         .verification-section {
             margin-top: 25px;
             display: none;
         }
-        
+
         .verification-section.active {
             display: block;
             animation: fadeIn 0.5s ease;
         }
-        
+
         #resultContainer {
             display: none;
         }
-        
+
         #resultContainer.active {
             display: block;
             animation: fadeIn 0.4s ease;
         }
-        
+
         .loading {
             display: inline-block;
             width: 16px;
@@ -381,21 +381,21 @@
             border-top-color: #000;
             animation: spin 1s ease-in-out infinite;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(30px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        
+
         /* 状态显示面板 */
         .status-panel {
             background: linear-gradient(135deg, #fffff0 0%, #fffbe4 90%);
@@ -612,11 +612,11 @@
             .app-title {
                 font-size: 20px;
             }
-            
+
             .page-title h1 {
                 font-size: 26px;
             }
-            
+
             .step {
                 width: 80px;
             }
@@ -628,35 +628,35 @@
             .status-value {
                 max-width: 120px;
             }
-            
+
             .status-label {
                 min-width: 80px;
             }
-            
+
             .step-number {
                 width: 40px;
                 height: 40px;
                 font-size: 18px;
             }
-            
+
             .step-text {
                 font-size: 13px;
             }
-            
+
             .card-header {
                 padding: 15px;
                 font-size: 19px;
             }
-            
+
             .card-body {
                 padding: 20px;
             }
-            
+
             textarea, input {
                 padding: 14px;
                 font-size: 15px;
             }
-            
+
             .btn {
                 padding: 14px;
                 font-size: 16px;
@@ -673,32 +673,32 @@
                 min-width: fit-content;
             }
         }
-        
+
         @media (max-width: 480px) {
             .step-indicator {
                 max-width: 95%;
             }
-            
+
             .step {
                 width: 60px;
             }
-            
+
             .step-number {
                 width: 35px;
                 height: 35px;
                 font-size: 16px;
             }
-            
+
             .step-text {
                 font-size: 12px;
             }
-            
+
             .header-buttons {
                 gap: 6px;
                 flex-direction: column;
                 align-items: flex-end;
             }
-            
+
             .login-btn, .github-btn {
                 padding: 6px 12px;
                 font-size: 13px;
@@ -736,7 +736,7 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- 开卡推广 -->
         <div class="promo-banner reveal">
             <div class="promo-content">
@@ -746,7 +746,7 @@
                 </span>
             </div>
         </div>
-        
+
         <!-- 页面标题 -->
         <div class="page-title reveal">
             <h1>Giffgaff eSIM 申请工具</h1>
@@ -755,7 +755,7 @@
                 <i class="fas fa-exchange-alt" aria-hidden="true"></i> 设备更换模式
             </div>
         </div>
-        
+
         <!-- 服务时间提示（优化布局） -->
         <div id="serviceTimeAlert" class="alert mb-4 service-time-alert">
           <div class="service-time-grid">
@@ -790,7 +790,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 状态显示面板 -->
         <div class="status-panel card-elevated reveal" role="status" aria-live="polite">
             <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 当前状态</h3>
@@ -834,7 +834,7 @@
                 <i class="fas fa-trash-alt" aria-hidden="true"></i> 清除会话
             </button>
         </div>
-        
+
         <!-- 步骤指示器 -->
         <div class="step-indicator reveal" role="list" aria-label="进度步骤">
           <div class="step active" role="listitem" aria-current="step" data-step="1">
@@ -858,7 +858,7 @@
                 <div class="step-text">获取二维码</div>
             </div>
         </div>
-        
+
         <!-- 步骤1: 选择登录方式 -->
         <div id="step1" class="section active reveal">
             <div class="card card-elevated">
@@ -869,7 +869,7 @@
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
                         请选择您偏好的登录方式：
                     </p>
-                    
+
                     <div class="row row-cols-1 row-cols-md-2 g-3">
                         <div class="col">
                             <div id="oauthCard" class="card h-100" style="cursor: pointer;" role="button" tabindex="0" aria-label="选择 OAuth 登录">
@@ -892,13 +892,13 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div id="loginMethodStatus" class="status"></div>
-                    
+
                     <!-- OAuth登录区域 -->
                     <div id="oauthLoginSection" class="mt-4" style="display: none;">
                         <h5 class="mb-3">OAuth 2.0 登录</h5>
-                        
+
                         <!-- OAuth说明区域 -->
                         <div class="alert alert-warning mb-4">
                             <h6><i class="fas fa-exclamation-triangle me-2"></i>如何获取回调URL：</h6>
@@ -912,42 +912,42 @@
                             </ol>
                             <p class="mb-0"><small class="text-muted">💡 提示：如果看不到网络请求，请先打开开发者工具再进行登录操作</small></p>
                         </div>
-                        
+
                         <div class="alert alert-info mb-4">
                             <h6><i class="fas fa-info-circle me-2"></i>回调URL格式示例：</h6>
                             <p class="mb-2"><code>giffgaff://auth/callback/?code=ABC123&state=XYZ789</code></p>
                             <p class="mb-0"><small class="text-muted">确保URL包含 <code>code</code> 和 <code>state</code> 参数</small></p>
                         </div>
-                        
+
                         <div class="btn-group">
                             <button id="oauthLoginBtn" class="btn btn-primary">
                                 <i class="fas fa-sign-in-alt me-2"></i> 开始OAuth登录
                             </button>
                         </div>
-                    
+
                     <div id="oauthStatus" class="status" role="status" aria-live="polite"></div>
-                    
+
                     <!-- OAuth回调处理区域 -->
                     <div id="oauthCallbackSection" class="verification-section">
                         <div class="mb-4">
                             <label for="callbackUrl" class="form-label">回调URL：</label>
                             <textarea id="callbackUrl" class="form-control" placeholder="例如：giffgaff://auth/callback/?code=EDXgE_Uq5Q96LT5s&state=7piz0IXfUIHHoxMURfaboQ" rows="3"></textarea>
                         </div>
-                        
+
                         <div class="btn-group">
                             <button id="processCallbackBtn" class="btn btn-primary">
                                 <i class="fas fa-check me-2"></i> 处理回调
                             </button>
                         </div>
-                        
+
                         <div id="callbackStatus" class="status mt-4" role="status" aria-live="polite"></div>
                     </div>
                     </div>
-                    
+
                     <!-- Cookie登录区域 -->
                     <div id="cookieLoginSection" class="mt-4" style="display: none;">
                         <h5 class="mb-3">Cookie 登录</h5>
-                        
+
                         <div class="alert alert-info mb-4">
                             <h6><i class="fas fa-info-circle me-2"></i>如何获取Cookie：</h6>
                             <ol class="mb-2">
@@ -989,24 +989,24 @@
                                 </small>
                             </div>
                         </div>
-                        
+
                         <div class="mb-4">
                             <label for="cookieInput" class="form-label">Cookie 字符串：</label>
                             <textarea id="cookieInput" class="form-control" placeholder="输入完整的Cookie字符串，例如：session_token=abc123; user_id=456789; ..." rows="4"></textarea>
                         </div>
-                        
+
                         <div class="btn-group">
                             <button id="verifyCookieBtn" class="btn btn-warning">
                                 <i class="fas fa-check-circle me-2"></i> 验证Cookie
                             </button>
                         </div>
-                        
+
                         <div id="cookieStatus" class="status"></div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- 步骤2: 邮件验证 -->
         <div id="step2" class="section reveal">
             <div class="card card-elevated">
@@ -1027,38 +1027,38 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="btn-group">
                         <button id="sendEmailBtn" class="btn btn-primary">
                             <i class="fas fa-paper-plane me-2"></i> 发送验证码
                         </button>
                     </div>
-                    
+
                     <div id="emailStatus" class="status" role="status" aria-live="polite"></div>
-                    
+
                     <!-- 邮件验证码输入区域 -->
                     <div id="emailVerificationSection" class="verification-section">
                         <p class="mb-4" style="font-size: 17px; color: #212529; margin-top: 25px;">
                             请检查您的邮箱或短信并输入收到的6位验证码：
                         </p>
-                        
+
                         <div class="mb-4">
                             <label for="emailCode" class="form-label">验证码（邮件/短信）：</label>
                             <input type="text" id="emailCode" class="form-control" placeholder="输入6位验证码" maxlength="6">
                         </div>
-                        
+
                         <div class="btn-group">
                             <button id="verifyEmailBtn" class="btn btn-primary">
                                 <i class="fas fa-check me-2"></i> 验证验证码
                             </button>
                         </div>
-                        
+
                         <div id="emailVerifyStatus" class="status mt-4" role="status" aria-live="polite"></div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- 步骤3: 获取会员信息 -->
         <div id="step3" class="section reveal">
             <div class="card card-elevated">
@@ -1069,19 +1069,19 @@
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
                         获取您的Giffgaff会员信息：
                     </p>
-                    
+
                     <div class="btn-group">
                         <button id="getMemberBtn" class="btn btn-primary">
                             <i class="fas fa-user-circle me-2"></i> 获取会员信息
                         </button>
                     </div>
-                    
+
                     <div id="memberStatus" class="status" role="status" aria-live="polite"></div>
                     <div id="memberInfo" class="mt-4"></div>
                 </div>
             </div>
         </div>
-        
+
         <!-- 步骤4: 申请eSIM -->
         <div id="step4" class="section reveal">
             <div class="card card-elevated">
@@ -1235,7 +1235,7 @@
                                     <i class="fas fa-warning me-2"></i>
                                     <strong>请保持此网页开启状态，不要关闭或刷新页面！</strong>
                                 </div>
-                                
+
                                 <h5 class="text-success mb-3 text-center" id="esimStatusTitle">您的eSIM信息（状态：RESERVED）</h5>
                                     <div class="row text-center">
                                         <div class="col-md-6 d-flex flex-column align-items-center">
@@ -1257,7 +1257,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                
+
                                 <div class="manual-activation-guide">
                                     <h5 class="text-primary mb-3">
                                         <i class="fas fa-hand-point-right me-2" aria-hidden="true"></i>下一步：激活eSIM
@@ -1293,7 +1293,7 @@
                                             <strong>稍等片刻，新 eSIM 生效后会跳转回 Giffgaff 首页显示成功信息</strong>
                                         </li>
                                     </ol>
-                                    
+
                                     <div class="mt-4">
                                         <div class="btn-group" role="group" aria-label="eSIM激活操作">
                                             <!-- 自动激活按钮：仅在Cookie登录时显示 -->
@@ -1315,7 +1315,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- 步骤5: 获取eSIM -->
         <div id="step5" class="section reveal">
             <div class="card card-elevated">
@@ -1326,15 +1326,15 @@
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
                         获取您的eSIM下载代码和二维码：
                     </p>
-                    
+
                     <div class="btn-group">
                         <button id="getESimTokenBtn" class="btn btn-primary">
                             <i class="fas fa-download me-2"></i> 获取eSIM Token
                         </button>
                     </div>
-                    
+
                     <div id="tokenStatus" class="status" role="status" aria-live="polite"></div>
-                    
+
                     <!-- eSIM结果显示 -->
                     <div id="resultContainer" class="mt-4">
                         <div class="card">
@@ -1351,7 +1351,7 @@
             </div>
         </div>
     </div>
- 
+
      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
      <!-- 入场动效：与首页一致的 IntersectionObserver reveal（当前页面可按需为元素添加 .reveal 类启用） -->
      <script>
@@ -1386,19 +1386,19 @@
             // OAuth相关
             accessToken: "",
             codeVerifier: "",
-            
+
             // Cookie相关
             cookie: "",
-            
+
             // MFA相关
             emailCodeRef: "",
             emailSignature: "",
-            
+
             // 会员信息
             memberId: "",
             memberName: "",
             phoneNumber: "",
-            
+
             // eSIM相关
             esimSSN: "",
             esimActivationCode: "",
@@ -1406,14 +1406,14 @@
             lpaString: "",
              // 模式
              isDeviceChange: true,
-            
+
             // 步骤控制
             currentStep: 1
         };
 
         // 环境检测
         const isNetlify = window.location.hostname.includes('cosr.eu.org') || window.location.hostname.includes('netlify');
-        
+
         // OAuth 2.0 PKCE相关配置
         const oauthConfig = {
             clientId: "4a05bf219b3985647d9b9a3ba610a9ce",
@@ -1441,7 +1441,7 @@
         const elements = {
             steps: document.querySelectorAll('.step'),
             sections: document.querySelectorAll('.section'),
-            
+
             // 状态显示元素
              statusMode: document.getElementById('statusMode'),
             statusAccessToken: document.getElementById('statusAccessToken'),
@@ -1453,12 +1453,12 @@
             clearSessionBtn: document.getElementById('clearSessionBtn'),
              // 模式徽标
              modeBadge: document.getElementById('modeBadge'),
-            
+
             // Step 1 - 登录方式选择
             loginMethodStatus: document.getElementById('loginMethodStatus'),
             oauthLoginSection: document.getElementById('oauthLoginSection'),
             cookieLoginSection: document.getElementById('cookieLoginSection'),
-            
+
             // OAuth相关
             oauthLoginBtn: document.getElementById('oauthLoginBtn'),
             oauthStatus: document.getElementById('oauthStatus'),
@@ -1466,12 +1466,12 @@
             callbackUrl: document.getElementById('callbackUrl'),
             processCallbackBtn: document.getElementById('processCallbackBtn'),
             callbackStatus: document.getElementById('callbackStatus'),
-            
+
             // Cookie相关
             cookieInput: document.getElementById('cookieInput'),
             verifyCookieBtn: document.getElementById('verifyCookieBtn'),
             cookieStatus: document.getElementById('cookieStatus'),
-            
+
             // Step 2 - Email verification
             sendEmailBtn: document.getElementById('sendEmailBtn'),
             emailStatus: document.getElementById('emailStatus'),
@@ -1479,23 +1479,23 @@
             emailCode: document.getElementById('emailCode'),
             verifyEmailBtn: document.getElementById('verifyEmailBtn'),
             emailVerifyStatus: document.getElementById('emailVerifyStatus'),
-            
+
             // Step 3 - Member info
             getMemberBtn: document.getElementById('getMemberBtn'),
             memberStatus: document.getElementById('memberStatus'),
             memberInfo: document.getElementById('memberInfo'),
-            
+
             // Step 4 - eSIM reservation
             reserveESimBtn: document.getElementById('reserveESimBtn'),
             esimReserveStatus: document.getElementById('esimReserveStatus'),
-            
+
             // Step 5 - Get eSIM token and QR
             getESimTokenBtn: document.getElementById('getESimTokenBtn'),
             tokenStatus: document.getElementById('tokenStatus'),
             resultContainer: document.getElementById('resultContainer'),
             qrcode: document.getElementById('qrcode'),
             esimInfo: document.getElementById('esimInfo'),
-            
+
             // Auto activation
             autoActivateBtn: document.getElementById('autoActivateBtn'),
             autoActivateStatus: document.getElementById('autoActivateStatus')
@@ -1563,7 +1563,7 @@
             element.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
             element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        
+
         // 选择登录方式
         function selectLoginMethod(method) {
             if (method === 'oauth') {
@@ -1576,13 +1576,13 @@
                 showStatus(elements.loginMethodStatus, "已选择Cookie登录方式", "success");
             }
         }
-        
+
         // Cookie相关函数
         function setCookie(name, value, days) {
             const expires = days ? `; expires=${new Date(Date.now() + days * 864e5).toUTCString()}` : '';
             document.cookie = `${name}=${value || ''}${expires}; path=/`;
         }
-        
+
         function getCookie(name) {
             const nameEQ = name + '=';
             const ca = document.cookie.split(';');
@@ -1593,7 +1593,7 @@
             }
             return null;
         }
-        
+
         function eraseCookie(name) {
             document.cookie = `${name}=; Max-Age=-99999999; path=/`;
         }
@@ -1705,7 +1705,7 @@
                 elements.statusAccessToken.className = 'status-value disconnected';
                 removeTooltip(elements.statusAccessToken);
             }
-            
+
             // 更新MFA签名状态
             if (appState.emailSignature) {
                 elements.statusMfaSignature.textContent = appState.emailSignature;
@@ -1717,7 +1717,7 @@
                 elements.statusMfaSignature.className = 'status-value disconnected';
                 removeTooltip(elements.statusMfaSignature);
             }
-            
+
             // 更新会员ID状态
             if (appState.memberId) {
                 elements.statusMemberId.textContent = appState.memberId;
@@ -1728,7 +1728,7 @@
                 elements.statusMemberId.className = 'status-value disconnected';
                 removeTooltip(elements.statusMemberId);
             }
-            
+
             // 更新eSIM状态：要求具备基本前置（至少拿到 memberId）才展示 RESERVED/ACTIVE 等
             const hasPrerequisite = !!appState.memberId;
             const delivery = hasPrerequisite
@@ -1755,9 +1755,9 @@
                 elements.statusActivationCode.className = 'status-value disconnected';
                 removeTooltip(elements.statusActivationCode);
             }
-            
+
             // 去重：不再重复覆盖激活码状态，保持上方逻辑（含 SSN 合并）
-            
+
             // 更新LPA字符串状态：获取后仅显示“已获取”，不展示原始 LPA
             if (appState.lpaString) {
                 elements.statusLpaString.textContent = '已获取';
@@ -1773,30 +1773,30 @@
         // 添加悬浮提示功能
         function addTooltip(element, fullText, forceShow = false) {
             if (!element || !fullText) return;
-            
+
             // 检查文本是否被截断；若 forceShow 为 true 则忽略此检查
             const isTruncated = element.scrollWidth > element.clientWidth;
             if (!forceShow && !isTruncated) return;
-            
+
             // 移除现有的提示框
             removeTooltip(element);
-            
+
             // 创建提示框
             const tooltip = document.createElement('div');
             tooltip.className = 'tooltip';
             tooltip.textContent = fullText;
             tooltip.setAttribute('role', 'tooltip');
             tooltip.setAttribute('aria-hidden', 'true');
-            
+
             // 添加鼠标事件
             const onEnter = (e) => { showTooltip(tooltip, e, true); };
             const onLeave = () => { hideTooltip(tooltip); };
             element.addEventListener('mouseenter', onEnter);
             element.addEventListener('mouseleave', onLeave);
-            
+
             // 设置光标样式为help，表示有悬浮框
             element.style.cursor = 'help';
-            
+
             // 存储提示框引用
             element.tooltip = tooltip;
         }
@@ -1812,28 +1812,28 @@
 
         function showTooltip(tooltip, event, pinBelow = false) {
             if (!tooltip) return;
-            
+
             // 将提示框添加到body
             document.body.appendChild(tooltip);
-            
+
             // 计算位置（更贴近触发元素）
             const rect = event.target.getBoundingClientRect();
             const tooltipRect = tooltip.getBoundingClientRect();
-            
+
             let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
             // 始终显示在触发元素下方，并缩小与元素的间隔
             let top = rect.bottom + 4;
-            
+
             // 确保提示框不超出视窗
             if (left < 10) left = 10;
             if (left + tooltipRect.width > window.innerWidth - 10) {
                 left = window.innerWidth - tooltipRect.width - 10;
             }
             // 不再向上翻转，保持在下方
-            
+
             tooltip.style.left = left + 'px';
             tooltip.style.top = top + 'px';
-            
+
             // 显示提示框
             setTimeout(() => {
                 tooltip.classList.add('show');
@@ -1921,7 +1921,7 @@
             };
             localStorage.setItem('giffgaff_session', JSON.stringify(sessionData));
         }
-        
+
         // 保存cookie到localStorage
         function saveCookie(cookie) {
             if (cookie && typeof cookie === 'string') {
@@ -1939,7 +1939,7 @@
                     const data = JSON.parse(sessionData);
                     const now = Date.now();
                     const twoHours = 2 * 60 * 60 * 1000; // 2小时的毫秒数
-                    
+
                     // 检查是否超过2小时
                     if (now - data.timestamp < twoHours) {
                         appState.accessToken = data.accessToken || "";
@@ -1953,7 +1953,7 @@
                         appState.lpaString = data.lpaString || "";
                          appState.isDeviceChange = typeof data.isDeviceChange === 'boolean' ? data.isDeviceChange : true;
                         appState.currentStep = data.currentStep || 1;
-                        
+
                         // 恢复UI状态
                         if (appState.accessToken) {
                             // 根据已有的数据决定跳转到合适的步骤
@@ -1996,7 +1996,7 @@
                                 }, 100);
                             }
                         }
-                        
+
                         updateStatus();
                         return true;
                     } else {
@@ -2059,7 +2059,7 @@
                 .replace(/\+/g, '-')
                 .replace(/\//g, '_')
                 .replace(/=+$/, '');
-            
+
             // 确保长度在43-128之间
             return verifier.length >= 43 ? verifier.substr(0, 128) : verifier + 'a'.repeat(43 - verifier.length);
         }
@@ -2119,21 +2119,21 @@
                         </p>
                         <div style="display: flex; gap: 10px; justify-content: center;">
                             <button id="continueAnyway" style="
-                                background: #dc2626; 
-                                color: white; 
-                                border: none; 
-                                padding: 10px 20px; 
-                                border-radius: 8px; 
+                                background: #dc2626;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 8px;
                                 cursor: pointer;
                                 font-weight: 600;
                                 transition: all 0.3s ease;
                             " onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">仍要继续</button>
                             <button id="cancelOperation" style="
-                                background: #6b7280; 
-                                color: white; 
-                                border: none; 
-                                padding: 10px 20px; 
-                                border-radius: 8px; 
+                                background: #6b7280;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 8px;
                                 cursor: pointer;
                                 font-weight: 600;
                                 transition: all 0.3s ease;
@@ -2141,7 +2141,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 // 创建模态对话框
                 const modal = document.createElement('div');
                 modal.style.cssText = `
@@ -2156,7 +2156,7 @@
                     justify-content: center;
                     z-index: 10000;
                 `;
-                
+
                 const modalContent = document.createElement('div');
                 modalContent.style.cssText = `
                     background: white;
@@ -2167,10 +2167,10 @@
                     animation: modalSlideIn 0.3s ease-out;
                 `;
                 modalContent.innerHTML = warningMessage;
-                
+
                 modal.appendChild(modalContent);
                 document.body.appendChild(modal);
-                
+
                 // 添加动画样式
                 const style = document.createElement('style');
                 style.textContent = `
@@ -2180,18 +2180,18 @@
                     }
                 `;
                 document.head.appendChild(style);
-                
+
                 // 按钮事件
                 document.getElementById('continueAnyway').addEventListener('click', () => {
                     document.body.removeChild(modal);
                     resolve(true); // 允许继续
                 });
-                
+
                 document.getElementById('cancelOperation').addEventListener('click', () => {
                     document.body.removeChild(modal);
                     resolve(false); // 取消操作
                 });
-                
+
                 // 点击背景关闭
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
@@ -2211,7 +2211,7 @@
                     return;
                 }
             }
-            
+
             const cookie = elements.cookieInput.value.trim();
             if (!cookie) {
                 showStatus(elements.cookieStatus, "请输入Cookie字符串", "error");
@@ -2221,9 +2221,9 @@
             try {
                 elements.verifyCookieBtn.innerHTML = '<span class="loading"></span> 验证中...';
                 elements.verifyCookieBtn.disabled = true;
-                
+
                 showStatus(elements.cookieStatus, "正在验证Cookie...", "success");
-                
+
                 // 调用Cookie验证API（现在使用Node.js后端）
                 const response = await fetch(apiEndpoints.cookieVerify, {
                     method: 'POST',
@@ -2234,12 +2234,12 @@
                         cookie: cookie
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`验证失败: ${response.status} - ${errorText}`);
                 }
-                
+
                 const result = await response.json();
 
                 const looksLikeJwt = typeof result.accessToken === 'string' && result.accessToken.includes('.') && result.accessToken.length > 200;
@@ -2286,7 +2286,7 @@
                 } else {
                     throw new Error(result.message || 'Cookie验证失败');
                 }
-                
+
             } catch (error) {
                 console.error('Cookie验证详细错误:', error);
                 showStatus(elements.cookieStatus, error.message, "error");
@@ -2305,13 +2305,13 @@
                     return;
                 }
             }
-            
+
             try {
                 elements.oauthLoginBtn.innerHTML = '<span class="loading"></span> 准备登录...';
                 elements.oauthLoginBtn.disabled = true;
-                
+
                 showStatus(elements.oauthStatus, "正在准备OAuth登录...", "success");
-                
+
                 // 生成PKCE参数
                 appState.codeVerifier = generateCodeVerifier();
                 const codeChallenge = await generateCodeChallenge(appState.codeVerifier);
@@ -2323,7 +2323,7 @@
                     sessionStorage.setItem('gg_pkce_map', JSON.stringify(pkceMap));
                     sessionStorage.setItem('gg_oauth_last_state', state);
                 } catch (e) {}
-                
+
                 // 构建授权URL
                 const authParams = new URLSearchParams({
                     response_type: 'code',
@@ -2334,18 +2334,18 @@
                     code_challenge: codeChallenge,
                     code_challenge_method: 'S256'
                 });
-                
+
                 const authUrl = `${oauthConfig.authUrl}?${authParams.toString()}`;
-                
+
                 showStatus(elements.oauthStatus, "正在打开登录页面...", "success");
-                
+
                 // 打开登录页面
                 window.open(authUrl, '_blank');
-                
+
                 // 显示回调处理区域
                 elements.oauthCallbackSection.classList.add('active');
                 showStatus(elements.oauthStatus, "登录页面已打开，请完成登录后复制回调URL", "success");
-                
+
             } catch (error) {
                 showStatus(elements.oauthStatus, "OAuth登录准备失败：" + error.message, "error");
             } finally {
@@ -2361,16 +2361,16 @@
                 showStatus(elements.callbackStatus, "请输入回调URL", "error");
                 return;
             }
-            
+
             try {
                 elements.processCallbackBtn.innerHTML = '<span class="loading"></span> 处理中...';
                 elements.processCallbackBtn.disabled = true;
-                
+
                 showStatus(elements.callbackStatus, "正在处理OAuth回调...", "success");
-                
+
                 // 解析回调URL中的code
                 let code, state;
-                
+
                 if (callbackUrl.startsWith('giffgaff://')) {
                     // 处理giffgaff://协议的回调URL
                     const match = callbackUrl.match(/[?&]code=([^&]+)/);
@@ -2383,14 +2383,14 @@
                     code = url.searchParams.get('code');
                     state = url.searchParams.get('state');
                 }
-                
+
                 if (!code) {
                     throw new Error("回调URL中未找到授权码");
                 }
-                
+
                 console.log('解析到的授权码:', code);
                 console.log('解析到的状态:', state);
-                
+
                 // 如果内存中的 codeVerifier 丢失，优先通过 state 在映射中恢复
                 if (!appState.codeVerifier) {
                     try {
@@ -2426,11 +2426,11 @@
                         ...(turnstileToken ? { turnstileToken } : {})
                     })
                 });
-                
+
                 if (!tokenResponse.ok) {
                     throw new Error(`Token交换失败: ${tokenResponse.status}`);
                 }
-                
+
                 const tokenData = await tokenResponse.json();
                 appState.accessToken = tokenData.access_token;
                 try {
@@ -2438,16 +2438,16 @@
                     if (state && pkceMap[state]) { delete pkceMap[state]; }
                     sessionStorage.setItem('gg_pkce_map', JSON.stringify(pkceMap));
                 } catch (e) {}
-                
+
                 showStatus(elements.callbackStatus, "OAuth登录成功！", "success");
                 updateStatus(); // 更新状态显示
                 saveSession(); // 保存会话
-                
+
                 // 进入下一步
                 setTimeout(() => {
                     showSection(2);
                 }, 1500);
-                
+
             } catch (error) {
                 showStatus(elements.callbackStatus, "OAuth回调处理失败：" + error.message, "error");
             } finally {
@@ -2465,13 +2465,13 @@
                     return;
                 }
             }
-            
+
             try {
                 elements.sendEmailBtn.innerHTML = '<span class="loading"></span> 发送中...';
                 elements.sendEmailBtn.disabled = true;
-                
+
                 showStatus(elements.emailStatus, "正在发送验证码...", "success");
-                
+
                 const response = await fetch(apiEndpoints.mfaChallenge, {
                     method: 'POST',
                     headers: {
@@ -2489,11 +2489,11 @@
                         })()
                     })
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`请求失败: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
 
                 // 检查令牌是否被刷新
@@ -2502,7 +2502,7 @@
                     appState.accessToken = data._newAccessToken;
                     saveSession(); // 保存更新后的令牌
                 }
-                
+
                 // 只有真的发送成功（存在 ref）才显示“已发送”和验证码输入区
                 if (data && data.ref) {
                     appState.emailCodeRef = data.ref;
@@ -2511,7 +2511,7 @@
                 } else {
                     throw new Error('发送验证码未成功，请稍后重试');
                 }
-                
+
             } catch (error) {
                 showStatus(elements.emailStatus, "发送验证码失败：" + error.message, "error");
             } finally {
@@ -2527,12 +2527,12 @@
                 showStatus(elements.emailVerifyStatus, "请输入验证码", "error");
                 return;
             }
-            
+
             if (!/^\d{6}$/.test(code)) {
                 showStatus(elements.emailVerifyStatus, "验证码格式错误，请输入6位数字", "error");
                 return;
             }
-            
+
             try {
                 elements.verifyEmailBtn.innerHTML = '<span class="loading"></span> 验证中...';
                 elements.verifyEmailBtn.disabled = true;
@@ -2565,7 +2565,7 @@
                 updateStatus();
                 saveSession();
                 setTimeout(() => { showSection(3); }, 1000);
-                
+
             } catch (error) {
                 showStatus(elements.emailVerifyStatus, "验证码验证失败：" + error.message, "error");
             } finally {
@@ -2579,18 +2579,18 @@
             try {
                 elements.getMemberBtn.innerHTML = '<span class="loading"></span> 获取中...';
                 elements.getMemberBtn.disabled = true;
-                
+
                 showStatus(elements.memberStatus, "正在获取会员信息...", "success");
-                
+
                 // 检查是否有必要的认证信息
                 if (!appState.accessToken) {
                     throw new Error("缺少访问令牌，请重新进行OAuth认证");
                 }
-                
+
                 if (!appState.emailSignature) {
                     throw new Error("缺少邮件验证签名，请完成邮件验证");
                 }
-                
+
                 const response = await fetch(apiEndpoints.graphql, {
                     method: 'POST',
                     headers: {
@@ -2614,28 +2614,28 @@
                         operationName: 'getMemberProfileAndSim'
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('GraphQL请求失败:', response.status, errorText);
                     throw new Error(`请求失败: ${response.status} - ${errorText}`);
                 }
-                
+
                 const data = await response.json();
                 console.log('GraphQL响应:', data);
                 if (data.errors) {
                     console.error('GraphQL错误:', data.errors);
                     throw new Error(data.errors[0].message);
                 }
-                
+
                 appState.memberId = data.data.memberProfile.id;
                 appState.memberName = data.data.memberProfile.memberName;
                 appState.phoneNumber = data.data.sim.phoneNumber;
-                
+
                 showStatus(elements.memberStatus, "会员信息获取成功！", "success");
                 updateStatus(); // 更新状态显示
                 saveSession(); // 保存会话
-                
+
                 // 显示会员信息
                 elements.memberInfo.innerHTML = `
                     <div class="card">
@@ -2648,12 +2648,12 @@
                         </div>
                     </div>
                 `;
-                
+
                 // 进入下一步
                 setTimeout(() => {
                     showSection(4);
                 }, 2000);
-                
+
             } catch (error) {
                 showStatus(elements.memberStatus, "获取会员信息失败：" + error.message, "error");
             } finally {
@@ -2671,13 +2671,13 @@
                     return;
                 }
             }
-            
+
             try {
                 elements.reserveESimBtn.innerHTML = '<span class="loading"></span> 预订中...';
                 elements.reserveESimBtn.disabled = true;
-                
+
                 showStatus(elements.esimReserveStatus, "正在预订eSIM...", "success");
-                
+
                 const response = await fetch(apiEndpoints.graphql, {
                     method: 'POST',
                     headers: {
@@ -2712,31 +2712,31 @@
                         operationName: 'reserveESim'
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('GraphQL请求失败:', response.status, errorText);
                     throw new Error(`请求失败: ${response.status} - ${errorText}`);
                 }
-                
+
                 const data = await response.json();
                 console.log('GraphQL响应:', data);
                 if (data.errors) {
                     console.error('GraphQL错误:', data.errors);
                     throw new Error(data.errors[0].message);
                 }
-                
+
                 appState.esimSSN = data.data.reserveESim.esim.ssn;
                 appState.esimActivationCode = data.data.reserveESim.esim.activationCode;
                 appState.esimDeliveryStatus = data.data.reserveESim.esim.deliveryStatus;
-                
+
                 showStatus(elements.esimReserveStatus, `eSIM预订成功！状态：${appState.esimDeliveryStatus || 'RESERVED'}`, "success");
                 updateStatus(); // 更新状态显示
                 saveSession(); // 持久化激活码/SSN
-                
+
                 // 显示eSIM信息和手动激活指导
                 showESIMInfoAndGuide();
-                
+
             } catch (error) {
                 showStatus(elements.esimReserveStatus, "eSIM预订失败：" + error.message, "error");
             } finally {
@@ -2760,11 +2760,11 @@
                         sendBtn.innerHTML = '<span class="loading"></span> 发送中...';
                         sendBtn.disabled = true;
                         showStatus(statusEl, '正在发送短信验证码...', 'success');
-                        
+
                         // 更新：使用GraphQL接口发送短信验证码
                         const response = await fetch(apiEndpoints.graphql, {
                             method: 'POST',
-                            headers: { 
+                            headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': appState.accessToken ? `Bearer ${appState.accessToken}` : undefined
                             },
@@ -2784,27 +2784,27 @@
                                 }`
                             }])
                         });
-                        
+
                         if (!response.ok) {
                             const errorText = await response.text();
                             throw new Error(`发送失败: ${response.status} - ${errorText}`);
                         }
-                        
+
                         const responseData = await response.json();
                         console.log('simSwapMfaChallenge 响应:', responseData);
-                        
+
                         // 处理可能的错误响应
                         if (responseData.errors) {
                             throw new Error(responseData.errors[0].message || '发送验证码失败');
                         }
-                        
+
                         const data = responseData.data;
                         if (!data || !data.simSwapMfaChallenge || !data.simSwapMfaChallenge.ref) {
                             throw new Error('未返回有效的验证码引用');
                         }
-                        
+
                         appState.emailCodeRef = data.simSwapMfaChallenge.ref;
-                        
+
                         // 显示发送成功消息并显示验证码输入区
                         showStatus(statusEl, '验证码已发送，请查收短信。', 'success');
                         const codeSection = document.getElementById('smsCodeInputSection');
@@ -2827,7 +2827,7 @@
                     try {
                         verifyBtn.innerHTML = '<span class="loading"></span> 验证中...';
                         verifyBtn.disabled = true;
-                        
+
                         // 更新：使用新的MFA验证端点
                         const resp = await fetch(apiEndpoints.mfaValidation, {
                             method: 'POST',
@@ -2851,7 +2851,7 @@
                         const data = await resp.json();
                         appState.emailSignature = data.signature || '';
                         showStatus(statusEl, '验证码验证成功，开始自动预订与激活...', 'success');
-                        
+
                         // 预订 eSIM
                         const reserveResp = await fetch(apiEndpoints.graphql, {
                             method: 'POST',
@@ -2897,15 +2897,15 @@
                         }
                         const reserveData = await reserveResp.json();
                         if (reserveData.errors) throw new Error('预订GraphQL错误: ' + reserveData.errors[0].message);
-                        
+
                         appState.esimSSN = reserveData?.data?.reserveESim?.esim?.ssn || appState.esimSSN;
                         appState.esimActivationCode = reserveData?.data?.reserveESim?.esim?.activationCode || appState.esimActivationCode;
                         appState.esimDeliveryStatus = reserveData?.data?.reserveESim?.esim?.deliveryStatus || 'RESERVED';
                         updateStatus();
                         saveSession();
-                        
+
                         showStatus(statusEl, '预订成功，正在完成SIM交换...', 'success');
-                        
+
                         // 执行 swapSim（关键：将预订的新卡生效）
                         // 注意：swapSim 同时需要 mfaSignature 和 mfaRef 两个参数！
                         const swapResp = await fetch(apiEndpoints.graphql, {
@@ -2943,52 +2943,52 @@
                                 }`
                             })
                         });
-                        
+
                         let swapSuccess = false;
                         if (!swapResp.ok) {
                             const errText = await swapResp.text();
                             console.error('SwapSim请求失败:', swapResp.status, errText);
                             throw new Error(`SIM交换失败: ${swapResp.status} - ${errText}`);
                         }
-                        
+
                         const swapData = await swapResp.json();
                         console.log('SwapSim 完整响应:', swapData);
-                        
+
                         if (swapData.errors) {
                             const errMsg = swapData.errors[0]?.message || 'SwapSim失败';
                             console.error('SwapSim GraphQL错误:', swapData.errors);
                             throw new Error(`SIM交换GraphQL错误: ${errMsg}`);
                         }
-                        
+
                         const newSim = swapData?.data?.swapSim?.new;
                         if (!newSim || !newSim.ssn) {
                             throw new Error('SIM交换响应异常，未找到新SIM信息');
                         }
-                        
+
                         // 交换成功，更新状态
                         appState.esimSSN = newSim.ssn;
                         if (newSim.activationCode) appState.esimActivationCode = newSim.activationCode;
                         appState.esimDeliveryStatus = 'ACTIVE';
                         swapSuccess = true;
-                        
+
                         console.log('SIM交换成功:', {
                             oldSSN: swapData?.data?.swapSim?.old?.ssn,
                             newSSN: newSim.ssn,
                             newActivationCode: newSim.activationCode
                         });
-                        
+
                         updateStatus();
                         saveSession();
                         showStatus(statusEl, 'SIM交换成功！正在获取二维码...', 'success');
-                        
+
                         // 只有交换成功才继续获取二维码
                         if (!swapSuccess) {
                             throw new Error('SIM交换未成功，无法获取二维码');
                         }
-                        
+
                         // 等待几秒让系统处理完成
                         await new Promise(r => setTimeout(r, 5000));
-                        
+
                         // 现在尝试获取 LPA（在交换完成后）
                         showStatus(statusEl, '正在获取eSIM二维码...', 'success');
                         let got = false;
@@ -3047,32 +3047,32 @@
             const displayActivationCode = document.getElementById('displayActivationCode');
             const displaySSN = document.getElementById('displaySSN');
             const esimStatusTitle = document.getElementById('esimStatusTitle');
-            
+
             if (esimInfoDisplay && displayActivationCode && displaySSN) {
                 // 显示激活码和SSN
                 displayActivationCode.textContent = appState.esimActivationCode || '未获取';
                 displaySSN.textContent = appState.esimSSN || '未获取';
-                
+
                 // 更新eSIM状态标题
                 if (esimStatusTitle) {
                     const deliveryStatus = appState.esimDeliveryStatus || 'RESERVED';
                     esimStatusTitle.textContent = `您的eSIM信息（状态：${deliveryStatus}）`;
                 }
-                
+
                 // 显示信息区域
                 esimInfoDisplay.style.display = 'block';
-                
+
                 // 重新绑定按钮事件（因为DOM可能已重新创建）
                 const confirmBtn = document.getElementById('confirmActivationBtn');
                 const autoActivateBtn = document.getElementById('autoActivateBtn');
-                
+
                 if (confirmBtn) {
                     confirmBtn.addEventListener('click', function() {
                         // 用户确认已手动激活完成，跳转到第五步
                         showSection(5);
                     });
                 }
-                
+
                 if (autoActivateBtn) {
                     autoActivateBtn.addEventListener('click', autoActivateESim);
                 }
@@ -3157,9 +3157,9 @@
 
                 elements.autoActivateBtn.innerHTML = '<span class="loading"></span> 自动激活中...';
                 elements.autoActivateBtn.disabled = true;
-                
+
                 showStatus(elements.autoActivateStatus, "正在自动激活eSIM...", "success");
-                
+
                 // 调用Netlify Function进行自动激活
                 const response = await fetch(apiEndpoints.autoActivate, {
                     method: 'POST',
@@ -3186,25 +3186,25 @@
                     // 根据返回消息判断是否完全自动化
                     if (result.message.includes('可能需要手动确认')) {
                         showStatus(elements.autoActivateStatus, "激活码验证成功！请手动确认替换SIM，然后点击下方按钮继续。", "warning");
-                        
+
                         // 显示手动确认提示
                         const manualConfirmDiv = document.createElement('div');
                         manualConfirmDiv.className = 'alert alert-info mt-3';
                         manualConfirmDiv.innerHTML = `
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>需要手动确认：</strong>请前往 
-                            <a href="https://www.giffgaff.com/activate" target="_blank">Giffgaff激活页面</a> 
+                            <strong>需要手动确认：</strong>请前往
+                            <a href="https://www.giffgaff.com/activate" target="_blank">Giffgaff激活页面</a>
                             确认替换SIM，完成后点击下方按钮继续。
                         `;
                         elements.autoActivateStatus.appendChild(manualConfirmDiv);
                     } else {
                         showStatus(elements.autoActivateStatus, "eSIM自动激活成功！", "success");
-                        
+
                         // 更新eSIM状态
                         appState.esimDeliveryStatus = 'ACTIVE';
                         updateStatus();
                         saveSession();
-                        
+
                         // 延迟跳转到下一步
                         setTimeout(() => {
                             showSection(5);
@@ -3213,7 +3213,7 @@
                 } else {
                     throw new Error(result.message || '激活失败');
                 }
-                
+
             } catch (error) {
                 console.error('自动激活错误:', error);
                 showStatus(elements.autoActivateStatus, `自动激活失败：${error.message}。请尝试手动激活。`, "error");
@@ -3228,9 +3228,9 @@
             try {
                 elements.getESimTokenBtn.innerHTML = '<span class="loading"></span> 获取中...';
                 elements.getESimTokenBtn.disabled = true;
-                
+
                 showStatus(elements.tokenStatus, "正在获取eSIM下载代码...", "success");
-                
+
                 const response = await fetch(apiEndpoints.graphql, {
                     method: 'POST',
                     headers: {
@@ -3254,28 +3254,28 @@
                         operationName: 'eSimDownloadToken'
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('GraphQL请求失败:', response.status, errorText);
                     throw new Error(`请求失败: ${response.status} - ${errorText}`);
                 }
-                
+
                 const data = await response.json();
                 console.log('GraphQL响应:', data);
                 if (data.errors) {
                     console.error('GraphQL错误:', data.errors);
                     throw new Error(data.errors[0].message);
                 }
-                
+
                 appState.lpaString = data.data.eSimDownloadToken.lpaString;
-                
+
                 showStatus(elements.tokenStatus, "eSIM下载代码获取成功！", "success");
                 updateStatus(); // 更新状态显示
-                
+
                 // 显示结果
                 showESimResult();
-                
+
             } catch (error) {
                 showStatus(elements.tokenStatus, "获取eSIM下载代码失败：" + error.message, "error");
             } finally {
@@ -3287,13 +3287,13 @@
         // 显示eSIM结果
         function showESimResult() {
             if (!appState.lpaString) return;
-            
+
             // 显示结果容器
             elements.resultContainer.classList.add('active');
-            
+
             // 生成二维码
             generateQRCode(appState.lpaString);
-            
+
             // 显示eSIM信息
             elements.esimInfo.innerHTML = `
                 <div class="mb-3">
@@ -3313,18 +3313,18 @@
                     请立即保存这些信息，页面关闭后将无法再次查看！
                 </div>
             `;
-            
+
             // 添加复制功能
             document.getElementById('copyLpaBtn').addEventListener('click', () => {
                 copyToClipboard(appState.lpaString);
                 showToast('LPA字符串已复制到剪贴板');
             });
-            
+
             // 添加下载功能
             document.getElementById('downloadQrBtn').addEventListener('click', () => {
                 downloadQRCode();
             });
-            
+
             // 滚动到结果
             setTimeout(() => {
                 elements.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3442,7 +3442,7 @@
         function downloadQRCode() {
             const img = elements.qrcode.querySelector('img');
             if (!img) return;
-            
+
             const link = document.createElement('a');
             link.href = img.src;
             link.download = 'giffgaff_esim_qrcode.png';
@@ -3459,13 +3459,13 @@
                     ${message}
                 </div>
             `;
-            
+
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.classList.add('show');
             }, 10);
-            
+
             setTimeout(() => {
                 toast.classList.remove('show');
                 setTimeout(() => {
@@ -3504,16 +3504,16 @@
                 z-index: 1000;
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             }
-            
+
             .toast-notification.show {
                 opacity: 1;
             }
-            
+
             .toast-content {
                 display: flex;
                 align-items: center;
             }
-            
+
             .toast-content i {
                 color: #4cc9f0;
                 font-size: 18px;
@@ -3529,31 +3529,31 @@
             const now = new Date();
             const currentHour = now.getHours();
             const currentMinute = now.getMinutes();
-            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' +
                               now.getMinutes().toString().padStart(2, '0');
             // 英国当前时间（伦敦时区）
             const ukTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
-            
+
             // 更新当前时间显示
             const timeElement = document.getElementById('currentTime');
             timeElement.textContent = currentTime;
             // 同步小字英国时间
             const ukHint = document.getElementById('ukTimeHint');
             if (ukHint) ukHint.textContent = `英国时间 ${ukTime}`;
-            
+
             // 添加时间更新动画
             timeElement.style.animation = 'none';
             timeElement.offsetHeight; // 触发重排
             timeElement.style.animation = 'time-update 0.5s ease-out';
-            
+
             // 统一使用同一逻辑判断当前是否在服务时段
             const isOutsideServiceTime = !isServiceTimeAvailable();
-            
+
             const alertElement = document.getElementById('serviceTimeAlert');
             const iconElement = document.getElementById('serviceTimeIcon');
             const messageElement = document.getElementById('serviceTimeMessage');
             const actionMessageElement = document.getElementById('actionMessage');
-            
+
             if (isOutsideServiceTime) {
                 // 在服务时间外，显示警告
                 alertElement.className = 'alert alert-warning mb-4';
@@ -3572,7 +3572,7 @@
                 actionMessageElement.style.display = 'block';
             }
         }
-        
+
         // 页面加载完成后的初始化
         document.addEventListener('DOMContentLoaded', function() {
             // Step4 卡片选择交互（与第一步UI一致）
@@ -3602,7 +3602,7 @@
                 });
             })();
             console.log('Giffgaff eSIM申请工具已加载');
-            
+
             // 初始化服务时间检查（立即渲染一次）
             checkServiceTime();
 
@@ -3612,14 +3612,14 @@
                 checkServiceTime();
                 setInterval(checkServiceTime, 60000);
             }, msToNextMinute);
-            
+
             // 尝试恢复之前的会话
             const sessionRestored = loadSession();
-            
+
             if (!sessionRestored) {
                 showSection(1);
             }
-            
+
             updateStatus(); // 初始化状态显示
 
             // 若已存在激活码/SSN，提示是否继续激活流程
@@ -3689,12 +3689,12 @@
             }
         });
     </script>
-    
+
     <!-- 验证码加载脚本 -->
     <script type="module" src="/src/js/captcha-client.js"></script>
     <!-- 性能优化脚本 -->
     <script src="/src/js/performance.js"></script>
-    
+
     <!-- 网络状态指示器样式 -->
     <style>
         .network-status {
@@ -3710,19 +3710,19 @@
             transform: translateX(100%);
             transition: transform 0.3s ease;
         }
-        
+
         .network-status.success {
             background: linear-gradient(135deg, #10b981, #059669);
         }
-        
+
         .network-status.warning {
             background: linear-gradient(135deg, #f59e0b, #d97706);
         }
-        
+
         .network-status.show {
             transform: translateX(0);
         }
-        
+
         .update-notification {
             position: fixed;
             bottom: 20px;
@@ -3735,18 +3735,18 @@
             z-index: 10000;
             max-width: 300px;
         }
-        
+
         .notification-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        
+
         .touch-active {
             transform: scale(0.98) !important;
             transition: transform 0.1s ease !important;
         }
-        
+
         /* 加载状态样式 */
         .loading-content {
             background: white;
@@ -3755,13 +3755,13 @@
             text-align: center;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
-        
+
         .loading-content p {
             margin: 0;
             color: #6b7280;
             font-weight: 500;
         }
-        
+
         /* ===== 服务时间提醒：新版布局与美化 ===== */
         :root {
           --st-gap: 20px;
@@ -3838,14 +3838,14 @@
           width: 100%;
           padding: 0;
         }
-        
+
         /* 新增：使图标在左侧垂直居中 */
         .service-time-layout {
           display: flex;
           align-items: center;
           gap: 24px;
         }
-        
+
         .service-time-icon-section {
           display: flex;
           align-items: center;
@@ -3879,7 +3879,7 @@
         }
 
         #serviceTimeIcon.warning {
-          background: #e6f6ee; 
+          background: #e6f6ee;
           color: #10b981;
           box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
           animation: breathing-light-green 2s ease-in-out infinite;
@@ -4136,7 +4136,7 @@
           }
           .time-card-value { font-size: 24px; } /* 保持相对更醒目 */
         }
-        
+
         @keyframes pulse-glow {
             0%, 100% {
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -4145,7 +4145,7 @@
                 box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
             }
         }
-        
+
         @keyframes time-update {
             0% {
                 transform: scale(1);
@@ -4157,16 +4157,16 @@
                 transform: scale(1);
             }
         }
-        
+
         /* 服务时间图标动画 */
         #serviceTimeIcon {
             transition: all 0.3s ease;
         }
-        
+
         #serviceTimeIcon:hover {
             transform: scale(1.1);
         }
-        
+
         /* 警告状态特殊样式 */
         .alert-warning #serviceTimeIcon {
             animation: warning-pulse 2s ease-in-out infinite;
@@ -4174,7 +4174,7 @@
             color: #f59d06;      /* 警告态主色 */
             box-shadow: inset 0 0 0 2px rgba(245,158,11,0.15);
         }
-        
+
         @keyframes warning-pulse {
             0%, 100% {
                 transform: scale(1);
@@ -4183,7 +4183,7 @@
                 transform: scale(1.05);
             }
         }
-        
+
         /* 成功状态特殊样式 */
         .alert-success #serviceTimeIcon {
             animation: breathing-light-green 2s ease-in-out infinite;
@@ -4191,7 +4191,7 @@
             color: #10b981;      /* 成功态主色 */
             box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
         }
-        
+
         @keyframes success-bounce {
             0%, 100% {
                 transform: scale(1);
@@ -4203,12 +4203,12 @@
                 transform: scale(1.02);
             }
         }
-        
+
         /* 动画优化 */
         .animate-in {
             animation: fadeInUp 0.6s ease-out;
         }
-        
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -4220,7 +4220,7 @@
             }
         }
     </style>
-    
+
     <script type="module" src="/src/js/bootstrap-footer.js"></script>
 </body>
 </html>
