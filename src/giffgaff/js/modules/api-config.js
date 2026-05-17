@@ -21,16 +21,16 @@ export const oauthConfig = {
  */
 export function getApiEndpoints() {
     const isNetlify = isNetlifyEnvironment();
-    
+
     return {
-        mfaChallenge: isNetlify 
-            ? "/bff/giffgaff-mfa-challenge" 
+        mfaChallenge: isNetlify
+            ? "/bff/giffgaff-mfa-challenge"
             : "https://id.giffgaff.com/v4/mfa/challenge/me",
-        mfaValidation: isNetlify 
-            ? "/bff/giffgaff-mfa-validation" 
+        mfaValidation: isNetlify
+            ? "/bff/giffgaff-mfa-validation"
             : "https://id.giffgaff.com/v4/mfa/validation",
-        graphql: isNetlify 
-            ? "/bff/giffgaff-graphql" 
+        graphql: isNetlify
+            ? "/bff/giffgaff-graphql"
             : "https://publicapi.giffgaff.com/gateway/graphql",
         cookieVerify: "/bff/verify-cookie",
         autoActivate: "/bff/auto-activate-esim",
@@ -55,7 +55,7 @@ export const graphqlQueries = {
             __typename
         }
     }`,
-    
+
     reserveESim: `mutation reserveESim($input: ESimReservationInput!) {
         reserveESim: reserveESim(input: $input) {
             id
@@ -73,7 +73,7 @@ export const graphqlQueries = {
             __typename
         }
     }`,
-    
+
     eSimDownloadToken: `query eSimDownloadToken($ssn: String!) {
         eSimDownloadToken(ssn: $ssn) {
             id
@@ -83,7 +83,7 @@ export const graphqlQueries = {
             __typename
         }
     }`,
-    
+
     simSwapMfaChallenge: `mutation simSwapMfaChallenge {
         simSwapMfaChallenge {
             ref
@@ -95,9 +95,9 @@ export const graphqlQueries = {
             __typename
         }
     }`,
-    
-    swapSim: `mutation SwapSim($activationCode: String!, $mfaSignature: String!, $mfaRef: String!) {
-        swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature, mfaRef: $mfaRef) {
+
+    swapSim: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
+        swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
             old {
                 ssn
                 activationCode

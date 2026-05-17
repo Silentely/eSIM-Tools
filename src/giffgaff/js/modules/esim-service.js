@@ -154,10 +154,10 @@ export class ESimService {
                     operationName: "SwapSim",
                     variables: {
                         activationCode,
-                        mfaSignature,
-                        mfaRef
+                        mfaSignature
                     },
-                    query: graphqlQueries.swapSim
+                    query: graphqlQueries.swapSim,
+                    mfaRef
                 })
             });
 

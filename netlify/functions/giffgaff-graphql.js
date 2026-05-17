@@ -93,6 +93,11 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     operationName: operationName || null
   };
 
+  // swapSim 需要 mfaRef 作为顶层字段（Giffgaff schema 要求）
+  if (mfaRef) {
+    graphqlBody.mfaRef = mfaRef;
+  }
+
   // 供失败时刷新令牌使用的 verify-cookie 地址
   const hostHdr = lowerCaseHeaders['x-forwarded-host'] || lowerCaseHeaders['host'] || '';
   const protoHdr = lowerCaseHeaders['x-forwarded-proto'] || 'https';
