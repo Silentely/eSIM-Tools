@@ -27,17 +27,6 @@
   to = "/src/simyo/simyo_modular.html"
   status = 200
 
-# Legacy 页面重定向到 Modular 版本（废弃 Legacy 前端）
-[[redirects]]
-  from = "/src/giffgaff/giffgaff_complete_esim.html"
-  to = "/src/giffgaff/giffgaff_modular.html"
-  status = 301
-
-[[redirects]]
-  from = "/src/simyo/simyo_complete_esim.html"
-  to = "/src/simyo/simyo_modular.html"
-  status = 301
-
 [[redirects]]
   # 根路径重定向到选择页面
   from = "/"
