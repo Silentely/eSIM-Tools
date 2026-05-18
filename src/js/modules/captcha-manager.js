@@ -9,6 +9,8 @@ class CaptchaManager {
     this.recaptchaWidgetId = null;
     this.recaptchaReadyResolver = null;
     this.recaptchaReadyPromise = null;
+    this.recaptchaErrorCount = 0;
+    this.recaptchaMaxRetries = 3;
   }
 
   async init() {
@@ -70,13 +72,19 @@ class CaptchaManager {
           size: 'invisible',
           callback: (token) => {
             this.storeToken(token);
+            this.recaptchaErrorCount = 0;
           },
           'expired-callback': () => {
             this.storeToken(undefined);
             this.executeRecaptcha();
           },
           'error-callback': () => {
-            setTimeout(() => this.executeRecaptcha(), 1000);
+            this.recaptchaErrorCount++;
+            if (this.recaptchaErrorCount <= this.recaptchaMaxRetries) {
+              setTimeout(() => this.executeRecaptcha(), 1000);
+            } else {
+              console.warn('[CaptchaManager] reCAPTCHA 连续失败次数超限，停止重试');
+            }
           }
         });
         this.executeRecaptcha();
