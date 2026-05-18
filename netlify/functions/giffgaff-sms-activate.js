@@ -195,12 +195,13 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       swapRef = ch.data?.data?.simSwapMfaChallenge?.ref || null;
     } catch (_) {}
 
+    const effectiveSwapRef = swapRef || ref;
     const swapBody = {
-      query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) { swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) { old { ssn activationCode __typename } new { ssn activationCode __typename } __typename } }`,
-      variables: { activationCode: currentActivationCode, mfaSignature },
+      query: `mutation SwapSim($activationCode: String!, $mfaSignature: String!, $mfaRef: String!) { swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature, mfaRef: $mfaRef) { old { ssn activationCode __typename } new { ssn activationCode __typename } __typename } }`,
+      variables: { activationCode: currentActivationCode, mfaSignature, mfaRef: effectiveSwapRef },
       operationName: 'SwapSim'
     };
-    const rs = await createGraphql(accessToken)({ ...swapBody, mfaRef: swapRef || ref });
+    const rs = await createGraphql(accessToken)({ ...swapBody, mfaRef: effectiveSwapRef });
     const sw = rs.data?.data?.swapSim;
     if (sw?.new?.ssn) {
       currentSSN = sw.new.ssn;

@@ -161,7 +161,8 @@ export class ESimService {
                     operationName: "SwapSim",
                     variables: {
                         activationCode,
-                        mfaSignature
+                        mfaSignature,
+                        mfaRef: normalizedMfaRef
                     },
                     query: graphqlQueries.swapSim,
                     mfaRef: normalizedMfaRef || undefined

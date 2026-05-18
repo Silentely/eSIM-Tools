@@ -96,8 +96,8 @@ export const graphqlQueries = {
         }
     }`,
 
-    swapSim: `mutation SwapSim($activationCode: String!, $mfaSignature: String!) {
-        swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature) {
+    swapSim: `mutation SwapSim($activationCode: String!, $mfaSignature: String!, $mfaRef: String!) {
+        swapSim(activationCode: $activationCode, mfaSignature: $mfaSignature, mfaRef: $mfaRef) {
             old {
                 ssn
                 activationCode

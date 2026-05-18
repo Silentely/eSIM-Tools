@@ -112,6 +112,13 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     throw new AuthError('swapSim 缺少 mfaRef（MFA challenge reference）', 400);
   }
 
+  if (isSwap) {
+    graphqlBody.variables = {
+      ...(graphqlBody.variables || {}),
+      mfaRef: resolvedMfaRef
+    };
+  }
+
   // 供失败时刷新令牌使用的 verify-cookie 地址
   const hostHdr = lowerCaseHeaders['x-forwarded-host'] || lowerCaseHeaders['host'] || '';
   const protoHdr = lowerCaseHeaders['x-forwarded-proto'] || 'https';
