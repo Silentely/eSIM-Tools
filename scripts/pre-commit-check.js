@@ -56,6 +56,10 @@ function getStagedFiles() {
   return output.split('\0').filter(Boolean);
 }
 
+/**
+ * Get the list of protected file paths that currently have staged changes.
+ * @returns {string[]} Array of relative paths for protected files that are staged; empty if none.
+ */
 function getTouchedProtectedFiles() {
   const output = git([
     'diff',
@@ -68,39 +72,11 @@ function getTouchedProtectedFiles() {
   return output.split('\0').filter(Boolean);
 }
 
-function getUpstreamRef() {
-  try {
-    return git([
-      'rev-parse',
-      '--abbrev-ref',
-      '--symbolic-full-name',
-      '@{u}'
-    ]).trim();
-  } catch (_) {
-    return '';
-  }
-}
-
-function syncWithRemote() {
-  const upstreamRef = getUpstreamRef();
-  if (!upstreamRef) {
-    console.log('ℹ️ 当前分支未配置 upstream，跳过远程同步');
-    return;
-  }
-
-  console.log(`🔄 提交前同步远程更新（${upstreamRef}）...`);
-  try {
-    git(['pull', '--rebase', '--autostash', '--quiet'], {
-      stdio: 'inherit'
-    });
-    console.log('✅ 远程更新同步完成');
-  } catch (_) {
-    console.error('\n❌ pre-commit 远程同步失败：');
-    console.error('  - 请先手动执行 `git pull --rebase` 解决冲突后再提交。');
-    process.exit(1);
-  }
-}
-
+/**
+ * Determine whether a file should be normalized (text formatting enforced) based on its path.
+ * @param {string} relPath - File path relative to the repository root.
+ * @returns {boolean} `true` if the file extension is in TEXT_EXTENSIONS or the basename is `.gitignore` or `.gitattributes`, `false` otherwise.
+ */
 function shouldFormat(relPath) {
   const ext = path.extname(relPath).toLowerCase();
   if (TEXT_EXTENSIONS.has(ext)) {
@@ -210,6 +186,19 @@ function runChecks(stagedFiles) {
   return failures;
 }
 
+/**
+ * Run pre-commit validation and normalization for staged files, aborting the commit on violations.
+ *
+ * Checks for changes to protected files and exits with status 1 if any are touched. If there are no
+ * staged files, exits with status 0. For staged text files, normalizes line endings, trims trailing
+ * whitespace, ensures a trailing newline, writes changes back to the working tree and re-stages them.
+ * Then validates staged JavaScript and JSON files for smart-quote characters and syntax errors;
+ * any validation failures are printed and cause an exit with status 1. On success, prints a pass message.
+ *
+ * Exit codes:
+ * - 0: no staged files (early exit) or checks passed
+ * - 1: protected file touched or one or more validation failures
+ */
 function main() {
   const touchedProtectedFiles = PROTECTED_FILES.length > 0 ? getTouchedProtectedFiles() : [];
   if (touchedProtectedFiles.length > 0) {
@@ -220,8 +209,6 @@ function main() {
     console.error('  - 如确需调整，请改为维护对应 modular 版本文件。');
     process.exit(1);
   }
-
-  syncWithRemote();
 
   const stagedFiles = getStagedFiles();
   if (stagedFiles.length === 0) {

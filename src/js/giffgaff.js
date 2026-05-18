@@ -1,6 +1,6 @@
 /**
  * Giffgaff eSIM 工具 - 主入口文件
- * 
+ *
  * 这个文件负责初始化 Giffgaff eSIM 管理应用
  * 所有业务逻辑已经模块化到 modules/giffgaff/ 目录下
  */
@@ -16,7 +16,7 @@ import './modules/sentry-init.js';
 // 导入性能优化模块
 import './performance.js';
 import { autoInjectFooter } from './modules/footer.js';
-import captchaManager from './modules/captcha-manager.js';
+import Logger from './modules/logger.js';
 
 // 导入 Giffgaff 应用主模块
 import giffgaffApp from './modules/giffgaff/app.js';
@@ -25,14 +25,9 @@ import giffgaffApp from './modules/giffgaff/app.js';
 window.giffgaffApp = giffgaffApp;
 window.app = giffgaffApp; // 简写别名
 
-// 生产环境不打印冗余日志
-
-// 初始化验证码管理
-try {
-  captchaManager.init();
-} catch (error) {
-  console.error('[Giffgaff Entry] captcha init failed', error);
-}
+// 输出环境信息
+Logger.env();
+Logger.log('[Giffgaff Entry] 应用启动');
 
 // 导出应用实例
 export default giffgaffApp;

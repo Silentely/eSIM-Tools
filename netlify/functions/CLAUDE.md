@@ -73,9 +73,8 @@ const schema = {
 ```javascript
 {
   code: string,            // 授权码
-  code_verifier: string,   // PKCE Verifier
-  redirect_uri: string,    // 回调 URL
-  turnstileToken: string   // 验证码 Token
+  code_verifier: string,   // PKVE Verifier
+  redirect_uri: string     // 回调 URL
 }
 ```
 
