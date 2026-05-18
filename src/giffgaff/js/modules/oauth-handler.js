@@ -91,8 +91,8 @@ export class OAuthHandler {
                 throw new Error(t('giffgaff.oauth.errors.missingCode'));
             }
 
-            Logger.log(t('giffgaff.oauth.log.codeFound'), code);
-            Logger.log(t('giffgaff.oauth.log.stateFound'), state);
+            Logger.log(t('giffgaff.oauth.log.codeFound'), code ? 'hasCode=true' : 'hasCode=false');
+            Logger.log(t('giffgaff.oauth.log.stateFound'), state ? 'hasState=true' : 'hasState=false');
 
             // 恢复code verifier
             let codeVerifier = stateManager.get('codeVerifier');

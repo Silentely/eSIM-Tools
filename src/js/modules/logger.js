@@ -92,13 +92,16 @@ class Logger {
   }
 
   /**
-   * 输出环境信息（启动时调用一次，仅开发环境）
+   * 输出环境信息（启动时调用一次）
    */
   static env() {
-    if (!isDev || typeof window === 'undefined') return;
-    console.log('[ENV]', {
+    if (!isDev) return;
+    if (typeof window === 'undefined') return;
+    this.log('[ENV]', {
       timestamp: new Date().toISOString(),
       hostname: window.location.hostname,
+      isDev,
+      userAgent: navigator.userAgent.substring(0, 80),
       language: navigator.language,
       platform: navigator.platform
     });
