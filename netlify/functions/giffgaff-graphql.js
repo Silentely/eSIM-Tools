@@ -29,6 +29,10 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     Object.entries(event.headers || {}).map(([k, v]) => [String(k).toLowerCase(), v])
   );
   const authHeader = lowerCaseHeaders['authorization'] || '';
+  const headerMfaRefRaw = lowerCaseHeaders['x-mfa-ref'] || lowerCaseHeaders['x-mfa-challenge-ref'] || '';
+  const headerMfaRef = typeof headerMfaRefRaw === 'string' ? headerMfaRefRaw.trim() : '';
+  const bodyMfaRef = typeof mfaRef === 'string' ? mfaRef.trim() : '';
+  const resolvedMfaRef = bodyMfaRef || headerMfaRef;
   let accessToken = body.accessToken;
   if (!accessToken && authHeader.startsWith('Bearer ')) {
     accessToken = authHeader.slice(7);
@@ -94,8 +98,8 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   };
 
   // swapSim 需要 mfaRef 作为顶层字段（Giffgaff schema 要求）
-  if (mfaRef) {
-    graphqlBody.mfaRef = mfaRef;
+  if (resolvedMfaRef) {
+    graphqlBody.mfaRef = resolvedMfaRef;
   }
 
   // 供失败时刷新令牌使用的 verify-cookie 地址

@@ -138,15 +138,22 @@ export class ESimService {
     async swapSim(activationCode, mfaSignature, mfaRef) {
         try {
             const state = stateManager.getState();
+            const normalizedMfaRef = typeof mfaRef === 'string' ? mfaRef.trim() : '';
+            const requestHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.accessToken}`,
+                'X-MFA-Signature': mfaSignature,
+                'X-CF-Turnstile': window.__cfTurnstileToken || ''
+            };
+
+            if (normalizedMfaRef) {
+                requestHeaders['X-MFA-Ref'] = normalizedMfaRef;
+                requestHeaders['X-MFA-Challenge-Ref'] = normalizedMfaRef;
+            }
 
             const response = await fetch(this.apiEndpoints.graphql, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${state.accessToken}`,
-                    'X-MFA-Signature': mfaSignature,
-                    'X-CF-Turnstile': window.__cfTurnstileToken || ''
-                },
+                headers: requestHeaders,
                 body: JSON.stringify({
                     accessToken: state.accessToken,
                     mfaSignature: mfaSignature,
@@ -157,7 +164,7 @@ export class ESimService {
                         mfaSignature
                     },
                     query: graphqlQueries.swapSim,
-                    mfaRef
+                    mfaRef: normalizedMfaRef || undefined
                 })
             });
 
@@ -312,10 +319,12 @@ export class ESimService {
      */
     async smsActivateFlow(smsCode) {
         try {
-            const state = stateManager.getState();
-
             // 1. 验证短信验证码
             const mfaResult = await this.validateMFACodeForSwap(smsCode);
+            const swapMfaRef = (mfaResult.ref || stateManager.get('emailCodeRef') || '').trim();
+            if (!swapMfaRef) {
+                throw new Error(t('giffgaff.mfa.errors.missingRef'));
+            }
 
             // 2. 预订eSIM
             const reserveResult = await this.reserveESim();
@@ -324,7 +333,7 @@ export class ESimService {
             const swapResult = await this.swapSim(
                 reserveResult.data.esim.activationCode,
                 mfaResult.signature,
-                state.emailCodeRef
+                swapMfaRef
             );
 
             // 4. 获取LPA（轮询）
@@ -370,6 +379,11 @@ export class ESimService {
      */
     async validateMFACodeForSwap(code) {
         const state = stateManager.getState();
+        const ref = (state.emailCodeRef || '').trim();
+
+        if (!ref) {
+            throw new Error(t('giffgaff.mfa.errors.missingRef'));
+        }
 
         const response = await fetch(this.apiEndpoints.mfaValidation, {
             method: 'POST',
@@ -381,7 +395,7 @@ export class ESimService {
             body: JSON.stringify({
                 accessToken: state.accessToken,
                 cookie: stateManager.getCookie() || undefined,
-                ref: state.emailCodeRef,
+                ref,
                 code,
                 turnstileToken: window.__cfTurnstileToken || ''
             })
@@ -397,9 +411,12 @@ export class ESimService {
 
         const data = await response.json();
         const signature = data.signature || '';
+        if (!signature) {
+            throw new Error(t('giffgaff.mfa.errors.missingSignature'));
+        }
         stateManager.set('emailSignature', signature);
 
-        return { success: true, signature };
+        return { success: true, signature, ref };
     }
 }
 
