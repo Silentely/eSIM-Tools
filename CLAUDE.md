@@ -41,7 +41,7 @@ eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simy
 
 1. **无框架设计**: 使用原生 JavaScript 避免框架依赖，保持最小打包体积
 2. **Serverless 优先**: 所有后端逻辑通过 Netlify Functions 实现
-3. **BFF 模式**: Edge Functions 作为 Backend-For-Frontend 代理层，注入 ACCESS_KEY 并验证验证码
+3. **BFF 模式**: Edge Functions 作为 Backend-For-Frontend 代理层，注入 ACCESS_KEY 并转发请求
 4. **中间件统一**: 通过 `withAuth` 中间件统一处理鉴权、CORS、验证
 5. **双入口架构**: 同时维护 legacy (HTML 内联) 和 modular (Webpack 打包) 两套前端
 
@@ -112,7 +112,7 @@ graph TD
 | **Simyo 前端** | `src/js/modules/simyo/` | Simyo eSIM 管理流程 (登录/设备更换/激活) | JavaScript |
 | **通用工具** | `src/js/modules/` | 可复用前端工具模块 (日志/存储/安全/性能) | JavaScript |
 | **Netlify Functions** | `netlify/functions/` | Serverless 后端逻辑 (11 个函数) | JavaScript (Node.js) |
-| **Edge Functions** | `netlify/edge-functions/` | BFF 代理层 (密钥注入 + 验证码验证) | JavaScript (Deno) |
+| **Edge Functions** | `netlify/edge-functions/` | BFF 代理层 (密钥注入 + 请求转发) | JavaScript (Deno) |
 | **构建脚本** | `scripts/` | 构建、质量检查、安全扫描 (22 个脚本) | JavaScript/Shell |
 | **测试** | `tests/` | 单元测试 (Jest + jsdom) | JavaScript |
 | **文档** | `docs/` | 使用指南、API 参考、修复记录 | Markdown |
@@ -170,7 +170,7 @@ npm run test:coverage    # 生成覆盖率报告
 | `ALLOWED_ORIGIN` | 是 | CORS 允许来源 (默认 https://esim.cosr.eu.org) |
 | `GIFFGAFF_CLIENT_ID` | 是 | Giffgaff OAuth Client ID |
 | `GIFFGAFF_CLIENT_SECRET` | 是 | Giffgaff OAuth Client Secret (Base64) |
-| `CAPTCHA_PROVIDER` | 否 | 验证码提供商 (turnstile/recaptcha/off) |
+| `CAPTCHA_PROVIDER` | 否 | 验证码提供商 (recaptcha/off，默认 off) |
 | `SENTRY_DSN` | 否 | Sentry 错误监控 DSN |
 | `NODE_ENV` | 否 | 环境 (development/production) |
 
