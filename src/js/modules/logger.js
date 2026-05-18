@@ -95,8 +95,9 @@ class Logger {
    * 输出环境信息（启动时调用一次）
    */
   static env() {
+    if (!isDev) return;
     if (typeof window === 'undefined') return;
-    console.log('[ENV]', {
+    this.log('[ENV]', {
       timestamp: new Date().toISOString(),
       hostname: window.location.hostname,
       isDev,

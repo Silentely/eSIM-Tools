@@ -15,6 +15,7 @@ import {
     delay
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
+import captchaManager from '../../js/modules/captcha-manager.js';
 
 class SimyoApp {
     constructor() {
@@ -28,6 +29,9 @@ class SimyoApp {
         if (this.initialized) return;
 
         console.log(t('simyo.app.console.initStart'));
+
+        // 初始化验证码
+        await captchaManager.init();
 
         // 订阅状态变化
         stateManager.subscribe((state) => {
