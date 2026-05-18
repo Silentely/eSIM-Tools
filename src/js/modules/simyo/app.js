@@ -2,6 +2,7 @@
  * Simyo eSIM 应用控制器
  */
 
+import Logger from '../logger.js';
 import apiManager from './api.js';
 import HTMLSanitizer from '../html-sanitizer.js';
 import SecureStorage from '../secure-storage.js';
@@ -25,14 +26,15 @@ class SimyoApp {
    */
   async init() {
     if (this.initialized) return;
+    Logger.log('[SimyoApp] init: 开始初始化');
 
     try {
       this.bindEventListeners();
       this.loadSession();
       this.initialized = true;
-      // 初始化完成
+      Logger.log('[SimyoApp] init: 初始化完成');
     } catch (error) {
-      console.error('初始化失败:', error);
+      Logger.error('[SimyoApp] init: 初始化失败', error);
     }
   }
 
@@ -40,6 +42,7 @@ class SimyoApp {
    * 绑定事件监听器
    */
   bindEventListeners() {
+    Logger.log('[SimyoApp] bindEventListeners: 绑定事件监听器');
     // 登录
     const loginBtn = document.getElementById('simyoLoginBtn');
     if (loginBtn) {
@@ -75,6 +78,7 @@ class SimyoApp {
    * 处理登录
    */
   async handleLogin() {
+    Logger.log('[SimyoApp] handleLogin: 开始登录');
     try {
       const usernameEl = document.getElementById('simyoUsername');
       const passwordEl = document.getElementById('simyoPassword');
@@ -111,6 +115,7 @@ class SimyoApp {
    * 发送短信验证码
    */
   async handleSendSMS() {
+    Logger.log('[SimyoApp] handleSendSMS: 发送短信验证码');
     try {
       if (!this.state.token) {
         this.showStatus('smsStatus', '请先登录', 'error');
@@ -139,6 +144,7 @@ class SimyoApp {
    * 验证短信验证码
    */
   async handleVerifySMS() {
+    Logger.log('[SimyoApp] handleVerifySMS: 验证短信验证码');
     try {
       const codeEl = document.getElementById('smsCode');
       const code = codeEl ? codeEl.value : undefined;
@@ -169,6 +175,7 @@ class SimyoApp {
    * 处理设备更换
    */
   async handleDeviceChange() {
+    Logger.log('[SimyoApp] handleDeviceChange: 处理设备更换');
     try {
       if (!this.state.token) {
         this.showStatus('deviceStatus', '请先完成认证', 'error');
@@ -200,6 +207,7 @@ class SimyoApp {
    * 确认安装
    */
   async handleConfirmInstall() {
+    Logger.log('[SimyoApp] handleConfirmInstall: 确认安装');
     try {
       if (!this.state.token || !this.state.esimData) {
         this.showStatus('installStatus', '请先完成设备更换', 'error');

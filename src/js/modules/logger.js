@@ -90,6 +90,21 @@ class Logger {
       console.table(data);
     }
   }
+
+  /**
+   * 输出环境信息（启动时调用一次）
+   */
+  static env() {
+    if (typeof window === 'undefined') return;
+    console.log('[ENV]', {
+      timestamp: new Date().toISOString(),
+      hostname: window.location.hostname,
+      isDev,
+      userAgent: navigator.userAgent.substring(0, 80),
+      language: navigator.language,
+      platform: navigator.platform
+    });
+  }
 }
 
 // 导出

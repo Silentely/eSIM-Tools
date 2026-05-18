@@ -1,7 +1,2 @@
-import captchaManager from './modules/captcha-manager.js';
-
-try {
-  captchaManager.init();
-} catch (error) {
-  console.error('[CaptchaClient] 初始化失败', error);
-}
+// 验证码客户端 - 已禁用，保留模块兼容性
+// CaptchaManager 通过 main.js / giffgaff.js 统一初始化
