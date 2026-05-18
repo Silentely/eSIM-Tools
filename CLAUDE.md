@@ -44,7 +44,7 @@ eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simy
 2. **Serverless 优先**: 所有后端逻辑通过 Netlify Functions 实现
 3. **BFF 模式**: Edge Functions 作为 Backend-For-Frontend 代理层，注入 ACCESS_KEY 并转发请求
 4. **中间件统一**: 通过 `withAuth` 中间件统一处理鉴权、CORS、验证
-5. **Legacy 架构**: 前端采用 Legacy 模块化架构 (HTML + ES6 模块)，通过 Webpack 打包入口文件
+5. **Legacy 架构**: 前端采用 Legacy 模块化架构 (HTML + ES6 模块)，通过 ES6 import 按需加载
 
 ### 部署流程
 
@@ -202,7 +202,7 @@ npm run test:coverage    # 生成覆盖率报告
 ## AI 使用指引
 
 1. **修改 Functions 时**: 必须通过 `withAuth` 中间件包装 handler
-2. **修改前端模块时**: 注意 Webpack 别名 `@modules`, `@utils`
+2. **修改前端模块时**: 使用相对路径导入模块
 3. **添加新 Function 时**: 在 `server.js` 中注册 Express 路由 (本地开发)
 4. **测试变更时**: 运行 `npm test` 确保通过
 5. **部署前**: 运行 `npm run quality-check && npm run security-check`
