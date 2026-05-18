@@ -8,7 +8,7 @@
 
 ## 测试框架
 
-- **框架**: Jest 29.7.0
+- **框架**: Jest 30.3.0
 - **环境**: jsdom (模拟浏览器)
 - **配置**: `jest.config.js`
 - **Mock**: `tests/__mocks__/` (styleMock.js, fileMock.js)

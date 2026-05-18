@@ -387,32 +387,6 @@ async functionName(param1) {
 }
 ```
 
-## 🚀 渐进式重构计划
-
-### 阶段1：基础设施层
-1. ✅ 创建目录结构
-2. ⏳ 实现 state-manager.js
-3. ⏳ 实现 api-config.js
-4. ⏳ 实现 utils.js
-
-### 阶段2：服务层
-1. ⏳ 实现 auth-handler.js
-2. ⏳ 实现 device-change-handler.js
-3. ⏳ 实现 esim-service.js
-
-### 阶段3：UI层
-1. ⏳ 实现 ui-controller.js
-2. ⏳ 提取CSS到独立文件
-
-### 阶段4：应用层
-1. ⏳ 实现 simyo-app.js
-2. ⏳ 创建 simyo_modular.html
-
-### 阶段5：测试与优化
-1. ⏳ 功能测试
-2. ⏳ 性能优化
-3. ⏳ 文档完善
-
 ---
 
 **文档版本：** 1.0.0

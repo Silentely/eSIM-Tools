@@ -26,9 +26,7 @@
 
 ## 入口与启动
 
-各模块通过 ES6 import 按需加载，无统一入口。Webpack 别名:
-- `@modules` -> `src/js/modules`
-- `@utils` -> `src/js/modules/utils`
+各模块通过 ES6 import 按需加载，无统一入口。
 
 ## 对外接口
 

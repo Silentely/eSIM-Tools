@@ -142,7 +142,7 @@ npm start
 ## 🔧 故障排除
 
 ### 端口被占用
-如果3000端口被占用，修改 `simyo_proxy_server.js`:
+如果3000端口被占用，修改 `server.js`:
 ```javascript
 const PORT = process.env.PORT || 3001; // 改为其他端口
 ```
