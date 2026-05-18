@@ -56,6 +56,13 @@ function getStagedFiles() {
   return output.split('\0').filter(Boolean);
 }
 
+/**
+ * List staged changes that match the repository's protected file paths.
+ *
+ * Runs a git diff against the index for the configured PROTECTED_FILES and returns
+ * the matching paths.
+ * @returns {string[]} An array of staged protected file paths relative to the repository root; empty if none.
+ */
 function getTouchedProtectedFiles() {
   const output = git([
     'diff',
@@ -68,6 +75,11 @@ function getTouchedProtectedFiles() {
   return output.split('\0').filter(Boolean);
 }
 
+/**
+ * Determine whether a staged file should be normalized/formatting applied.
+ * @param {string} relPath - File path relative to the repository root.
+ * @returns {boolean} `true` if the file is treated as text and should be normalized (including `.gitignore` and `.gitattributes`), `false` otherwise.
+ */
 function shouldFormat(relPath) {
   const ext = path.extname(relPath).toLowerCase();
   if (TEXT_EXTENSIONS.has(ext)) {
@@ -177,6 +189,14 @@ function runChecks(stagedFiles) {
   return failures;
 }
 
+/**
+ * Run the pre-commit validation workflow for staged files.
+ *
+ * Performs protected-file enforcement (exits with code 1 if protected files are touched),
+ * normalizes/formats text files and re-stages any changes, and runs smart-quote detection
+ * plus JavaScript/JSON syntax checks on staged content. Exits with code 1 if any checks fail;
+ * exits with code 0 when there are no staged files or all checks pass.
+ */
 function main() {
   const touchedProtectedFiles = PROTECTED_FILES.length > 0 ? getTouchedProtectedFiles() : [];
   if (touchedProtectedFiles.length > 0) {
