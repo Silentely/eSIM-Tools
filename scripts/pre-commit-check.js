@@ -56,6 +56,10 @@ function getStagedFiles() {
   return output.split('\0').filter(Boolean);
 }
 
+/**
+ * Get the list of protected file paths that currently have staged changes.
+ * @returns {string[]} Array of relative paths for protected files that are staged; empty if none.
+ */
 function getTouchedProtectedFiles() {
   const output = git([
     'diff',
@@ -68,6 +72,11 @@ function getTouchedProtectedFiles() {
   return output.split('\0').filter(Boolean);
 }
 
+/**
+ * Determine whether a file should be normalized (text formatting enforced) based on its path.
+ * @param {string} relPath - File path relative to the repository root.
+ * @returns {boolean} `true` if the file extension is in TEXT_EXTENSIONS or the basename is `.gitignore` or `.gitattributes`, `false` otherwise.
+ */
 function shouldFormat(relPath) {
   const ext = path.extname(relPath).toLowerCase();
   if (TEXT_EXTENSIONS.has(ext)) {
@@ -177,6 +186,19 @@ function runChecks(stagedFiles) {
   return failures;
 }
 
+/**
+ * Run pre-commit validation and normalization for staged files, aborting the commit on violations.
+ *
+ * Checks for changes to protected files and exits with status 1 if any are touched. If there are no
+ * staged files, exits with status 0. For staged text files, normalizes line endings, trims trailing
+ * whitespace, ensures a trailing newline, writes changes back to the working tree and re-stages them.
+ * Then validates staged JavaScript and JSON files for smart-quote characters and syntax errors;
+ * any validation failures are printed and cause an exit with status 1. On success, prints a pass message.
+ *
+ * Exit codes:
+ * - 0: no staged files (early exit) or checks passed
+ * - 1: protected file touched or one or more validation failures
+ */
 function main() {
   const touchedProtectedFiles = PROTECTED_FILES.length > 0 ? getTouchedProtectedFiles() : [];
   if (touchedProtectedFiles.length > 0) {
