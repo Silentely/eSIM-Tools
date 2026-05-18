@@ -105,7 +105,7 @@ function authenticate(event) {
 function createHeaders(origin = ALLOWED_ORIGIN, additionalHeaders = {}) {
   return {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-MFA-Signature, X-Esim-Key, X-App-Key',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-MFA-Signature, X-MFA-Ref, X-MFA-Challenge-Ref, X-CF-Turnstile, X-Esim-Key, X-App-Key',
     'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
     'Vary': 'Origin',
     'Content-Type': 'application/json',

@@ -90,6 +90,12 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     requestHeaders['x-mfa-signature'] = mfaSignature;
   }
 
+  if (isSwap && resolvedMfaRef) {
+    // 上游 swapSim 对 MFA challenge ref 兼容性要求较严格，显式双写头部
+    requestHeaders['X-GG-MFA-REF'] = resolvedMfaRef;
+    requestHeaders['x-gg-mfa-ref'] = resolvedMfaRef;
+  }
+
   // 构建GraphQL请求体
   const graphqlBody = {
     query,
@@ -100,6 +106,10 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   // swapSim 需要 mfaRef 作为顶层字段（Giffgaff schema 要求）
   if (resolvedMfaRef) {
     graphqlBody.mfaRef = resolvedMfaRef;
+  }
+
+  if (isSwap && !resolvedMfaRef) {
+    throw new AuthError('swapSim 缺少 mfaRef（MFA challenge reference）', 400);
   }
 
   // 供失败时刷新令牌使用的 verify-cookie 地址
