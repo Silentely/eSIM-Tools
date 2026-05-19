@@ -20,6 +20,7 @@ import {
     downloadQRCode
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
+import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
 import captchaManager from '../../js/modules/captcha-manager.js';
 import Logger from '../../js/modules/logger.js';
 
@@ -427,6 +428,11 @@ class GiffgaffApp {
     async handleOAuthLogin() {
         const { elements } = uiController;
         console.log('[Giffgaff] === OAuth 登录开始 ===');
+
+        // 手机环境检测：非PC环境弹出提醒
+        if (isMobileBrowser()) {
+            showMobileWarning();
+        }
 
         // 检查服务时间
         if (!isServiceTimeAvailable()) {

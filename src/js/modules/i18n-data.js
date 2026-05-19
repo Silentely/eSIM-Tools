@@ -689,6 +689,7 @@ export const TRANSLATIONS = {
 };
 
 export const LITERAL_TRANSLATIONS = {
+  '当前为手机浏览器环境，部分功能可能受限。如遇错误请切换到 PC 环境操作。': 'You are using a mobile browser. Some features may be limited. If you encounter errors, please switch to a PC.',
   '点击返回此步骤': 'Click to revisit this step',
   '请按顺序完成前序步骤': 'Complete earlier steps in order',
   '已选择OAuth 2.0登录方式': 'OAuth 2.0 login selected',

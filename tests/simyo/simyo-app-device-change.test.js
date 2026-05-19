@@ -8,6 +8,9 @@ describe('SimyoApp 设备更换主流程自动化', () => {
   let mockSkipDeviceChange;
   let mockApplyNewEsim;
   let mockVerifyCode;
+  let mockIsMobileBrowser;
+  let mockShowMobileWarning;
+  let mockAuthLogin;
 
   beforeEach(async () => {
     jest.resetModules();
@@ -18,6 +21,8 @@ describe('SimyoApp 设备更换主流程自动化', () => {
       <button id="verifyCodeBtn" disabled></button>
       <div id="verifyCodeStatus"></div>
       <input id="validationCodeInput" />
+      <input id="phoneNumber" />
+      <input id="password" type="password" />
       <button id="loginBtn"></button>
       <div id="loginStatus"></div>
       <button id="getEsimBtn"></button>
@@ -76,13 +81,16 @@ describe('SimyoApp 设备更换主流程自动化', () => {
       }
     }));
 
-    jest.doMock('../../src/simyo/js/modules/auth-handler.js', () => ({
-      authHandler: {
-        login: jest.fn(),
-        isLoggedIn: jest.fn(() => true),
-        getSessionToken: jest.fn(() => 'token')
-      }
-    }));
+    jest.doMock('../../src/simyo/js/modules/auth-handler.js', () => {
+      mockAuthLogin = jest.fn();
+      return {
+        authHandler: {
+          login: mockAuthLogin,
+          isLoggedIn: jest.fn(() => true),
+          getSessionToken: jest.fn(() => 'token')
+        }
+      };
+    });
 
     jest.doMock('../../src/simyo/js/modules/esim-service.js', () => ({
       esimService: {
@@ -110,6 +118,15 @@ describe('SimyoApp 设备更换主流程自动化', () => {
       openHelp: jest.fn(),
       delay: jest.fn(() => Promise.resolve())
     }));
+
+    jest.doMock('../../src/js/modules/browser-utils.js', () => {
+      mockIsMobileBrowser = jest.fn(() => false);
+      mockShowMobileWarning = jest.fn();
+      return {
+        isMobileBrowser: mockIsMobileBrowser,
+        showMobileWarning: mockShowMobileWarning
+      };
+    });
 
     jest.doMock('../../src/js/modules/i18n.js', () => ({
       t: (key, params = {}) => {
@@ -160,6 +177,37 @@ describe('SimyoApp 设备更换主流程自动化', () => {
 
     expect(mockVerifyCode).toHaveBeenCalledWith('123456');
     expect(mockSkipDeviceChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('手机浏览器登录时应弹出环境警告', async () => {
+    mockIsMobileBrowser.mockReturnValue(true);
+    document.getElementById('phoneNumber').value = '0612345678';
+    document.getElementById('password').value = 'pass';
+    mockAuthLogin.mockResolvedValue({ success: true, mode: 'standard' });
+
+    await app.handleLogin();
+
+    expect(mockShowMobileWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it('手机浏览器设备更换时应弹出环境警告', async () => {
+    mockIsMobileBrowser.mockReturnValue(true);
+    mockApplyNewEsim.mockResolvedValueOnce({ success: true, message: 'ok' });
+
+    await app.handleApplyNewEsim();
+
+    expect(mockShowMobileWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it('PC浏览器登录时不应弹出环境警告', async () => {
+    mockIsMobileBrowser.mockReturnValue(false);
+    document.getElementById('phoneNumber').value = '0612345678';
+    document.getElementById('password').value = 'pass';
+    mockAuthLogin.mockResolvedValue({ success: true, mode: 'standard' });
+
+    await app.handleLogin();
+
+    expect(mockShowMobileWarning).not.toHaveBeenCalled();
   });
 });
 

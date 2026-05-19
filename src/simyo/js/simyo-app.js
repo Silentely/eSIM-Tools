@@ -15,6 +15,7 @@ import {
     delay
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
+import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
 import Logger from '../../js/modules/logger.js';
 
 class SimyoApp {
@@ -187,6 +188,11 @@ class SimyoApp {
         const loginStatus = document.getElementById('loginStatus');
         console.log('[Simyo] === 登录开始 ===');
 
+        // 手机环境检测：非PC环境弹出提醒
+        if (isMobileBrowser()) {
+            showMobileWarning();
+        }
+
         if (!phoneNumberEl || !passwordEl) {
             console.error('[Simyo] 登录表单元素未找到！');
             return;
@@ -234,6 +240,11 @@ class SimyoApp {
         const applyBtn = document.getElementById('applyNewEsimBtn');
         const statusEl = document.getElementById('applyNewEsimStatus');
         console.log('[Simyo] === 请求设备更换 ===');
+
+        // 手机环境检测：非PC环境弹出提醒
+        if (isMobileBrowser()) {
+            showMobileWarning();
+        }
 
         try {
             applyBtn.innerHTML = `<span class="loading"></span> ${tl('处理中...')}`;
