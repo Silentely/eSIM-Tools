@@ -137,6 +137,14 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       { headers: requestHeaders, timeout: 30000 }
     );
     console.log(`[GGQL] ${ts} | upstream OK: status=${response.status}, hasData=${!!response.data}, hasErrors=${!!response.data?.errors}`);
+
+    // Giffgaff 返回 HTTP 200 但 GraphQL body 包含 errors 时，视为业务失败
+    if (response.data?.errors?.length > 0) {
+      const gqlErr = response.data.errors[0];
+      const gqlMsg = gqlErr?.message || gqlErr?.error || JSON.stringify(gqlErr);
+      console.error(`[GGQL] ${ts} | GraphQL errors from upstream: ${gqlMsg}`);
+      throw new AuthError(`Upstream GraphQL error: ${gqlMsg}`, 422);
+    }
   } catch (err) {
     const status = err.response?.status;
     const data = err.response?.data || {};
