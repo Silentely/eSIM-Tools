@@ -99,11 +99,4 @@ class NotificationService {
 // 单例模式
 const notificationService = new NotificationService();
 
-// 导出
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = notificationService;
-} else if (typeof window !== 'undefined') {
-  window.NotificationService = notificationService;
-}
-
 export default notificationService;

@@ -155,11 +155,4 @@ class NotificationManager {
 // 单例模式
 const notificationManager = new NotificationManager();
 
-// 导出
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = notificationManager;
-} else if (typeof window !== 'undefined') {
-  window.NotificationManager = notificationManager;
-}
-
 export default notificationManager;
