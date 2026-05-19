@@ -14,8 +14,6 @@ const isSentryEnabled = sentryAuthToken && sentryOrg && sentryProject && process
 module.exports = {
   entry: {
     main: './src/js/main.js',
-    giffgaff: './src/js/giffgaff.js',
-    simyo: './src/js/simyo.js',
     footer: './src/js/bootstrap-footer.js'
   },
   output: {
@@ -222,12 +220,7 @@ module.exports = {
     })] : [])
   ],
   resolve: {
-    extensions: ['.js', '.css'],
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '@modules': path.resolve(__dirname, 'src/js/modules'),
-      '@utils': path.resolve(__dirname, 'src/js/modules/utils')
-    }
+    extensions: ['.js', '.css']
   },
   performance: {
     hints: 'warning',
@@ -235,4 +228,4 @@ module.exports = {
     maxAssetSize: 512000
   },
   devtool: 'source-map'
-}; 
+};

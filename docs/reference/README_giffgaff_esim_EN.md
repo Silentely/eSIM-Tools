@@ -1,19 +1,6 @@
-# Giffgaff eSIM Tool
-> QR code provider: Prefer `https://qrcode.show/`, and keep `quickchart.io` and `chart.googleapis.com` as alternatives.
-A complete eSIM device change web tool built based on the Giffgaff-swap-esim.json Postman script.
+# Giffgaff eSIM Tool - Technical Reference
 
-## 🚀 Project Overview
-
-This is a complete web application that allows existing Giffgaff subscribers to convert their physical SIM to eSIM directly through a browser, without using mobile apps or complex API tools.
-
-### Core Features
-- ✅ OAuth 2.0 PKCE Authentication Process
-- ✅ Email/SMS Verification Code (MFA) Verification
-- ✅ GraphQL API Full Integration
-- ✅ SMS Verification Code Auto-activation (Recommended)
-- ✅ eSIM Download Code Generation and QR Code Display
-- ✅ Responsive Design, Mobile Device Support
-- ✅ Complete Error Handling and User Experience Optimization
+> A complete eSIM device change web tool built based on the Giffgaff-swap-esim.json Postman script.
 
 ## 📁 File Description
 
@@ -21,7 +8,7 @@ This is a complete web application that allows existing Giffgaff subscribers to 
 - **`giffgaff_modular.html`** - eSIM Device Change Tool (Production Version, Modular Architecture)
 - **`tests/test_giffgaff_esim.html`** - Comprehensive Test Page (Development/Test Version)
 - **`Giffgaff-swap-esim.json`** - Original Postman Script (Reference Document)
-- **`giffgaff.html`**** - Original Simplified Version (Reference)
+- **`giffgaff.html`** - Original Simplified Version (Reference)
 
 ### Reference Files
 - **`simyo.html`** - Simyo eSIM Tool (Other Operator Reference)
@@ -39,7 +26,7 @@ This is a complete web application that allows existing Giffgaff subscribers to 
 - **OAuth 2.0 PKCE** - Secure Authentication Process
 - **Giffgaff ID API** - User Authentication and MFA
 - **Giffgaff GraphQL API** - Business Logic Processing
-- **QR Code API** - QR Code Generation Service
+- **QR Code API** - QR Code Generation Service (Prefer `https://qrcode.show/`, alternatives: `quickchart.io` and `chart.googleapis.com`)
 
 ### Key API Endpoints
 ```javascript
@@ -50,69 +37,6 @@ const apiEndpoints = {
     qrcode: "https://qrcode.show/"
 };
 ```
-
-## 🚦 Usage Process
-
-### Step 1: OAuth Login
-1. Click "Start OAuth Login"
-2. Complete Giffgaff account login on the pop-up page
-3. Copy the callback URL and paste it into the input box
-4. Click "Process Callback" to get the access token
-
-### Step 2: Email Verification
-1. Click "Send Email Verification Code"
-2. Check your email for the 6-digit verification code
-3. Enter the verification code and click "Verify Email Verification Code"
-
-### Step 3: Get Member Information
-1. Click "Get Member Information"
-2. The system will display your Giffgaff account details
-
-### Step 4: Activate eSIM via SMS Verification
-1. Click the "SMS Verification Activate" button
-2. The system automatically handles: send SMS code -> verify -> reserve eSIM -> SIM swap
-3. Enter the received SMS verification code and submit
-4. The system will execute the full activation flow automatically (no need to visit the Giffgaff website manually)
-
-> **Note**: Manual activation was disabled on October 8, 2025. Only SMS verification activation is currently supported.
-
-### Step 5: Get QR Code
-1. After activation, the system automatically generates the LPA string and QR code
-2. Save the QR code image or copy the LPA string to an eSIM-enabled device
-
-## ⚠️ Important Notes
-
-### Security Warning
-- **Physical SIM Card Will Be Invalid** - After performing SIM swap, the original physical SIM card will no longer work
-- **Save Information Immediately** - eSIM information cannot be retrieved again after the page is closed
-- **Personal Use Only** - Do not share your OAuth token or eSIM information
-
-### System Requirements
-- **Modern Browser** - Chrome 80+, Firefox 75+, Safari 13+, Edge 80+
-- **HTTPS Environment** - Due to security restrictions, some features require HTTPS
-- **JavaScript Enabled** - JavaScript must be enabled to work properly
-
-### Compatibility
-- ✅ Desktop (Windows, macOS, Linux)
-- ✅ Mobile (iOS, Android)
-- ✅ Tablet Devices
-- ⚠️ Some older browsers may not be supported
-
-## 🧪 Testing
-
-Use `test_giffgaff_esim.html` for functional testing:
-
-### Test Categories
-1. **Unit Tests** - OAuth functions, URL parsing, state management, UI components
-2. **Integration Tests** - OAuth process, MFA verification, GraphQL API, eSIM processing
-3. **End-to-End Tests** - Complete process, error handling, responsive design
-4. **Performance Tests** - API response time, memory usage monitoring
-
-### Running Tests
-1. Open `test_giffgaff_esim.html`
-2. Configure mock data (optional)
-3. Click "Run All Tests" or select specific test categories
-4. View test results and detailed logs
 
 ## 📝 Development Instructions
 
@@ -168,36 +92,8 @@ mutation reserveESim($input: ESimReservationInput!) {
 }
 ```
 
-## 🤝 Contribution Guidelines
-
-### Development Environment Setup
-1. Clone or download project files
-2. Run using local HTTP server (HTTPS recommended)
-3. Configure test data and API endpoints
-
-### Code Standards
-- Use modern JavaScript syntax (ES6+)
-- Follow semantic HTML structure
-- Maintain CSS modularity and responsive design
-- Add detailed error handling and user feedback
-
-### Testing Requirements
-- New features must include corresponding test cases
-- Ensure all existing tests pass
-- Performance tests to ensure reasonable response times
-
-## 📄 License
-
-This project is developed based on the original Postman script for learning and personal use only. Please comply with Giffgaff's terms of service and API usage policy.
-
-## 🙋‍♂️ Support
-
-If you have questions or suggestions, please:
-1. First use the test page to verify functionality
-2. Check browser console error messages
-3. Confirm network connection and API availability
-4. Refer to Giffgaff official documentation
-
 ---
 
-**Disclaimer**: This tool is developed solely for user convenience. Please ensure you understand the risks and consequences of eSIM conversion before use. The developer is not responsible for any losses caused by using this tool.
+**Document Version:** 1.1.0
+**Last Updated:** 2026-05-18
+**Maintainer:** eSIM Tools Team

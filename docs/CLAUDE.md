@@ -18,7 +18,6 @@
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| **开发指南** | `DEVELOPMENT_GUIDE.md` | 快速上手开发 |
 | **架构说明** | `ARCHITECTURE.md` | 项目架构详解 |
 | **安全指南** | `SECURITY.md` | 安全措施说明 |
 | **Giffgaff 教程** | `User_Guide.md` | 图文操作指南 |
@@ -33,10 +32,10 @@
 - **语言**: 中文为主，英文版本并行维护
 - **格式**: Markdown (CommonMark)
 - **链接**: 使用相对路径，确保 GitHub 渲染正确
+- **参考文档**: `reference/` 目录下的技术文档已精简，仅保留核心架构和 API 信息，详细使用流程请参考根 README
 
 ## 相关文件清单
 
-- `docs/DEVELOPMENT_GUIDE.md`
 - `docs/ARCHITECTURE.md`
 - `docs/SECURITY.md`
 - `docs/User_Guide.md`
