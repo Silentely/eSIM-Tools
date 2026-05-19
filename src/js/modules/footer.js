@@ -49,14 +49,15 @@ function createNetlifyBadge() {
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.setAttribute('aria-label', 'Deploys by Netlify');
-  link.style.display = 'block';
-  link.style.textAlign = 'center';
-  link.style.marginTop = '16px';
+  link.style.display = 'flex';
+  link.style.alignItems = 'center';
+  link.style.justifyContent = 'center';
+  link.style.marginLeft = '4px';
 
   const img = document.createElement('img');
   img.src = 'https://www.netlify.com/assets/badges/netlify-badge-light.svg';
   img.alt = 'Deploys by Netlify';
-  img.style.height = '26px';
+  img.style.height = '18px';
   img.style.opacity = '0.7';
   img.style.transition = 'opacity 0.2s ease';
   img.style.filter = 'grayscale(20%)';
@@ -143,11 +144,11 @@ export function injectFooter(options = {}) {
     copyrightRow.appendChild(span);
     copyrightRow.appendChild(githubLink);
 
-    // Netlify 徽章行（放在版权信息下方）
+    // Netlify 徽章（放在 GitHub 图标后面）
     const netlifyBadge = createNetlifyBadge();
+    copyrightRow.appendChild(netlifyBadge);
 
     wrapper.appendChild(copyrightRow);
-    wrapper.appendChild(netlifyBadge);
 
     return wrapper;
   };
