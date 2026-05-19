@@ -96,12 +96,19 @@ class Logger {
    */
   static env() {
     if (!isDev || typeof window === 'undefined') return;
-    console.log('[ENV]', {
-      timestamp: new Date().toISOString(),
-      hostname: window.location.hostname,
-      language: navigator.language,
-      platform: navigator.platform
-    });
+    console.groupCollapsed('%c[ENV] 环境信息', 'color: #6366f1; font-weight: bold');
+    console.log('时间:', new Date().toISOString());
+    console.log('主机:', window.location.hostname);
+    console.log('协议:', window.location.protocol);
+    console.log('语言:', navigator.language);
+    console.log('平台:', navigator.platform);
+    console.log('UserAgent:', navigator.userAgent);
+    console.log('屏幕:', `${screen.width}x${screen.height}`);
+    console.log('视口:', `${window.innerWidth}x${window.innerHeight}`);
+    console.log('Cookie:', navigator.cookieEnabled ? '启用' : '禁用');
+    console.log('ServiceWorker:', 'serviceWorker' in navigator ? '支持' : '不支持');
+    console.log('NODE_ENV:', typeof process !== 'undefined' ? process.env?.NODE_ENV : 'N/A');
+    console.groupEnd();
   }
 }
 
