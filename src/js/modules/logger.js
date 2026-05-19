@@ -129,5 +129,4 @@ class Logger {
   }
 }
 
-// 统一 CJS 导出，避免混合 ESM/CJS 导致 Webpack 生产构建解析异常
-module.exports = Logger;
+export default Logger;

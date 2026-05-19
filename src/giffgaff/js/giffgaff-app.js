@@ -664,7 +664,7 @@ class GiffgaffApp {
 
             console.log('[Giffgaff] 调用 esimService.getMemberInfo()...');
             const result = await esimService.getMemberInfo();
-            console.log('[Giffgaff] 会员信息获取成功, memberId:', result.data?.memberId);
+            console.log('[Giffgaff] 会员信息获取成功, memberId:', result.data?.memberProfile?.id);
 
             uiController.showStatus(elements.memberStatus, t('giffgaff.app.status.memberFetched'), "success");
             uiController.showMemberInfo(result.data);

@@ -522,6 +522,13 @@ export class UIController {
             status.className = 'status';
         });
 
+        // 清除会员信息和eSIM信息等动态内容区
+        if (this.elements.memberInfo) this.elements.memberInfo.innerHTML = '';
+        const esimInfoDisplay = document.getElementById('esimInfoDisplay');
+        if (esimInfoDisplay) esimInfoDisplay.style.display = 'none';
+        const resultContainer = this.elements.resultContainer;
+        if (resultContainer) resultContainer.innerHTML = '';
+
         // 重置按钮状态
         document.querySelectorAll('button').forEach(btn => {
             if (!btn.id.includes('clearSession') && !btn.onclick) {
