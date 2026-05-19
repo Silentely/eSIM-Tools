@@ -5,14 +5,12 @@
 ## 📁 File Description
 
 ### Main Files
-- **`giffgaff_modular.html`** - eSIM Device Change Tool (Production Version, Modular Architecture)
+- **`src/giffgaff/giffgaff_modular.html`** - eSIM Device Change Tool (Production Version, Modular Architecture)
 - **`tests/test_giffgaff_esim.html`** - Comprehensive Test Page (Development/Test Version)
-- **`Giffgaff-swap-esim.json`** - Original Postman Script (Reference Document)
-- **`giffgaff.html`** - Original Simplified Version (Reference)
 
 ### Reference Files
-- **`simyo.html`** - Simyo eSIM Tool (Other Operator Reference)
-- **`Simyo ESIM V2.postman_collection.json`** - Simyo API Script
+- **`postman/giffgaff.html`** - Original single-file version (Reference)
+- **`postman/Giffgaff-swap-esim.json`** - Original Postman Script
 
 ## 🔧 Technical Architecture
 

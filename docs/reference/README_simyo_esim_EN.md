@@ -5,10 +5,8 @@
 ## 📁 File Description
 
 ### Main Files
-- **`simyo_modular.html`** - Simyo eSIM Device Change Tool (Production Version, Modular Architecture)
+- **`src/simyo/simyo_modular.html`** - Simyo eSIM Device Change Tool (Production Version, Modular Architecture)
 - **`tests/test_simyo_esim.html`** - Comprehensive Test Page (Development/Test Version)
-- **`Simyo ESIM V2.postman_collection.json`** - Original Postman Script (Reference Document)
-- **`simyo.html`** - Original Simplified Version (Reference)
 
 ## 🔧 Technical Architecture
 

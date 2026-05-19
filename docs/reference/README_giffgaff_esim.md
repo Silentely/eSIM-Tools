@@ -5,14 +5,12 @@
 ## 📁 文件说明
 
 ### 主要文件
-- **`giffgaff_modular.html`** - eSIM 设备更换工具（生产版本，模块化架构）
+- **`src/giffgaff/giffgaff_modular.html`** - eSIM 设备更换工具（生产版本，模块化架构）
 - **`tests/test_giffgaff_esim.html`** - 综合测试页面（开发/测试版本）
-- **`Giffgaff-swap-esim.json`** - 原始 Postman 脚本（参考文档）
-- **`giffgaff.html`** - 原有的简化版本（参考）
 
 ### 参考文件
-- **`simyo.html`** - Simyo eSIM 工具（其他运营商参考）
-- **`Simyo ESIM V2.postman_collection.json`** - Simyo API 脚本
+- **`postman/giffgaff.html`** - 原始单文件版本（参考）
+- **`postman/Giffgaff-swap-esim.json`** - 原始 Postman 脚本
 
 ## 🔧 技术架构
 

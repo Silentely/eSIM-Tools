@@ -70,31 +70,36 @@ graph TD
     A --> H["tests"];
     A --> I["docs"];
 
-    B --> B1["giffgaff-app.js - 主控制器"];
-    B --> B2["oauth-handler.js - OAuth PKCE"];
-    B --> B3["esim-service.js - eSIM 业务逻辑"];
-    B --> B4["state-manager.js - 状态管理"];
-    B --> B5["ui-controller.js - UI 控制"];
+    B --> B0["js/giffgaff-app.js - 主控制器"];
+    B --> B1["js/modules/oauth-handler.js - OAuth PKCE"];
+    B --> B2["js/modules/esim-service.js - eSIM 业务逻辑"];
+    B --> B3["js/modules/state-manager.js - 状态管理"];
+    B --> B4["js/modules/ui-controller.js - UI 控制"];
+    B --> B5["js/modules/mfa-handler.js - MFA 验证"];
+    B --> B6["js/modules/cookie-handler.js - Cookie 管理"];
 
-    C --> C1["simyo-app.js - 主控制器"];
-    C --> C2["auth-handler.js - 登录认证"];
-    C --> C3["device-change-handler.js - 设备更换"];
-    C --> C4["esim-service.js - eSIM 服务"];
+    C --> C0["js/simyo-app.js - 主控制器"];
+    C --> C1["js/modules/auth-handler.js - 登录认证"];
+    C --> C2["js/modules/device-change-handler.js - 设备更换"];
+    C --> C3["js/modules/esim-service.js - eSIM 服务"];
 
-    D --> D1["logger.js"];
-    D --> D2["captcha-manager.js"];
-    D --> D3["api-service.js"];
-    D --> D4["html-sanitizer.js"];
-    D --> D5["secure-storage.js"];
-    D --> D6["i18n.js"];
+    D --> D1["logger.js / api-service.js"];
+    D --> D2["notification-manager.js / notification-service.js"];
+    D --> D3["html-sanitizer.js / secure-storage.js"];
+    D --> D4["captcha-manager.js / i18n.js"];
+    D --> D5["utils.js / performance-monitor.js"];
+    D --> D6["config.js / app-config.js / footer.js"];
 
     E --> E1["giffgaff-token-exchange.js"];
     E --> E2["giffgaff-graphql.js"];
     E --> E3["giffgaff-mfa-challenge.js"];
     E --> E4["giffgaff-sms-activate.js"];
-    E --> E5["_shared/middleware.js"];
+    E --> E5["giffgaff-mfa-validation.js"];
+    E --> E6["auto-activate-esim.js"];
+    E --> E7["_shared/middleware.js"];
 
     F --> F1["bff-proxy.js"];
+    F --> F2["markdown-negotiation.js"];
 
     click B "./src/giffgaff/MODULE_ARCHITECTURE.md" "查看 Giffgaff Legacy 架构文档"
     click C "./src/simyo/MODULE_ARCHITECTURE.md" "查看 Simyo Legacy 架构文档"
@@ -115,7 +120,7 @@ graph TD
 | **Simyo Legacy** | `src/simyo/` | Simyo eSIM 管理流程 (登录/设备更换/激活) | JavaScript |
 | **通用工具** | `src/js/modules/` | 可复用前端工具模块 (日志/存储/安全/性能/i18n) | JavaScript |
 | **Netlify Functions** | `netlify/functions/` | Serverless 后端逻辑 (11 个函数) | JavaScript (Node.js) |
-| **Edge Functions** | `netlify/edge-functions/` | BFF 代理层 (密钥注入 + 请求转发) | JavaScript (Deno) |
+| **Edge Functions** | `netlify/edge-functions/` | BFF 代理层 (密钥注入 + 请求转发 + 内容协商) | JavaScript (Deno) |
 | **构建脚本** | `scripts/` | 构建、质量检查、安全扫描 (22 个脚本) | JavaScript/Shell |
 | **测试** | `tests/` | 单元测试 (Jest + jsdom) | JavaScript |
 | **文档** | `docs/` | 使用指南、API 参考、修复记录 | Markdown |

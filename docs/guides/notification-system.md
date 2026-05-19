@@ -49,6 +49,8 @@ eSIM-Tools 通知系统是一个轻量级的消息通知解决方案，用于在
 
 #### 基础用法
 
+首先导入通知管理器模块（默认导出为单例实例）：
+
 ```javascript
 import NotificationManager from './modules/notification-manager.js';
 
@@ -273,9 +275,10 @@ constructor() {
 ### 3. 手动触发检查
 
 ```javascript
+// notification-service.js 导出的是单例实例
 import NotificationService from './modules/notification-service.js';
 
-// 手动检查新通知
+// 手动检查新通知（无需参数，内部从后端获取）
 NotificationService.checkAndShowNotifications();
 ```
 

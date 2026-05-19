@@ -18,7 +18,8 @@
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| **架构说明** | `ARCHITECTURE.md` | 项目架构详解 |
+| **架构说明** | `ARCHITECTURE.md` | 当前架构详解 |
+| **未来架构** | `FUTURE_ARCHITECTURE.md` | 尚未实施的架构规划 |
 | **安全指南** | `SECURITY.md` | 安全措施说明 |
 | **Giffgaff 教程** | `User_Guide.md` | 图文操作指南 |
 | **Giffgaff 英文教程** | `User_Guide_EN.md` | 英文版使用指南 |
@@ -37,6 +38,7 @@
 ## 相关文件清单
 
 - `docs/ARCHITECTURE.md`
+- `docs/FUTURE_ARCHITECTURE.md`
 - `docs/SECURITY.md`
 - `docs/User_Guide.md`
 - `docs/User_Guide_EN.md`

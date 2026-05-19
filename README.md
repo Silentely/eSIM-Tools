@@ -114,12 +114,18 @@
    npm install
    ```
 
-3. **启动开发服务器**
+3. **配置环境变量**
+   ```bash
+   cp env.example .env
+   # 编辑 .env 填写 ACCESS_KEY 等必要配置
+   ```
+
+4. **启动开发服务器**
    ```bash
    npm start
    ```
 
-4. **访问应用**
+5. **访问应用**
    ```
    http://localhost:3000
    ```
@@ -230,7 +236,8 @@ eSIM-Tools/
 │   ├── 🎨 styles/                # 样式文件
 │   └── ⚙️ js/                    # JavaScript模块
 ├── 🌐 netlify/                   # 无服务器函数
-│   └── functions/                # API代理
+│   ├── functions/                # API代理
+│   └── edge-functions/           # BFF代理层
 ├── 📚 docs/                      # 项目文档
 │   ├── guides/                   # 使用指南
 │   ├── reference/                # 参考文档

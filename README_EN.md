@@ -113,19 +113,18 @@ A modern eSIM management toolkit for existing Giffgaff and Simyo subscribers, su
    npm install
    ```
 
-3. **Start Proxy Server**
+3. **Configure Environment Variables**
    ```bash
-   # Windows
-   start_simyo_server.bat
+   cp env.example .env
+   # Edit .env to fill in ACCESS_KEY and other required config
+   ```
 
-   # macOS/Linux
-   ./start_simyo_server.sh
-
-   # Or start manually
+4. **Start Development Server**
+   ```bash
    npm start
    ```
 
-4. **Open the App**
+5. **Open the App**
    ```
    http://localhost:3000
    ```
@@ -236,7 +235,8 @@ eSIM-Tools/
 │   ├── 🎨 styles/                # Style files
 │   └── ⚙️ js/                    # JavaScript modules
 ├── 🌐 netlify/                   # Serverless functions
-│   └── functions/                # API proxy
+│   ├── functions/                # API proxy
+│   └── edge-functions/           # BFF proxy layer
 ├── 📚 docs/                      # Project documents
 │   ├── guides/                   # User guides
 │   ├── reference/                # Reference docs

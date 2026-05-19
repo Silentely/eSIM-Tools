@@ -54,17 +54,15 @@ npm start
 无CORS限制          添加CORS头              原始API
 ```
 
-### 方案2: 浏览器插件（临时方案）
+### 方案2: 临时绕过 CORS（仅开发测试，不推荐）
 
-安装CORS浏览器插件，如：
-- Chrome: "CORS Unblock"
-- Firefox: "CORS Everywhere"
+安装 CORS 浏览器插件（Chrome: "CORS Unblock"，Firefox: "CORS Everywhere"）。
 
-⚠️ **注意**: 此方案有安全风险，仅建议开发测试使用
+⚠️ 此方案禁用浏览器同源安全策略，仅限本地开发测试，切勿在日常浏览中开启。
 
-### 方案3: 浏览器启动参数（开发用）
+### 方案3: 禁用浏览器安全策略（仅开发测试）
 
-使用禁用安全检查的参数启动Chrome：
+使用 `--disable-web-security` 参数启动 Chrome：
 ```bash
 # Windows
 chrome.exe --user-data-dir=/tmp/chrome_dev_test --disable-web-security --disable-features=VizDisplayCompositor
@@ -180,7 +178,7 @@ curl http://localhost:3000/api/health
 {
   "success": true,
   "message": "Simyo eSIM代理服务器运行正常",
-  "timestamp": "2024-01-15T10:30:00.000Z",
+  "timestamp": "<当前时间戳>",
   "version": "1.0.0"
 }
 ```
@@ -191,9 +189,8 @@ curl http://localhost:3000/api/health
 ### 3. API测试
 使用Postman或curl测试API端点
 
-## 🛡️ 安全建议
+## 🛡️ 安全提示
 
-1. **仅本地使用**: 代理服务器仅用于本地开发和个人使用
-2. **防火墙设置**: 确保3000端口不对外网开放
-3. **定期更新**: 保持Node.js和依赖包的最新版本
-4. **凭据保护**: 不要在代码中硬编码敏感信息
+- 代理服务器仅监听 `localhost`，不应暴露到外网
+- 代理不存储用户凭据，请求日志中不包含敏感信息
+- 如需长期使用，推荐使用在线服务 [esim.cosr.eu.org](https://esim.cosr.eu.org) 替代本地代理

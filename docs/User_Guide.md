@@ -2,14 +2,7 @@
 
 > 🌐 [English Version](./User_Guide_EN.md)
 
-> 🎬 视频教程 - giffgaff eSIM更换操作演示（视频教程未更新，其中OAuth获取回调url方式请阅读文字教程）
-
-<video controls preload="metadata" width="100%" style="max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-  <source src="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720" type="video/mp4">
-  您的浏览器不支持视频播放，请<a href="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720">点击这里</a>下载视频。
-</video>
-
-[giffgaff.webm](https://github.com/user-attachments/assets/d4fbd0ff-b8bc-4477-a0c4-45698fe4802c)
+> 🎬 视频教程见文末（视频教程未更新，OAuth 获取回调 URL 方式请以文字教程为准）
 
 ## 1. 打开giffgaff的eSIM更换网页
 
@@ -69,4 +62,23 @@ OAuth方式需要获取回调URL，获取方式参考页面说明：
 ![eSIM信息](image/116.jpg)
 ![eSIM信息1](image/117.jpg)
 
-## 6.  使用原生eSIM手机完成扫码
+## 6. 使用原生 eSIM 手机完成扫码
+
+1. 打开手机的**设置** → **蜂窝网络** / **移动网络**
+2. 选择**添加 eSIM** / **扫描二维码**
+3. 扫描页面上显示的 QR 码
+4. 确认安装，等待 eSIM 激活完成
+5. 激活成功后可在蜂窝网络设置中看到新的号码
+
+---
+
+## 附录：视频教程
+
+> ⚠️ 视频教程未更新，其中 OAuth 获取回调 URL 的方式请以上方文字教程为准。
+
+<video controls preload="metadata" width="100%" style="max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+  <source src="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720" type="video/mp4">
+  您的浏览器不支持视频播放，请<a href="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720">点击这里</a>下载视频。
+</video>
+
+[giffgaff.webm](https://github.com/user-attachments/assets/d4fbd0ff-b8bc-4477-a0c4-45698fe4802c)
