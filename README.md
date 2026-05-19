@@ -311,6 +311,10 @@ open tests/test_simyo_esim.html
 
 ![](https://starchart.cc/Silentely/eSIM-Tools.svg)
 
+## 贡献者公约
+
+本项目遵循[贡献者公约](CODE_OF_CONDUCT.md)行为准则。
+
 ## 📄 许可证
 
 - 本项目的所有代码除另有说明外,均按照 [MIT License](LICENSE) 发布。

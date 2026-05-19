@@ -43,6 +43,38 @@ function bindContainerAria(container) {
   onLocaleChange(apply);
 }
 
+function createNetlifyBadge() {
+  const link = document.createElement('a');
+  link.href = 'https://www.netlify.com';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.setAttribute('aria-label', 'Deploys by Netlify');
+  link.style.display = 'block';
+  link.style.textAlign = 'center';
+  link.style.marginTop = '16px';
+
+  const img = document.createElement('img');
+  img.src = 'https://www.netlify.com/assets/badges/netlify-badge-light.svg';
+  img.alt = 'Deploys by Netlify';
+  img.style.height = '26px';
+  img.style.opacity = '0.7';
+  img.style.transition = 'opacity 0.2s ease';
+  img.style.filter = 'grayscale(20%)';
+
+  link.addEventListener('mouseenter', () => {
+    img.style.opacity = '0.9';
+    img.style.filter = 'grayscale(0%)';
+  });
+
+  link.addEventListener('mouseleave', () => {
+    img.style.opacity = '0.7';
+    img.style.filter = 'grayscale(20%)';
+  });
+
+  link.appendChild(img);
+  return link;
+}
+
 function bindCopyright(span, options = {}) {
   const custom = typeof options.text === 'string' ? options.text.trim() : '';
   if (custom) {
@@ -69,12 +101,16 @@ export function injectFooter(options = {}) {
   // 3) 最后退回到 body（避免因 body 为 flex row 导致横排：因此仅最后兜底）
 
   const createCopyrightNode = () => {
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.alignItems = 'center';
-    div.style.justifyContent = 'center';
-    div.style.gap = '12px';
-    div.style.marginTop = '8px';
+    const wrapper = document.createElement('div');
+    wrapper.style.textAlign = 'center';
+    wrapper.style.marginTop = '8px';
+
+    // 版权信息行
+    const copyrightRow = document.createElement('div');
+    copyrightRow.style.display = 'flex';
+    copyrightRow.style.alignItems = 'center';
+    copyrightRow.style.justifyContent = 'center';
+    copyrightRow.style.gap = '12px';
 
     const span = document.createElement('span');
     bindCopyright(span, options);
@@ -104,10 +140,16 @@ export function injectFooter(options = {}) {
 
     githubLink.appendChild(githubIcon);
     bindGithubLink(githubLink);
-    div.appendChild(span);
-    div.appendChild(githubLink);
+    copyrightRow.appendChild(span);
+    copyrightRow.appendChild(githubLink);
 
-    return div;
+    // Netlify 徽章行（放在版权信息下方）
+    const netlifyBadge = createNetlifyBadge();
+
+    wrapper.appendChild(copyrightRow);
+    wrapper.appendChild(netlifyBadge);
+
+    return wrapper;
   };
 
   // 情形 1：已有站内 footer（如首页免责声明区）

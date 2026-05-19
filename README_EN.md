@@ -317,6 +317,10 @@ If you encounter issues or have suggestions:
 
 ![](https://starchart.cc/Silentely/eSIM-Tools.svg)
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## 📄 License
 
 - All code in this project, unless otherwise stated, is released under the [MIT License](LICENSE).
