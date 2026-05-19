@@ -117,3 +117,6 @@ postman/
 # Gemini 剪贴板临时文件
 .gemini-clipboard/
 
+#context
+.context/
+
