@@ -29,7 +29,7 @@ class SimyoApp {
         if (this.initialized) return;
 
         console.log(t('simyo.app.console.initStart'));
-        Logger.env();
+        try { Logger.env(); } catch (_) {}
         console.log('[Simyo] 页面:', window.location.href);
         console.log('[Simyo] UserAgent:', navigator.userAgent);
         console.log('[Simyo] 语言:', navigator.language);

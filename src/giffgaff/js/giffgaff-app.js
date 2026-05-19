@@ -122,7 +122,7 @@ class GiffgaffApp {
         if (this.initialized) return;
 
         console.log(t('giffgaff.app.console.initStart'));
-        Logger.env();
+        try { Logger.env(); } catch (_) {}
         console.log('[Giffgaff] 页面:', window.location.href);
         console.log('[Giffgaff] UserAgent:', navigator.userAgent);
         console.log('[Giffgaff] 语言:', navigator.language);
