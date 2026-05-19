@@ -39,19 +39,24 @@ class GiffgaffApp {
         // 处理未捕获的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
             console.error('[Giffgaff] Unhandled Promise Rejection:', event.reason);
+
+            // 先将 reason 统一为 Error 对象，用于噪音检测
+            const error = this.normalizeUnhandledRejectionReason(event.reason);
+
+            // 浏览器噪音检查：无论 Error/字符串/对象，只要命中忽略列表就静默吞掉
+            if (error && this.isIgnoredUnhandledRejection(error)) {
+                event.preventDefault();
+                console.debug('[Giffgaff] Ignored browser noise rejection:', error.message);
+                return;
+            }
+
+            // 非噪音但仍非自定义错误（带 stack 的真实 Error），交给 Sentry 自动采集
             const shouldHandleAsCustomError =
                 typeof event.reason === 'string' ||
                 (event.reason && typeof event.reason === 'object' && !event.reason.stack);
             if (!shouldHandleAsCustomError) return;
 
-            const error = this.normalizeUnhandledRejectionReason(event.reason);
             if (!error) return;
-
-            if (this.isIgnoredUnhandledRejection(error)) {
-                event.preventDefault();
-                console.debug('[Giffgaff] Ignored browser noise rejection:', error.message);
-                return;
-            }
 
             // 上报到 Sentry
             if (window.Sentry) {
@@ -109,7 +114,8 @@ class GiffgaffApp {
             'moz-extension://',
             'metamask',
             'tronlink',
-            'backpack'
+            'backpack',
+            'method not found'
         ];
 
         return ignoredKeywords.some((keyword) => payload.includes(keyword));
