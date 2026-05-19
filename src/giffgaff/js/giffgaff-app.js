@@ -169,7 +169,8 @@ class GiffgaffApp {
 
         // 启动Cookie监控（如果有）
         const cookie = stateManager.getCookie();
-        console.log('[Giffgaff] Cookie状态:', cookie ? '已存在，启动监控' : '无Cookie');
+        const loginMethod = stateManager.get('accessToken') ? 'OAuth' : (cookie ? 'Cookie' : '未登录');
+        console.log('[Giffgaff] 登录方式:', loginMethod, '| Cookie状态:', cookie ? '已存在，启动监控' : '无Cookie（正常）');
         if (cookie) {
             cookieHandler.startValidityMonitor();
         }

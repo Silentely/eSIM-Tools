@@ -317,49 +317,47 @@ function initSentry() {
       // 性能监控
       integrations: [
         window.Sentry.browserTracingIntegration(),
+        // Session Replay - 记录用户操作以重现错误场景
+        window.Sentry.replayIntegration({
+          maxReplayDuration: 60000,
+          maskAllText: true,
+          maskAllInputs: true,
+        }),
       ],
       tracesSampleRate: 0.1,
+      // Session Replay 采样率
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
 
       // 错误采样率
       sampleRate: 1.0,
 
-      // 错误过滤
+      // 错误过滤 - 仅过滤浏览器扩展和已知噪音
       ignoreErrors: [
-        // 浏览器扩展冲突（增强版）
+        // 浏览器扩展冲突（必须过滤）
         /Cannot redefine property:? ethereum/i,
         /Cannot redefine property/i,
         /redefine property/i,
-        /defineProperty/i,
         /Object\.defineProperty/i,
         /ethereum/i,
-        // 浏览器扩展通用错误
         /chrome-extension/i,
         /moz-extension/i,
         /extensions\//i,
         /inpage\.js/i,
-        // TronLink 和其他钱包扩展
         /tronlink/i,
         /backpack/i,
         /metamask/i,
-        /wallet must has at least one account/i,
-        /wallet must have at least one account/i,
+        /wallet must (?:has|have) at least one account/i,
         /webkit-masked-url/i,
         /autofillFieldData\.autoCompleteType\.includes/i,
         /Can't find variable: currentInset/i,
         /Can't find variable: CONFIG/i,
-        // 网络相关错误
-        /ResizeObserver loop/,
-        /Non-Error promise rejection/,
-        /Loading chunk .* failed/,
-        /Network request failed/,
-        /Failed to fetch/,
-        /Load failed/,
+        // 已知浏览器噪音（保留）
+        'ResizeObserver loop',
+        'Non-Error promise rejection',
         /AbortError/,
-        /Error invoking post/,
-        /Method not found/,
-        // 第三方服务错误
+        // 第三方脚本噪音
         /turnstile/i,
-        /postMessage/i,
       ],
 
       denyUrls: [
@@ -371,51 +369,26 @@ function initSentry() {
         /^webkit-masked-url:\/\//i,
       ],
 
-      // 敏感数据过滤和浏览器扩展错误过滤
+      // 敏感数据过滤 + 诊断日志
       beforeSend(event) {
-        // 1. 过滤浏览器扩展相关错误
+        // 1. 仅过滤浏览器扩展错误（更精确的匹配）
         if (event.exception?.values) {
           for (const exception of event.exception.values) {
             const mechanismType = exception?.mechanism?.type || '';
-            if (isExtensionProviderConflict({
-              message: exception.value,
-              mechanismType,
-            })) {
-              recordExtensionNoise('init-beforeSend-exception', {
+
+            // 仅在堆栈帧中明确包含扩展路径时才过滤
+            const frames = exception.stacktrace?.frames || [];
+            const hasExtensionFrame = frames.some(frame => {
+              const filename = frame.filename || '';
+              return /chrome-extension:\/\//.test(filename) ||
+                     /moz-extension:\/\//.test(filename) ||
+                     /webkit-masked-url:\/\//.test(filename);
+            });
+
+            if (hasExtensionFrame) {
+              recordExtensionNoise('init-beforeSend-extension-frame', {
                 message: exception.value,
                 mechanismType,
-              });
-              console.debug('[Sentry beforeSend] 已拦截扩展错误:', exception.value);
-              return null;
-            }
-
-            // 检查堆栈帧 URL 与函数名
-            if (exception.stacktrace?.frames) {
-              for (const frame of exception.stacktrace.frames) {
-                if (isExtensionProviderConflict({
-                  filename: frame.filename,
-                  functionName: frame.function,
-                })) {
-                  recordExtensionNoise('init-beforeSend-frame', {
-                    filename: frame.filename,
-                    message: frame.function,
-                  });
-                  console.debug('[Sentry beforeSend] 已拦截扩展堆栈:', frame.filename || frame.function);
-                  return null;
-                }
-              }
-            }
-          }
-
-          // Sentry 对非 Error rejection 会退化为通用文案，额外从 event 全量字段回溯扩展特征
-          for (const exception of event.exception.values) {
-            if (!isGenericObjectRejectionException(exception)) continue;
-
-            const searchable = collectEventSearchableText(event);
-            if (includesExtensionKeyword(searchable)) {
-              recordExtensionNoise('init-beforeSend-object-rejection', {
-                message: exception?.value,
-                mechanismType: exception?.mechanism?.type || 'onunhandledrejection',
               });
               return null;
             }
@@ -440,7 +413,11 @@ function initSentry() {
                 .replace(/token[=:]\s*[^\s,]+/gi, 'token=***')
                 .replace(/key[=:]\s*[^\s,]+/gi, 'key=***')
                 .replace(/password[=:]\s*[^\s,]+/gi, 'password=***')
-                .replace(/cookie[=:]\s*[^\s,]+/gi, 'cookie=***');
+                .replace(/cookie[=:]\s*[^\s,]+/gi, 'cookie=***')
+                .replace(/code[=:]\s*[^\s,]+/gi, 'code=***')
+                .replace(/state[=:]\s*[^\s,]+/gi, 'state=***')
+                .replace(/access_token[=:]\s*[^\s,]+/gi, 'access_token=***')
+                .replace(/refresh_token[=:]\s*[^\s,]+/gi, 'refresh_token=***');
             }
           });
         }
@@ -567,9 +544,68 @@ export function testSentry() {
   }
 }
 
+/**
+ * 显示用户反馈对话框
+ * 当发生错误时，允许用户主动报告问题详情
+ */
+export function showReportDialog(options = {}) {
+  const sentry = getSentry();
+  if (sentry.showReportDialog) {
+    sentry.showReportDialog({
+      eventId: options.eventId || lastEventId(),
+      title: options.title || '报告问题',
+      subtitle: options.subtitle || '告诉我们发生了什么',
+      subtitleLine2: options.subtitleLine2 || '您的反馈将帮助我们改进',
+      labelName: options.labelName || '名称',
+      labelEmail: options.labelEmail || '邮箱',
+      labelComments: options.labelComments || '问题描述',
+      labelClose: options.labelClose || '关闭',
+      labelSubmit: options.labelSubmit || '提交反馈',
+      successMessage: options.successMessage || '感谢您的反馈！',
+      ...options,
+    });
+  }
+}
+
+/**
+ * 获取上次错误事件 ID
+ */
+function lastEventId() {
+  const sentry = getSentry();
+  return sentry.lastEventId ? sentry.lastEventId() : null;
+}
+
+/**
+ * 获取 Sentry 健康状态
+ */
+export function getSentryHealth() {
+  return {
+    sdkLoaded: !!window.Sentry && window.Sentry !== SentryMock,
+    initialized: sentryInitialized,
+    isDev: isDev,
+    dsnConfigured: !!SENTRY_DSN,
+    environment: SENTRY_ENVIRONMENT,
+    release: SENTRY_RELEASE,
+    extensionNoiseStats: typeof window !== 'undefined' && window.getSentryExtensionNoiseStats
+      ? window.getSentryExtensionNoiseStats()
+      : { count: 0, samples: [] },
+  };
+}
+
 // 暴露测试函数到全局
 if (typeof window !== 'undefined') {
   window.testSentry = testSentry;
+  window.getSentryHealth = getSentryHealth;
+  window.showReportDialog = showReportDialog;
 }
 
-export default { getSentry, setUser, clearUser, captureException, captureMessage, testSentry };
+export default {
+  getSentry,
+  setUser,
+  clearUser,
+  captureException,
+  captureMessage,
+  testSentry,
+  showReportDialog,
+  getSentryHealth,
+};

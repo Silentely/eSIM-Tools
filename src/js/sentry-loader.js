@@ -345,7 +345,7 @@
             traceXHR: true,
             // 启用页面加载和导航追踪
             enableLongTask: true
-          })
+          }),
         ],
         // 追踪传播目标 - 指定哪些请求应该添加追踪头
         tracePropagationTargets: [
@@ -361,38 +361,33 @@
         // 错误采样率
         sampleRate: 1.0,
 
-        // 错误过滤
+        // 错误过滤 - 仅过滤浏览器扩展和已知噪音
+        // 注意：不再过滤网络错误，这些是真实的用户问题
         ignoreErrors: [
+          // 浏览器扩展冲突（必须过滤）
           /Cannot redefine property:? ethereum/i,
           /Cannot redefine property/i,
           /redefine property/i,
-          /defineProperty/i,
           /Object\.defineProperty/i,
           /ethereum/i,
-          'ResizeObserver loop',
-          'Non-Error promise rejection',
-          /Loading chunk .* failed/,
-          /Network request failed/,
-          /Failed to fetch/,
-          /Load failed/,
-          /AbortError/,
-          /chrome-extension/,
-          /moz-extension/,
+          /chrome-extension/i,
+          /moz-extension/i,
           /extensions\//i,
           /inpage\.js/i,
           /tronlink/i,
           /backpack/i,
           /metamask/i,
-          /wallet must has at least one account/i,
-          /wallet must have at least one account/i,
+          /wallet must (?:has|have) at least one account/i,
           /webkit-masked-url/i,
           /autofillFieldData\.autoCompleteType\.includes/i,
           /Can't find variable: currentInset/i,
           /Can't find variable: CONFIG/i,
-          /Error invoking post/,
-          /Method not found/,
+          // 已知浏览器噪音（保留）
+          'ResizeObserver loop',
+          'Non-Error promise rejection',
+          /AbortError/,
+          // 第三方脚本噪音
           /turnstile/i,
-          /postMessage/i
         ],
 
         denyUrls: [
@@ -403,62 +398,50 @@
           /^webkit-masked-url:\/\//i
         ],
 
-        // 敏感数据过滤
+        // 敏感数据过滤 + 诊断日志
         beforeSend: function(event) {
-          if (event && event.exception && event.exception.values) {
+          // 诊断：记录被发送的事件（仅在开发环境或调试时启用）
+          var eventMessage = '';
+          if (event.exception && event.exception.values && event.exception.values[0]) {
+            eventMessage = event.exception.values[0].value || '';
+          } else if (event.message) {
+            eventMessage = event.message;
+          }
+
+          // 1. 仅过滤浏览器扩展错误（更精确的匹配）
+          if (event.exception && event.exception.values) {
             for (var i = 0; i < event.exception.values.length; i++) {
               var exception = event.exception.values[i] || {};
               var mechanismType = exception.mechanism && exception.mechanism.type
                 ? exception.mechanism.type
                 : '';
 
-              if (isExtensionProviderConflict({
-                message: exception.value,
-                mechanismType: mechanismType
-              })) {
-                recordExtensionNoise('loader-beforeSend-exception', {
-                  message: exception.value,
-                  mechanismType: mechanismType
-                });
-                return null;
-              }
-
+              // 仅在堆栈帧中明确包含扩展路径时才过滤
               var stacktrace = exception.stacktrace;
               var frames = stacktrace && stacktrace.frames ? stacktrace.frames : [];
+              var hasExtensionFrame = false;
               for (var j = 0; j < frames.length; j++) {
                 var frame = frames[j] || {};
-                if (isExtensionProviderConflict({
-                  filename: frame.filename,
-                  functionName: frame.function
-                })) {
-                  recordExtensionNoise('loader-beforeSend-frame', {
-                    filename: frame.filename,
-                    message: frame.function
-                  });
-                  return null;
+                var frameFilename = frame.filename || '';
+                if (/chrome-extension:\/\//.test(frameFilename) ||
+                    /moz-extension:\/\//.test(frameFilename) ||
+                    /webkit-masked-url:\/\//.test(frameFilename)) {
+                  hasExtensionFrame = true;
+                  break;
                 }
               }
-            }
 
-            // Sentry 对非 Error rejection 会退化为通用文案，额外从 event 全量字段回溯扩展特征
-            for (var k = 0; k < event.exception.values.length; k++) {
-              var candidate = event.exception.values[k] || {};
-              if (!isGenericObjectRejectionException(candidate)) continue;
-
-              var searchable = collectEventSearchableText(event);
-              if (includesExtensionKeyword(searchable)) {
-                recordExtensionNoise('loader-beforeSend-object-rejection', {
-                  message: candidate.value,
-                  mechanismType: candidate.mechanism && candidate.mechanism.type
-                    ? candidate.mechanism.type
-                    : 'onunhandledrejection'
+              if (hasExtensionFrame) {
+                recordExtensionNoise('loader-beforeSend-extension-frame', {
+                  message: exception.value,
+                  mechanismType: mechanismType
                 });
                 return null;
               }
             }
           }
 
-          // 脱敏 URL 中的敏感查询参数
+          // 2. 脱敏 URL 中的敏感查询参数
           function sanitizeQueryString(url) {
             if (!url) return url;
             var sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
@@ -471,22 +454,18 @@
               });
               return urlObj.toString();
             } catch (e) {
-              // URL 解析失败，使用正则替换
               return url.replace(/([?&])(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1$2=***');
             }
           }
 
           if (event.request) {
-            // 脱敏 query_string
             if (event.request.query_string) {
               event.request.query_string = event.request.query_string
                 .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
             }
-            // 脱敏 URL
             if (event.request.url) {
               event.request.url = sanitizeQueryString(event.request.url);
             }
-            // 删除敏感 cookies 和 headers
             delete event.request.cookies;
             if (event.request.headers) {
               delete event.request.headers['authorization'];
@@ -495,6 +474,7 @@
             }
           }
 
+          // 3. 脱敏异常消息中的敏感信息
           if (event.exception && event.exception.values) {
             event.exception.values.forEach(function(exception) {
               if (exception.value) {
@@ -564,8 +544,8 @@
   // 生产环境：加载 SDK
   // ===================================
 
-  // Sentry SDK URL (v8.x) - 使用本地托管的 bundle（避免国内 CDN 访问问题）
-  var SENTRY_SDK_URL = '/src/assets/vendor/sentry-8.40.0.bundle.tracing.min.js';
+  // Sentry SDK URL - 使用官方 CDN（带 tracing 和 replay）
+  var SENTRY_SDK_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.min.js';
 
   // 创建 script 标签
   var script = document.createElement('script');
