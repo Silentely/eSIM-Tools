@@ -129,11 +129,5 @@ class Logger {
   }
 }
 
-// 导出
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = Logger;
-} else if (typeof window !== 'undefined') {
-  window.Logger = Logger;
-}
-
-export default Logger;
+// 统一 CJS 导出，避免混合 ESM/CJS 导致 Webpack 生产构建解析异常
+module.exports = Logger;
