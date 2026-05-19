@@ -21,6 +21,9 @@ const graphqlSchema = {
 };
 
 exports.handler = withAuth(async (event, context, { auth, body }) => {
+  const ts = new Date().toISOString();
+  console.log(`[GGQL] ${ts} | invoked, operationName=${body.operationName || 'none'}, hasAccessToken=${!!body.accessToken}, hasMfaSignature=${!!body.mfaSignature}, hasCookie=${!!body.cookie}`);
+
   // 解析请求体
   const { mfaSignature, mfaRef, query, variables, operationName, cookie } = body;
 
@@ -125,6 +128,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   const verifyCookieUrl = hostHdr ? `${protoHdr}://${hostHdr}/.netlify/functions/verify-cookie` : ((process.env.URL || '').replace(/\/$/, '') + '/.netlify/functions/verify-cookie');
 
   // 调用Giffgaff GraphQL API
+  console.log(`[GGQL] ${ts} | calling upstream: op=${opName}, isSwap=${isSwap}, hasMfaSignature=${!!mfaSignature}, hasResolvedMfaRef=${!!resolvedMfaRef}`);
   let response;
   try {
     response = await axios.post(
@@ -132,13 +136,16 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       graphqlBody,
       { headers: requestHeaders, timeout: 30000 }
     );
+    console.log(`[GGQL] ${ts} | upstream OK: status=${response.status}, hasData=${!!response.data}, hasErrors=${!!response.data?.errors}`);
   } catch (err) {
     const status = err.response?.status;
     const data = err.response?.data || {};
     const isUnauthorized = status === 401 || data?.error === 'unauthorized' || /invalid_token/i.test(String(data?.error || ''));
+    console.error(`[GGQL] ${ts} | upstream FAILED: status=${status}, isUnauthorized=${isUnauthorized}, errMsg=${err.message}`);
 
     // 失败 401 时尝试用 cookie 刷新后重试一次
     if (isUnauthorized && cookie) {
+      console.log(`[GGQL] ${ts} | attempting cookie-based token refresh`);
       try {
         const r = await axios.post(verifyCookieUrl, { cookie }, {
           headers: { 'Content-Type': 'application/json' },
@@ -148,15 +155,19 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
         if (r.data?.success && r.data?.accessToken) {
           accessToken = r.data.accessToken;
           requestHeaders['Authorization'] = `Bearer ${accessToken}`;
+          console.log(`[GGQL] ${ts} | token refreshed, retrying upstream call`);
           response = await axios.post(
             'https://publicapi.giffgaff.com/gateway/graphql',
             graphqlBody,
             { headers: requestHeaders, timeout: 30000 }
           );
+          console.log(`[GGQL] ${ts} | retry OK: status=${response.status}`);
         } else {
+          console.error(`[GGQL] ${ts} | cookie refresh failed: success=${r.data?.success}`);
           throw err;
         }
       } catch (reErr) {
+        console.error(`[GGQL] ${ts} | token refresh/retry FAILED: ${reErr.message}`);
         throw new AuthError('Access token expired. Please re-login with cookie.', 401);
       }
     } else {

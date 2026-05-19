@@ -92,23 +92,40 @@ class Logger {
   }
 
   /**
-   * 输出环境信息（启动时调用一次，仅开发环境）
+   * 输出环境信息（启动时调用一次）
+   * 生产环境：仅输出关键排错信息（不含敏感数据）
+   * 开发环境：输出完整信息
    */
   static env() {
-    if (!isDev || typeof window === 'undefined') return;
-    console.groupCollapsed('%c[ENV] 环境信息', 'color: #6366f1; font-weight: bold');
-    console.log('时间:', new Date().toISOString());
-    console.log('主机:', window.location.hostname);
-    console.log('协议:', window.location.protocol);
-    console.log('语言:', navigator.language);
-    console.log('平台:', navigator.platform);
-    console.log('UserAgent:', navigator.userAgent);
-    console.log('屏幕:', `${screen.width}x${screen.height}`);
-    console.log('视口:', `${window.innerWidth}x${window.innerHeight}`);
-    console.log('Cookie:', navigator.cookieEnabled ? '启用' : '禁用');
-    console.log('ServiceWorker:', 'serviceWorker' in navigator ? '支持' : '不支持');
-    console.log('NODE_ENV:', typeof process !== 'undefined' ? process.env?.NODE_ENV : 'N/A');
-    console.groupEnd();
+    if (typeof window === 'undefined') return;
+
+    if (isDev) {
+      // 开发环境：完整信息
+      console.groupCollapsed('%c[ENV] 环境信息', 'color: #6366f1; font-weight: bold');
+      console.log('时间:', new Date().toISOString());
+      console.log('主机:', window.location.hostname);
+      console.log('协议:', window.location.protocol);
+      console.log('语言:', navigator.language);
+      console.log('平台:', navigator.platform);
+      console.log('UserAgent:', navigator.userAgent);
+      console.log('屏幕:', `${screen.width}x${screen.height}`);
+      console.log('视口:', `${window.innerWidth}x${window.innerHeight}`);
+      console.log('Cookie:', navigator.cookieEnabled ? '启用' : '禁用');
+      console.log('ServiceWorker:', 'serviceWorker' in navigator ? '支持' : '不支持');
+      console.log('NODE_ENV:', typeof process !== 'undefined' ? process.env?.NODE_ENV : 'N/A');
+      console.groupEnd();
+    } else {
+      // 生产环境：关键排错信息（折叠分组，不占空间）
+      console.groupCollapsed('%c[ENV] 运行环境', 'color: #6b7280; font-size: 11px');
+      console.log('主机:', window.location.hostname);
+      console.log('协议:', window.location.protocol);
+      console.log('平台:', navigator.platform);
+      console.log('语言:', navigator.language);
+      console.log('Cookie:', navigator.cookieEnabled ? '启用' : '禁用');
+      console.log('ServiceWorker:', 'serviceWorker' in navigator ? '支持' : '不支持');
+      console.log('视口:', `${window.innerWidth}x${window.innerHeight}`);
+      console.groupEnd();
+    }
   }
 }
 
