@@ -57,7 +57,20 @@ class GiffgaffApp {
                 (event.reason && typeof event.reason === 'object' && !event.reason.stack);
             if (!shouldHandleAsCustomError) return;
 
-            if (!error) return;
+            if (!error) {
+                // normalize 返回 null（number/boolean/symbol 等原始类型）
+                // 仍需阻止默认行为，避免浏览器控制台报错
+                event.preventDefault();
+                return;
+            }
+
+            // 过滤 Sentry 内置 ignoreErrors 已覆盖的噪音模式
+            // 避免自定义 handler 绕过 Sentry 过滤导致噪音上报
+            if (this.isSentryIgnoredError(error)) {
+                event.preventDefault();
+                console.debug('[Giffgaff] Delegated to Sentry ignoreErrors:', error.message);
+                return;
+            }
 
             // 上报到 Sentry
             if (window.Sentry) {
@@ -120,6 +133,19 @@ class GiffgaffApp {
         ];
 
         return ignoredKeywords.some((keyword) => payload.includes(keyword));
+    }
+
+    /**
+     * 检查是否匹配 Sentry ignoreErrors 列表中的噪音模式
+     * 避免自定义 handler 绕过 Sentry 内置过滤，将噪音当作真实错误上报
+     */
+    isSentryIgnoredError(error) {
+        const message = (error?.message || '').toLowerCase();
+        return (
+            message.includes('non-error promise rejection') ||
+            message.includes('resizeobserver loop') ||
+            message.includes('aborterror')
+        );
     }
 
     /**
