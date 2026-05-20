@@ -122,6 +122,7 @@ class GiffgaffApp {
         const ignoredKeywords = [
             'wallet must has at least one account',
             'wallet must have at least one account',
+            '4001',
             'autofillfielddata.autocompletetype.includes',
             'webkit-masked-url://',
             'chrome-extension://',
@@ -712,7 +713,36 @@ class GiffgaffApp {
             }, 2000);
         } catch (error) {
             console.error('[Giffgaff] 获取会员信息失败:', error.message, error);
-            uiController.showStatus(elements.memberStatus, t('giffgaff.app.error.memberFailed', { message: error.message }), "error");
+
+            // 针对"账号无号码"错误提供专门提示
+            const isWalletEmpty = error.message?.includes('wallet must') ||
+                                   error.message?.includes('at least one account') ||
+                                   error.code === 4001;
+
+            if (isWalletEmpty) {
+                // 用户账号没有号码，不支持下一步操作
+                const htmlMsg = `
+                    <div style="text-align: left; line-height: 1.8;">
+                        <p style="margin-bottom: 12px;"><strong>${tl('giffgaff.app.error.walletEmpty')}</strong></p>
+                        <p style="margin-bottom: 8px;">${tl('giffgaff.app.error.walletEmptyDesc')}</p>
+                        <ul style="margin-left: 20px; margin-bottom: 12px;">
+                            <li>${tl('giffgaff.app.error.walletEmptyFeatures转换')}</li>
+                            <li>${tl('giffgaff.app.error.walletEmptyFeatures更换')}</li>
+                        </ul>
+                        <p style="margin-bottom: 8px;">${tl('giffgaff.app.error.walletEmptyGuide')}</p>
+                        <p style="margin-left: 20px;">
+                            <a href="https://www.giffgaff.com/" target="_blank" rel="noopener noreferrer"
+                               style="color: #2563eb; text-decoration: underline;">
+                                ${tl('giffgaff.app.error.walletEmptyLink')} <i class="fas fa-external-link-alt" style="font-size: 0.85em;"></i>
+                            </a>
+                        </p>
+                    </div>
+                `;
+                elements.memberStatus.innerHTML = htmlMsg;
+                elements.memberStatus.className = 'status error';
+            } else {
+                uiController.showStatus(elements.memberStatus, t('giffgaff.app.error.memberFailed', { message: error.message }), "error");
+            }
         } finally {
             elements.getMemberBtn.innerHTML = `<i class="fas fa-user-circle me-2"></i> ${tl('获取会员信息')}`;
             elements.getMemberBtn.disabled = false;
