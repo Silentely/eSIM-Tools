@@ -3,6 +3,8 @@ class PerformanceOptimizer {
   constructor() {
     this.isOnline = navigator.onLine;
     this.observers = new Map(); // Track observers for cleanup
+    this._webpSupported = null; // 缓存 WebP 检测结果
+    this._parallaxElements = null; // 缓存视差元素查询
     this.init();
   }
 
@@ -12,6 +14,7 @@ class PerformanceOptimizer {
     this.setupScrollOptimization();
     this.setupIntersectionObserver();
     this.setupTouchOptimization();
+    this.setupVisibilityHandler();
   }
 
   // Cleanup method to prevent memory leaks
@@ -43,9 +46,9 @@ class PerformanceOptimizer {
     const toast = document.createElement('div');
     toast.className = `network-status ${type} fade-in`;
     toast.textContent = message;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
       toast.classList.add('fade-out');
       setTimeout(() => toast.remove(), 300);
@@ -55,7 +58,7 @@ class PerformanceOptimizer {
   // 图片优化
   optimizeImages() {
     const images = document.querySelectorAll('img[data-src]');
-    
+
     if ('IntersectionObserver' in window) {
       const imageObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -71,7 +74,7 @@ class PerformanceOptimizer {
       });
 
       images.forEach(img => imageObserver.observe(img));
-      
+
       // Store observer for cleanup
       this.observers.set('images', imageObserver);
     } else {
@@ -87,7 +90,7 @@ class PerformanceOptimizer {
 
     // Create a new image to preload
     const tempImg = new Image();
-    
+
     tempImg.onload = () => {
       // Check WebP support
       if (this.supportsWebP()) {
@@ -98,30 +101,32 @@ class PerformanceOptimizer {
       img.classList.add('fade-in');
       img.removeAttribute('data-src');
     };
-    
+
     tempImg.onerror = () => {
       // Fallback to original format if WebP fails
       img.src = src;
       img.classList.add('fade-in');
       img.removeAttribute('data-src');
     };
-    
+
     // Trigger preload
     tempImg.src = this.supportsWebP() ? src.replace(/\.(jpg|jpeg|png)$/i, '.webp') : src;
   }
 
-  // 检查WebP支持
+  // 检查WebP支持（缓存结果避免重复创建canvas）
   supportsWebP() {
+    if (this._webpSupported !== null) return this._webpSupported;
     const canvas = document.createElement('canvas');
     canvas.width = 1;
     canvas.height = 1;
-    return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    this._webpSupported = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    return this._webpSupported;
   }
 
   // 滚动优化
   setupScrollOptimization() {
     let ticking = false;
-    
+
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
@@ -135,12 +140,15 @@ class PerformanceOptimizer {
     window.addEventListener('scroll', handleScroll, { passive: true });
   }
 
-  // 更新滚动效果
+  // 更新滚动效果（缓存DOM查询）
   updateScrollEffects() {
     const scrolled = window.pageYOffset;
-    const parallaxElements = document.querySelectorAll('[data-parallax]');
-    
-    parallaxElements.forEach(element => {
+    // 首次调用时缓存视差元素
+    if (this._parallaxElements === null) {
+      this._parallaxElements = document.querySelectorAll('[data-parallax]');
+    }
+
+    this._parallaxElements.forEach(element => {
       const speed = element.dataset.parallax || 0.5;
       const yPos = -(scrolled * speed);
       element.style.transform = `translateY(${yPos}px)`;
@@ -167,7 +175,7 @@ class PerformanceOptimizer {
     document.querySelectorAll('[data-animate]').forEach(el => {
       observer.observe(el);
     });
-    
+
     // Store observer for cleanup
     this.observers.set('animations', observer);
   }
@@ -184,10 +192,11 @@ class PerformanceOptimizer {
       lastTouchEnd = now;
     }, false);
 
-    // 优化触摸反馈
+    // 优化触摸反馈（使用CSS变量避免高频classList操作）
     document.addEventListener('touchstart', (e) => {
       const target = e.target.closest('.btn, .card, .form-control');
       if (target) {
+        target.style.setProperty('--touch-active', '1');
         target.classList.add('touch-active');
       }
     }, { passive: true });
@@ -195,11 +204,32 @@ class PerformanceOptimizer {
     document.addEventListener('touchend', (e) => {
       const target = e.target.closest('.btn, .card, .form-control');
       if (target) {
-        setTimeout(() => {
+        // 使用requestAnimationFrame替代setTimeout，更高效
+        requestAnimationFrame(() => {
+          target.style.removeProperty('--touch-active');
           target.classList.remove('touch-active');
-        }, 150);
+        });
       }
     }, { passive: true });
+  }
+
+  // 页面可见性处理（暂停/恢复滚动效果）
+  setupVisibilityHandler() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // 页面不可见时，断开滚动观察器
+        const scrollObserver = this.observers.get('scroll');
+        if (scrollObserver) {
+          scrollObserver.disconnect();
+        }
+      } else {
+        // 页面可见时，重新连接滚动观察器
+        const scrollObserver = this.observers.get('scroll');
+        if (scrollObserver) {
+          scrollObserver.observe(document.documentElement);
+        }
+      }
+    });
   }
 
   // 显示加载状态
@@ -212,13 +242,13 @@ class PerformanceOptimizer {
         <p class="mt-3">${message}</p>
       </div>
     `;
-    
+
     document.body.appendChild(overlay);
-    
+
     // 强制重绘
     overlay.offsetHeight;
     overlay.classList.add('show');
-    
+
     return overlay;
   }
 
@@ -300,4 +330,4 @@ class PerformanceOptimizer {
 const performanceOptimizer = new PerformanceOptimizer();
 
 // 导出供其他模块使用
-window.PerformanceOptimizer = PerformanceOptimizer; 
+window.PerformanceOptimizer = PerformanceOptimizer;

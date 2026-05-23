@@ -30,7 +30,9 @@ class GiffgaffApp {
         this.countdownIntervalId = null;
         this.minuteIntervalId = null;
         this.minuteTimeoutId = null;
+        this._isPageVisible = true; // 页面可见性状态
         this.setupGlobalErrorHandlers();
+        this.setupVisibilityHandler(); // 监听页面可见性变化
     }
 
     /**
@@ -88,6 +90,50 @@ class GiffgaffApp {
             // 显示用户友好的错误提示
             showToast(tl('操作失败，请重试或刷新页面'));
         });
+    }
+
+    /**
+     * 设置页面可见性监听器
+     * 页面不可见时暂停定时器，节省CPU资源
+     */
+    setupVisibilityHandler() {
+        document.addEventListener('visibilitychange', () => {
+            this._isPageVisible = !document.hidden;
+            if (document.hidden) {
+                // 页面不可见，暂停所有定时器
+                this.pauseTimers();
+            } else {
+                // 页面可见，恢复定时器
+                this.resumeTimers();
+            }
+        });
+    }
+
+    /**
+     * 暂停所有定时器
+     */
+    pauseTimers() {
+        if (this.countdownIntervalId) {
+            clearInterval(this.countdownIntervalId);
+            this.countdownIntervalId = null;
+        }
+        if (this.minuteIntervalId) {
+            clearInterval(this.minuteIntervalId);
+            this.minuteIntervalId = null;
+        }
+        if (this.minuteTimeoutId) {
+            clearTimeout(this.minuteTimeoutId);
+            this.minuteTimeoutId = null;
+        }
+    }
+
+    /**
+     * 恢复定时器
+     */
+    resumeTimers() {
+        if (this.initialized) {
+            this.initServiceTimeCheck();
+        }
     }
 
     normalizeUnhandledRejectionReason(reason) {
