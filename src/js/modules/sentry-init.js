@@ -39,6 +39,8 @@ const EXTENSION_ERROR_KEYWORDS = [
   'autofillfielddata.autocompletetype.includes',
   'can\'t find variable: currentinset',
   'can\'t find variable: config',
+  'error invoking post',
+  'method not found',
 ];
 
 function toLowerSafe(value) {
@@ -352,6 +354,9 @@ function initSentry() {
         /autofillFieldData\.autoCompleteType\.includes/i,
         /Can't find variable: currentInset/i,
         /Can't find variable: CONFIG/i,
+        // Android WebView / 浏览器注入脚本噪音
+        /Error invoking post/i,
+        /Method not found/i,
         // 已知浏览器噪音（保留）
         'ResizeObserver loop',
         'Non-Error promise rejection',
