@@ -340,6 +340,26 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
+/* ===== 新用户提示 ===== */
+.new-user-notice {
+    background: linear-gradient(135deg, #fff8e1, #fff3c4);
+    border: 1px solid rgba(255, 204, 0, 0.4);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.new-user-notice i {
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
 /* ===== 推广横幅 ===== */
 .promo-banner {
     background: linear-gradient(135deg, #ffcc00, #ffd633);
