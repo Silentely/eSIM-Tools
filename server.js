@@ -9,13 +9,30 @@ const path = require('path');
 const fs = require('fs');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const Logger = require('./src/js/modules/logger.js');
 require('dotenv').config();
+
+if (typeof global.File === 'undefined') {
+  global.File = class File {};
+}
+
+const Logger = {
+  log: (...args) => console.log('[INFO]', ...args),
+  warn: (...args) => console.warn('[WARN]', ...args),
+  error: (...args) => console.error('[ERROR]', ...args)
+};
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const STATIC_ROOT = path.join(__dirname, process.env.STATIC_ROOT || 'dist');
 const INTERNAL_FUNCTION_KEY = process.env.ACCESS_KEY || '';
+const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _resolveCorsOrigin } = require('./netlify/functions/_shared/cors');
+const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
+const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
+const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
+const DEFAULT_SIMYO_CLIENT_TOKEN = 'e77b7e2f43db41bb95b17a2a11581a38';
+const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
+const DEFAULT_SIMYO_CLIENT_VERSION = '4.23.5';
+const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)';
 
 // 启动时环境检查
 if (!INTERNAL_FUNCTION_KEY) {
@@ -34,6 +51,10 @@ if (!fs.existsSync(STATIC_ROOT)) {
     console.warn('💡 运行: npm run build');
 }
 
+if (origins.allowAll) {
+    Logger.warn('⚠️  ALLOWED_ORIGIN 包含通配符(*)，所有来源均可访问。请勿在生产环境使用');
+}
+
 // 中间件配置
 app.use(helmet({
     contentSecurityPolicy: {
@@ -49,11 +70,9 @@ app.use(helmet({
 }));
 
 // 仅允许特定来源访问本地API（前端文件本地打开时可能 Origin 为 undefined）
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://esim.cosr.eu.org';
 app.use(cors({
     origin: function(origin, callback) {
-        if (!origin) return callback(null, true); // 非浏览器/本地文件放行
-        if (origin === ALLOWED_ORIGIN) return callback(null, true);
+        if (isAllowedOrigin(origin)) return callback(null, true); // 非浏览器/本地文件放行
         return callback(new Error('Not allowed by CORS'));
     },
     credentials: false
@@ -140,13 +159,14 @@ app.use('/.netlify/functions/public-config', wrapNetlifyFunction(publicConfig));
 
 // Simyo API代理路由
 app.use('/api/simyo/*', (req, res) => {
-    const targetUrl = `https://appapi.simyo.nl/simyoapi/api/v1${req.path.replace('/api/simyo', '')}`;
+    const proxyPath = req.originalUrl.replace(/^\/api\/simyo/, '').split('?')[0] || '/';
+    const targetUrl = `https://appapi.simyo.nl/simyoapi/api/v1${proxyPath}`;
     Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
 
     // 设置CORS头（仅允许指定域）
-    res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+    res.header('Access-Control-Allow-Origin', getCorsOrigin(req.headers.origin));
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Token, X-Client-Platform, X-Client-Version');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Token, X-Client-Platform, X-Client-Version, X-Session-Token');
     res.header('Vary', 'Origin');
 
     if (req.method === 'OPTIONS') {
@@ -160,10 +180,11 @@ app.use('/api/simyo/*', (req, res) => {
         url: targetUrl,
         headers: {
             'Content-Type': 'application/json',
-            'User-Agent': req.headers['user-agent'] || 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)',
-            'X-Client-Token': req.headers['x-client-token'] || process.env.SIMYO_CLIENT_TOKEN || '',
-            'X-Client-Platform': req.headers['x-client-platform'] || 'ios',
-            'X-Client-Version': req.headers['x-client-version'] || '4.23.5'
+            'User-Agent': req.headers['user-agent'] || process.env.SIMYO_USER_AGENT || DEFAULT_SIMYO_USER_AGENT,
+            'X-Client-Token': req.headers['x-client-token'] || process.env.SIMYO_CLIENT_TOKEN || DEFAULT_SIMYO_CLIENT_TOKEN,
+            'X-Client-Platform': req.headers['x-client-platform'] || process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
+            'X-Client-Version': req.headers['x-client-version'] || process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
+            'X-Session-Token': req.headers['x-session-token'] || ''
         },
         timeout: 30000
     };

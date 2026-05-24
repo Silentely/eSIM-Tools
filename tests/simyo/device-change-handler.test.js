@@ -13,8 +13,11 @@ describe('Simyo DeviceChangeHandler 集成覆盖', () => {
   });
 
   it('应完成设备更换主流程：applyNewEsim -> verifyCode', async () => {
+    const jsonHeaders = { get: (name) => name === 'content-type' ? 'application/json' : null };
     global.fetch
       .mockResolvedValueOnce({
+        headers: jsonHeaders,
+        ok: true,
         json: async () => ({
           success: true,
           result: {
@@ -24,6 +27,8 @@ describe('Simyo DeviceChangeHandler 集成覆盖', () => {
         })
       })
       .mockResolvedValueOnce({
+        headers: jsonHeaders,
+        ok: true,
         json: async () => ({
           success: true,
           result: {
@@ -42,12 +47,12 @@ describe('Simyo DeviceChangeHandler 集成覆盖', () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(global.fetch).toHaveBeenNthCalledWith(
       1,
-      'http://localhost:3000/api/simyo/settings/simcard',
+      '/api/simyo/settings/simcard',
       expect.objectContaining({ method: 'POST' })
     );
     expect(global.fetch).toHaveBeenNthCalledWith(
       2,
-      'http://localhost:3000/api/simyo/esim/verify-code',
+      '/api/simyo/esim/verify-code',
       expect.objectContaining({ method: 'POST' })
     );
   });

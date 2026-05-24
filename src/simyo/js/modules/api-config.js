@@ -21,35 +21,37 @@ export const simyoConfig = {
  */
 export function getApiEndpoints() {
     const isNetlify = isNetlifyEnvironment();
+    const isBrowserServed = typeof window !== 'undefined' && /^https?:$/.test(window.location.protocol);
+    const localBase = isBrowserServed ? '' : 'http://localhost:3000';
 
     return {
         // 认证相关
         login: isNetlify
             ? "/api/simyo/sessions"
-            : "http://localhost:3000/api/simyo/sessions",
+            : `${localBase}/api/simyo/sessions`,
 
         // eSIM相关
         getEsim: isNetlify
             ? "/api/simyo/esim/get-by-customer"
-            : "http://localhost:3000/api/simyo/esim/get-by-customer",
+            : `${localBase}/api/simyo/esim/get-by-customer`,
 
         // 设备更换相关
         applyNewEsim: isNetlify
             ? "/api/simyo/settings/simcard"
-            : "http://localhost:3000/api/simyo/settings/simcard",
+            : `${localBase}/api/simyo/settings/simcard`,
         verifyCode: isNetlify
             ? "/api/simyo/esim/verify-code"
-            : "http://localhost:3000/api/simyo/esim/verify-code",
+            : `${localBase}/api/simyo/esim/verify-code`,
 
         // 新增：查询可用的验证方式 (v2 API)
         availableValidationMethods: isNetlify
             ? "/api/simyo/esim.availableValidationMethods"
-            : "http://localhost:3000/api/simyo/esim.availableValidationMethods",
+            : `${localBase}/api/simyo/esim.availableValidationMethods`,
 
         // 安装确认
         confirmInstall: isNetlify
             ? "/api/simyo/esim/reorder-profile-installed"
-            : "http://localhost:3000/api/simyo/esim/reorder-profile-installed",
+            : `${localBase}/api/simyo/esim/reorder-profile-installed`,
 
         // 二维码服务
         qrcode: "https://qrcode.show/"
@@ -82,30 +84,53 @@ export function createHeaders(includeSession = false, sessionToken = "") {
  * @param {Response} response - Fetch API响应对象
  */
 export async function handleApiResponse(response) {
-    const data = await response.json();
-
-    // 适配不同环境的响应格式
-    const isNetlify = isNetlifyEnvironment();
-
-    if (isNetlify) {
-        // Netlify环境：直接从Simyo API响应获取
-        // Simyo API响应格式：{result: {success: true, ...}}
-        // 需要展平 result 以便统一处理
-        if (data.result && data.result.success !== undefined) {
-            // 返回展平后的结构，便于后续使用
-            return {
-                success: data.result.success,
-                result: data.result,
-                message: data.result.message || data.result.reason
-            };
+    const contentType = response.headers.get('content-type') || '';
+    let data;
+    if (contentType.includes('application/json')) {
+        try {
+            data = await response.json();
+        } catch (e) {
+            // JSON 解析失败（空体/坏体），回退为空对象
+            data = {};
         }
-        return data;
     } else {
-        // 本地代理环境：从包装的响应获取
-        if (data.success && data.result) {
-            return data;
-        } else {
-            throw new Error(data.message || data.error || t('simyo.api.error.generic'));
-        }
+        data = { message: await response.text() };
     }
+
+    // 先处理 HTTP 错误，尽量透传服务端信息
+    if (!response.ok) {
+        throw new Error(
+            data.message ||
+            data.error ||
+            data.reason ||
+            `HTTP ${response.status}`
+        );
+    }
+
+    // 统一兼容三种返回格式：
+    // 1. 本地旧代理包装: { success, result, message }
+    // 2. 直通 Simyo: { result: {...} }
+    // 3. Simyo 展平成功结构: { success: true, ... }
+    if (data.success === true && data.result) {
+        return data;
+    }
+
+    if (data.result) {
+        const nestedSuccess = data.result.success;
+        return {
+            success: nestedSuccess !== false,
+            result: data.result,
+            message: data.message || data.result.message || data.result.reason
+        };
+    }
+
+    if (data.success === true) {
+        return {
+            success: true,
+            result: data,
+            message: data.message || data.reason
+        };
+    }
+
+    throw new Error(data.message || data.error || data.reason || t('simyo.api.error.generic'));
 }
