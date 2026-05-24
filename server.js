@@ -148,14 +148,21 @@ function wrapNetlifyFunction(handler) {
     };
 }
 
-// API端点
-app.use('/.netlify/functions/giffgaff-mfa-challenge', wrapNetlifyFunction(giffgaffMfaChallenge));
-app.use('/.netlify/functions/giffgaff-mfa-validation', wrapNetlifyFunction(giffgaffMfaValidation));
-app.use('/.netlify/functions/giffgaff-graphql', wrapNetlifyFunction(giffgaffGraphql));
-app.use('/.netlify/functions/giffgaff-token-exchange', wrapNetlifyFunction(giffgaffTokenExchange));
-app.use('/.netlify/functions/verify-cookie', wrapNetlifyFunction(verifyCookie));
-app.use('/.netlify/functions/giffgaff-sms-activate', wrapNetlifyFunction(giffgaffSmsActivate));
-app.use('/.netlify/functions/public-config', wrapNetlifyFunction(publicConfig));
+// API端点（同时挂 /.netlify/functions/* 与 /bff/*，本地模拟 Edge BFF 代理）
+const functionRoutes = [
+  ['giffgaff-mfa-challenge', giffgaffMfaChallenge],
+  ['giffgaff-mfa-validation', giffgaffMfaValidation],
+  ['giffgaff-graphql', giffgaffGraphql],
+  ['giffgaff-token-exchange', giffgaffTokenExchange],
+  ['verify-cookie', verifyCookie],
+  ['giffgaff-sms-activate', giffgaffSmsActivate],
+  ['public-config', publicConfig]
+];
+functionRoutes.forEach(([name, handler]) => {
+  const wrapped = wrapNetlifyFunction(handler);
+  app.use(`/.netlify/functions/${name}`, wrapped);
+  app.use(`/bff/${name}`, wrapped);
+});
 
 // Simyo API代理路由
 app.use('/api/simyo/*', (req, res) => {
