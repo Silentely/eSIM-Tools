@@ -107,6 +107,11 @@ export async function handleApiResponse(response) {
         );
     }
 
+    // 非 JSON 响应直接返回文本内容
+    if (!contentType.includes('application/json')) {
+        return { success: true, result: data };
+    }
+
     // 统一兼容三种返回格式：
     // 1. 本地旧代理包装: { success, result, message }
     // 2. 直通 Simyo: { result: {...} }
@@ -118,7 +123,7 @@ export async function handleApiResponse(response) {
     if (data.result) {
         const nestedSuccess = data.result.success;
         return {
-            success: nestedSuccess !== false,
+            success: nestedSuccess === true,
             result: data.result,
             message: data.message || data.result.message || data.result.reason
         };

@@ -159,8 +159,10 @@ app.use('/.netlify/functions/public-config', wrapNetlifyFunction(publicConfig));
 
 // Simyo API代理路由
 app.use('/api/simyo/*', (req, res) => {
-    const proxyPath = req.originalUrl.replace(/^\/api\/simyo/, '').split('?')[0] || '/';
-    const targetUrl = `https://appapi.simyo.nl/simyoapi/api/v1${proxyPath}`;
+    const [pathPart, queryPart] = req.originalUrl.replace(/^\/api\/simyo/, '').split('?');
+    const proxyPath = pathPart || '/';
+    const queryString = queryPart ? `?${queryPart}` : '';
+    const targetUrl = `https://appapi.simyo.nl/simyoapi/api/v1${proxyPath}${queryString}`;
     Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
 
     // 设置CORS头（仅允许指定域）
@@ -184,7 +186,7 @@ app.use('/api/simyo/*', (req, res) => {
             'X-Client-Token': req.headers['x-client-token'] || process.env.SIMYO_CLIENT_TOKEN || DEFAULT_SIMYO_CLIENT_TOKEN,
             'X-Client-Platform': req.headers['x-client-platform'] || process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
             'X-Client-Version': req.headers['x-client-version'] || process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
-            'X-Session-Token': req.headers['x-session-token'] || ''
+            ...(req.headers['x-session-token'] ? { 'X-Session-Token': req.headers['x-session-token'] } : {})
         },
         timeout: 30000
     };

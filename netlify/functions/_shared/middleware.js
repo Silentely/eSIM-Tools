@@ -110,7 +110,7 @@ function authenticate(event) {
  * @param {Object} additionalHeaders - 额外的响应头
  * @returns {Object} 响应头对象
  */
-function createHeaders(origin = ALLOWED_ORIGIN, additionalHeaders = {}) {
+function createHeaders(origin = null, additionalHeaders = {}) {
   return {
     'Access-Control-Allow-Origin': resolveCorsOrigin(origin),
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-MFA-Signature, X-MFA-Ref, X-MFA-Challenge-Ref, X-CF-Turnstile, X-Esim-Key, X-App-Key',
