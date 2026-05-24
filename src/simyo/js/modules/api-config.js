@@ -85,9 +85,17 @@ export function createHeaders(includeSession = false, sessionToken = "") {
  */
 export async function handleApiResponse(response) {
     const contentType = response.headers.get('content-type') || '';
-    const data = contentType.includes('application/json')
-        ? await response.json()
-        : { message: await response.text() };
+    let data;
+    if (contentType.includes('application/json')) {
+        try {
+            data = await response.json();
+        } catch (e) {
+            // JSON 解析失败（空体/坏体），回退为空对象
+            data = {};
+        }
+    } else {
+        data = { message: await response.text() };
+    }
 
     // 先处理 HTTP 错误，尽量透传服务端信息
     if (!response.ok) {

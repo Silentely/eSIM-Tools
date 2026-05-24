@@ -25,26 +25,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const STATIC_ROOT = path.join(__dirname, process.env.STATIC_ROOT || 'dist');
 const INTERNAL_FUNCTION_KEY = process.env.ACCESS_KEY || '';
-const DEFAULT_ALLOWED_ORIGIN = 'https://esim.cosr.eu.org';
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || DEFAULT_ALLOWED_ORIGIN;
-const ALLOWED_ORIGINS = ALLOWED_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean);
-const ALLOW_ALL_ORIGINS = ALLOWED_ORIGINS.includes('*');
+const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _resolveCorsOrigin } = require('./netlify/functions/_shared/cors');
+const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
+const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
+const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
 const DEFAULT_SIMYO_CLIENT_TOKEN = 'e77b7e2f43db41bb95b17a2a11581a38';
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
 const DEFAULT_SIMYO_CLIENT_VERSION = '4.23.5';
 const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)';
-
-function isAllowedOrigin(origin) {
-  if (!origin) return true;
-  if (ALLOW_ALL_ORIGINS) return true;
-  return ALLOWED_ORIGINS.includes(origin);
-}
-
-function getCorsOrigin(origin) {
-  if (ALLOW_ALL_ORIGINS) return '*';
-  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
-  return ALLOWED_ORIGINS[0] || DEFAULT_ALLOWED_ORIGIN;
-}
 
 // 启动时环境检查
 if (!INTERNAL_FUNCTION_KEY) {
@@ -61,6 +49,10 @@ if (!process.env.SIMYO_CLIENT_TOKEN) {
 if (!fs.existsSync(STATIC_ROOT)) {
     console.warn(`⚠️  静态目录 ${STATIC_ROOT} 不存在，请先运行 npm run build`);
     console.warn('💡 运行: npm run build');
+}
+
+if (origins.allowAll) {
+    Logger.warn('⚠️  ALLOWED_ORIGIN 包含通配符(*)，所有来源均可访问。请勿在生产环境使用');
 }
 
 // 中间件配置

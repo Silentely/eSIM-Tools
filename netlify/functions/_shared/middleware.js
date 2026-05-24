@@ -4,12 +4,10 @@
  */
 
 const { captureException, flush, setContext } = require('./sentry');
+const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _resolveCorsOrigin } = require('./cors');
 
-const DEFAULT_ALLOWED_ORIGIN = 'https://esim.cosr.eu.org';
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || DEFAULT_ALLOWED_ORIGIN;
-const ALLOWED_ORIGINS = ALLOWED_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean);
-const ALLOW_ALL_ORIGINS = ALLOWED_ORIGINS.includes('*');
 const ACCESS_KEY = process.env.ACCESS_KEY;
+const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
 
 // 启动时检查密钥
 if (!ACCESS_KEY) {
@@ -19,6 +17,10 @@ if (!ACCESS_KEY) {
 
 if (ACCESS_KEY === 'please_change_me') {
   console.error('❌ 安全警告: ACCESS_KEY 使用了默认值，请立即修改');
+}
+
+if (origins.allowAll) {
+  console.warn('⚠️  ALLOWED_ORIGIN 包含通配符(*)，所有来源均可访问。请勿在生产环境使用');
 }
 
 /**
@@ -32,17 +34,8 @@ class AuthError extends Error {
   }
 }
 
-function isAllowedOrigin(origin) {
-  if (!origin) return true;
-  if (ALLOW_ALL_ORIGINS) return true;
-  return ALLOWED_ORIGINS.includes(origin);
-}
-
-function resolveCorsOrigin(origin) {
-  if (ALLOW_ALL_ORIGINS) return '*';
-  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
-  return ALLOWED_ORIGINS[0] || DEFAULT_ALLOWED_ORIGIN;
-}
+const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
+const resolveCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
 
 /**
  * 提取请求中提供的认证密钥
