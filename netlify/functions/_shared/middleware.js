@@ -5,7 +5,10 @@
 
 const { captureException, flush, setContext } = require('./sentry');
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://esim.cosr.eu.org';
+const DEFAULT_ALLOWED_ORIGIN = 'https://esim.cosr.eu.org';
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || DEFAULT_ALLOWED_ORIGIN;
+const ALLOWED_ORIGINS = ALLOWED_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean);
+const ALLOW_ALL_ORIGINS = ALLOWED_ORIGINS.includes('*');
 const ACCESS_KEY = process.env.ACCESS_KEY;
 
 // 启动时检查密钥
@@ -27,6 +30,18 @@ class AuthError extends Error {
     this.name = 'AuthError';
     this.statusCode = statusCode;
   }
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (ALLOW_ALL_ORIGINS) return true;
+  return ALLOWED_ORIGINS.includes(origin);
+}
+
+function resolveCorsOrigin(origin) {
+  if (ALLOW_ALL_ORIGINS) return '*';
+  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
+  return ALLOWED_ORIGINS[0] || DEFAULT_ALLOWED_ORIGIN;
 }
 
 /**
@@ -71,14 +86,14 @@ function authenticate(event) {
   // CORS 预检请求
   if (event.httpMethod === 'OPTIONS') {
     // 验证来源
-    if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
+    if (!isAllowedOrigin(requestOrigin)) {
       throw new AuthError('Origin not allowed', 403);
     }
     return { preflight: true, origin: requestOrigin };
   }
 
   // 非预检请求：验证来源
-  if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
+  if (!isAllowedOrigin(requestOrigin)) {
     throw new AuthError('Origin not allowed', 403);
   }
 
@@ -104,7 +119,7 @@ function authenticate(event) {
  */
 function createHeaders(origin = ALLOWED_ORIGIN, additionalHeaders = {}) {
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Origin': resolveCorsOrigin(origin),
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-MFA-Signature, X-MFA-Ref, X-MFA-Challenge-Ref, X-CF-Turnstile, X-Esim-Key, X-App-Key',
     'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
     'Vary': 'Origin',
@@ -241,7 +256,7 @@ function withAuth(handler, options = {}) {
 
         // CORS 预检请求
         if (event.httpMethod === 'OPTIONS') {
-          if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
+          if (!isAllowedOrigin(requestOrigin)) {
             throw new AuthError('Origin not allowed', 403);
           }
           return {
@@ -252,7 +267,7 @@ function withAuth(handler, options = {}) {
         }
 
         // 非预检请求：仅验证来源
-        if (requestOrigin && requestOrigin !== ALLOWED_ORIGIN) {
+        if (!isAllowedOrigin(requestOrigin)) {
           throw new AuthError('Origin not allowed', 403);
         }
 
