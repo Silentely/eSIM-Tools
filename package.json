@@ -17,8 +17,6 @@
     "dev": "nodemon server.js",
     "build": "npm run build:static",
     "build:static": "node scripts/build-static.js",
-    "verify:legacy": "node scripts/verify-legacy-frozen.js",
-    "verify:legacy:update": "node scripts/verify-legacy-frozen.js --update",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

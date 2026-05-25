@@ -9,6 +9,7 @@
 
 | 时间 | 变更内容 |
 |------|----------|
+| 2026-05-25 | 清理 Legacy 残留措辞：删除 verify-legacy-frozen 工具链、修复 server.js 死路由 simyo-static、统一架构表述为"原生 ES6 模块" |
 | 2026-05-18 | 文档清理与路径重构：移除未使用的新模块化版本，修复文档错链，精简重复文档 |
 | 2026-05-03 22:11:20 | 增量扫描更新：重新扫描全仓，更新模块索引与覆盖率报告 |
 | 2026-04-28 19:11:10 | 增量扫描更新：重新扫描全仓，更新模块索引与覆盖率报告 |
@@ -44,7 +45,7 @@ eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simy
 2. **Serverless 优先**: 所有后端逻辑通过 Netlify Functions 实现
 3. **BFF 模式**: Edge Functions 作为 Backend-For-Frontend 代理层，注入 ACCESS_KEY 并转发请求
 4. **中间件统一**: 通过 `withAuth` 中间件统一处理鉴权、CORS、验证
-5. **Legacy 架构**: 前端采用 Legacy 模块化架构 (HTML + ES6 模块)，通过 ES6 import 按需加载
+5. **原生 ES6 模块**: 前端采用浏览器原生 ES6 模块化设计 (HTML + `<script type="module">` + `import/export`)，业务页面不经 Webpack 打包，按需加载，由 Netlify 静态托管直接派发
 
 ### 部署流程
 
@@ -61,8 +62,8 @@ eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simy
 
 ```mermaid
 graph TD
-    A["eSIM-Tools (根)"] --> B["src/giffgaff (Legacy)"];
-    A --> C["src/simyo (Legacy)"];
+    A["eSIM-Tools (根)"] --> B["src/giffgaff"];
+    A --> C["src/simyo"];
     A --> D["src/js/modules (通用工具)"];
     A --> E["netlify/functions"];
     A --> F["netlify/edge-functions"];
@@ -101,8 +102,8 @@ graph TD
     F --> F1["bff-proxy.js"];
     F --> F2["markdown-negotiation.js"];
 
-    click B "./src/giffgaff/MODULE_ARCHITECTURE.md" "查看 Giffgaff Legacy 架构文档"
-    click C "./src/simyo/MODULE_ARCHITECTURE.md" "查看 Simyo Legacy 架构文档"
+    click B "./src/giffgaff/MODULE_ARCHITECTURE.md" "查看 Giffgaff 模块架构文档"
+    click C "./src/simyo/MODULE_ARCHITECTURE.md" "查看 Simyo 模块架构文档"
     click D "./src/js/modules/CLAUDE.md" "查看通用工具模块文档"
     click E "./netlify/functions/CLAUDE.md" "查看 Functions 模块文档"
     click F "./netlify/edge-functions/CLAUDE.md" "查看 Edge Functions 模块文档"
@@ -116,8 +117,8 @@ graph TD
 
 | 模块 | 路径 | 职责 | 语言 |
 |------|------|------|------|
-| **Giffgaff Legacy** | `src/giffgaff/` | Giffgaff eSIM 管理流程 (OAuth/MFA/GraphQL) | JavaScript |
-| **Simyo Legacy** | `src/simyo/` | Simyo eSIM 管理流程 (登录/设备更换/激活) | JavaScript |
+| **Giffgaff 前端** | `src/giffgaff/` | Giffgaff eSIM 管理流程 (OAuth/MFA/GraphQL) | JavaScript (ES6 Module) |
+| **Simyo 前端** | `src/simyo/` | Simyo eSIM 管理流程 (登录/设备更换/激活) | JavaScript (ES6 Module) |
 | **通用工具** | `src/js/modules/` | 可复用前端工具模块 (日志/存储/安全/性能/i18n) | JavaScript |
 | **Netlify Functions** | `netlify/functions/` | Serverless 后端逻辑 (11 个函数) | JavaScript (Node.js) |
 | **Edge Functions** | `netlify/edge-functions/` | BFF 代理层 (密钥注入 + 请求转发 + 内容协商) | JavaScript (Deno) |

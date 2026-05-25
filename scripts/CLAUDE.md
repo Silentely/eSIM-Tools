@@ -12,8 +12,7 @@
 
 | 脚本 | 命令 | 职责 |
 |------|------|------|
-| `build-static.js` | `npm run build` | Webpack 打包与资源优化 |
-| `verify-legacy-frozen.js` | `npm run verify:legacy` | 验证 legacy 文件未被修改 |
+| `build-static.js` | `npm run build` | 静态资源复制与 dist 构建 |
 | `transpile-dist-js.js` | - | dist/ JS 文件转译 |
 | `inject-sentry-config.js` | - | Sentry 配置注入 |
 

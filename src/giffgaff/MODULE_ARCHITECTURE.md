@@ -1,6 +1,6 @@
 # Giffgaff eSIM 工具 - 模块架构说明
 
-> **注意**: 本文档描述的是 `src/giffgaff/` 下的 Legacy 模块架构。新的模块化架构位于 `src/js/modules/giffgaff/`，详见 `src/js/modules/giffgaff/CLAUDE.md`。
+> 本项目采用浏览器原生 ES6 模块（HTML + `<script type="module">` + `import/export`）作为唯一前端架构。业务页面不经 Webpack 打包，由 Netlify 静态托管直接派发。本文档即描述当前生产架构。
 
 ## 🏗️ 架构概览
 

@@ -91,18 +91,6 @@ async function copyDirectory(source, destination) {
     }
   }
 
-  // 删除 Legacy HTML 文件（已废弃，统一使用 Modular 版本）
-  const legacyHtmlFiles = [
-    path.join(distDir, 'src', 'giffgaff', 'giffgaff_complete_esim.html'),
-    path.join(distDir, 'src', 'simyo', 'simyo_complete_esim.html')
-  ];
-  for (const f of legacyHtmlFiles) {
-    if (fs.existsSync(f)) {
-      await fs.promises.unlink(f);
-      BuildLogger.log(`🗑️  已删除 Legacy 文件: ${path.relative(projectRoot, f)}`);
-    }
-  }
-
   BuildLogger.log('🧩 转译 dist/src 下的 JS（browserslist 目标）...');
   await transpileDistJs();
 
