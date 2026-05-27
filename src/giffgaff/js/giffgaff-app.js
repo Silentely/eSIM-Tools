@@ -1264,6 +1264,8 @@ class GiffgaffApp {
         const messageElement = document.getElementById('serviceTimeMessage');
         const actionMessageElement = document.getElementById('actionMessage');
 
+        if (!alertElement || !iconElement || !messageElement || !actionMessageElement) return;
+
         if (isOutside) {
             // 获取倒计时信息
             const timeUntil = getTimeUntilServiceOpen();
