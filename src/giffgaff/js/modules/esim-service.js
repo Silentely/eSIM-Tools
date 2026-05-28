@@ -409,7 +409,7 @@ export class ESimService {
             throw new Error(errorObj?.message || errorObj?.error || JSON.stringify(errorObj));
         }
 
-        return data.data.eSims || [];
+        return data?.data?.eSims || [];
     }
 
     /**
@@ -417,7 +417,6 @@ export class ESimService {
      * @param {string|null} preselectedSsn - 已选定的 SSN（多选场景）
      */
     async directFetchFlow(preselectedSsn = null) {
-        stateManager.set('directFetchMode', true);
         const list = await this.fetchExistingESims();
 
         if (list.length === 0) {
@@ -445,7 +444,8 @@ export class ESimService {
         stateManager.setState({
             esimSSN: ssn,
             esimDeliveryStatus: 'DOWNLOADABLE',
-            lpaString: tokenResult.lpaString
+            lpaString: tokenResult.lpaString,
+            directFetchMode: true
         });
 
         return { success: true, ssn, lpaString: tokenResult.lpaString };

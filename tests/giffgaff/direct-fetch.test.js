@@ -149,13 +149,10 @@ describe('ESimService - directFetchFlow', () => {
         })
       });
 
-      try {
-        await esimService.directFetchFlow();
-        fail('应抛出 MULTIPLE_ESIMS 错误');
-      } catch (error) {
-        expect(error.code).toBe('MULTIPLE_ESIMS');
-        expect(error.candidates).toEqual(['A', 'B']);
-      }
+      await expect(esimService.directFetchFlow()).rejects.toMatchObject({
+        code: 'MULTIPLE_ESIMS',
+        candidates: ['A', 'B']
+      });
     });
 
     test('多 eSIM 已选定 preselectedSsn 时直接使用该 ssn', async () => {
@@ -191,12 +188,9 @@ describe('ESimService - directFetchFlow', () => {
         })
       });
 
-      try {
-        await esimService.directFetchFlow();
-        fail('应抛出 EMPTY_LIST 错误');
-      } catch (error) {
-        expect(error.code).toBe('EMPTY_LIST');
-      }
+      await expect(esimService.directFetchFlow()).rejects.toMatchObject({
+        code: 'EMPTY_LIST'
+      });
     });
   });
 });

@@ -32,7 +32,9 @@ module.exports = {
     '!src/js/modules/**/*.test.js',
     '!src/js/modules/**/*.spec.js',
     '!src/giffgaff/js/modules/**/*.test.js',
+    '!src/giffgaff/js/modules/**/*.spec.js',
     '!src/simyo/js/modules/**/*.test.js',
+    '!src/simyo/js/modules/**/*.spec.js',
     '!**/node_modules/**',
     '!**/dist/**'
   ],

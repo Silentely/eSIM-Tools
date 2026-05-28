@@ -340,7 +340,9 @@ class GiffgaffApp {
             const handler = () => {
                 const smsSection = document.getElementById('smsInlineSection');
                 const manualBlock = document.getElementById('manualBlock');
+                const directSection = document.getElementById('directFetchSection');
                 if (manualBlock) manualBlock.style.display = 'none';
+                if (directSection) directSection.style.display = 'none';
                 if (smsSection) {
                     smsSection.style.display = 'block';
                     smsSection.scrollIntoView({behavior:'smooth', block:'center'});
@@ -468,8 +470,12 @@ class GiffgaffApp {
 
         try {
             pullBtn.disabled = true;
-            pullBtn.innerHTML = `<span class="loading"></span> ${tl('拉取中...')}`;
-            uiController.showStatus(statusEl, t('giffgaff.directFetch.status.fetching'), 'success');
+            pullBtn.replaceChildren();
+            const spinner = document.createElement('span');
+            spinner.className = 'loading';
+            pullBtn.appendChild(spinner);
+            pullBtn.append(' ' + tl('拉取中...'));
+            uiController.showStatus(statusEl, t('giffgaff.directFetch.status.fetching'), 'info');
 
             await esimService.directFetchFlow(preselectedSsn);
             uiController.showStatus(statusEl, t('giffgaff.directFetch.status.success'), 'success');
@@ -479,6 +485,7 @@ class GiffgaffApp {
                 uiController.showESimResult();
             }, 800);
         } catch (error) {
+            stateManager.set('directFetchMode', false);
             if (error.code === 'MULTIPLE_ESIMS') {
                 this.renderSsnPicker(error.candidates);
                 uiController.showStatus(statusEl, t('giffgaff.directFetch.errors.multipleNeedPick'), 'info');
@@ -489,7 +496,11 @@ class GiffgaffApp {
             }
         } finally {
             pullBtn.disabled = false;
-            pullBtn.innerHTML = `<i class="fas fa-bolt me-2"></i> ${tl('拉取我的 eSIM')}`;
+            pullBtn.replaceChildren();
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-bolt me-2';
+            pullBtn.appendChild(icon);
+            pullBtn.append(' ' + tl('拉取我的 eSIM'));
         }
     }
 
@@ -500,26 +511,37 @@ class GiffgaffApp {
         const container = document.getElementById('directFetchSsnPicker');
         if (!container) return;
 
-        container.innerHTML = candidates.map((ssn, i) => {
-            const safeSsn = HtmlSanitizer.escapeHtml(ssn);
-            return `
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="directFetchSsn" id="ssn-${i}"
-                value="${safeSsn}" ${i === 0 ? 'checked' : ''}>
-                <label class="form-check-label" for="ssn-${i}"><code>${safeSsn}</code></label>
-            </div>`;
-        }).join('') + `
-            <button id="directFetchSsnConfirmBtn" class="btn btn-info mt-2">
-                <i class="fas fa-check me-2"></i>${tl('使用选定的 eSIM')}
-            </button>
-        `;
+        container.replaceChildren();
+        candidates.forEach((ssn, i) => {
+            const row = document.createElement('div');
+            row.className = 'form-check';
+            const input = document.createElement('input');
+            input.className = 'form-check-input';
+            input.type = 'radio';
+            input.name = 'directFetchSsn';
+            input.id = `ssn-${i}`;
+            input.value = String(ssn);
+            if (i === 0) input.checked = true;
+            const label = document.createElement('label');
+            label.className = 'form-check-label';
+            label.htmlFor = input.id;
+            const code = document.createElement('code');
+            code.textContent = String(ssn);
+            label.appendChild(code);
+            row.append(input, label);
+            container.appendChild(row);
+        });
+        const confirmBtn = document.createElement('button');
+        confirmBtn.id = 'directFetchSsnConfirmBtn';
+        confirmBtn.className = 'btn btn-info mt-2';
+        confirmBtn.textContent = tl('使用选定的 eSIM');
+        container.appendChild(confirmBtn);
         container.style.display = 'block';
 
-        const confirmBtn = document.getElementById('directFetchSsnConfirmBtn');
-        if (confirmBtn && !confirmBtn.__bound) {
+        if (!confirmBtn.__bound) {
             confirmBtn.__bound = true;
             confirmBtn.addEventListener('click', () => {
-                const selected = document.querySelector('input[name="directFetchSsn"]:checked')?.value;
+                const selected = container.querySelector('input[name="directFetchSsn"]:checked')?.value;
                 if (!selected) return;
                 container.style.display = 'none';
                 this.handleDirectFetchPull(selected);

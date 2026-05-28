@@ -174,7 +174,8 @@ export class UIController {
         }
 
         if (this.elements.modeBadge) {
-            this.elements.modeBadge.style.display = state.isDeviceChange ? 'inline-flex' : 'none';
+            this.elements.modeBadge.style.display =
+                state.isDeviceChange && !state.directFetchMode ? 'inline-flex' : 'none';
         }
 
         // Access Token
