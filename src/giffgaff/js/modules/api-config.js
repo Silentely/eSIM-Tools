@@ -84,6 +84,13 @@ export const graphqlQueries = {
         }
     }`,
 
+    getESims: `query getESims($deliveryStatus: ESimDeliveryStatus!) {
+        eSims(deliveryStatus: $deliveryStatus) {
+            ssn
+            __typename
+        }
+    }`,
+
     simSwapMfaChallenge: `mutation simSwapMfaChallenge {
         simSwapMfaChallenge {
             ref

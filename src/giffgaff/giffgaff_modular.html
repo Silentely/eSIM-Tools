@@ -623,7 +623,7 @@
                         请选择一种方式完成 eSIM 激活：
                     </p>
 
-                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                    <div class="row row-cols-1 row-cols-md-3 g-3">
                         <div class="col">
                             <div id="manualActivateCard" class="card h-100" style="cursor:not-allowed; opacity: 0.6;" role="button" tabindex="-1" aria-label="手动激活（已停用）">
                                 <div class="card-body text-center">
@@ -649,6 +649,28 @@
                                     <p class="small text-muted mb-0">系统将自动完成预订与激活。</p>
                                     <div class="text-center mt-3 badge-spacer">
                                         <span class="badge bg-success text-white badge-pill-cta">✓ 推荐使用</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div id="directFetchCard" class="card h-100" style="cursor:pointer;" role="button" tabindex="0"
+                            aria-label="已支付直取 eSIM">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-bolt fa-2x mb-2"></i>
+                                    <h5 class="fw-bold">
+                                        <span class="lang-zh">已支付直取 eSIM</span>
+                                        <span class="lang-en">Fetch eSIM directly</span>
+                                    </h5>
+                                    <p class="small text-muted mb-0">
+                                        <span class="lang-zh">已在官方 App 完成支付，直接拉取 eSIM。</span>
+                                        <span class="lang-en">Already paid in the official app — fetch the eSIM directly.</span>
+                                    </p>
+                                    <div class="text-center mt-3 badge-spacer">
+                                        <span class="badge bg-info badge-pill-cta">
+                                            <span class="lang-zh">新购用户专用</span>
+                                            <span class="lang-en">For new-purchase users</span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -687,6 +709,24 @@
                                     <i class="fas fa-check me-2"></i> 验证并继续激活
                                 </button>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- 直取 eSIM 内联区域 -->
+                    <div id="directFetchSection" style="display:none;">
+                        <div class="card card-body mt-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span class="lang-zh">此选项适用于在官方 Giffgaff App 已完成 10 英镑付款，但 App 未成功生成 eSIM 的新购用户。将直接拉取账户上现存的 eSIM 并生成二维码（无需 reserveESim / swapSim）。</span>
+                                <span class="lang-en">Use this option if you have already paid £10 in the official Giffgaff app but did not receive an eSIM. We will fetch any existing eSIM on the account directly and generate a QR code (no reserveESim / swapSim).</span>
+                            </div>
+                            <button id="directFetchPullBtn" class="btn btn-info">
+                                <i class="fas fa-bolt me-2"></i>
+                                <span class="lang-zh">拉取我的 eSIM</span>
+                                <span class="lang-en">Fetch my eSIM</span>
+                            </button>
+                            <div id="directFetchStatus" class="status mt-2" role="status" aria-live="polite"></div>
+                            <div id="directFetchSsnPicker" class="mt-3" style="display:none;"></div>
                         </div>
                     </div>
 
