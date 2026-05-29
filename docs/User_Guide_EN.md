@@ -67,14 +67,15 @@ Select SMS verification code activation and enter the SMS verification code, the
 
 ### Method 2: Fetch eSIM Directly (For New-Purchase Users)
 
-> ⚠ This feature has not been fully tested. If you encounter issues, please open the browser console (F12 → Console), copy the full log, and submit it via [GitHub Issues](https://github.com/Silentely/eSIM-Tools/issues).
+> ⚠️ This feature could not be fully tested by the author due to eligibility constraints. If you encounter issues, please open the browser console (F12 → Console), copy the full log, and submit it via [GitHub Issues](https://github.com/Silentely/eSIM-Tools/issues).
 
 If you have already paid £10 in the official Giffgaff app but did not receive an eSIM, use this method:
 1. Click the "Fetch eSIM directly" card
 2. Click the "Fetch my eSIM" button
 3. The system will fetch the existing eSIM on your account and generate a QR code
+4. If multiple downloadable eSIMs are found on your account, a selection list will appear — pick the one you need and click confirm
 
-This method requires no SMS verification code and skips the reserve/swap flow — it directly retrieves the QR code.
+This method requires no SMS verification code and skips the `reserveESim` / `swapSim` flow — it directly retrieves the QR code.
 
 ### Method 3: Manual Activation (Paused)
 
