@@ -161,7 +161,10 @@ export class UIController {
 
         // 模式显示
         if (this.elements.statusMode) {
-            if (state.isDeviceChange) {
+            if (state.directFetchMode) {
+                this.elements.statusMode.textContent = tl('已购用户获取eSIM(仅限新购)');
+                this.elements.statusMode.className = 'status-value connected';
+            } else if (state.isDeviceChange) {
                 this.elements.statusMode.textContent = tl('设备更换');
                 this.elements.statusMode.className = 'status-value connected';
             } else {
@@ -171,7 +174,8 @@ export class UIController {
         }
 
         if (this.elements.modeBadge) {
-            this.elements.modeBadge.style.display = state.isDeviceChange ? 'inline-flex' : 'none';
+            this.elements.modeBadge.style.display =
+                state.isDeviceChange && !state.directFetchMode ? 'inline-flex' : 'none';
         }
 
         // Access Token

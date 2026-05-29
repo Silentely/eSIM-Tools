@@ -27,8 +27,14 @@ module.exports = {
   // 覆盖率收集
   collectCoverageFrom: [
     'src/js/modules/**/*.js',
+    'src/giffgaff/js/modules/**/*.js',
+    'src/simyo/js/modules/**/*.js',
     '!src/js/modules/**/*.test.js',
     '!src/js/modules/**/*.spec.js',
+    '!src/giffgaff/js/modules/**/*.test.js',
+    '!src/giffgaff/js/modules/**/*.spec.js',
+    '!src/simyo/js/modules/**/*.test.js',
+    '!src/simyo/js/modules/**/*.spec.js',
     '!**/node_modules/**',
     '!**/dist/**'
   ],

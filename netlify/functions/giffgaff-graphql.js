@@ -66,7 +66,8 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   const isSwap = /swapSim\s*\(/i.test(String(query || '')) || /swapSim/i.test(opName);
   const isToken = /eSimDownloadToken\s*\(/i.test(String(query || '')) || /eSimDownloadToken/i.test(opName);
   const isMfaChallenge = /simSwapMfaChallenge/i.test(String(query || '')) || /simSwapMfaChallenge/i.test(opName);
-  const needsAppHeaders = isReserve || isSwap || isToken || isMfaChallenge;
+  const isESims = /eSims\s*\(/i.test(String(query || '')) || /getESims/i.test(opName);
+  const needsAppHeaders = isReserve || isSwap || isToken || isMfaChallenge || isESims;
 
   if (needsAppHeaders) {
     requestHeaders['x-gg-app-device-manufacturer'] = process.env.GG_APP_DEVICE_MANUFACTURER || 'Apple';

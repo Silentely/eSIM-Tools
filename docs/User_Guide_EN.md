@@ -57,9 +57,29 @@ Click "Get Member Information" to go to the fourth step of converting/activating
 
 ## 5. Select and Activate eSIM
 
+Step 4 offers three activation methods. Choose the one that fits your situation:
+
+### Method 1: SMS Verification Code Activation (Recommended)
+
 Select SMS verification code activation and enter the SMS verification code, the system will automatically complete the eSIM replacement and generate QR code and LPA information:
 
 ![Verification Code Page](image/115.jpg)
+
+### Method 2: Fetch eSIM Directly (For New-Purchase Users)
+
+> ⚠️ This feature could not be fully tested by the author due to eligibility constraints. If you encounter issues, please open the browser console (F12 → Console), copy the full log, and submit it via [GitHub Issues](https://github.com/Silentely/eSIM-Tools/issues).
+
+If you have already paid £10 in the official Giffgaff app but did not receive an eSIM, use this method:
+1. Click the "Fetch eSIM directly" card
+2. Click the "Fetch my eSIM" button
+3. The system will fetch the existing eSIM on your account and generate a QR code
+4. If multiple downloadable eSIMs are found on your account, a selection list will appear — pick the one you need and click confirm
+
+This method requires no SMS verification code and skips the `reserveESim` / `swapSim` flow — it directly retrieves the QR code.
+
+### Method 3: Manual Activation (Paused)
+
+Manual activation has been paused by Giffgaff. Please use one of the methods above.
 
 After successful exchange, you will be redirected to the fifth step showing QR code and LPA information:
 

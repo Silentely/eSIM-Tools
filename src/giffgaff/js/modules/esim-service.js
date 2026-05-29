@@ -376,6 +376,82 @@ export class ESimService {
     }
 
     /**
+     * 直接拉取账户上已存在的 eSIM 列表（已支付但 App 未下发的场景）
+     */
+    async fetchExistingESims() {
+        const state = stateManager.getState();
+        if (!state.accessToken) {
+            throw new Error(t('giffgaff.directFetch.errors.missingToken'));
+        }
+
+        const response = await fetch(this.apiEndpoints.graphql, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                accessToken: state.accessToken,
+                cookie: stateManager.getCookie() || undefined,
+                query: graphqlQueries.getESims,
+                variables: { deliveryStatus: 'DOWNLOADABLE' },
+                operationName: 'getESims'
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(t('giffgaff.directFetch.errors.generic', {
+                message: `${response.status} - ${errorText}`
+            }));
+        }
+
+        const data = await response.json();
+        if (data.errors) {
+            const errorObj = data.errors[0];
+            throw new Error(errorObj?.message || errorObj?.error || JSON.stringify(errorObj));
+        }
+
+        return data?.data?.eSims || [];
+    }
+
+    /**
+     * 直取 eSIM 完整流程：拉取列表 → 选定 SSN → 获取 LPA
+     * @param {string|null} preselectedSsn - 已选定的 SSN（多选场景）
+     */
+    async directFetchFlow(preselectedSsn = null) {
+        const list = await this.fetchExistingESims();
+
+        if (list.length === 0) {
+            const err = new Error(t('giffgaff.directFetch.errors.empty'));
+            err.code = 'EMPTY_LIST';
+            throw err;
+        }
+
+        if (list.length > 1 && !preselectedSsn) {
+            const err = new Error(t('giffgaff.directFetch.errors.multipleNeedPick'));
+            err.code = 'MULTIPLE_ESIMS';
+            err.candidates = list.map(e => e.ssn);
+            throw err;
+        }
+
+        if (preselectedSsn && !list.some(e => e.ssn === preselectedSsn)) {
+            const err = new Error(t('giffgaff.directFetch.errors.generic', { message: 'Invalid SSN selection' }));
+            err.code = 'INVALID_SSN';
+            throw err;
+        }
+
+        const ssn = preselectedSsn || list[0].ssn;
+        const tokenResult = await this.getESimDownloadToken(ssn);
+
+        stateManager.setState({
+            esimSSN: ssn,
+            esimDeliveryStatus: 'DOWNLOADABLE',
+            lpaString: tokenResult.lpaString,
+            directFetchMode: true
+        });
+
+        return { success: true, ssn, lpaString: tokenResult.lpaString };
+    }
+
+    /**
      * 为SIM交换验证MFA验证码
      */
     async validateMFACodeForSwap(code) {

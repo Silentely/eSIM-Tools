@@ -460,6 +460,13 @@ export const TRANSLATIONS = {
     'giffgaff.mfa.errors.invalidRef': '未返回有效的验证码引用',
     'giffgaff.mfa.log.swapSendFailed': '发送SIM交换验证码失败:',
 
+    'giffgaff.directFetch.status.fetching': '正在拉取已有的 eSIM...',
+    'giffgaff.directFetch.status.success': '成功获取 eSIM 信息，正在生成二维码...',
+    'giffgaff.directFetch.errors.missingToken': '缺少访问令牌，请重新进行 OAuth 登录',
+    'giffgaff.directFetch.errors.empty': '未在您的账户上发现可下载的 eSIM。如确认已在官方 App 完成 10 英镑付款，请联系 Giffgaff 客服核实订单状态。',
+    'giffgaff.directFetch.errors.multipleNeedPick': '检测到多个可下载的 eSIM，请选择一个继续',
+    'giffgaff.directFetch.errors.generic': '直取 eSIM 失败：{message}',
+
     'simyo.meta.title': 'Simyo eSIM 工具',
     'simyo.meta.description': 'Simyo eSIM 工具，支持设备更换、邮箱验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。',
     'simyo.body.ariaLabel': 'Simyo eSIM 工具',
@@ -713,6 +720,13 @@ export const TRANSLATIONS = {
     'giffgaff.mfa.errors.invalidRef': 'No valid verification reference returned.',
     'giffgaff.mfa.log.swapSendFailed': 'Failed to send SIM swap verification code:',
 
+    'giffgaff.directFetch.status.fetching': 'Fetching existing eSIM...',
+    'giffgaff.directFetch.status.success': 'eSIM info retrieved successfully — generating QR code...',
+    'giffgaff.directFetch.errors.missingToken': 'Missing access token. Please re-run OAuth login.',
+    'giffgaff.directFetch.errors.empty': 'No downloadable eSIM found on your account. If you have completed the £10 payment in the official app, please contact Giffgaff support to verify your order.',
+    'giffgaff.directFetch.errors.multipleNeedPick': 'Multiple downloadable eSIMs detected — please pick one to continue',
+    'giffgaff.directFetch.errors.generic': 'Direct fetch failed: {message}',
+
     'simyo.meta.title': 'Simyo eSIM Tool',
     'simyo.meta.description': 'Simyo eSIM toolkit with device change, email verification, QR generation, and installation confirmation for Dutch Simyo users.',
     'simyo.body.ariaLabel': 'Simyo eSIM Tool',
@@ -917,4 +931,8 @@ export const LITERAL_TRANSLATIONS = {
   '是否继续操作？': 'Continue anyway?',
   '已为您预留 eSIM（状态 RESERVED）。请保持本页面开启，前往 <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff 激活页</a> 手动输入上方激活码并点击 "Activate your SIM"，随后确认 "Yes, I want to replace my SIM"。完成后返回本页点击"获取 eSIM Token"继续。': 'Your eSIM has been reserved (status: RESERVED). Keep this page open, go to the <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff activation page</a>, enter the activation code above and click "Activate your SIM", then confirm "Yes, I want to replace my SIM". Return here and click "Fetch eSIM token" to continue.',
   'SIM 交换服务窗口：英国时间 04:30 至 21:30。您仍可浏览信息，部分操作可能失败。': 'SIM swap window: UK time 04:30–21:30. You can still browse, but some operations may fail.',
+  '已购用户获取eSIM(仅限新购)': 'Paid user eSIM fetch (new-purchase only)',
+  '拉取中...': 'Fetching...',
+  '拉取我的 eSIM': 'Fetch my eSIM',
+  '使用选定的 eSIM': 'Use selected eSIM',
 };

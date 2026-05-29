@@ -31,6 +31,7 @@ export class StateManager {
 
             // 模式
             isDeviceChange: true,
+            directFetchMode: false,
 
             // 步骤控制
             currentStep: 1
@@ -273,6 +274,7 @@ export class StateManager {
             esimDeliveryStatus: "",
             lpaString: "",
             isDeviceChange: true,
+            directFetchMode: false,
             currentStep: 1
         };
 

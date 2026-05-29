@@ -339,7 +339,9 @@ class GiffgaffApp {
             const handler = () => {
                 const smsSection = document.getElementById('smsInlineSection');
                 const manualBlock = document.getElementById('manualBlock');
+                const directSection = document.getElementById('directFetchSection');
                 if (manualBlock) manualBlock.style.display = 'none';
+                if (directSection) directSection.style.display = 'none';
                 if (smsSection) {
                     smsSection.style.display = 'block';
                     smsSection.scrollIntoView({behavior:'smooth', block:'center'});
@@ -356,6 +358,9 @@ class GiffgaffApp {
 
         // SMS内联流程
         this.bindSmsInlineFlow();
+
+        // 直取eSIM流程
+        this.bindDirectFetchActions();
 
         // 手动输入eSIM信息
         this.bindManualEsimInput();
@@ -410,6 +415,136 @@ class GiffgaffApp {
         if (saveBtn && !saveBtn.__bound) {
             saveBtn.__bound = true;
             saveBtn.addEventListener('click', () => this.handleManualEsimSave());
+        }
+    }
+
+    /**
+     * 绑定直取eSIM卡片与按钮事件
+     */
+    bindDirectFetchActions() {
+        const directCard = document.getElementById('directFetchCard');
+        if (directCard && !directCard.__bound) {
+            directCard.__bound = true;
+            const handler = () => this.handleDirectFetchExpand();
+            directCard.addEventListener('click', handler);
+            directCard.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handler();
+                }
+            });
+        }
+
+        const pullBtn = document.getElementById('directFetchPullBtn');
+        if (pullBtn && !pullBtn.__bound) {
+            pullBtn.__bound = true;
+            pullBtn.addEventListener('click', () => this.handleDirectFetchPull());
+        }
+    }
+
+    /**
+     * 处理直取eSIM卡片展开
+     */
+    handleDirectFetchExpand() {
+        const manualBlock = document.getElementById('manualBlock');
+        const smsSection = document.getElementById('smsInlineSection');
+        const directSection = document.getElementById('directFetchSection');
+        if (manualBlock) manualBlock.style.display = 'none';
+        if (smsSection) smsSection.style.display = 'none';
+        if (directSection) {
+            directSection.style.display = 'block';
+            directSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const pullBtn = document.getElementById('directFetchPullBtn');
+            if (pullBtn) pullBtn.focus();
+        }
+    }
+
+    /**
+     * 处理直取eSIM拉取操作
+     */
+    async handleDirectFetchPull(preselectedSsn = null) {
+        const pullBtn = document.getElementById('directFetchPullBtn');
+        const statusEl = document.getElementById('directFetchStatus');
+        if (!pullBtn || !statusEl) return;
+
+        try {
+            pullBtn.disabled = true;
+            pullBtn.replaceChildren();
+            const spinner = document.createElement('span');
+            spinner.className = 'loading';
+            pullBtn.appendChild(spinner);
+            pullBtn.append(' ' + tl('拉取中...'));
+            uiController.showStatus(statusEl, t('giffgaff.directFetch.status.fetching'), 'info');
+
+            await esimService.directFetchFlow(preselectedSsn);
+            uiController.showStatus(statusEl, t('giffgaff.directFetch.status.success'), 'success');
+
+            setTimeout(() => {
+                uiController.showSection(5);
+                uiController.showESimResult();
+            }, 800);
+        } catch (error) {
+            stateManager.set('directFetchMode', false);
+            if (error.code === 'MULTIPLE_ESIMS') {
+                this.renderSsnPicker(error.candidates);
+                uiController.showStatus(statusEl, t('giffgaff.directFetch.errors.multipleNeedPick'), 'info');
+            } else if (error.code === 'EMPTY_LIST') {
+                uiController.showStatus(statusEl, t('giffgaff.directFetch.errors.empty'), 'error');
+            } else {
+                uiController.showStatus(statusEl, t('giffgaff.directFetch.errors.generic', { message: error.message }), 'error');
+            }
+        } finally {
+            pullBtn.disabled = false;
+            pullBtn.replaceChildren();
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-bolt me-2';
+            pullBtn.appendChild(icon);
+            pullBtn.append(' ' + tl('拉取我的 eSIM'));
+        }
+    }
+
+    /**
+     * 渲染多eSIM选择器（radio列表 + 确认按钮）
+     */
+    renderSsnPicker(candidates) {
+        const container = document.getElementById('directFetchSsnPicker');
+        if (!container) return;
+
+        container.replaceChildren();
+        candidates.forEach((ssn, i) => {
+            const row = document.createElement('div');
+            row.className = 'form-check';
+            const input = document.createElement('input');
+            input.className = 'form-check-input';
+            input.type = 'radio';
+            input.name = 'directFetchSsn';
+            input.id = `ssn-${i}`;
+            input.value = String(ssn);
+            if (i === 0) input.checked = true;
+            const label = document.createElement('label');
+            label.className = 'form-check-label';
+            label.htmlFor = input.id;
+            const code = document.createElement('code');
+            code.textContent = String(ssn);
+            label.appendChild(code);
+            row.append(input, label);
+            container.appendChild(row);
+        });
+        const confirmBtn = document.createElement('button');
+        confirmBtn.id = 'directFetchSsnConfirmBtn';
+        confirmBtn.className = 'btn btn-info mt-2';
+        confirmBtn.textContent = tl('使用选定的 eSIM');
+        container.appendChild(confirmBtn);
+        container.style.display = 'block';
+
+        if (!confirmBtn.__bound) {
+            confirmBtn.__bound = true;
+            confirmBtn.addEventListener('click', () => {
+                const selected = container.querySelector('input[name="directFetchSsn"]:checked')?.value;
+                if (!selected) return;
+                container.style.display = 'none';
+                this.handleDirectFetchPull(selected);
+            });
         }
     }
 
