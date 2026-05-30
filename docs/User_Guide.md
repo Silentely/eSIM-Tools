@@ -61,7 +61,7 @@ OAuth方式需要获取回调URL，获取方式参考页面说明：
 
 ![验证码页面](image/115.jpg)
 
-### 方式二：已支付直取 eSIM（新购用户专用）
+### 方式二：已支付直取 eSIM（已付款用户专用）
 
 > ⚠️ 作者因条件不符未能实测此功能。如遇到问题，请打开浏览器开发者工具（F12 → Console），复制完整日志后到 [GitHub Issues](https://github.com/Silentely/eSIM-Tools/issues) 提交反馈。
 

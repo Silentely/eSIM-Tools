@@ -353,15 +353,22 @@
     margin-bottom: 16px;
     font-size: 14px;
     color: #7f1d1d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    text-align: center;
+    line-height: 1.6;
 }
 
-.new-user-notice i {
+.new-user-notice .notice-line1 {
+    display: block;
+    font-weight: 600;
+}
+
+.new-user-notice .notice-line1 i {
     color: #dc2626;
-    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.new-user-notice .notice-line2 {
+    display: block;
 }
 
 /* ===== 推广横幅 ===== */

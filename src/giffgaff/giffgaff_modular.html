@@ -82,12 +82,12 @@
         <!-- 新用户提示 -->
         <div class="new-user-notice reveal">
             <span class="lang-zh">
-                <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
-                本工具仅支持已有 Giffgaff 号码的用户，新用户（未有号码）无法使用。如需开卡，请点击下方链接获取优惠。
+                <span class="notice-line1"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> 本工具仅支持已有 Giffgaff 号码的用户，</span>
+                <span class="notice-line2">支持实体卡转 eSIM、eSIM 换设备、已支付 £10 直取 eSIM。新用户（未有号码）无法使用，如需开卡请点击下方链接。</span>
             </span>
             <span class="lang-en">
-                <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
-                This tool only supports existing Giffgaff users. New users without a number cannot use it. To get a new SIM, please click the link below for an exclusive offer.
+                <span class="notice-line1"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> This tool supports existing Giffgaff users only:</span>
+                <span class="notice-line2">SIM-to-eSIM conversion, eSIM device change, and direct eSIM fetch for £10 paid users. New users without a number cannot use it. Click the link below to get started.</span>
             </span>
         </div>
 
@@ -582,6 +582,7 @@
                         <ul class="mb-2" style="margin-left: 20px; margin-bottom: 8px;">
                             <li><strong>实体卡转 eSIM</strong>（需已有实体 SIM 卡）</li>
                             <li><strong>eSIM 更换设备</strong>（需已有 eSIM 或实体卡号码）</li>
+                            <li><strong>已支付 £10 直取 eSIM</strong>（已在官方 App 完成付款，直接拉取）</li>
                         </ul>
                         <p class="mb-2" style="margin-bottom: 8px; padding: 8px 12px; background: rgba(220, 38, 38, 0.1); border-radius: 4px;">
                             <i class="fas fa-times-circle me-2" style="color: #dc2626;"></i>
@@ -663,13 +664,13 @@
                                         <span class="lang-en">Fetch eSIM directly</span>
                                     </h5>
                                     <p class="small text-muted mb-0">
-                                        <span class="lang-zh">已在官方 App 完成支付，直接拉取 eSIM。</span>
-                                        <span class="lang-en">Already paid in the official app — fetch the eSIM directly.</span>
+                                        <span class="lang-zh">已在官方 App 完成 £10 付款但未收到 eSIM，可直接拉取。</span>
+                                        <span class="lang-en">Paid £10 in the official app but no eSIM received? Fetch it directly.</span>
                                     </p>
                                     <div class="text-center mt-3 badge-spacer">
                                         <span class="badge bg-info badge-pill-cta">
-                                            <span class="lang-zh">新购用户专用</span>
-                                            <span class="lang-en">For new-purchase users</span>
+                                            <span class="lang-zh">已付款用户专用</span>
+                                            <span class="lang-en">For paid users</span>
                                         </span>
                                     </div>
                                 </div>
@@ -717,7 +718,7 @@
                         <div class="card card-body mt-3">
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <span class="lang-zh">此选项适用于在官方 Giffgaff App 已完成 10 英镑付款，但 App 未成功生成 eSIM 的新购用户。将直接拉取账户上现存的 eSIM 并生成二维码（无需 reserveESim / swapSim）。</span>
+                                <span class="lang-zh">此选项适用于在官方 Giffgaff App 已完成 10 英镑付款，但 App 未成功生成 eSIM 的用户。将直接拉取账户上现存的 eSIM 并生成二维码（无需 reserveESim / swapSim）。</span>
                                 <span class="lang-en">Use this option if you have already paid £10 in the official Giffgaff app but did not receive an eSIM. We will fetch any existing eSIM on the account directly and generate a QR code (no reserveESim / swapSim).</span>
                             </div>
                             <div class="alert alert-warning py-2 px-3 mb-3" style="font-size: 0.82rem; border-left: 3px solid #f72585;">

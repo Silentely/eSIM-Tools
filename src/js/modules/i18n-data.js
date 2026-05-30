@@ -931,7 +931,7 @@ export const LITERAL_TRANSLATIONS = {
   '是否继续操作？': 'Continue anyway?',
   '已为您预留 eSIM（状态 RESERVED）。请保持本页面开启，前往 <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff 激活页</a> 手动输入上方激活码并点击 "Activate your SIM"，随后确认 "Yes, I want to replace my SIM"。完成后返回本页点击"获取 eSIM Token"继续。': 'Your eSIM has been reserved (status: RESERVED). Keep this page open, go to the <a href="https://www.giffgaff.com/activate" target="_blank" rel="noopener">giffgaff activation page</a>, enter the activation code above and click "Activate your SIM", then confirm "Yes, I want to replace my SIM". Return here and click "Fetch eSIM token" to continue.',
   'SIM 交换服务窗口：英国时间 04:30 至 21:30。您仍可浏览信息，部分操作可能失败。': 'SIM swap window: UK time 04:30–21:30. You can still browse, but some operations may fail.',
-  '已购用户获取eSIM(仅限新购)': 'Paid user eSIM fetch (new-purchase only)',
+  '已付款用户直取 eSIM': 'Paid user — fetch eSIM directly',
   '拉取中...': 'Fetching...',
   '拉取我的 eSIM': 'Fetch my eSIM',
   '使用选定的 eSIM': 'Use selected eSIM',
