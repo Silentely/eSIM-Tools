@@ -38,7 +38,7 @@ export class CookieHandler {
                                 result.accessToken.includes('.') &&
                                 result.accessToken.length > 200;
 
-            if (result.success && result.valid && looksLikeJwt) {
+            if (result.valid && looksLikeJwt) {
                 // 保存访问令牌和Cookie
                 stateManager.set('accessToken', result.accessToken);
                 stateManager.saveCookie(cookie);
@@ -51,7 +51,7 @@ export class CookieHandler {
                     accessToken: result.accessToken,
                     message: t('giffgaff.cookie.verifySuccess')
                 };
-            } else if (result.success && !result.valid) {
+            } else if (!result.valid) {
                 return {
                     valid: false,
                     partialSuccess: true,
@@ -92,7 +92,7 @@ export class CookieHandler {
 
             const result = await response.json();
 
-            if (result && result.success && result.valid) {
+            if (result && result.valid) {
                 // 刷新访问令牌
                 if (result.accessToken) {
                     stateManager.set('accessToken', result.accessToken);

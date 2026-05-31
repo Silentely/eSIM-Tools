@@ -64,33 +64,38 @@ class APIService {
    * Execute the actual HTTP request with retry
    */
   async executeRequest(url, options) {
+    const timeout = this.createTimeoutSignal(options.timeout || this.timeout);
     const fetchOptions = {
       method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
       },
-      signal: this.createTimeoutSignal(options.timeout || this.timeout)
+      signal: timeout.signal
     };
 
     if (options.body) {
       fetchOptions.body = JSON.stringify(options.body);
     }
 
-    return retry(async () => {
-      const response = await fetch(url, fetchOptions);
+    try {
+      return await retry(async () => {
+        const response = await fetch(url, fetchOptions);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return response.json();
-      }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return response.json();
+        }
 
-      return response.text();
-    }, this.retries);
+        return response.text();
+      }, this.retries);
+    } finally {
+      timeout.clear();
+    }
   }
 
   /**
@@ -134,8 +139,11 @@ class APIService {
    */
   createTimeoutSignal(timeout) {
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), timeout);
-    return controller.signal;
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    return {
+      signal: controller.signal,
+      clear: () => clearTimeout(timeoutId)
+    };
   }
 
   /**

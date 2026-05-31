@@ -6,6 +6,13 @@
 const axios = require('axios');
 const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
 
+function getInternalHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'x-esim-key': process.env.ACCESS_KEY || ''
+  };
+}
+
 // 输入验证schema
 const mfaValidationSchema = {
   ref: {
@@ -50,7 +57,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   if (cookie && !accessToken) {
     try {
       const cookieVerifyResponse = await axios.post(verifyCookieUrl, { cookie }, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: getInternalHeaders(),
         timeout: 30000
       });
 
@@ -94,7 +101,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     if (isExpired && cookie) {
       try {
         const cookieVerifyResponse = await axios.post(verifyCookieUrl, { cookie }, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: getInternalHeaders(),
           timeout: 30000
         });
 

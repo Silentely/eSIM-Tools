@@ -47,19 +47,9 @@ function getProvidedKey(event) {
     Object.entries(event.headers || {}).map(([k, v]) => [k.toLowerCase(), v])
   );
 
-  // 优先级: Header > Body > Query
+  // 仅允许 Header 传递内部密钥，避免 URL / Body 泄漏
   const fromHeader = lower['x-esim-key'] || lower['x-app-key'];
   if (fromHeader) return fromHeader;
-
-  try {
-    const body = JSON.parse(event.body || '{}');
-    if (body && typeof body.authKey === 'string') {
-      return body.authKey;
-    }
-  } catch {}
-
-  const query = event.queryStringParameters || {};
-  if (query.authKey) return query.authKey;
 
   return '';
 }
@@ -75,9 +65,11 @@ function authenticate(event) {
     Object.entries(event.headers || {}).map(([k, v]) => [k.toLowerCase(), v])
   );
   const requestOrigin = lower.origin;
+  const requestMethod = event.httpMethod || 'GET';
+  const isInternalCall = lower['x-esim-key'] || lower['x-app-key'];
 
   // CORS 预检请求
-  if (event.httpMethod === 'OPTIONS') {
+  if (requestMethod === 'OPTIONS') {
     // 验证来源
     if (!isAllowedOrigin(requestOrigin)) {
       throw new AuthError('Origin not allowed', 403);
@@ -86,6 +78,10 @@ function authenticate(event) {
   }
 
   // 非预检请求：验证来源
+  if (!requestOrigin && !isInternalCall) {
+    throw new AuthError('Origin not allowed', 403);
+  }
+
   if (!isAllowedOrigin(requestOrigin)) {
     throw new AuthError('Origin not allowed', 403);
   }

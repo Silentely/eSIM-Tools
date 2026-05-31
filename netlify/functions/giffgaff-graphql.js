@@ -6,6 +6,13 @@
 const axios = require('axios');
 const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
 
+function getInternalHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'x-esim-key': process.env.ACCESS_KEY || ''
+  };
+}
+
 // 输入验证schema
 const graphqlSchema = {
   query: {
@@ -183,7 +190,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
         console.log(`[GGQL] ${ts} | attempting cookie-based token refresh`);
         try {
           const r = await axios.post(verifyCookieUrl, { cookie }, {
-            headers: { 'Content-Type': 'application/json' },
+            headers: getInternalHeaders(),
             timeout: 15000
           });
 

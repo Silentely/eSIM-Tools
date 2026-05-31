@@ -74,7 +74,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   return {
     statusCode: 200,
     body: JSON.stringify({
-      success: true,
+      success: false,
       valid: false,
       accessToken: null,
       emailSignature: null,

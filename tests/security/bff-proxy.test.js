@@ -1,0 +1,146 @@
+describe('BFF proxy guardrails', () => {
+  const originalEnv = process.env;
+  const OriginalRequest = global.Request;
+  const OriginalResponse = global.Response;
+  const OriginalDeno = global.Deno;
+
+  class MockHeaders {
+    constructor(init = {}) {
+      this.map = new Map();
+      if (init && typeof init.entries === 'function') {
+        Array.from(init.entries()).forEach(([key, value]) => {
+          this.set(key, value);
+        });
+      } else {
+        Object.entries(init).forEach(([key, value]) => {
+          this.set(key, value);
+        });
+      }
+    }
+
+    get(name) {
+      return this.map.get(String(name).toLowerCase()) || null;
+    }
+
+    set(name, value) {
+      this.map.set(String(name).toLowerCase(), String(value));
+    }
+
+    delete(name) {
+      this.map.delete(String(name).toLowerCase());
+    }
+
+    entries() {
+      return this.map.entries();
+    }
+
+    [Symbol.iterator]() {
+      return this.map[Symbol.iterator]();
+    }
+  }
+
+  class MockRequest {
+    constructor(url, init = {}) {
+      this.url = url;
+      this.method = init.method || 'GET';
+      this.headers = init.headers instanceof MockHeaders ? init.headers : new MockHeaders(init.headers || {});
+      this.body = init.body;
+    }
+
+    async arrayBuffer() {
+      const text = typeof this.body === 'string' ? this.body : JSON.stringify(this.body || '');
+      return new TextEncoder().encode(text).buffer;
+    }
+  }
+
+  class MockResponse {
+    constructor(body = '', init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.statusText = init.statusText || '';
+      this.headers = init.headers instanceof MockHeaders ? init.headers : new MockHeaders(init.headers || {});
+    }
+
+    async text() {
+      return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+    }
+  }
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = {
+      ...originalEnv,
+      ACCESS_KEY: 'test-access-key',
+      ALLOWED_ORIGIN: 'https://esim.cosr.eu.org'
+    };
+    global.Deno = {
+      env: {
+        get: (name) => {
+          if (name === 'ACCESS_KEY') return 'test-access-key';
+          if (name === 'ALLOWED_ORIGIN') return 'https://esim.cosr.eu.org';
+          return '';
+        }
+      }
+    };
+    global.Request = MockRequest;
+    global.Response = MockResponse;
+    global.fetch = jest.fn().mockResolvedValue(new MockResponse('ok', { status: 200, headers: { 'content-type': 'text/plain' } }));
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    jest.restoreAllMocks();
+    global.Request = OriginalRequest;
+    global.Response = OriginalResponse;
+    global.Deno = OriginalDeno;
+  });
+
+  it('blocks unknown BFF targets', async () => {
+    const mod = await import('../../netlify/edge-functions/bff-proxy.js');
+    const request = new Request('https://example.com/bff/unknown-route', {
+      method: 'POST',
+      headers: { origin: 'https://esim.cosr.eu.org' }
+    });
+
+    const response = await mod.default(request);
+    expect(response.status).toBe(404);
+  });
+
+  it('blocks missing-origin calls to protected BFF targets', async () => {
+    const mod = await import('../../netlify/edge-functions/bff-proxy.js');
+    const request = new Request('https://example.com/bff/verify-cookie', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ cookie: 'test-cookie' })
+    });
+
+    const response = await mod.default(request);
+    expect(response.status).toBe(403);
+  });
+
+  it('forwards allowlisted BFF targets with the server x-esim-key', async () => {
+    const mod = await import('../../netlify/edge-functions/bff-proxy.js');
+    const request = new Request('https://example.com/bff/giffgaff-token-exchange', {
+      method: 'POST',
+      headers: {
+        origin: 'https://esim.cosr.eu.org',
+        'content-type': 'application/json',
+        'x-esim-key': 'client-key',
+        'x-app-key': 'client-app-key'
+      },
+      body: JSON.stringify({
+        code: 'authorization-code',
+        code_verifier: 'a'.repeat(64)
+      })
+    });
+
+    const response = await mod.default(request);
+
+    expect(response.status).toBe(200);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const proxiedRequest = global.fetch.mock.calls[0][0];
+    expect(proxiedRequest.url).toBe('https://example.com/.netlify/functions/giffgaff-token-exchange');
+    expect(proxiedRequest.headers.get('x-esim-key')).toBe('test-access-key');
+    expect(proxiedRequest.headers.get('x-app-key')).toBeNull();
+  });
+});

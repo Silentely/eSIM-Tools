@@ -46,11 +46,6 @@ const tokenExchangeSchema = {
     minLength: 43,
     maxLength: 128,
     pattern: /^[A-Za-z0-9\-._~]+$/
-  },
-  redirect_uri: {
-    required: false,
-    type: 'string',
-    maxLength: 500
   }
 };
 
@@ -58,7 +53,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   // 输入验证
   validateInput(tokenExchangeSchema, body);
 
-  const { code, code_verifier: codeVerifier, redirect_uri: redirectUri } = body;
+  const { code, code_verifier: codeVerifier } = body;
 
   // 验证环境配置
   const { clientId, clientSecret } = validateClientCredentials();
@@ -72,7 +67,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   const form = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
-    redirect_uri: redirectUri || defaultRedirectUri,
+    redirect_uri: defaultRedirectUri,
     code_verifier: codeVerifier
   });
 

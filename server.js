@@ -29,7 +29,6 @@ const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _res
 const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
 const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
 const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
-const DEFAULT_SIMYO_CLIENT_TOKEN = 'e77b7e2f43db41bb95b17a2a11581a38';
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
 const DEFAULT_SIMYO_CLIENT_VERSION = '4.23.5';
 const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)';
@@ -103,6 +102,7 @@ const giffgaffGraphql = require('./netlify/functions/giffgaff-graphql');
 const giffgaffTokenExchange = require('./netlify/functions/giffgaff-token-exchange');
 const verifyCookie = require('./netlify/functions/verify-cookie');
 const giffgaffSmsActivate = require('./netlify/functions/giffgaff-sms-activate');
+const autoActivateEsim = require('./netlify/functions/auto-activate-esim');
 const publicConfig = require('./netlify/functions/public-config');
 
 // 包装Netlify Functions为Express路由
@@ -156,8 +156,11 @@ const functionRoutes = [
   ['giffgaff-token-exchange', giffgaffTokenExchange],
   ['verify-cookie', verifyCookie],
   ['giffgaff-sms-activate', giffgaffSmsActivate],
+  ['auto-activate-esim', autoActivateEsim],
   ['public-config', publicConfig]
 ];
+app.locals.bffRoutes = functionRoutes.map(([name]) => `/bff/${name}`);
+app.locals.functionRoutes = functionRoutes.map(([name]) => `/.netlify/functions/${name}`);
 functionRoutes.forEach(([name, handler]) => {
   const wrapped = wrapNetlifyFunction(handler);
   app.use(`/.netlify/functions/${name}`, wrapped);
@@ -190,9 +193,9 @@ app.use('/api/simyo/*', (req, res) => {
         headers: {
             'Content-Type': 'application/json',
             'User-Agent': req.headers['user-agent'] || process.env.SIMYO_USER_AGENT || DEFAULT_SIMYO_USER_AGENT,
-            'X-Client-Token': req.headers['x-client-token'] || process.env.SIMYO_CLIENT_TOKEN || DEFAULT_SIMYO_CLIENT_TOKEN,
-            'X-Client-Platform': req.headers['x-client-platform'] || process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
-            'X-Client-Version': req.headers['x-client-version'] || process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
+            'X-Client-Token': process.env.SIMYO_CLIENT_TOKEN || '',
+            'X-Client-Platform': process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
+            'X-Client-Version': process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
             ...(req.headers['x-session-token'] ? { 'X-Session-Token': req.headers['x-session-token'] } : {})
         },
         timeout: 30000
@@ -257,13 +260,15 @@ app.use((req, res) => {
     });
 });
 
-// 启动服务器
-app.listen(PORT, () => {
-    Logger.log(`🚀 eSIM工具服务器已启动`);
-    Logger.log(`📍 本地地址: http://localhost:${PORT}`);
-    Logger.log(`🔧 Giffgaff工具: http://localhost:${PORT}/giffgaff`);
-    Logger.log(`📱 Simyo工具: http://localhost:${PORT}/simyo`);
-    Logger.log(`🌐 环境: ${process.env.NODE_ENV || 'development'}`);
-});
+// 启动服务器。被测试或其他模块 require 时不自动占用端口。
+if (require.main === module) {
+    app.listen(PORT, () => {
+        Logger.log(`🚀 eSIM工具服务器已启动`);
+        Logger.log(`📍 本地地址: http://localhost:${PORT}`);
+        Logger.log(`🔧 Giffgaff工具: http://localhost:${PORT}/giffgaff`);
+        Logger.log(`📱 Simyo工具: http://localhost:${PORT}/simyo`);
+        Logger.log(`🌐 环境: ${process.env.NODE_ENV || 'development'}`);
+    });
+}
 
 module.exports = app;
