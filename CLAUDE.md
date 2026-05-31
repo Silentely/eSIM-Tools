@@ -209,7 +209,7 @@ npm run test:coverage    # 生成覆盖率报告
 
 1. **上下文检索优先级**: 开始任务或修改代码前，优先使用 `mcp__fast_context__fast_context_search` 做语义检索；再用 `rg`/`sed`/`nl` 精确核验文件、符号和行号
 2. **不要再引用旧的 `mcp__ace-tool__search_context`**: 该仓库当前统一使用 `mcp__fast_context__fast_context_search` 作为首选上下文检索方式
-3. **Giffgaff OAuth 的 `GIFFGAFF_REDIRECT_URI` 只影响服务端 token exchange**: 前端授权跳转仍由 `src/giffgaff/js/modules/oauth-handler.js` 中的 `oauthConfig.redirectUri` 控制，Netlify 环境变量不会自动改写前端授权 URL
+3. **Giffgaff OAuth 的 `GIFFGAFF_REDIRECT_URI` 只影响服务端 token exchange**: 前端授权跳转仍由 `src/giffgaff/js/modules/api-config.js` 中的 `oauthConfig.redirectUri` 控制，Netlify 环境变量不会自动改写前端授权 URL
 4. **修改 Functions 时**: 必须通过 `withAuth` 中间件包装 handler
 5. **修改前端模块时**: 使用相对路径导入模块
 6. **添加新 Function 时**: 在 `server.js` 中注册 Express 路由 (本地开发)

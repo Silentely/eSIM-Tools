@@ -64,23 +64,26 @@ class APIService {
    * Execute the actual HTTP request with retry
    */
   async executeRequest(url, options) {
-    const timeout = this.createTimeoutSignal(options.timeout || this.timeout);
     const fetchOptions = {
       method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
       },
-      signal: timeout.signal
     };
 
     if (options.body) {
       fetchOptions.body = JSON.stringify(options.body);
     }
 
-    try {
-      return await retry(async () => {
-        const response = await fetch(url, fetchOptions);
+    return await retry(async () => {
+      const timeout = this.createTimeoutSignal(options.timeout || this.timeout);
+      try {
+        const requestOptions = {
+          ...fetchOptions,
+          signal: timeout.signal
+        };
+        const response = await fetch(url, requestOptions);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -92,10 +95,10 @@ class APIService {
         }
 
         return response.text();
-      }, this.retries);
-    } finally {
-      timeout.clear();
-    }
+      } finally {
+        timeout.clear();
+      }
+    }, this.retries);
   }
 
   /**

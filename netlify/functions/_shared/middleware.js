@@ -77,12 +77,12 @@ function authenticate(event) {
     return { preflight: true, origin: requestOrigin };
   }
 
-  // 非预检请求：验证来源
+  // 非预检请求：内部调用可跳过 Origin gate，但仍需在后续校验内部密钥
   if (!requestOrigin && !isInternalCall) {
     throw new AuthError('Origin not allowed', 403);
   }
 
-  if (!isAllowedOrigin(requestOrigin)) {
+  if (requestOrigin && !isAllowedOrigin(requestOrigin)) {
     throw new AuthError('Origin not allowed', 403);
   }
 
@@ -296,17 +296,19 @@ function withAuth(handler, options = {}) {
       // 执行业务逻辑
       const result = await handler(event, context, { auth, body: parsedBody });
 
+      const responseOrigin = auth.origin;
+
       // 确保返回正确的响应格式
       if (!result.statusCode) {
         return {
           statusCode: 200,
-          headers: createHeaders(auth.origin),
+          headers: createHeaders(responseOrigin),
           body: JSON.stringify(result)
         };
       }
 
       // 合并默认头
-      result.headers = createHeaders(auth.origin, result.headers || {});
+      result.headers = createHeaders(responseOrigin, result.headers || {});
       return result;
 
     } catch (error) {

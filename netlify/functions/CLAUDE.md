@@ -58,7 +58,7 @@ const schema = {
 - **axios**: HTTP 请求 (Functions 内部调用外部 API)
 - **cheerio**: HTML 解析 (爬虫场景)
 - **@sentry/node**: 错误监控 (生产环境)
-- **环境变量**: `ACCESS_KEY`, `ALLOWED_ORIGIN`, `GIFFGAFF_CLIENT_ID`, `GIFFGAFF_CLIENT_SECRET`, `GIFFGAFF_REDIRECT_URI`, `SENTRY_DSN`
+- **环境变量**: `ACCESS_KEY`, `ALLOWED_ORIGIN`, `GIFFGAFF_CLIENT_ID`, `GIFFGAFF_CLIENT_SECRET`, `GIFFGAFF_REDIRECT_URI`, `SIMYO_CLIENT_TOKEN`, `SENTRY_DSN`
 
 ## 数据模型
 

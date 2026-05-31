@@ -185,6 +185,14 @@ app.use('/api/simyo/*', (req, res) => {
         return res.status(200).end();
     }
 
+    const simyoClientToken = process.env.SIMYO_CLIENT_TOKEN;
+    if (!simyoClientToken) {
+        return res.status(500).json({
+            error: 'Server Misconfigured',
+            message: 'SIMYO_CLIENT_TOKEN 未配置'
+        });
+    }
+
     // 代理请求
     const axios = require('axios');
     const config = {
@@ -193,7 +201,7 @@ app.use('/api/simyo/*', (req, res) => {
         headers: {
             'Content-Type': 'application/json',
             'User-Agent': req.headers['user-agent'] || process.env.SIMYO_USER_AGENT || DEFAULT_SIMYO_USER_AGENT,
-            'X-Client-Token': process.env.SIMYO_CLIENT_TOKEN || '',
+            'X-Client-Token': simyoClientToken,
             'X-Client-Platform': process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
             'X-Client-Version': process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
             ...(req.headers['x-session-token'] ? { 'X-Session-Token': req.headers['x-session-token'] } : {})

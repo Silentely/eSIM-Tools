@@ -7,9 +7,12 @@ const axios = require('axios');
 const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
 
 function getInternalHeaders() {
+  if (!process.env.ACCESS_KEY) {
+    throw new AuthError('ACCESS_KEY 未配置', 500);
+  }
   return {
     'Content-Type': 'application/json',
-    'x-esim-key': process.env.ACCESS_KEY || ''
+    'x-esim-key': process.env.ACCESS_KEY
   };
 }
 
@@ -194,7 +197,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
             timeout: 15000
           });
 
-          if (r.data?.success && r.data?.accessToken) {
+          if (r.data?.valid && r.data?.accessToken) {
             accessToken = r.data.accessToken;
             requestHeaders['Authorization'] = `Bearer ${accessToken}`;
             console.log(`[GGQL] ${ts} | token refreshed, retrying upstream call`);
@@ -206,7 +209,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
             console.log(`[GGQL] ${ts} | retry OK: status=${response.status}`);
             break; // 重试成功，跳出循环
           } else {
-            console.error(`[GGQL] ${ts} | cookie refresh failed: success=${r.data?.success}`);
+            console.error(`[GGQL] ${ts} | cookie refresh failed: valid=${r.data?.valid}`);
             throw err;
           }
         } catch (reErr) {

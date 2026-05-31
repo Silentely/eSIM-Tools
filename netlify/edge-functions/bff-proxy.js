@@ -77,13 +77,16 @@ export default async (request, context) => {
   const sameOrigin = requestOrigin === url.origin;
   const configuredOrigin = allowedOrigins.includes(requestOrigin);
   const corsOrigin = sameOrigin || configuredOrigin ? requestOrigin : '';
+  const allowMissingOriginForPublicGet = targetName === 'public-config' && request.method === 'GET';
+  const fallbackCorsOrigin = allowedOrigins[0] || DEFAULT_ALLOWED_ORIGIN;
+  const errorCorsHeaders = buildCorsHeaders(corsOrigin || fallbackCorsOrigin);
 
-  if (!corsOrigin) {
+  if (!corsOrigin && !allowMissingOriginForPublicGet) {
     console.warn(`[BFF] ${ts} | blocked origin=${requestOrigin || 'missing'} target=${targetName}`);
-    return jsonResponse(403, { error: 'Forbidden', message: 'Origin not allowed' });
+    return jsonResponse(403, { error: 'Forbidden', message: 'Origin not allowed' }, errorCorsHeaders);
   }
 
-  const corsHeaders = buildCorsHeaders(corsOrigin);
+  const corsHeaders = corsOrigin ? buildCorsHeaders(corsOrigin) : {};
   if (request.method === 'OPTIONS') {
     return new Response('', { status: 200, headers: corsHeaders });
   }

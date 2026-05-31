@@ -49,6 +49,32 @@ describe('Functions authentication hardening', () => {
     expect(result.authorized).toBe(true);
   });
 
+
+  it('allows OPTIONS preflight for allowed origin', () => {
+    const { middleware } = loadModules();
+
+    const result = middleware.authenticate({
+      httpMethod: 'OPTIONS',
+      headers: { origin: 'https://esim.cosr.eu.org' },
+      body: '{}',
+      queryStringParameters: {}
+    });
+
+    expect(result.preflight).toBe(true);
+    expect(result.origin).toBe('https://esim.cosr.eu.org');
+  });
+
+  it('rejects OPTIONS preflight for disallowed origin', () => {
+    const { middleware } = loadModules();
+
+    expect(() => middleware.authenticate({
+      httpMethod: 'OPTIONS',
+      headers: { origin: 'https://evil.example.com' },
+      body: '{}',
+      queryStringParameters: {}
+    })).toThrow('Origin not allowed');
+  });
+
   it('does not accept authKey from query or body', () => {
     const { middleware } = loadModules();
     const event = {
@@ -85,6 +111,27 @@ describe('Functions authentication hardening', () => {
     const form = axios.post.mock.calls[0][1];
     expect(form).toContain('redirect_uri=giffgaff%3A%2F%2Fauth%2Fcallback%2F');
     expect(form).not.toContain('attacker.example');
+  });
+
+
+
+  it('throws a configuration error when ACCESS_KEY is missing for token exchange', async () => {
+    const { tokenExchange } = loadModules({ ACCESS_KEY: '' });
+
+    const result = await tokenExchange.handler({
+      httpMethod: 'POST',
+      headers: {
+        origin: 'https://esim.cosr.eu.org'
+      },
+      body: JSON.stringify({
+        code: 'authorization-code',
+        code_verifier: 'a'.repeat(64)
+      }),
+      queryStringParameters: {}
+    }, { functionName: 'giffgaff-token-exchange' });
+
+    expect(result.statusCode).toBe(500);
+    expect(result.body).toContain('ACCESS_KEY');
   });
 
   it('uses configured GIFFGAFF_REDIRECT_URI for token exchange', async () => {

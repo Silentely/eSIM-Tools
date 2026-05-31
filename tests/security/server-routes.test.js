@@ -24,7 +24,7 @@ describe('Local server route coverage', () => {
     const app = require('../../server.js');
     const routes = app.locals.bffRoutes;
 
-    expect(routes).toEqual(expect.arrayContaining([
+    const expectedRoutes = [
       '/bff/giffgaff-token-exchange',
       '/bff/giffgaff-graphql',
       '/bff/giffgaff-mfa-challenge',
@@ -33,6 +33,8 @@ describe('Local server route coverage', () => {
       '/bff/auto-activate-esim',
       '/bff/verify-cookie',
       '/bff/public-config'
-    ]));
+    ];
+
+    expect([...routes].sort()).toEqual([...expectedRoutes].sort());
   });
 });

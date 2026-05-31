@@ -3,6 +3,7 @@ describe('BFF proxy guardrails', () => {
   const OriginalRequest = global.Request;
   const OriginalResponse = global.Response;
   const OriginalDeno = global.Deno;
+  const OriginalFetch = global.fetch;
 
   class MockHeaders {
     constructor(init = {}) {
@@ -92,6 +93,7 @@ describe('BFF proxy guardrails', () => {
     jest.restoreAllMocks();
     global.Request = OriginalRequest;
     global.Response = OriginalResponse;
+    global.fetch = OriginalFetch;
     global.Deno = OriginalDeno;
   });
 
@@ -106,7 +108,21 @@ describe('BFF proxy guardrails', () => {
     expect(response.status).toBe(404);
   });
 
-  it('blocks missing-origin calls to protected BFF targets', async () => {
+
+
+  it('allows same-origin public GET requests without Origin', async () => {
+    const mod = await import('../../netlify/edge-functions/bff-proxy.js');
+    const request = new Request('https://example.com/bff/public-config', {
+      method: 'GET'
+    });
+
+    const response = await mod.default(request);
+
+    expect(response.status).toBe(200);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 403 for missing-origin protected POST requests', async () => {
     const mod = await import('../../netlify/edge-functions/bff-proxy.js');
     const request = new Request('https://example.com/bff/verify-cookie', {
       method: 'POST',
@@ -115,7 +131,9 @@ describe('BFF proxy guardrails', () => {
     });
 
     const response = await mod.default(request);
+
     expect(response.status).toBe(403);
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://esim.cosr.eu.org');
   });
 
   it('forwards allowlisted BFF targets with the server x-esim-key', async () => {
