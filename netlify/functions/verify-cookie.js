@@ -38,12 +38,16 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   // 验证Cookie并获取Access Token
   const result = await validateCookieAndGetToken(cookie);
 
+  // success: Cookie 验证请求本身是否成功（HTTP 层面）
+  // valid:   Cookie 是否可用于后续 API 调用（需同时拿到可用的 JWT 令牌）
+  // 调用方（前端 & 内部函数）应以 valid 字段作为能否继续的唯一判断依据。
   if (result.success) {
     const looksLikeJwt = typeof result.accessToken === 'string' &&
                          result.accessToken.includes('.') &&
                          result.accessToken.length > 200;
 
-    // 只有拿到疑似 JWT 的令牌才视为可直接进入第2步
+    // Cookie 验证通过但未拿到可用 JWT → success=true, valid=false
+    // 表示服务可达、Cookie 有效，但缺少可用于 API 的令牌（需走 OAuth 或补充会话）
     if (!looksLikeJwt) {
       return {
         statusCode: 200,
@@ -58,6 +62,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       };
     }
 
+    // Cookie 验证通过且拿到可用 JWT → success=true, valid=true
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -71,6 +76,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     };
   }
 
+  // Cookie 验证失败 → success=false, valid=false
   return {
     statusCode: 200,
     body: JSON.stringify({
@@ -78,7 +84,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       valid: false,
       accessToken: null,
       emailSignature: null,
-      message: result.error || '无法��Cookie获取访问令牌'
+      message: result.error || '无法通过Cookie获取访问令牌'
     })
   };
 }, {

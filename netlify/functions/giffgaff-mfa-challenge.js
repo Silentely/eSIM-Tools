@@ -5,16 +5,7 @@
 
 const axios = require('axios');
 const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
-
-function getInternalHeaders() {
-  if (!process.env.ACCESS_KEY) {
-    throw new AuthError('ACCESS_KEY 未配置', 500);
-  }
-  return {
-    'Content-Type': 'application/json',
-    'x-esim-key': process.env.ACCESS_KEY
-  };
-}
+const { getInternalHeaders } = require('./_shared/internal-headers');
 
 // 输入验证schema
 const mfaChallengeSchema = {
