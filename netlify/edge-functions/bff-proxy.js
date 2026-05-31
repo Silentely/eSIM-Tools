@@ -16,6 +16,8 @@ const BFF_ROUTES = new Map([
   ['public-config', ['GET', 'OPTIONS']]
 ]);
 
+// 注意：此文件运行在 Deno（Edge Function），无法直接引用 Node.js 的 _shared/cors.js。
+// 下方 parseAllowedOrigins 逻辑需与 netlify/functions/_shared/cors.js 的 parseOrigins 保持同步。
 const DEFAULT_ALLOWED_ORIGIN = 'https://esim.cosr.eu.org';
 
 function getEnv(name, fallback = '') {
