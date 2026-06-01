@@ -19,13 +19,13 @@ OAuth方式需要获取回调URL，获取方式参考页面说明：
 ![获取回调URL说明](image/102.jpg)
 
 1. 首先请在新标签页打开giffgaff官网的登录页面：'https://www.giffgaff.com' 进行登录
-2. 登录完成后返回eSIM更换页面，打开开发者工具：按 F12 或右键选择"检查"切换到"控制台"（Console）标签页
-3. 点击下方"开始OAuth登录"按钮，新窗口打开后切换回eSIM更换页面
+2. 登录完成后，切换回**eSIM-Tools 工具页面**（即本页面），打开浏览器开发者工具：按 F12 或右键选择"检查"切换到"控制台"（Console）标签页
+3. 点击下方"开始OAuth登录"按钮，新窗口打开后切换回本页面（eSIM-Tools 工具页面）
 4. 在控制台中查找错误信息：Failed to launch 'giffgaff://auth/callback/...'，复制该行中的回调URL
 
 ![获取回调URL](image/103.jpg)
 
-5. 将获取到的回调URL输入到eSIM更换网页相应的输入框中，点击"处理回调"
+5. 将获取到的回调URL输入到本页面相应的输入框中，点击"处理回调"
 
 ![输入回调URL](image/104.jpg)
 
