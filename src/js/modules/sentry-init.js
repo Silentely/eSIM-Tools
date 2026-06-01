@@ -41,6 +41,7 @@ const EXTENSION_ERROR_KEYWORDS = [
   'can\'t find variable: config',
   'error invoking post',
   'method not found',
+  'swal',
 ];
 
 function toLowerSafe(value) {
@@ -363,6 +364,8 @@ function initSentry() {
         /AbortError/,
         // 第三方脚本噪音
         /turnstile/i,
+        // 浏览器扩展注入的 SweetAlert 冲突（t.swal=e() 模式）
+        /swal/i,
       ],
 
       denyUrls: [
@@ -395,6 +398,13 @@ function initSentry() {
                 message: exception.value,
                 mechanismType,
               });
+              return null;
+            }
+
+            // 过滤非 Error 类型的 rejection 对象（如 { code, message }）
+            // 这类对象通常是 API 错误响应被直接 reject，不属于代码 bug
+            if (mechanismType === 'onunhandledrejection' &&
+                (exception.value || '').includes('object captured as promise rejection with keys')) {
               return null;
             }
           }

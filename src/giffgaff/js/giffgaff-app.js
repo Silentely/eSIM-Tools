@@ -31,64 +31,43 @@ class GiffgaffApp {
         this.minuteIntervalId = null;
         this.minuteTimeoutId = null;
         this._isPageVisible = true; // 页面可见性状态
+        this.activeRequests = new Set(); // 追踪活跃的异步请求（issue #66）
+        this._beforeunloadExempt = false; // Token 获取成功后豁免 beforeunload 拦截
         this.setupGlobalErrorHandlers();
         this.setupVisibilityHandler(); // 监听页面可见性变化
     }
 
     /**
      * 设置全局错误处理器
+     *
+     * 职责边界：
+     * - 本 handler 仅负责浏览器扩展噪音检测和用户通知
+     * - 错误上报由 Sentry SDK 自动采集（onunhandledrejection 集成）
+     * - 非 Error 类型的 rejection（如 { code, message }）由 Sentry beforeSend 过滤
+     * - 禁止在此处手动调用 captureException，否则会与 Sentry 自动采集产生重复上报
      */
     setupGlobalErrorHandlers() {
         // 处理未捕获的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
             console.error('[Giffgaff] Unhandled Promise Rejection:', event.reason);
 
-            // 先将 reason 统一为 Error 对象，用于噪音检测
+            // 将 reason 统一为 Error 对象，用于噪音检测
             const error = this.normalizeUnhandledRejectionReason(event.reason);
 
-            // 浏览器噪音检查：无论 Error/字符串/对象，只要命中忽略列表就静默吞掉
+            // 浏览器扩展噪音检查：命中忽略列表则静默吞掉，不通知用户
             if (error && this.isIgnoredUnhandledRejection(error)) {
                 event.preventDefault();
                 console.debug('[Giffgaff] Ignored browser noise rejection:', error.message);
                 return;
             }
 
-            // 非噪音但仍非自定义错误（带 stack 的真实 Error），交给 Sentry 自动采集
-            const shouldHandleAsCustomError =
-                typeof event.reason === 'string' ||
-                (event.reason && typeof event.reason === 'object' && !event.reason.stack);
-            if (!shouldHandleAsCustomError) return;
-
-            if (!error) {
-                // normalize 返回 null（number/boolean/symbol 等原始类型）
-                // 仍需阻止默认行为，避免浏览器控制台报错
+            // 非噪音错误：阻止浏览器默认行为，显示用户友好提示
+            // 错误上报交给 Sentry 自动采集，不在这里手动 captureException
+            if (error) {
                 event.preventDefault();
-                return;
+                // 显示用户友好的错误提示（仅对有效 Error 对象，跳过原始类型 rejection）
+                showToast(tl('操作失败，请重试或刷新页面'));
             }
-
-            // 过滤 Sentry 内置 ignoreErrors 已覆盖的噪音模式
-            // 避免自定义 handler 绕过 Sentry 过滤导致噪音上报
-            if (this.isSentryIgnoredError(error)) {
-                event.preventDefault();
-                console.debug('[Giffgaff] Delegated to Sentry ignoreErrors:', error.message);
-                return;
-            }
-
-            // 上报到 Sentry
-            if (window.Sentry) {
-                window.Sentry.captureException(error, {
-                    extra: {
-                        originalReason: event.reason,
-                        reasonType: typeof event.reason
-                    }
-                });
-            }
-
-            // 阻止默认行为（避免控制台报错）
-            event.preventDefault();
-
-            // 显示用户友好的错误提示
-            showToast(tl('操作失败，请重试或刷新页面'));
         });
     }
 
@@ -183,19 +162,6 @@ class GiffgaffApp {
     }
 
     /**
-     * 检查是否匹配 Sentry ignoreErrors 列表中的噪音模式
-     * 避免自定义 handler 绕过 Sentry 内置过滤，将噪音当作真实错误上报
-     */
-    isSentryIgnoredError(error) {
-        const message = (error?.message || '').toLowerCase();
-        return (
-            message.includes('non-error promise rejection') ||
-            message.includes('resizeobserver loop') ||
-            message.includes('aborterror')
-        );
-    }
-
-    /**
      * 初始化应用
      */
     async init() {
@@ -223,6 +189,10 @@ class GiffgaffApp {
                 hasCookie: !!state.cookie,
                 currentStep: state.currentStep
             }));
+            // 离开 Step 5 时重置 beforeunload 豁免，确保后续关键步骤仍受保护
+            if (this._beforeunloadExempt && state.currentStep !== 5) {
+                this._beforeunloadExempt = false;
+            }
             uiController.updateStatusPanel();
         });
 
@@ -293,6 +263,9 @@ class GiffgaffApp {
 
         // 步骤点击跳转
         this.bindStepNavigation();
+
+        // 请求进行中或关键步骤时拦截刷新/后退（issue #66）
+        this.bindBeforeUnloadGuard();
 
         // Cookie过期事件
         window.addEventListener('cookieExpired', (e) => this.handleCookieExpired(e));
@@ -549,7 +522,7 @@ class GiffgaffApp {
     }
 
     /**
-     * 绑定步骤导航
+     * 绑定步骤导航（issue #66: 添加导航守卫，防止请求进行中误操作）
      */
     bindStepNavigation() {
         document.addEventListener('click', (e) => {
@@ -557,10 +530,40 @@ class GiffgaffApp {
             if (stepEl && stepEl.dataset && stepEl.dataset.step) {
                 const target = parseInt(stepEl.dataset.step, 10);
                 const currentStep = stateManager.get('currentStep');
+
+                // 请求进行中时拦截导航
+                if (this.activeRequests.size > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const confirmed = confirm(t('giffgaff.app.warning.requestInProgress'));
+                    if (!confirmed) return;
+                    // 用户确认后退，清除活跃请求标记
+                    // safe: handleGetToken 在 await 后会检查 has(requestId) 并提前 return
+                    this.activeRequests.clear();
+                }
+
                 if (!isNaN(target) && target <= currentStep) {
                     e.preventDefault();
                     uiController.showSection(target);
                 }
+            }
+        });
+    }
+
+    /**
+     * 绑定 beforeunload 守卫（issue #66: 拦截页面刷新/关闭）
+     * 浏览器会显示默认的"离开此页面？"提示
+     */
+    bindBeforeUnloadGuard() {
+        window.addEventListener('beforeunload', (event) => {
+            // Token 获取成功后豁免拦截，用户可自由关闭页面
+            if (this._beforeunloadExempt) return;
+
+            const currentStep = stateManager.get('currentStep');
+            // 请求进行中或处于 Step 4/5 关键阶段时拦截
+            if (this.activeRequests.size > 0 || currentStep === 4 || currentStep === 5) {
+                event.preventDefault();
+                event.returnValue = ''; // Chrome 需要设置 returnValue
             }
         });
     }
@@ -1082,30 +1085,81 @@ class GiffgaffApp {
     }
 
     /**
-     * 处理获取Token
+     * 处理获取Token（issue #66: 增加前置校验 + 分类错误处理）
      */
     async handleGetToken() {
         const { elements } = uiController;
+        const state = stateManager.getState();
         console.log('[Giffgaff] === 获取 eSIM Token ===');
 
+        // === 前置校验：防止状态脱节导致的 422/401 错误 ===
+        // trim 处理：防止空白字符串通过校验
+        const esimSSN = typeof state.esimSSN === 'string' ? state.esimSSN.trim() : '';
+        if (!esimSSN) {
+            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.missingSSN'), "error");
+            console.error('[Giffgaff] Missing or invalid esimSSN. Redirecting to step 4.');
+            setTimeout(() => uiController.showSection(4), 2000);
+            return;
+        }
+
+        if (!state.accessToken || !state.emailSignature) {
+            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.sessionExpired'), "error");
+            console.error('[Giffgaff] Missing auth tokens. Redirecting to login.');
+            stateManager.clearSession();
+            setTimeout(() => uiController.showSection(1), 2000);
+            return;
+        }
+
+        console.log('[Giffgaff] SSN 长度:', esimSSN.length);
+
+        const requestId = 'getToken_' + Date.now();
+
         try {
+            this.activeRequests.add(requestId);
             elements.getESimTokenBtn.innerHTML = `<span class="loading"></span> ${tl('获取中...')}`;
             elements.getESimTokenBtn.disabled = true;
 
             uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetching'), "success");
 
-            const state = stateManager.getState();
-            console.log('[Giffgaff] SSN 长度:', state.esimSSN?.length || 0);
             console.log('[Giffgaff] 调用 esimService.getESimDownloadToken()...');
-            await esimService.getESimDownloadToken(state.esimSSN);
+            const tokenResult = await esimService.getESimDownloadToken(esimSSN);
+
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的结果
+            if (!this.activeRequests.has(requestId)) return;
+
+            // 确认请求仍有效后才写入状态，避免 stale 请求污染 session
+            stateManager.set('lpaString', tokenResult.lpaString);
+
             console.log('[Giffgaff] eSIM Token 获取成功');
 
+            this._beforeunloadExempt = true; // Token 已获取，解除 beforeunload 拦截
             uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetchedSuccess'), "success");
             uiController.showESimResult();
         } catch (error) {
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的错误
+            if (!this.activeRequests.has(requestId)) return;
+
             console.error('[Giffgaff] eSIM Token 获取失败:', error.message, error);
-            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.tokenFailed', { message: error.message }), "error");
+
+            // 根据错误类型进行差异化处理
+            if (error.status === 401 || error.message?.includes('401')) {
+                uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.authExpired'), "error");
+                setTimeout(() => {
+                    if (confirm(t('giffgaff.app.prompt.relogin'))) {
+                        stateManager.clearSession();
+                        uiController.showSection(1);
+                    }
+                }, 500);
+            } else if (error.status === 422 || error.message?.includes('422')) {
+                uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.ssnNotFound'), "error");
+                setTimeout(() => uiController.showSection(4), 2000);
+            } else {
+                // 其他错误：展示 esim-service 已转换的友好提示
+                const errorMsg = error.message || t('giffgaff.app.error.tokenFailed', { message: '' });
+                uiController.showStatus(elements.tokenStatus, errorMsg, "error");
+            }
         } finally {
+            this.activeRequests.delete(requestId);
             elements.getESimTokenBtn.innerHTML = `<i class="fas fa-download me-2"></i> ${tl('获取eSIM Token')}`;
             elements.getESimTokenBtn.disabled = false;
         }
@@ -1119,6 +1173,7 @@ class GiffgaffApp {
         if (confirm(tl('确定要清除所有会话数据吗？这将重置所有进度。'))) {
             cookieHandler.stopValidityMonitor();
             stateManager.clearSession();
+            this._beforeunloadExempt = false; // 重置 beforeunload 豁免
             console.log('[Giffgaff] 会话已清除');
             uiController.resetUI();
             uiController.showStatus(uiController.elements.loginMethodStatus, tl('会话已清除，请重新开始'), "success");
@@ -1150,7 +1205,7 @@ class GiffgaffApp {
     }
 
     /**
-     * 处理会话恢复
+     * 处理会话恢复（issue #66: 增加状态一致性降级）
      */
     handleSessionRestore() {
         const state = stateManager.getState();
@@ -1197,7 +1252,18 @@ class GiffgaffApp {
                 targetStep = 2;
             }
 
-            uiController.showSection(Math.max(targetStep, state.currentStep));
+            // === 状态一致性降级：防止前后端状态脱节 ===
+            if (targetStep === 5 && !state.esimSSN) {
+                console.warn('[Giffgaff] State inconsistency: step 5 without SSN. Downgrading to step 4.');
+                targetStep = 4;
+            }
+            if (targetStep === 4 && !state.memberId) {
+                console.warn('[Giffgaff] State inconsistency: step 4 without memberId. Downgrading to step 3.');
+                targetStep = 3;
+            }
+
+            // 使用降级后的 targetStep 作为事实来源，上方一致性校验已确保其有效
+            uiController.showSection(targetStep);
 
             // 恢复eSIM信息显示
             if (state.esimActivationCode || state.esimSSN) {

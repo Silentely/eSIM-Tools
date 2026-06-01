@@ -133,6 +133,8 @@ export class MFAHandler {
                     'Authorization': state.accessToken ? `Bearer ${state.accessToken}` : undefined
                 },
                 body: JSON.stringify([{
+                    accessToken: state.accessToken,
+                    cookie: stateManager.getCookie() || undefined,
                     operationName: "simSwapMfaChallenge",
                     variables: {},
                     query: `mutation simSwapMfaChallenge {

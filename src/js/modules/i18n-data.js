@@ -432,6 +432,10 @@ export const TRANSLATIONS = {
     'giffgaff.esim.log.lpaAttemptFailed': '获取LPA尝试 {attempt}/{total} 失败:',
     'giffgaff.esim.errors.lpaTimeout': '获取LPA超时，请稍后在第五步手动获取',
     'giffgaff.esim.errors.validationFailed': '验证失败：{status} - {message}',
+    'giffgaff.esim.errors.tokenExpired': '登录已过期，请返回第一步重新验证Cookie后重试',
+    'giffgaff.esim.errors.authFailed': '认证失败，请返回第一步重新验证Cookie',
+    'giffgaff.esim.errors.ssnNotFound': '该SIM卡编号不存在或已过期，请确认eSIM预订状态后重试',
+    'giffgaff.esim.errors.upstreamBusinessError': '操作失败：{message}',
     'giffgaff.oauth.log.savePkceFailed': '保存PKCE参数失败:',
     'giffgaff.oauth.status.windowOpened': '登录页面已打开，请完成登录后复制回调URL',
     'giffgaff.oauth.log.prepareFailed': 'OAuth登录准备失败:',
@@ -466,6 +470,17 @@ export const TRANSLATIONS = {
     'giffgaff.directFetch.errors.empty': '未在您的账户上发现可下载的 eSIM。如确认已在官方 App 完成 10 英镑付款，请联系 Giffgaff 客服核实订单状态。',
     'giffgaff.directFetch.errors.multipleNeedPick': '检测到多个可下载的 eSIM，请选择一个继续',
     'giffgaff.directFetch.errors.generic': '直取 eSIM 失败：{message}',
+
+    // issue #66: 请求进行中防护与错误分类
+    'giffgaff.app.warning.criticalStep': '⚠️ 请勿在此步骤刷新页面或后退，否则可能导致激活失败',
+    'giffgaff.app.warning.requestInProgress': '正在处理请求中，后退可能导致激活失败。是否确认后退？',
+    'giffgaff.app.error.missingSSN': 'eSIM 序列号(SSN)缺失，请返回上一步重新获取',
+    'giffgaff.app.error.sessionExpired': '会话已过期，请重新登录',
+    'giffgaff.app.error.authExpired': '认证已过期，请重新登录后再试',
+    'giffgaff.app.error.ssnNotFound': 'eSIM 序列号已失效，请返回重新激活',
+    'giffgaff.app.prompt.relogin': '认证已过期，是否重新登录？',
+    '二维码生成服务超时，请复制下方 LPA 字符串使用': '二维码生成服务超时，请复制下方 LPA 字符串使用',
+    '二维码生成失败，请复制下方 LPA 字符串使用': '二维码生成失败，请复制下方 LPA 字符串使用',
 
     'simyo.meta.title': 'Simyo eSIM 工具',
     'simyo.meta.description': 'Simyo eSIM 工具，支持设备更换、邮箱验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。',
@@ -692,6 +707,10 @@ export const TRANSLATIONS = {
     'giffgaff.esim.log.lpaAttemptFailed': 'LPA fetch attempt {attempt}/{total} failed:',
     'giffgaff.esim.errors.lpaTimeout': 'Timed out fetching the LPA. Retrieve it manually in Step 5.',
     'giffgaff.esim.errors.validationFailed': 'Verification failed: {status} - {message}',
+    'giffgaff.esim.errors.tokenExpired': 'Login expired. Please re-verify your Cookie in Step 1 and try again.',
+    'giffgaff.esim.errors.authFailed': 'Authentication failed. Please re-verify your Cookie in Step 1.',
+    'giffgaff.esim.errors.ssnNotFound': 'This SIM serial number does not exist or has expired. Please check your eSIM reservation status.',
+    'giffgaff.esim.errors.upstreamBusinessError': 'Operation failed: {message}',
     'giffgaff.oauth.log.savePkceFailed': 'Failed to persist PKCE parameters:',
     'giffgaff.oauth.status.windowOpened': 'Login page opened. Complete the sign-in and copy the callback URL.',
     'giffgaff.oauth.log.prepareFailed': 'OAuth login preparation failed:',
@@ -726,6 +745,17 @@ export const TRANSLATIONS = {
     'giffgaff.directFetch.errors.empty': 'No downloadable eSIM found on your account. If you have completed the £10 payment in the official app, please contact Giffgaff support to verify your order.',
     'giffgaff.directFetch.errors.multipleNeedPick': 'Multiple downloadable eSIMs detected — please pick one to continue',
     'giffgaff.directFetch.errors.generic': 'Direct fetch failed: {message}',
+
+    // issue #66: Request-in-progress guards and error classification
+    'giffgaff.app.warning.criticalStep': '⚠️ Do not refresh or go back on this step, or activation may fail',
+    'giffgaff.app.warning.requestInProgress': 'A request is in progress. Going back may cause activation to fail. Are you sure?',
+    'giffgaff.app.error.missingSSN': 'eSIM serial number (SSN) is missing. Please go back to the previous step to retrieve it.',
+    'giffgaff.app.error.sessionExpired': 'Session expired. Please log in again.',
+    'giffgaff.app.error.authExpired': 'Authentication expired. Please log in again.',
+    'giffgaff.app.error.ssnNotFound': 'eSIM serial number has expired. Please go back and re-activate.',
+    'giffgaff.app.prompt.relogin': 'Authentication expired. Do you want to log in again?',
+    '二维码生成服务超时，请复制下方 LPA 字符串使用': 'QR code generation service timed out. Please copy the LPA string below to use.',
+    '二维码生成失败，请复制下方 LPA 字符串使用': 'QR code generation failed. Please copy the LPA string below to use.',
 
     'simyo.meta.title': 'Simyo eSIM Tool',
     'simyo.meta.description': 'Simyo eSIM toolkit with device change, email verification, QR generation, and installation confirmation for Dutch Simyo users.',
@@ -935,4 +965,7 @@ export const LITERAL_TRANSLATIONS = {
   '拉取中...': 'Fetching...',
   '拉取我的 eSIM': 'Fetch my eSIM',
   '使用选定的 eSIM': 'Use selected eSIM',
+  // issue #66: 关键步骤警告和错误提示的字面量翻译
+  '二维码生成服务超时，请复制下方 LPA 字符串使用': 'QR code generation service timed out. Please copy the LPA string below to use.',
+  '二维码生成失败，请复制下方 LPA 字符串使用': 'QR code generation failed. Please copy the LPA string below to use.',
 };

@@ -33,6 +33,7 @@ export class ESimService {
                 body: JSON.stringify({
                     accessToken: state.accessToken,
                     mfaSignature: state.emailSignature,
+                    cookie: stateManager.getCookie() || undefined,
                     query: graphqlQueries.getMemberProfile,
                     operationName: 'getMemberProfileAndSim'
                 })
@@ -85,6 +86,7 @@ export class ESimService {
                 body: JSON.stringify({
                     accessToken: state.accessToken,
                     mfaSignature: state.emailSignature,
+                    cookie: stateManager.getCookie() || undefined,
                     query: graphqlQueries.reserveESim,
                     variables: {
                         input: {
@@ -157,6 +159,7 @@ export class ESimService {
                 body: JSON.stringify({
                     accessToken: state.accessToken,
                     mfaSignature: mfaSignature,
+                    cookie: stateManager.getCookie() || undefined,
                     turnstileToken: window.__cfTurnstileToken || '',
                     operationName: "SwapSim",
                     variables: {
@@ -209,7 +212,7 @@ export class ESimService {
     }
 
     /**
-     * 获取eSIM下载Token
+     * 获取eSIM下载Token（issue #66: 增强错误信息，附加 status code）
      */
     async getESimDownloadToken(ssn) {
         try {
@@ -221,6 +224,7 @@ export class ESimService {
                 body: JSON.stringify({
                     accessToken: state.accessToken,
                     mfaSignature: state.emailSignature,
+                    cookie: stateManager.getCookie() || undefined,
                     query: graphqlQueries.eSimDownloadToken,
                     variables: { ssn },
                     operationName: 'eSimDownloadToken'
@@ -229,10 +233,11 @@ export class ESimService {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(t('giffgaff.esim.errors.requestFailed', {
-                    status: response.status,
-                    message: errorText
-                }));
+                // 区分上游 401（token 过期）和业务 422（SSN 不存在）等错误，给出友好提示
+                const parsed = this._tryParseError(errorText);
+                const error = new Error(this._friendlyGraphqlError(response.status, parsed));
+                error.status = response.status; // 附加 status code 便于上层判断
+                throw error;
             }
 
             const data = await response.json();
@@ -244,7 +249,6 @@ export class ESimService {
             }
 
             const lpaString = data.data.eSimDownloadToken.lpaString;
-            stateManager.set('lpaString', lpaString);
 
             return {
                 success: true,
@@ -338,7 +342,8 @@ export class ESimService {
             );
 
             // 4. 获取LPA（轮询）
-            await this.waitAndGetLPA(swapResult.data.new.ssn);
+            const lpaResult = await this.waitAndGetLPA(swapResult.data.new.ssn);
+            stateManager.set('lpaString', lpaResult.lpaString);
 
             return {
                 success: true,
@@ -449,6 +454,58 @@ export class ESimService {
         });
 
         return { success: true, ssn, lpaString: tokenResult.lpaString };
+    }
+
+    /**
+     * 尝试解析 JSON 格式的错误响应体
+     * @param {string} text - 原始响应文本
+     * @returns {Object|null} 解析后的错误对象，解析失败返回 null
+     */
+    _tryParseError(text) {
+        try {
+            const parsed = JSON.parse(text);
+            // 兼容 GraphQL 错误格式 { errors: [{ message: '...' }] }
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.errors) && parsed.errors.length > 0) {
+                const firstError = parsed.errors[0] || {};
+                const message = firstError?.message || (typeof firstError === 'string' ? firstError : null);
+                if (message) {
+                    return { ...parsed, message };
+                }
+            }
+            return parsed.error || parsed.message ? parsed : null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * 将上游 HTTP 错误转换为用户友好的中文提示
+     * @param {number} status - HTTP 状态码
+     * @param {Object|null} parsed - 解析后的错误对象
+     * @returns {string} 友好的错误提示
+     */
+    _friendlyGraphqlError(status, parsed) {
+        const msg = parsed?.message || parsed?.error || '';
+
+        // 401: token 过期
+        if (status === 401) {
+            // 后端已尝试用 cookie 刷新但仍失败，提示重新登录
+            if (/AxiosError|invalid_token|unauthorized/i.test(msg)) {
+                return t('giffgaff.esim.errors.tokenExpired');
+            }
+            return t('giffgaff.esim.errors.authFailed');
+        }
+
+        // 422: 业务校验错误（SSN 不存在等）
+        if (status === 422) {
+            if (/SSN.*ICCID.*not exist|SSN.*不存在/i.test(msg)) {
+                return t('giffgaff.esim.errors.ssnNotFound');
+            }
+            return t('giffgaff.esim.errors.upstreamBusinessError', { message: msg });
+        }
+
+        // 其他错误保留原始信息
+        return t('giffgaff.esim.errors.requestFailed', { status, message: msg || status });
     }
 
     /**
