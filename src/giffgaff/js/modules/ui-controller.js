@@ -4,13 +4,14 @@
  */
 
 import { stateManager } from './state-manager.js';
-import { tl } from '../../../js/modules/i18n.js';
+import { t, tl } from '../../../js/modules/i18n.js';
 
 export class UIController {
     constructor() {
         this.elements = this.initElements();
         this.tooltips = new Map();
         this.qrTimeoutId = null; // 追踪二维码超时定时器（issue #66）
+        this._qrGeneration = 0; // 防止并发 generateQRCode 竞态
     }
 
     /**
@@ -157,7 +158,7 @@ export class UIController {
 
             const warningEl = document.createElement('div');
             warningEl.className = 'alert alert-warning mt-2 mb-3 critical-step-warning';
-            warningEl.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${tl('giffgaff.app.warning.criticalStep')}`;
+            warningEl.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${t('giffgaff.app.warning.criticalStep')}`;
             warningEl.style.cssText = 'font-weight: 500; border-left: 4px solid #f59e0b;';
 
             // 插入到 section 内容的最前面
@@ -427,6 +428,9 @@ export class UIController {
             this.qrTimeoutId = null;
         }
 
+        // generation counter：防止并发调用时旧回调干扰新调用
+        const gen = ++this._qrGeneration;
+
         const vendors = [
             (s, d) => `https://qrcode.show/${encodeURIComponent(d)}?size=${s}`,
             (s, d) => `https://quickchart.io/qr?size=${s}&text=${encodeURIComponent(d)}`,
@@ -454,6 +458,8 @@ export class UIController {
         const startTimeout = () => {
             clearTimeout(this.qrTimeoutId);
             this.qrTimeoutId = setTimeout(() => {
+                // 如果已被新调用取代，忽略本次超时
+                if (gen !== this._qrGeneration) return;
                 if (!isResolved) {
                     isResolved = true;
                     this.qrTimeoutId = null;
@@ -472,6 +478,7 @@ export class UIController {
         startTimeout();
 
         img.onload = () => {
+            if (gen !== this._qrGeneration) return;
             if (!isResolved) {
                 isResolved = true;
                 clearTimeout(this.qrTimeoutId);
@@ -480,6 +487,7 @@ export class UIController {
         };
 
         img.onerror = () => {
+            if (gen !== this._qrGeneration) return;
             if (isResolved) return;
             if (vendorIdx < vendors.length - 1) {
                 // 回退到下一个服务，重置超时计时器
