@@ -19,7 +19,7 @@
 ### API Integration
 - **Simyo Sessions API** - User Authentication and Session Management
 - **Simyo eSIM API** - eSIM Configuration Retrieval and Management
-- **QR Code API** - QR Code Generation Service
+- **QR Code API** - QR Code Generation Service with 3-tier fallback: `qrcode.show` → `quickchart.io` → `api.qrserver.com`, 5-second timeout per vendor, falls back to LPA string display when all fail
 
 ### Key API Endpoints
 ```javascript
@@ -59,7 +59,7 @@ const appState = {
 - `createHeaders()` - Generate Simyo API request headers
 - `showSection(stepNumber)` - Show specified step
 - `showStatus(element, message, type)` - Show status information
-- `generateQRCode(data)` - Generate eSIM QR code
+- `generateQRCode(data)` - Generate eSIM QR code with 3-tier vendor fallback (`qrcode.show` → `quickchart.io` → `api.qrserver.com`), 5-second timeout per vendor, timer resets on fallback, displays LPA string when all vendors fail
 
 ### API Call Example
 ```javascript

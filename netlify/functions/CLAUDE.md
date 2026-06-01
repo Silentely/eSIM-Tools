@@ -94,6 +94,7 @@ const schema = {
 ## 相关文件清单
 
 - `netlify/functions/_shared/middleware.js` - 统一中间件
+- `netlify/functions/_shared/cors.js` - CORS 来源解析与校验
 - `netlify/functions/_shared/sentry.js` - Sentry 模块
 - `netlify/functions/_shared/rate-limiter.js` - 限流器
 - `netlify/functions/giffgaff-token-exchange.js`

@@ -21,7 +21,44 @@ eSIM-Tools 是一个 Web 应用，用于管理 Giffgaff 和 Simyo 运营商的 e
         Edge Functions (BFF 代理层，注入 ACCESS_KEY)
 ```
 
-## 构建优化将打包体积减少 25% 并提升缓存效率
+### 模块依赖关系
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    前端层 (Browser)                      │
+├─────────────────────────────────────────────────────────┤
+│  index.html → src/giffgaff/ → src/js/modules/          │
+│              src/simyo/    → (通用工具模块)              │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                 Edge Functions (BFF)                    │
+│         netlify/edge-functions/bff-proxy.js             │
+│              (ACCESS_KEY 注入 + 请求转发)                │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              Netlify Functions (Serverless)              │
+├─────────────────────────────────────────────────────────┤
+│  giffgaff-token-exchange.js    giffgaff-graphql.js      │
+│  giffgaff-mfa-challenge.js     giffgaff-sms-activate.js │
+│  giffgaff-mfa-validation.js    auto-activate-esim.js    │
+│  _shared/middleware.js                                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 关键设计决策
+
+1. **无框架设计**: 使用原生 JavaScript 避免框架依赖，保持最小打包体积
+2. **BFF 模式**: Edge Functions 作为 Backend-For-Frontend 代理层，注入 ACCESS_KEY 并转发请求
+3. **中间件统一**: 通过 `withAuth` 中间件统一处理鉴权、CORS、验证
+4. **原生 ES6 模块**: 业务页面不经 Webpack 打包，按需加载
+
+---
+
+## 构建优化
 
 ### 1. 图片处理速度提升 2.4 倍 (`scripts/optimize-images.js`)
 
@@ -63,6 +100,8 @@ eSIM-Tools 是一个 Web 应用，用于管理 Giffgaff 和 Simyo 运营商的 e
 
 提供请求体大小验证、Header 校验、XSS 清理、内存级速率限制、请求计时日志和异步错误边界。
 
+---
+
 ## 性能基准
 
 以下数据基于 Lighthouse 测量（Chrome DevTools，模拟 4G 网络）：
@@ -78,6 +117,8 @@ eSIM-Tools 是一个 Web 应用，用于管理 Giffgaff 和 Simyo 运营商的 e
 - 图片优化: 10 张图片 25 秒 (2.4x 提升)
 - First Contentful Paint: 1.2s (提升 33%)
 - Time to Interactive: 2.1s (提升 34%)
+
+---
 
 ## 实施路线
 

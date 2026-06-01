@@ -16,30 +16,30 @@
   <img src="src/assets/og-image.png" alt="eSIM Tools - Giffgaff & Simyo eSIM 在线管理工具" width="600">
 </p>
 
-专为已有 Giffgaff 和 Simyo 号码的用户设计的现代化 eSIM 管理工具集，支持将物理 SIM 卡转换为 eSIM、设备更换和二维码生成。
+专为已有 Giffgaff 和 Simyo 号码的用户设计的 eSIM 管理工具集，基于原生 ES6 模块架构，支持将物理 SIM 卡转换为 eSIM、设备更换和二维码生成。
 
 [:us: English Version](README_EN.md)
 
 
-## ✨ 功能特性
+## 功能特性
 
-### 🇬🇧 Giffgaff eSIM工具
+### Giffgaff eSIM工具
 - **OAuth 2.0 PKCE认证** - 安全的身份验证流程
 - **智能Cookie登录** - 支持免OAuth快速登录
 - **MFA多因子验证** - 邮件/短信验证码支持
-- **短信验证码激活** - 全自动eSIM转换与激活（✅ 推荐）
+- **短信验证码激活** - 全自动eSIM转换与激活（推荐）
 - **GraphQL API集成** - 完整的API调用链
 - **LPA二维码生成** - 标准eSIM激活码
 - ~~**手动激活引导**~~ - 已于2025年10月8日停用
 
-### 🇳🇱 Simyo eSIM工具
+### Simyo eSIM工具
 - **账户登录验证** - 荷兰手机号格式验证
 - **设备更换支持** - 完整的SIM卡更换流程
 - **短信验证码** - 自动发送和验证处理
 - **即时二维码生成** - 一键生成可扫描激活码
 - **安装确认** - 确保eSIM正确激活
 
-## 🖼️ 界面预览
+## 界面预览
 
 > 下方为主要页面的功能截图预览，便于快速了解工具界面与核心操作路径。
 
@@ -55,9 +55,9 @@
 
 ![Simyo-工具界面](./src/assets/images/simyo-preview.jpg)
 
-## 🌐 在线使用
+## 在线使用
 
-### 🚀 在线服务（推荐）
+### 在线服务（推荐）
 **完整版本**: [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
 - ✅ 支持所有eSIM操作和流程
 - ✅ 性能优化，支持离线使用
@@ -65,13 +65,13 @@
 
 > ⚠️ **适用范围说明**：本工具仅支持已有 Giffgaff 或 Simyo 号码的用户进行 eSIM 设备更换或物理 SIM 转 eSIM，不支持新用户直接申请号码。如需新开卡获取 eSIM，Giffgaff 用户可通过第三方修改版 APK/模块获取 eSIM 二维码后直接扫码激活，Simyo 用户请通过官方 APP 操作。
 
-### 🎁 新用户优惠
+### 新用户优惠
 - **Simyo用户**: 新开卡享受[额外5欧元话费赠送](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
 - **Giffgaff用户**: 新开卡享受[额外5英镑话费赠送](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
 
-## 📋 使用指南
+## 使用指南
 
-### 🇬🇧 Giffgaff eSIM 转换流程（推荐：短信验证码激活）
+### Giffgaff eSIM 转换流程（推荐：短信验证码激活）
 1. **身份验证** - OAuth登录或Cookie快速登录
 2. **邮件/短信验证** - 输入收到的MFA验证码
 3. **获取会员信息** - 自动获取账户信息
@@ -87,19 +87,19 @@
 >
 > 📖 **详细教程**：查看 [Giffgaff使用教程](./docs/User_Guide.md) 获取图文及视频完整操作指南
 
-### 🇳🇱 Simyo eSIM 设备更换流程
+### Simyo eSIM 设备更换流程
 1. **账户登录** - 输入荷兰手机号(06开头)和密码
 2. **选择服务** - 设备更换或直接获取已有 eSIM
 3. **验证码处理** - 短信或客服验证码验证
 4. **获取配置** - 系统生成eSIM配置信息
 5. **扫码安装** - 使用生成的二维码在新设备上安装
 
-### 📚 详细文档
+### 详细文档
 - **[Giffgaff使用教程](./docs/User_Guide.md)** | [English](./docs/User_Guide_EN.md)
 - [Giffgaff详细说明](./docs/reference/README_giffgaff_esim.md) | [English](./docs/reference/README_giffgaff_esim_EN.md)
 - [Simyo详细说明](./docs/reference/README_simyo_esim.md) | [English](./docs/reference/README_simyo_esim_EN.md)
 
-## 🚀 本地部署
+## 本地部署
 
 ### 快速开始
 
@@ -134,7 +134,7 @@
 - **现代浏览器**: Chrome 88+, Firefox 85+, Safari 14+, Edge 88+
 - **开发环境**: Node.js >= 18.0.0, npm >= 8.0.0 (仅本地开发需要)
 
-## 🔧 技术架构
+## 技术架构
 
 ### 前端技术栈
 - **HTML5/CSS3** - 响应式设计，现代化UI
@@ -148,7 +148,7 @@
 - **CORS处理** - 统一跨域请求解决方案
 - **会话管理** - 安全的本地存储和自动过期机制
 
-### 🚀 性能优化
+### 性能优化
 - **资源压缩**: Webpack + TerserPlugin，压缩率65%+
 - **Service Worker**: 离线缓存和网络状态监控
 - **图片优化**: WebP格式支持，自动压缩
@@ -160,15 +160,15 @@
 - **Giffgaff服务窗口**: 英国时间 04:30 – 21:30 (Europe/London)
 - **窗口外操作**: 可能失败或不稳定，UI会显示本地时间与英国时间对比
 
-## 📦 部署方式
+## 部署方式
 
-### 🌟 推荐：在线服务
+### 推荐：在线服务
 使用托管版本 [https://esim.cosr.eu.org](https://esim.cosr.eu.org)
 - 无需部署配置，即开即用
 - 自动更新，稳定可靠
 - 完整功能支持
 
-### 🔧 自建部署：Netlify
+### 自建部署：Netlify
 1. Fork此仓库到您的GitHub账户
 2. 在[Netlify](https://app.netlify.com)中连接GitHub仓库
 3. 构建设置：
@@ -176,7 +176,7 @@
    - Publish directory: `.`
 4. 部署完成，获得您的专属域名
 
-### ⚙️ 本地开发
+### 本地开发
 ```bash
 # 克隆仓库
 git clone https://github.com/Silentely/eSIM-Tools.git
@@ -189,7 +189,7 @@ npm start
 # 访问 http://localhost:3000
 ```
 
-## ❓ 常见问题
+## 常见问题
 
 ### Giffgaff相关
 **Q: 推荐使用哪种激活方式？**
@@ -211,7 +211,7 @@ A: 仅支持荷兰手机号（06开头的10位数字）。
 **Q: 验证码收不到怎么办？**
 A: 可选择客服验证码选项，或检查短信拦截设置。
 
-## ⚠️ 重要说明
+## 重要说明
 
 ### 适用范围
 - **Giffgaff**: 英国已有号码用户，支持物理 SIM 转 eSIM 及设备更换。新用户需先通过官方或第三方方式获取号码和 eSIM 二维码。
@@ -223,7 +223,7 @@ A: 可选择客服验证码选项，或检查短信拦截设置。
 - ✅ 建议在安全网络环境下使用
 - ✅ 开源透明，代码可审计
 
-## 📁 项目结构
+## 项目结构
 
 ```
 eSIM-Tools/
@@ -247,12 +247,12 @@ eSIM-Tools/
 ```
 
 ### 跨域解决方案
-1. **🌟 推荐**: 使用在线服务 [esim.cosr.eu.org](https://esim.cosr.eu.org)
-2. **🔧 Netlify Functions**: 自动API代理
-3. **💻 本地代理**: Node.js开发服务器
-4. **📖 详细说明**: [CORS解决方案文档](./docs/guides/CORS_SOLUTION.md)
+1. **推荐**: 使用在线服务 [esim.cosr.eu.org](https://esim.cosr.eu.org)
+2. **Netlify Functions**: 自动API代理
+3. **本地代理**: Node.js开发服务器
+4. **详细说明**: [CORS解决方案文档](./docs/guides/CORS_SOLUTION.md)
 
-## 🧪 测试
+## 测试
 
 项目包含完整的测试套件：
 - **单元测试** - 核心函数和模块测试
@@ -268,7 +268,7 @@ open tests/test_giffgaff_esim.html
 open tests/test_simyo_esim.html
 ```
 
-## 🤝 贡献指南
+## 贡献指南
 
 欢迎贡献代码和提出建议！
 
@@ -307,14 +307,14 @@ open tests/test_simyo_esim.html
 - 手动执行推送前全量检查：`npm run prepush:check`
 - 手动执行推送前快速检查：`npm run prepush:check:fast`
 
-## 📞 支持与反馈
+## 支持与反馈
 
 遇到问题或有建议？
 - 📋 [提交Issue](https://github.com/Silentely/eSIM-Tools/issues)
 - 📖 查看[项目文档](./docs/)
 - 💬 参与社区讨论
 
-## 📈 历史 Star 数
+## 历史 Star 数
 
 ![](https://starchart.cc/Silentely/eSIM-Tools.svg)
 
@@ -322,7 +322,7 @@ open tests/test_simyo_esim.html
 
 本项目遵循[贡献者公约](CODE_OF_CONDUCT.md)行为准则。
 
-## 📄 许可证
+## 许可证
 
 - 本项目的所有代码除另有说明外,均按照 [MIT License](LICENSE) 发布。
 - 本项目的README.md，wiki等资源基于 [CC BY-NC-SA 4.0][CC-NC-SA-4.0] 这意味着你可以拷贝、并再发行本项目的内容，<br/>
@@ -330,7 +330,7 @@ open tests/test_simyo_esim.html
   (增加附属条款)，凡是**任何盈利的活动皆属于商业用途**。
 - 请在遵守当地相关法律法规的前提下使用本项目。
 
-## ⚖️ 免责声明
+## 免责声明
 <p align="center">
   <img src="https://github.com/docker/dockercraft/raw/master/docs/img/contribute.png?raw=true" alt="贡献图示">
 </p>

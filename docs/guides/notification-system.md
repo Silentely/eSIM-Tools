@@ -2,6 +2,8 @@
 
 ## 概述
 
+> **快速摘要**: eSIM-Tools 通知系统是一个轻量级 Toast 通知方案，在用户每次访问页面时自动显示最新通知。前端通过 `NotificationManager` 显示 UI，后端通过 `netlify/functions/notifications.js` 提供通知数据。通知使用内存去重（刷新后重新显示），无需 localStorage 持久化。
+
 eSIM-Tools 通知系统是一个轻量级的消息通知解决方案，用于在用户访问页面时自动显示重要更新、修复信息与维护提示。
 
 本指南描述的是当前项目内置的通知系统（`NotificationManager` + `NotificationService` + Netlify Functions）。

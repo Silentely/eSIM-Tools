@@ -2,12 +2,6 @@
 
 > 🌐 [中文版](./User_Guide.md)
 
-> 🎬 Video Tutorial - Giffgaff eSIM Replacement Operation Demo（The video tutorial has not been updated. For information on how to obtain the OAuth callback URL, please refer to the text tutorial.）
-
-Your browser does not support video playback. Please [download the video tutorial](https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720) to watch it locally.
-
-[giffgaff.webm](https://github.com/user-attachments/assets/d4fbd0ff-b8bc-4477-a0c4-45698fe4802c)
-
 ## 1. Open Giffgaff eSIM Replacement Web Page
 
 Visit the eSIM Tools website and select the Giffgaff eSIM tool.
@@ -87,3 +81,22 @@ After successful exchange, you will be redirected to the fifth step showing QR c
 ![eSIM Information 1](image/117.jpg)
 
 ## 6. Use Native eSIM Phone to Complete Scanning
+
+1. Open your phone's **Settings** → **Cellular** / **Mobile Network**
+2. Select **Add eSIM** / **Scan QR Code**
+3. Scan the QR code displayed on the page
+4. Confirm installation and wait for eSIM activation to complete
+5. Once activated, you will see the new number in your cellular network settings
+
+---
+
+## Appendix: Video Tutorial
+
+> ⚠️ The video tutorial has not been updated. For information on how to obtain the OAuth callback URL, please refer to the text tutorial above.
+
+<video controls preload="metadata" width="100%" style="max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+  <source src="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720" type="video/mp4">
+  Your browser does not support video playback. Please <a href="https://github.com/user-attachments/assets/306dacb4-0a06-4930-bf35-3711d0f63720">download the video</a> to watch it locally.
+</video>
+
+[giffgaff.webm](https://github.com/user-attachments/assets/d4fbd0ff-b8bc-4477-a0c4-45698fe4802c)

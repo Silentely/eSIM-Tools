@@ -27,14 +27,14 @@ No 'Access-Control-Allow-Origin' header is present on the requested resource.
 **Windows用户:**
 ```bash
 # 双击运行
-start_simyo_server.bat
+scripts/start_simyo_server.bat
 ```
 
 **macOS/Linux用户:**
 ```bash
 # 添加执行权限并运行
-chmod +x start_simyo_server.sh
-./start_simyo_server.sh
+chmod +x scripts/start_simyo_server.sh
+./scripts/start_simyo_server.sh
 ```
 
 **手动启动:**
@@ -122,8 +122,8 @@ npm --version
 选择适合您系统的启动方式：
 
 **自动启动 (推荐):**
-- Windows: 双击 `start_simyo_server.bat`
-- macOS/Linux: 运行 `./start_simyo_server.sh`
+- Windows: 双击 `scripts/start_simyo_server.bat`
+- macOS/Linux: 运行 `./scripts/start_simyo_server.sh`
 
 **手动启动:**
 ```bash

@@ -46,7 +46,7 @@ app.use(cors({
 
 ### 3. 内容安全策略 (CSP)
 
-所有 HTML 文件都配置了严格的 CSP 策略。以下为本地开发服务器 (`server.js`) 中的 Helmet CSP 配置，生产环境通过 HTML `<meta>` 标签实现，具体值可能略有差异：
+所有 HTML 文件都配置了严格的 CSP 策略。以下为本地开发服务器 (`server.js`) 中的 Helmet CSP 配置，生产环境通过 HTML `<meta>` 标签实现，具体值可能略有差异，请以 `server.js` 中的配置为参考基准：
 
 ```javascript
 app.use(helmet({
@@ -62,8 +62,6 @@ app.use(helmet({
   }
 }));
 ```
-
-> 生产环境的 HTML `<meta>` 标签中也配置了 CSP，具体值可能略有差异，请以 `server.js` 中的 Helmet 配置为参考基准。
 
 ### 4. 数据安全
 

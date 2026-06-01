@@ -24,7 +24,7 @@
 - **OAuth 2.0 PKCE** - 安全认证流程
 - **Giffgaff ID API** - 用户认证和 MFA
 - **Giffgaff GraphQL API** - 业务逻辑处理
-- **QR Code API** - 二维码生成服务（优先 `https://qrcode.show/`，备选 `quickchart.io` 与 `chart.googleapis.com`）
+- **QR Code API** - 二维码生成服务，三级回退链：`qrcode.show` → `quickchart.io` → `api.qrserver.com`，单服务 5 秒超时，全部失败时显示 LPA 字符串供用户手动复制
 
 ### 关键 API 端点
 ```javascript
@@ -58,7 +58,7 @@ const appState = {
 - `generateCodeChallenge()` - 生成 PKCE 代码挑战
 - `showSection(stepNumber)` - 显示指定步骤
 - `showStatus(element, message, type)` - 显示状态信息
-- `generateQRCode(data)` - 生成二维码
+- `generateQRCode(data)` - 生成二维码，内部维护三级服务商回退链（`qrcode.show` → `quickchart.io` → `api.qrserver.com`），每个服务商 5 秒超时，回退时重置计时器，全部失败时展示 LPA 字符串供用户手动复制
 
 ### GraphQL 查询示例
 ```graphql

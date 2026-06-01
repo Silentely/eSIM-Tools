@@ -24,7 +24,7 @@
 - **OAuth 2.0 PKCE** - Secure Authentication Process
 - **Giffgaff ID API** - User Authentication and MFA
 - **Giffgaff GraphQL API** - Business Logic Processing
-- **QR Code API** - QR Code Generation Service (Prefer `https://qrcode.show/`, alternatives: `quickchart.io` and `chart.googleapis.com`)
+- **QR Code API** - QR Code Generation Service with 3-tier fallback: `qrcode.show` → `quickchart.io` → `api.qrserver.com`, 5-second timeout per vendor, falls back to LPA string display when all fail
 
 ### Key API Endpoints
 ```javascript
@@ -47,7 +47,7 @@ const appState = {
     emailCodeRef: "",     // Email verification reference
     emailSignature: "",   // MFA signature
     memberId: "",         // Member ID
-    esimSSN: "",         // eSIM serial number
+    esimSSN: "",          // eSIM serial number
     lpaString: "",        // LPA download string
     currentStep: 1        // Current step
 };
@@ -58,7 +58,7 @@ const appState = {
 - `generateCodeChallenge()` - Generate PKCE code challenge
 - `showSection(stepNumber)` - Show specified step
 - `showStatus(element, message, type)` - Show status information
-- `generateQRCode(data)` - Generate QR code
+- `generateQRCode(data)` - Generate QR code with 3-tier vendor fallback (`qrcode.show` → `quickchart.io` → `api.qrserver.com`), 5-second timeout per vendor, timer resets on fallback, displays LPA string when all vendors fail
 
 ### GraphQL Query Example
 ```graphql

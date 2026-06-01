@@ -2,8 +2,6 @@
 
 > 🌐 [English Version](./User_Guide_EN.md)
 
-> 🎬 视频教程见文末（视频教程未更新，OAuth 获取回调 URL 方式请以文字教程为准）
-
 ## 1. 打开giffgaff的eSIM更换网页
 
 访问eSIM Tools网站，选择Giffgaff eSIM工具。
