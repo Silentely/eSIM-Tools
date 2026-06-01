@@ -367,7 +367,7 @@ export class UIController {
                 vendorIdx += 1;
                 setSrc();
             } else {
-                this.elements.qrcode.innerHTML = `<div class="alert alert-warning">${tl('二维码生成失败，请复制下方 LPA 字符串手动安装。')}</div>`;
+                this.elements.qrcode.innerHTML = `<div class="alert alert-warning">${t('simyo.app.qr.failed')}</div>`;
             }
         };
 

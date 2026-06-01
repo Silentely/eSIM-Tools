@@ -464,11 +464,10 @@ export class UIController {
                     isResolved = true;
                     this.qrTimeoutId = null;
                     console.warn('[Giffgaff] QR code generation timed out');
-                    // safe: tl() 返回 i18n 字典中的静态字符串，非用户输入
                     this.elements.qrcode.innerHTML = `
                         <div class="alert alert-warning">
                             <i class="fas fa-clock me-2"></i>
-                            ${tl('二维码生成服务超时，请复制下方 LPA 字符串使用')}
+                            ${t('giffgaff.app.qr.timeout')}
                         </div>
                     `;
                 }
@@ -502,7 +501,7 @@ export class UIController {
                 this.elements.qrcode.innerHTML = `
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        ${tl('二维码生成失败，请复制下方 LPA 字符串使用')}
+                        ${t('giffgaff.app.qr.failed')}
                     </div>
                 `;
             }

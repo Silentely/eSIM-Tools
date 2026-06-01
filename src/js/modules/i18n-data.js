@@ -479,8 +479,8 @@ export const TRANSLATIONS = {
     'giffgaff.app.error.authExpired': '认证已过期，请重新登录后再试',
     'giffgaff.app.error.ssnNotFound': 'eSIM 序列号已失效，请返回重新激活',
     'giffgaff.app.prompt.relogin': '认证已过期，是否重新登录？',
-    '二维码生成服务超时，请复制下方 LPA 字符串使用': '二维码生成服务超时，请复制下方 LPA 字符串使用',
-    '二维码生成失败，请复制下方 LPA 字符串使用': '二维码生成失败，请复制下方 LPA 字符串使用',
+    'giffgaff.app.qr.timeout': '二维码生成服务超时，请复制下方 LPA 字符串使用',
+    'giffgaff.app.qr.failed': '二维码生成失败，请复制下方 LPA 字符串使用',
 
     'simyo.meta.title': 'Simyo eSIM 工具',
     'simyo.meta.description': 'Simyo eSIM 工具，支持设备更换、邮箱验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。',
@@ -517,6 +517,7 @@ export const TRANSLATIONS = {
     'simyo.app.status.generateProcessing': '正在生成eSIM二维码...',
     'simyo.app.status.generateSuccess': 'eSIM二维码生成成功！',
     'simyo.app.error.generateFailed': '二维码生成失败：{message}',
+    'simyo.app.qr.failed': '二维码生成失败，请复制下方 LPA 字符串手动安装。',
     'simyo.app.status.confirmProcessing': '正在确认eSIM安装状态...',
     'simyo.app.status.confirmSuccess': '安装确认完成，请检查设备eSIM状态',
     'simyo.app.error.confirmFailed': '确认安装失败：{message}',
@@ -754,8 +755,8 @@ export const TRANSLATIONS = {
     'giffgaff.app.error.authExpired': 'Authentication expired. Please log in again.',
     'giffgaff.app.error.ssnNotFound': 'eSIM serial number has expired. Please go back and re-activate.',
     'giffgaff.app.prompt.relogin': 'Authentication expired. Do you want to log in again?',
-    '二维码生成服务超时，请复制下方 LPA 字符串使用': 'QR code generation service timed out. Please copy the LPA string below to use.',
-    '二维码生成失败，请复制下方 LPA 字符串使用': 'QR code generation failed. Please copy the LPA string below to use.',
+    'giffgaff.app.qr.timeout': 'QR code generation service timed out. Please copy the LPA string below to use.',
+    'giffgaff.app.qr.failed': 'QR code generation failed. Please copy the LPA string below to use.',
 
     'simyo.meta.title': 'Simyo eSIM Tool',
     'simyo.meta.description': 'Simyo eSIM toolkit with device change, email verification, QR generation, and installation confirmation for Dutch Simyo users.',
@@ -792,6 +793,7 @@ export const TRANSLATIONS = {
     'simyo.app.status.generateProcessing': 'Generating the eSIM QR code...',
     'simyo.app.status.generateSuccess': 'eSIM QR code generated!',
     'simyo.app.error.generateFailed': 'Failed to generate the QR code: {message}',
+    'simyo.app.qr.failed': 'QR generation failed. Copy the LPA string below to install manually.',
     'simyo.app.status.confirmProcessing': 'Confirming eSIM installation...',
     'simyo.app.status.confirmSuccess': 'Installation confirmation received—check your device state.',
     'simyo.app.error.confirmFailed': 'Installation confirmation failed: {message}',
@@ -871,7 +873,6 @@ export const LITERAL_TRANSLATIONS = {
   'eSIM信息': 'eSIM info',
   '您的eSIM信息（状态：{status}）': 'Your eSIM details (status: {status})',
   'eSIM二维码': 'eSIM QR code',
-  '二维码生成失败，请复制下方 LPA 字符串手动安装。': 'QR generation failed. Copy the LPA string below to install manually.',
   'LPA字符串': 'LPA string',
   '复制 LPA 字符串': 'Copy LPA string',
   'LPA激活码': 'LPA activation code',
@@ -965,7 +966,4 @@ export const LITERAL_TRANSLATIONS = {
   '拉取中...': 'Fetching...',
   '拉取我的 eSIM': 'Fetch my eSIM',
   '使用选定的 eSIM': 'Use selected eSIM',
-  // issue #66: 关键步骤警告和错误提示的字面量翻译
-  '二维码生成服务超时，请复制下方 LPA 字符串使用': 'QR code generation service timed out. Please copy the LPA string below to use.',
-  '二维码生成失败，请复制下方 LPA 字符串使用': 'QR code generation failed. Please copy the LPA string below to use.',
 };
