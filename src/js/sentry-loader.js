@@ -395,7 +395,7 @@
           // 第三方脚本噪音
           /turnstile/i,
           // 浏览器扩展注入的 SweetAlert 冲突（t.swal=e() 模式）
-          /swal/i,
+          /t\.swal=e\(\)/i,
         ],
 
         denyUrls: [
@@ -450,7 +450,7 @@
               // 过滤非 Error 类型的 rejection 对象（如 { code, message }）
               // 这类对象通常是 API 错误响应被直接 reject，不属于代码 bug
               if (mechanismType === 'onunhandledrejection' &&
-                  exceptionValue.indexOf('object captured as promise rejection with keys') !== -1) {
+                  (exception.value || '').indexOf('object captured as promise rejection with keys') !== -1) {
                 return null;
               }
             }

@@ -32,6 +32,7 @@ class GiffgaffApp {
         this.minuteTimeoutId = null;
         this._isPageVisible = true; // 页面可见性状态
         this.activeRequests = new Set(); // 追踪活跃的异步请求（issue #66）
+        this._beforeunloadExempt = false; // Token 获取成功后豁免 beforeunload 拦截
         this.setupGlobalErrorHandlers();
         this.setupVisibilityHandler(); // 监听页面可见性变化
     }
@@ -64,10 +65,9 @@ class GiffgaffApp {
             // 错误上报交给 Sentry 自动采集，不在这里手动 captureException
             if (error) {
                 event.preventDefault();
+                // 显示用户友好的错误提示（仅对有效 Error 对象，跳过原始类型 rejection）
+                showToast(tl('操作失败，请重试或刷新页面'));
             }
-
-            // 显示用户友好的错误提示
-            showToast(tl('操作失败，请重试或刷新页面'));
         });
     }
 
@@ -534,6 +534,7 @@ class GiffgaffApp {
                     const confirmed = confirm(t('giffgaff.app.warning.requestInProgress'));
                     if (!confirmed) return;
                     // 用户确认后退，清除活跃请求标记
+                    // safe: handleGetToken 在 await 后会检查 has(requestId) 并提前 return
                     this.activeRequests.clear();
                 }
 
@@ -551,6 +552,9 @@ class GiffgaffApp {
      */
     bindBeforeUnloadGuard() {
         window.addEventListener('beforeunload', (event) => {
+            // Token 获取成功后豁免拦截，用户可自由关闭页面
+            if (this._beforeunloadExempt) return;
+
             const currentStep = stateManager.get('currentStep');
             // 请求进行中或处于 Step 4/5 关键阶段时拦截
             if (this.activeRequests.size > 0 || currentStep === 4 || currentStep === 5) {
@@ -1114,12 +1118,20 @@ class GiffgaffApp {
             uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetching'), "success");
 
             console.log('[Giffgaff] 调用 esimService.getESimDownloadToken()...');
-            const result = await esimService.getESimDownloadToken(esimSSN);
+            await esimService.getESimDownloadToken(esimSSN);
+
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的结果
+            if (!this.activeRequests.has(requestId)) return;
+
             console.log('[Giffgaff] eSIM Token 获取成功');
 
+            this._beforeunloadExempt = true; // Token 已获取，解除 beforeunload 拦截
             uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetchedSuccess'), "success");
             uiController.showESimResult();
         } catch (error) {
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的错误
+            if (!this.activeRequests.has(requestId)) return;
+
             console.error('[Giffgaff] eSIM Token 获取失败:', error.message, error);
 
             // 根据错误类型进行差异化处理
@@ -1136,7 +1148,8 @@ class GiffgaffApp {
                 setTimeout(() => uiController.showSection(4), 2000);
             } else {
                 // 其他错误：展示 esim-service 已转换的友好提示
-                uiController.showStatus(elements.tokenStatus, error.message || t('giffgaff.app.error.tokenFailed', { message: error.message }), "error");
+                const errorMsg = error.message || t('giffgaff.app.error.tokenFailed', { message: '' });
+                uiController.showStatus(elements.tokenStatus, errorMsg, "error");
             }
         } finally {
             this.activeRequests.delete(requestId);
@@ -1153,6 +1166,7 @@ class GiffgaffApp {
         if (confirm(tl('确定要清除所有会话数据吗？这将重置所有进度。'))) {
             cookieHandler.stopValidityMonitor();
             stateManager.clearSession();
+            this._beforeunloadExempt = false; // 重置 beforeunload 豁免
             console.log('[Giffgaff] 会话已清除');
             uiController.resetUI();
             uiController.showStatus(uiController.elements.loginMethodStatus, tl('会话已清除，请重新开始'), "success");
@@ -1241,9 +1255,8 @@ class GiffgaffApp {
                 targetStep = 3;
             }
 
-            // 使用降级后的 targetStep，避免 Math.max 导致降级失效
-            const restoredStep = Math.min(targetStep, state.currentStep || targetStep);
-            uiController.showSection(restoredStep);
+            // 使用降级后的 targetStep 作为事实来源，上方一致性校验已确保其有效
+            uiController.showSection(targetStep);
 
             // 恢复eSIM信息显示
             if (state.esimActivationCode || state.esimSSN) {

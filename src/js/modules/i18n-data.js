@@ -966,7 +966,6 @@ export const LITERAL_TRANSLATIONS = {
   '拉取我的 eSIM': 'Fetch my eSIM',
   '使用选定的 eSIM': 'Use selected eSIM',
   // issue #66: 关键步骤警告和错误提示的字面量翻译
-  '⚠️ 请勿在此步骤刷新页面或后退，否则可能导致激活失败': '⚠️ Do not refresh or go back on this step, or activation may fail',
   '二维码生成服务超时，请复制下方 LPA 字符串使用': 'QR code generation service timed out. Please copy the LPA string below to use.',
   '二维码生成失败，请复制下方 LPA 字符串使用': 'QR code generation failed. Please copy the LPA string below to use.',
 };

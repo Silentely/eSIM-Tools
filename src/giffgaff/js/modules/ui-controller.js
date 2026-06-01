@@ -157,7 +157,7 @@ export class UIController {
 
             const warningEl = document.createElement('div');
             warningEl.className = 'alert alert-warning mt-2 mb-3 critical-step-warning';
-            warningEl.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${tl('⚠️ 请勿在此步骤刷新页面或后退，否则可能导致激活失败')}`;
+            warningEl.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${tl('giffgaff.app.warning.criticalStep')}`;
             warningEl.style.cssText = 'font-weight: 500; border-left: 4px solid #f59e0b;';
 
             // 插入到 section 内容的最前面
@@ -451,19 +451,25 @@ export class UIController {
         img.style.maxWidth = `${size}px`;
 
         // 超时处理：二维码长时间加载失败时，显示 LPA 字符串提示
-        this.qrTimeoutId = setTimeout(() => {
-            if (!isResolved) {
-                isResolved = true;
-                this.qrTimeoutId = null;
-                console.warn('[Giffgaff] QR code generation timed out after', QR_TIMEOUT_MS, 'ms');
-                this.elements.qrcode.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-clock me-2"></i>
-                        ${tl('二维码生成服务超时，请复制下方 LPA 字符串使用')}
-                    </div>
-                `;
-            }
-        }, QR_TIMEOUT_MS);
+        const startTimeout = () => {
+            clearTimeout(this.qrTimeoutId);
+            this.qrTimeoutId = setTimeout(() => {
+                if (!isResolved) {
+                    isResolved = true;
+                    this.qrTimeoutId = null;
+                    console.warn('[Giffgaff] QR code generation timed out');
+                    // safe: tl() 返回 i18n 字典中的静态字符串，非用户输入
+                    this.elements.qrcode.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock me-2"></i>
+                            ${tl('二维码生成服务超时，请复制下方 LPA 字符串使用')}
+                        </div>
+                    `;
+                }
+            }, QR_TIMEOUT_MS);
+        };
+
+        startTimeout();
 
         img.onload = () => {
             if (!isResolved) {
@@ -479,20 +485,7 @@ export class UIController {
                 // 回退到下一个服务，重置超时计时器
                 vendorIdx += 1;
                 console.log('[Giffgaff] QR vendor fallback to:', vendorIdx + 1, '/', vendors.length);
-                clearTimeout(this.qrTimeoutId);
-                this.qrTimeoutId = setTimeout(() => {
-                    if (!isResolved) {
-                        isResolved = true;
-                        this.qrTimeoutId = null;
-                        console.warn('[Giffgaff] QR code generation timed out after fallback');
-                        this.elements.qrcode.innerHTML = `
-                            <div class="alert alert-warning">
-                                <i class="fas fa-clock me-2"></i>
-                                ${tl('二维码生成服务超时，请复制下方 LPA 字符串使用')}
-                            </div>
-                        `;
-                    }
-                }, QR_TIMEOUT_MS);
+                startTimeout();
                 setSrc();
             } else {
                 isResolved = true;

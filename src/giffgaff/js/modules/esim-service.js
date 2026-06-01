@@ -464,6 +464,14 @@ export class ESimService {
     _tryParseError(text) {
         try {
             const parsed = JSON.parse(text);
+            // 兼容 GraphQL 错误格式 { errors: [{ message: '...' }] }
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.errors) && parsed.errors.length > 0) {
+                const firstError = parsed.errors[0] || {};
+                const message = firstError?.message || (typeof firstError === 'string' ? firstError : null);
+                if (message) {
+                    return { ...parsed, message };
+                }
+            }
             return parsed.error || parsed.message ? parsed : null;
         } catch {
             return null;
@@ -477,7 +485,7 @@ export class ESimService {
      * @returns {string} 友好的错误提示
      */
     _friendlyGraphqlError(status, parsed) {
-        const msg = parsed?.message || '';
+        const msg = parsed?.message || parsed?.error || '';
 
         // 401: token 过期
         if (status === 401) {
