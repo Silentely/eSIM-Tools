@@ -21,6 +21,8 @@ import Logger from '../../js/modules/logger.js';
 class SimyoApp {
     constructor() {
         this.initialized = false;
+        this.activeRequests = new Set(); // 追踪活跃的异步请求
+        this._beforeunloadExempt = false; // 关键操作完成后豁免 beforeunload 拦截
     }
 
     /**
@@ -107,6 +109,9 @@ class SimyoApp {
 
         // 返回按钮
         this.bindBackButtons();
+
+        // 请求进行中或关键步骤时拦截刷新/后退
+        this.bindBeforeUnloadGuard();
     }
 
     /**
@@ -141,7 +146,7 @@ class SimyoApp {
     }
 
     /**
-     * 绑定步骤导航
+     * 绑定步骤导航（含请求进行中守卫）
      */
     bindStepNavigation() {
         document.addEventListener('click', (e) => {
@@ -149,10 +154,39 @@ class SimyoApp {
             if (stepEl && stepEl.dataset && stepEl.dataset.step) {
                 const target = parseInt(stepEl.dataset.step, 10);
                 const currentStep = stateManager.get('currentStep');
+
+                // 请求进行中时拦截导航
+                if (this.activeRequests.size > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const confirmed = confirm(t('simyo.app.warning.requestInProgress'));
+                    if (!confirmed) return;
+                    // 用户确认后退，清除活跃请求标记
+                    this.activeRequests.clear();
+                }
+
                 if (!isNaN(target) && target <= currentStep) {
                     e.preventDefault();
                     uiController.showSection(target);
                 }
+            }
+        });
+    }
+
+    /**
+     * 绑定 beforeunload 守卫（拦截页面刷新/关闭）
+     * 浏览器会显示默认的"离开此页面？"提示
+     */
+    bindBeforeUnloadGuard() {
+        window.addEventListener('beforeunload', (event) => {
+            // 关键操作完成后豁免拦截
+            if (this._beforeunloadExempt) return;
+
+            const currentStep = stateManager.get('currentStep');
+            // 请求进行中或处于 Step 3/4 关键阶段时拦截
+            if (this.activeRequests.size > 0 || currentStep === 3 || currentStep === 4) {
+                event.preventDefault();
+                event.returnValue = ''; // Chrome 需要设置 returnValue
             }
         });
     }
@@ -361,7 +395,10 @@ class SimyoApp {
         const { elements } = uiController;
         console.log('[Simyo] === 生成二维码 ===');
 
+        const requestId = 'generateQR_' + Date.now();
+
         try {
+            this.activeRequests.add(requestId);
             elements.generateQrBtn.innerHTML = `<span class="loading"></span> ${tl('生成中...')}`;
             elements.generateQrBtn.disabled = true;
 
@@ -370,6 +407,10 @@ class SimyoApp {
 
             console.log('[Simyo] 步骤1: 获取 eSIM 信息...');
             const esimResult = await esimService.getEsim();
+
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的结果
+            if (!this.activeRequests.has(requestId)) return;
+
             console.log('[Simyo] eSIM 信息获取成功');
 
             uiController.showStatus(elements.qrStatus, esimResult.message || t('simyo.app.status.getEsimSuccess'), "success");
@@ -396,13 +437,15 @@ class SimyoApp {
                 nextBtn.style.display = 'block';
             }
 
-            // 移除自动跳转，让用户手动点击"下一步"按钮
-            // await delay(2000);
-            // uiController.showSection(4);
+            this._beforeunloadExempt = true; // 二维码已生成，解除 beforeunload 拦截
         } catch (error) {
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的错误
+            if (!this.activeRequests.has(requestId)) return;
+
             console.error('[Simyo] 二维码生成失败:', error.message, error);
             uiController.showStatus(elements.qrStatus, t('simyo.app.error.generateFailed', { message: error.message }), "error");
         } finally {
+            this.activeRequests.delete(requestId);
             elements.generateQrBtn.innerHTML = `<i class="fas fa-qrcode me-2"></i> ${tl('生成二维码')}`;
             elements.generateQrBtn.disabled = false;
         }
@@ -443,7 +486,10 @@ class SimyoApp {
         const { elements } = uiController;
         console.log('[Simyo] === 确认安装 ===');
 
+        const requestId = 'confirmInstall_' + Date.now();
+
         try {
+            this.activeRequests.add(requestId);
             elements.confirmInstallBtn.innerHTML = `<span class="loading"></span> ${tl('确认中...')}`;
             elements.confirmInstallBtn.disabled = true;
 
@@ -451,13 +497,21 @@ class SimyoApp {
 
             console.log('[Simyo] 调用 esimService.confirmInstall()...');
             const result = await esimService.confirmInstall();
+
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的结果
+            if (!this.activeRequests.has(requestId)) return;
+
             console.log('[Simyo] 安装确认成功:', result.message);
 
             uiController.showStatus(elements.confirmStatus, result.message || t('simyo.app.status.confirmSuccess'), "success");
         } catch (error) {
+            // 用户已通过导航守卫离开当前步骤，忽略过期请求的错误
+            if (!this.activeRequests.has(requestId)) return;
+
             console.error('[Simyo] 安装确认失败:', error.message, error);
             uiController.showStatus(elements.confirmStatus, t('simyo.app.error.confirmFailed', { message: error.message }), "error");
         } finally {
+            this.activeRequests.delete(requestId);
             elements.confirmInstallBtn.innerHTML = `<i class="fas fa-check me-2"></i> ${tl('确认安装')}`;
             elements.confirmInstallBtn.disabled = false;
         }
@@ -470,6 +524,8 @@ class SimyoApp {
         console.log('[Simyo] === 清除会话 ===');
         if (confirm(t('simyo.app.prompt.clearSession'))) {
             stateManager.clearSession();
+            this._beforeunloadExempt = false; // 重置 beforeunload 豁免
+            this.activeRequests.clear(); // 清除所有活跃请求
             console.log('[Simyo] 会话已清除');
             uiController.resetUI();
             uiController.showStatus(uiController.elements.loginStatus, t('simyo.app.toast.sessionCleared'), "success");
