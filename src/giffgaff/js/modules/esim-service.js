@@ -249,7 +249,6 @@ export class ESimService {
             }
 
             const lpaString = data.data.eSimDownloadToken.lpaString;
-            stateManager.set('lpaString', lpaString);
 
             return {
                 success: true,
@@ -343,7 +342,8 @@ export class ESimService {
             );
 
             // 4. 获取LPA（轮询）
-            await this.waitAndGetLPA(swapResult.data.new.ssn);
+            const lpaResult = await this.waitAndGetLPA(swapResult.data.new.ssn);
+            stateManager.set('lpaString', lpaResult.lpaString);
 
             return {
                 success: true,

@@ -1122,10 +1122,13 @@ class GiffgaffApp {
             uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetching'), "success");
 
             console.log('[Giffgaff] 调用 esimService.getESimDownloadToken()...');
-            await esimService.getESimDownloadToken(esimSSN);
+            const tokenResult = await esimService.getESimDownloadToken(esimSSN);
 
             // 用户已通过导航守卫离开当前步骤，忽略过期请求的结果
             if (!this.activeRequests.has(requestId)) return;
+
+            // 确认请求仍有效后才写入状态，避免 stale 请求污染 session
+            stateManager.set('lpaString', tokenResult.lpaString);
 
             console.log('[Giffgaff] eSIM Token 获取成功');
 
