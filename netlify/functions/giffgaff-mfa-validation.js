@@ -89,6 +89,8 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   } catch (err) {
     const status = err.response?.status;
     const data = err.response?.data || {};
+
+    // 401: token 过期，尝试用 cookie 刷新
     const isExpired = status === 401 && (data.error === 'invalid_token' || /expired/i.test(String(data.error_description || '')));
 
     if (isExpired && cookie) {
@@ -107,6 +109,18 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       } catch (reErr) {
         throw new AuthError('Access token expired. Please re-login with cookie.', 401);
       }
+    } else if (status === 400) {
+      // 400 分类：区分 ref 过期 vs 验证码错误，便于前端重试策略
+      // 读取多个可能的错误字段，避免遗漏上游错误信息
+      const rawError = String(
+        data.error || data.message || data.error_description || JSON.stringify(data) || err.message
+      );
+      const isRefExpired = /expired|invalid.*ref|ref.*invalid|not.?found/i.test(rawError);
+      const statusCode = isRefExpired ? 410 : 400;
+      const message = isRefExpired
+        ? 'Verification reference expired or invalid. Please request a new code.'
+        : `Validation failed: ${rawError}`;
+      throw new AuthError(message, statusCode);
     } else {
       throw err;
     }

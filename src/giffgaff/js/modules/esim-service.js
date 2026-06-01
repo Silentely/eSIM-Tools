@@ -5,6 +5,7 @@
 
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints, graphqlQueries } from './api-config.js';
+import { mfaHandler } from './mfa-handler.js';
 import { t } from '../../../js/modules/i18n.js';
 
 export class ESimService {
@@ -320,12 +321,29 @@ export class ESimService {
     }
 
     /**
-     * 完整的短信激活流程
+     * 完整的短信激活流程（含 ref 失效自动恢复）
+     * 当 SMS 验证码校验返回 410（ref 过期）时，自动重新发送验证码，
+     * 并抛出可恢复错误让 UI 引导用户输入新验证码
      */
     async smsActivateFlow(smsCode) {
         try {
             // 1. 验证短信验证码
-            const mfaResult = await this.validateMFACodeForSwap(smsCode);
+            let mfaResult;
+            try {
+                mfaResult = await this.validateMFACodeForSwap(smsCode);
+            } catch (err) {
+                if (err.statusCode === 410) {
+                    // ref 过期：发送新 challenge，要求用户输入新验证码
+                    console.warn(t('giffgaff.esim.log.refExpiredRetrying'));
+                    await mfaHandler.sendSimSwapMFAChallenge();
+                    const refreshErr = new Error(t('giffgaff.esim.errors.refExpired'));
+                    refreshErr.code = 'REF_REFRESHED_NEEDS_NEW_CODE';
+                    throw refreshErr;
+                }
+                // 400（验证码错误）或其他错误直接抛出
+                throw err;
+            }
+
             const swapMfaRef = (mfaResult.ref || stateManager.get('emailCodeRef') || '').trim();
             if (!swapMfaRef) {
                 throw new Error(t('giffgaff.mfa.errors.missingRef'));
@@ -537,10 +555,13 @@ export class ESimService {
 
         if (!response.ok) {
             const errText = await response.text();
-            throw new Error(t('giffgaff.esim.errors.validationFailed', {
+            // 携带 statusCode 供上层 retry 逻辑判断错误类型
+            const err = new Error(t('giffgaff.esim.errors.validationFailed', {
                 status: response.status,
                 message: errText
             }));
+            err.statusCode = response.status;
+            throw err;
         }
 
         const data = await response.json();

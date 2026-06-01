@@ -1037,7 +1037,22 @@ class GiffgaffApp {
             uiController.showESimResult();
         } catch (error) {
             console.error('[Giffgaff] SMS 激活流程失败:', error.message, error);
-            uiController.showStatus(statusEl, t('giffgaff.app.error.smsActivateFailed', { message: error.message }), 'error');
+
+            // REF_REFRESHED_NEEDS_NEW_CODE: ref 过期，已自动重发新验证码
+            if (error.code === 'REF_REFRESHED_NEEDS_NEW_CODE') {
+                uiController.showStatus(statusEl, error.message, 'error');
+                // 清空输入框并聚焦，引导用户输入新验证码
+                if (codeInput) {
+                    codeInput.value = '';
+                    codeInput.focus();
+                }
+            } else {
+                uiController.showStatus(
+                    statusEl,
+                    t('giffgaff.app.error.smsActivateFailed', { message: error.message }),
+                    'error'
+                );
+            }
         } finally {
             verifyBtn.innerHTML = `<i class="fas fa-check me-2"></i> ${tl('验证并继续激活')}`;
             verifyBtn.disabled = false;
