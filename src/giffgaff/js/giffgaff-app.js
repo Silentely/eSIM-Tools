@@ -1104,7 +1104,8 @@ class GiffgaffApp {
             uiController.showESimResult();
         } catch (error) {
             console.error('[Giffgaff] eSIM Token 获取失败:', error.message, error);
-            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.tokenFailed', { message: error.message }), "error");
+            // esim-service 已将上游错误转换为友好提示，直接展示
+            uiController.showStatus(elements.tokenStatus, error.message || t('giffgaff.app.error.tokenFailed', { message: error.message }), "error");
         } finally {
             elements.getESimTokenBtn.innerHTML = `<i class="fas fa-download me-2"></i> ${tl('获取eSIM Token')}`;
             elements.getESimTokenBtn.disabled = false;
