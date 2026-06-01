@@ -189,6 +189,10 @@ class GiffgaffApp {
                 hasCookie: !!state.cookie,
                 currentStep: state.currentStep
             }));
+            // 离开 Step 5 时重置 beforeunload 豁免，确保后续关键步骤仍受保护
+            if (this._beforeunloadExempt && state.currentStep !== 5) {
+                this._beforeunloadExempt = false;
+            }
             uiController.updateStatusPanel();
         });
 
