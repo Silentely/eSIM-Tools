@@ -37,55 +37,33 @@ class GiffgaffApp {
 
     /**
      * 设置全局错误处理器
+     *
+     * 职责边界：
+     * - 本 handler 仅负责浏览器扩展噪音检测和用户通知
+     * - 错误上报由 Sentry SDK 自动采集（onunhandledrejection 集成）
+     * - 非 Error 类型的 rejection（如 { code, message }）由 Sentry beforeSend 过滤
+     * - 禁止在此处手动调用 captureException，否则会与 Sentry 自动采集产生重复上报
      */
     setupGlobalErrorHandlers() {
         // 处理未捕获的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
             console.error('[Giffgaff] Unhandled Promise Rejection:', event.reason);
 
-            // 先将 reason 统一为 Error 对象，用于噪音检测
+            // 将 reason 统一为 Error 对象，用于噪音检测
             const error = this.normalizeUnhandledRejectionReason(event.reason);
 
-            // 浏览器噪音检查：无论 Error/字符串/对象，只要命中忽略列表就静默吞掉
+            // 浏览器扩展噪音检查：命中忽略列表则静默吞掉，不通知用户
             if (error && this.isIgnoredUnhandledRejection(error)) {
                 event.preventDefault();
                 console.debug('[Giffgaff] Ignored browser noise rejection:', error.message);
                 return;
             }
 
-            // 非噪音但仍非自定义错误（带 stack 的真实 Error），交给 Sentry 自动采集
-            const shouldHandleAsCustomError =
-                typeof event.reason === 'string' ||
-                (event.reason && typeof event.reason === 'object' && !event.reason.stack);
-            if (!shouldHandleAsCustomError) return;
-
-            if (!error) {
-                // normalize 返回 null（number/boolean/symbol 等原始类型）
-                // 仍需阻止默认行为，避免浏览器控制台报错
+            // 非噪音错误：阻止浏览器默认行为，显示用户友好提示
+            // 错误上报交给 Sentry 自动采集，不在这里手动 captureException
+            if (error) {
                 event.preventDefault();
-                return;
             }
-
-            // 过滤 Sentry 内置 ignoreErrors 已覆盖的噪音模式
-            // 避免自定义 handler 绕过 Sentry 过滤导致噪音上报
-            if (this.isSentryIgnoredError(error)) {
-                event.preventDefault();
-                console.debug('[Giffgaff] Delegated to Sentry ignoreErrors:', error.message);
-                return;
-            }
-
-            // 上报到 Sentry
-            if (window.Sentry) {
-                window.Sentry.captureException(error, {
-                    extra: {
-                        originalReason: event.reason,
-                        reasonType: typeof event.reason
-                    }
-                });
-            }
-
-            // 阻止默认行为（避免控制台报错）
-            event.preventDefault();
 
             // 显示用户友好的错误提示
             showToast(tl('操作失败，请重试或刷新页面'));
@@ -180,19 +158,6 @@ class GiffgaffApp {
         ];
 
         return ignoredKeywords.some((keyword) => payload.includes(keyword));
-    }
-
-    /**
-     * 检查是否匹配 Sentry ignoreErrors 列表中的噪音模式
-     * 避免自定义 handler 绕过 Sentry 内置过滤，将噪音当作真实错误上报
-     */
-    isSentryIgnoredError(error) {
-        const message = (error?.message || '').toLowerCase();
-        return (
-            message.includes('non-error promise rejection') ||
-            message.includes('resizeobserver loop') ||
-            message.includes('aborterror')
-        );
     }
 
     /**
