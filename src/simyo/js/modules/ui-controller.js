@@ -341,7 +341,7 @@ export class UIController {
         const vendors = [
             (s, d) => `https://qrcode.show/qr?size=${s}x${s}&data=${encodeURIComponent(d)}`,
             (s, d) => `https://quickchart.io/qr?size=${s}&text=${encodeURIComponent(d)}`,
-            (s, d) => `https://chart.googleapis.com/chart?cht=qr&chs=${s}x${s}&chl=${encodeURIComponent(d)}`
+            (s, d) => `https://api.qrserver.com/v1/create-qr-code/?size=${s}x${s}&data=${encodeURIComponent(d)}`
         ];
         let vendorIdx = 0;
 

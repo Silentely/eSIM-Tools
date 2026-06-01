@@ -31,6 +31,7 @@ class GiffgaffApp {
         this.minuteIntervalId = null;
         this.minuteTimeoutId = null;
         this._isPageVisible = true; // 页面可见性状态
+        this.activeRequests = new Set(); // 追踪活跃的异步请求（issue #66）
         this.setupGlobalErrorHandlers();
         this.setupVisibilityHandler(); // 监听页面可见性变化
     }
@@ -258,6 +259,9 @@ class GiffgaffApp {
 
         // 步骤点击跳转
         this.bindStepNavigation();
+
+        // 请求进行中或关键步骤时拦截刷新/后退（issue #66）
+        this.bindBeforeUnloadGuard();
 
         // Cookie过期事件
         window.addEventListener('cookieExpired', (e) => this.handleCookieExpired(e));
@@ -514,7 +518,7 @@ class GiffgaffApp {
     }
 
     /**
-     * 绑定步骤导航
+     * 绑定步骤导航（issue #66: 添加导航守卫，防止请求进行中误操作）
      */
     bindStepNavigation() {
         document.addEventListener('click', (e) => {
@@ -522,10 +526,36 @@ class GiffgaffApp {
             if (stepEl && stepEl.dataset && stepEl.dataset.step) {
                 const target = parseInt(stepEl.dataset.step, 10);
                 const currentStep = stateManager.get('currentStep');
+
+                // 请求进行中时拦截导航
+                if (this.activeRequests.size > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const confirmed = confirm(t('giffgaff.app.warning.requestInProgress'));
+                    if (!confirmed) return;
+                    // 用户确认后退，清除活跃请求标记
+                    this.activeRequests.clear();
+                }
+
                 if (!isNaN(target) && target <= currentStep) {
                     e.preventDefault();
                     uiController.showSection(target);
                 }
+            }
+        });
+    }
+
+    /**
+     * 绑定 beforeunload 守卫（issue #66: 拦截页面刷新/关闭）
+     * 浏览器会显示默认的"离开此页面？"提示
+     */
+    bindBeforeUnloadGuard() {
+        window.addEventListener('beforeunload', (event) => {
+            const currentStep = stateManager.get('currentStep');
+            // 请求进行中或处于 Step 4/5 关键阶段时拦截
+            if (this.activeRequests.size > 0 || currentStep === 4 || currentStep === 5) {
+                event.preventDefault();
+                event.returnValue = ''; // Chrome 需要设置 returnValue
             }
         });
     }
@@ -1047,31 +1077,69 @@ class GiffgaffApp {
     }
 
     /**
-     * 处理获取Token
+     * 处理获取Token（issue #66: 增加前置校验 + 分类错误处理）
      */
     async handleGetToken() {
         const { elements } = uiController;
+        const state = stateManager.getState();
         console.log('[Giffgaff] === 获取 eSIM Token ===');
 
+        // === 前置校验：防止状态脱节导致的 422/401 错误 ===
+        // trim 处理：防止空白字符串通过校验
+        const esimSSN = typeof state.esimSSN === 'string' ? state.esimSSN.trim() : '';
+        if (!esimSSN) {
+            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.missingSSN'), "error");
+            console.error('[Giffgaff] Missing or invalid esimSSN. Redirecting to step 4.');
+            setTimeout(() => uiController.showSection(4), 2000);
+            return;
+        }
+
+        if (!state.accessToken || !state.emailSignature) {
+            uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.sessionExpired'), "error");
+            console.error('[Giffgaff] Missing auth tokens. Redirecting to login.');
+            stateManager.clearSession();
+            setTimeout(() => uiController.showSection(1), 2000);
+            return;
+        }
+
+        console.log('[Giffgaff] SSN 长度:', esimSSN.length);
+
+        const requestId = 'getToken_' + Date.now();
+
         try {
+            this.activeRequests.add(requestId);
             elements.getESimTokenBtn.innerHTML = `<span class="loading"></span> ${tl('获取中...')}`;
             elements.getESimTokenBtn.disabled = true;
 
             uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetching'), "success");
 
-            const state = stateManager.getState();
-            console.log('[Giffgaff] SSN 长度:', state.esimSSN?.length || 0);
             console.log('[Giffgaff] 调用 esimService.getESimDownloadToken()...');
-            await esimService.getESimDownloadToken(state.esimSSN);
+            const result = await esimService.getESimDownloadToken(esimSSN);
             console.log('[Giffgaff] eSIM Token 获取成功');
 
             uiController.showStatus(elements.tokenStatus, t('giffgaff.app.status.tokenFetchedSuccess'), "success");
             uiController.showESimResult();
         } catch (error) {
             console.error('[Giffgaff] eSIM Token 获取失败:', error.message, error);
-            // esim-service 已将上游错误转换为友好提示，直接展示
-            uiController.showStatus(elements.tokenStatus, error.message || t('giffgaff.app.error.tokenFailed', { message: error.message }), "error");
+
+            // 根据错误类型进行差异化处理
+            if (error.status === 401 || error.message?.includes('401')) {
+                uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.authExpired'), "error");
+                setTimeout(() => {
+                    if (confirm(t('giffgaff.app.prompt.relogin'))) {
+                        stateManager.clearSession();
+                        uiController.showSection(1);
+                    }
+                }, 500);
+            } else if (error.status === 422 || error.message?.includes('422')) {
+                uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.ssnNotFound'), "error");
+                setTimeout(() => uiController.showSection(4), 2000);
+            } else {
+                // 其他错误：展示 esim-service 已转换的友好提示
+                uiController.showStatus(elements.tokenStatus, error.message || t('giffgaff.app.error.tokenFailed', { message: error.message }), "error");
+            }
         } finally {
+            this.activeRequests.delete(requestId);
             elements.getESimTokenBtn.innerHTML = `<i class="fas fa-download me-2"></i> ${tl('获取eSIM Token')}`;
             elements.getESimTokenBtn.disabled = false;
         }
@@ -1116,7 +1184,7 @@ class GiffgaffApp {
     }
 
     /**
-     * 处理会话恢复
+     * 处理会话恢复（issue #66: 增加状态一致性降级）
      */
     handleSessionRestore() {
         const state = stateManager.getState();
@@ -1163,7 +1231,19 @@ class GiffgaffApp {
                 targetStep = 2;
             }
 
-            uiController.showSection(Math.max(targetStep, state.currentStep));
+            // === 状态一致性降级：防止前后端状态脱节 ===
+            if (targetStep === 5 && !state.esimSSN) {
+                console.warn('[Giffgaff] State inconsistency: step 5 without SSN. Downgrading to step 4.');
+                targetStep = 4;
+            }
+            if (targetStep === 4 && !state.memberId) {
+                console.warn('[Giffgaff] State inconsistency: step 4 without memberId. Downgrading to step 3.');
+                targetStep = 3;
+            }
+
+            // 使用降级后的 targetStep，避免 Math.max 导致降级失效
+            const restoredStep = Math.min(targetStep, state.currentStep || targetStep);
+            uiController.showSection(restoredStep);
 
             // 恢复eSIM信息显示
             if (state.esimActivationCode || state.esimSSN) {

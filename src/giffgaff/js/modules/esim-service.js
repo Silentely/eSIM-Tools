@@ -212,7 +212,7 @@ export class ESimService {
     }
 
     /**
-     * 获取eSIM下载Token
+     * 获取eSIM下载Token（issue #66: 增强错误信息，附加 status code）
      */
     async getESimDownloadToken(ssn) {
         try {
@@ -235,7 +235,9 @@ export class ESimService {
                 const errorText = await response.text();
                 // 区分上游 401（token 过期）和业务 422（SSN 不存在）等错误，给出友好提示
                 const parsed = this._tryParseError(errorText);
-                throw new Error(this._friendlyGraphqlError(response.status, parsed));
+                const error = new Error(this._friendlyGraphqlError(response.status, parsed));
+                error.status = response.status; // 附加 status code 便于上层判断
+                throw error;
             }
 
             const data = await response.json();
