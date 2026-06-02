@@ -9,6 +9,7 @@
 
 | 时间 | 变更内容 |
 |------|----------|
+| 2026-06-02 22:54:25 | 增量扫描更新：为 src/giffgaff 和 src/simyo 新建 CLAUDE.md，修复模块结构图 click 链接，校正脚本数量 |
 | 2026-05-25 | 清理 Legacy 残留措辞：删除 verify-legacy-frozen 工具链、修复 server.js 死路由 simyo-static、统一架构表述为"原生 ES6 模块" |
 | 2026-05-18 | 文档清理与路径重构：移除未使用的新模块化版本，修复文档错链，精简重复文档 |
 | 2026-05-03 22:11:20 | 增量扫描更新：重新扫描全仓，更新模块索引与覆盖率报告 |
@@ -108,8 +109,8 @@ graph TD
     F --> F1["bff-proxy.js"];
     F --> F2["markdown-negotiation.js"];
 
-    click B "./src/giffgaff/MODULE_ARCHITECTURE.md" "查看 Giffgaff 模块架构文档"
-    click C "./src/simyo/MODULE_ARCHITECTURE.md" "查看 Simyo 模块架构文档"
+    click B "./src/giffgaff/CLAUDE.md" "查看 Giffgaff 模块文档"
+    click C "./src/simyo/CLAUDE.md" "查看 Simyo 模块文档"
     click D "./src/js/modules/CLAUDE.md" "查看通用工具模块文档"
     click E "./netlify/functions/CLAUDE.md" "查看 Functions 模块文档"
     click F "./netlify/edge-functions/CLAUDE.md" "查看 Edge Functions 模块文档"
@@ -128,7 +129,7 @@ graph TD
 | **通用工具** | `src/js/modules/` | 可复用前端工具模块 (日志/存储/安全/性能/i18n) | JavaScript |
 | **Netlify Functions** | `netlify/functions/` | Serverless 后端逻辑 (11 个函数) | JavaScript (Node.js) |
 | **Edge Functions** | `netlify/edge-functions/` | BFF 代理层 (密钥注入 + 请求转发 + 内容协商) | JavaScript (Deno) |
-| **构建脚本** | `scripts/` | 构建、质量检查、安全扫描 (23 个脚本) | JavaScript/Shell |
+| **构建脚本** | `scripts/` | 构建、质量检查、安全扫描 (22 个脚本) | JavaScript/Shell |
 | **测试** | `tests/` | 单元测试 (Jest + jsdom) | JavaScript |
 | **文档** | `docs/` | 使用指南、API 参考、修复记录 | Markdown |
 
