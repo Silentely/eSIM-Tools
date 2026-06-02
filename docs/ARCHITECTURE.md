@@ -45,7 +45,10 @@ eSIM-Tools 是一个 Web 应用，用于管理 Giffgaff 和 Simyo 运营商的 e
 │  giffgaff-token-exchange.js    giffgaff-graphql.js      │
 │  giffgaff-mfa-challenge.js     giffgaff-sms-activate.js │
 │  giffgaff-mfa-validation.js    auto-activate-esim.js    │
-│  _shared/middleware.js                                  │
+│  verify-cookie.js              health.js                 │
+│  public-config.js              notifications.js          │
+│  notifications-internal.js                                │
+│  _shared/middleware.js  _shared/internal-headers.js       │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -128,10 +131,10 @@ eSIM-Tools 是一个 Web 应用，用于管理 Giffgaff 和 Simyo 运营商的 e
 - 改进错误处理
 - 添加验证中间件
 
-### 阶段 2: 基础设施 (规划中)
+### 阶段 2: 基础设施 (进行中)
+- ✅ Sentry 监控 (前后端)
+- ✅ 内存级速率限制 (`_shared/rate-limiter.js`)
 - 添加 Redis 缓存
-- 实现速率限制
-- 设置监控 (Sentry, LogRocket)
 - 添加端到端测试
 
 > 更多未来架构规划请参考 [FUTURE_ARCHITECTURE.md](./FUTURE_ARCHITECTURE.md)

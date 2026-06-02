@@ -55,6 +55,7 @@
 | `logger.js` | 构建日志模块 (彩色输出) |
 | `replace-console-log.js` | 替换 console.log |
 | `update-script-logging.js` | 更新脚本日志 |
+| `generate-agent-metadata.js` | 生成 AI Agent 元数据 |
 | `apply-middleware.sh` | 应用中间件 |
 | `start_simyo_server.sh/.bat` | 启动 Simyo 代理服务器 |
 
@@ -72,13 +73,24 @@ npm run compress           # 资源压缩
 ## 相关文件清单
 
 - `scripts/build-static.js`
+- `scripts/transpile-dist-js.js`
+- `scripts/inject-sentry-config.js`
 - `scripts/quality-check.js`
 - `scripts/security-check.js`
 - `scripts/deploy-prepare.js`
+- `scripts/deploy-analyze.js`
 - `scripts/test-deploy-config.js`
+- `scripts/deploy.sh`
 - `scripts/optimize-images.js`
 - `scripts/compress.js`
 - `scripts/logger.js`
+- `scripts/replace-console-log.js`
+- `scripts/update-script-logging.js`
 - `scripts/pre-commit-check.js`
 - `scripts/pre-push-check.js`
 - `scripts/commit-msg-lint.js`
+- `scripts/prepare-commit-msg.js`
+- `scripts/generate-agent-metadata.js`
+- `scripts/apply-middleware.sh`
+- `scripts/start_simyo_server.sh`
+- `scripts/start_simyo_server.bat`

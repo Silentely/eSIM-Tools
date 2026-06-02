@@ -87,8 +87,8 @@ graph TD
     D --> D1["logger.js / api-service.js"];
     D --> D2["notification-manager.js / notification-service.js"];
     D --> D3["html-sanitizer.js / secure-storage.js"];
-    D --> D4["captcha-manager.js / i18n.js"];
-    D --> D5["utils.js / performance-monitor.js"];
+    D --> D4["captcha-manager.js / i18n.js / i18n-data.js"];
+    D --> D5["utils.js / performance-monitor.js / browser-utils.js"];
     D --> D6["config.js / app-config.js / footer.js"];
 
     E --> E1["giffgaff-token-exchange.js"];
@@ -97,7 +97,13 @@ graph TD
     E --> E4["giffgaff-sms-activate.js"];
     E --> E5["giffgaff-mfa-validation.js"];
     E --> E6["auto-activate-esim.js"];
-    E --> E7["_shared/middleware.js"];
+    E --> E7["verify-cookie.js"];
+    E --> E8["health.js"];
+    E --> E9["public-config.js"];
+    E --> E10["notifications.js"];
+    E --> E11["notifications-internal.js"];
+    E --> E12["_shared/middleware.js"];
+    E --> E13["_shared/internal-headers.js"];
 
     F --> F1["bff-proxy.js"];
     F --> F2["markdown-negotiation.js"];
@@ -122,7 +128,7 @@ graph TD
 | **通用工具** | `src/js/modules/` | 可复用前端工具模块 (日志/存储/安全/性能/i18n) | JavaScript |
 | **Netlify Functions** | `netlify/functions/` | Serverless 后端逻辑 (11 个函数) | JavaScript (Node.js) |
 | **Edge Functions** | `netlify/edge-functions/` | BFF 代理层 (密钥注入 + 请求转发 + 内容协商) | JavaScript (Deno) |
-| **构建脚本** | `scripts/` | 构建、质量检查、安全扫描 (22 个脚本) | JavaScript/Shell |
+| **构建脚本** | `scripts/` | 构建、质量检查、安全扫描 (23 个脚本) | JavaScript/Shell |
 | **测试** | `tests/` | 单元测试 (Jest + jsdom) | JavaScript |
 | **文档** | `docs/` | 使用指南、API 参考、修复记录 | Markdown |
 
@@ -187,7 +193,7 @@ npm run test:coverage    # 生成覆盖率报告
 
 - **框架**: Jest 30.3.0 + jsdom 环境
 - **覆盖率阈值**: 60% (branches/functions/lines/statements)
-- **测试文件**: `tests/giffgaff/` 和 `tests/simyo/`
+- **测试文件**: `tests/modules/`、`tests/giffgaff/`、`tests/simyo/` 和 `tests/security/`
 - **Mock**: `tests/__mocks__/` (styleMock, fileMock)
 - **运行**: `npm test` / `npm run test:coverage`
 

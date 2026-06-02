@@ -11,7 +11,7 @@
 | 模块 | 文件 | 职责 |
 |------|------|------|
 | **Logger** | `logger.js` | 环境感知日志 (生产环境自动禁用 console.log) |
-| **CaptchaManager** | `captcha-manager.js` | 验证码集成 (Turnstile/reCAPTCHA)，自动刷新 |
+| **CaptchaManager** | `captcha-manager.js` | 验证码集成 (reCAPTCHA)，自动刷新 |
 | **API Service** | `api-service.js` | 统一 HTTP 客户端 (重试/缓存/去重) |
 | **HTML Sanitizer** | `html-sanitizer.js` | XSS 防护 (escapeHtml/escapeAttr) |
 | **Secure Storage** | `secure-storage.js` | 加密 localStorage (TTL 过期) |
@@ -54,7 +54,7 @@ element.innerHTML = sanitizeHTML(userInput);
 ## 测试与质量
 
 - 所有模块设计为可测试 (ES6 import/export)
-- 无独立测试文件，通过业务模块测试间接覆盖
+- 已有独立测试: `tests/modules/` 覆盖 logger、utils、html-sanitizer、secure-storage、api-service、app-config
 
 ## 相关文件清单
 
@@ -72,4 +72,6 @@ element.innerHTML = sanitizeHTML(userInput);
 - `src/js/modules/sentry-init.js`
 - `src/js/modules/utils.js`
 - `src/js/modules/config.js`
+- `src/js/modules/notification-service.js`
+- `src/js/modules/browser-utils.js`
 - `src/js/middleware/validation.js`

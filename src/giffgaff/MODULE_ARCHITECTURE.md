@@ -438,19 +438,24 @@ API调用 (原始错误)
 ## 🔐 安全考虑
 
 ### 1. 敏感数据处理
-- Access Token仅存储在内存和localStorage
-- Cookie不在代码中硬编码
-- 定期检查Cookie有效性
+- Access Token 仅存储在内存和 localStorage
+- Cookie 不在代码中硬编码
+- 定期检查 Cookie 有效性 (cookie-handler.js 5 分钟间隔)
 
-### 2. XSS防护
+### 2. XSS 防护
 - 使用 `textContent` 而非 `innerHTML`（除非必要）
-- CSP策略限制脚本来源
-- 用户输入验证
+- CSP 策略限制脚本来源 (HTML meta 标签 + server.js Helmet)
+- 通用工具模块 `html-sanitizer.js` 提供 `escapeHtml` / `escapeAttr`
 
-### 3. CSRF防护
-- 使用PKCE流程
-- State参数验证
-- Turnstile人机验证
+### 3. CSRF 防护
+- 使用 PKCE 流程
+- State 参数验证
+- reCAPTCHA 人机验证 (可选，通过 `captcha-manager.js` 集成)
+
+### 4. 传输层防护
+- 所有 API 请求通过 BFF 代理层 (Edge Functions) 转发
+- ACCESS_KEY 仅在服务端注入，前端不接触密钥
+- `withAuth` 中间件统一处理鉴权和 CORS 校验
 
 ## 📈 扩展性设计
 
@@ -511,35 +516,35 @@ import { StateManager } from './state-manager.js';
 
 describe('StateManager', () => {
     let manager;
-    
+
     beforeEach(() => {
         manager = new StateManager();
         localStorage.clear();
     });
-    
+
     test('应该正确保存和恢复会话', () => {
         manager.setState({ accessToken: 'test-token' });
         manager.saveSession();
-        
+
         const newManager = new StateManager();
         const restored = newManager.loadSession();
-        
+
         expect(restored).toBe(true);
         expect(newManager.get('accessToken')).toBe('test-token');
     });
-    
+
     test('应该在超时后清除会话', () => {
         manager.setState({ accessToken: 'test-token' });
         manager.saveSession();
-        
+
         // 模拟超时
         const sessionData = JSON.parse(localStorage.getItem('giffgaff_session'));
         sessionData.timestamp = Date.now() - (3 * 60 * 60 * 1000); // 3小时前
         localStorage.setItem('giffgaff_session', JSON.stringify(sessionData));
-        
+
         const newManager = new StateManager();
         const restored = newManager.loadSession();
-        
+
         expect(restored).toBe(false);
     });
 });
@@ -558,11 +563,11 @@ describe('OAuth Flow', () => {
         const loginResult = await oauthHandler.startOAuthLogin();
         expect(loginResult.success).toBe(true);
         expect(stateManager.get('codeVerifier')).toBeTruthy();
-        
+
         // 2. 模拟回调
         const mockCallback = 'giffgaff://auth/callback/?code=TEST&state=STATE';
         const callbackResult = await oauthHandler.processCallback(mockCallback);
-        
+
         expect(callbackResult.success).toBe(true);
         expect(stateManager.get('accessToken')).toBeTruthy();
     });
@@ -615,6 +620,6 @@ try {
 
 ---
 
-**文档版本：** 1.0.0  
-**最后更新：** 2025-10-31  
+**文档版本：** 1.0.0
+**最后更新：** 2025-10-31
 **维护者：** eSIM Tools Team

@@ -23,6 +23,16 @@
 
 ### 2. 服务器安全
 
+#### BFF 代理层 (Edge Functions)
+- 所有前端 `/bff/*` 请求经过 Edge Functions 代理
+- ACCESS_KEY 在服务端注入 (`x-esim-key` 头)，前端不接触密钥
+- 目标函数白名单校验，仅允许转发到 `/.netlify/functions/*`
+
+#### withAuth 中间件
+- 所有受保护的 Netlify Functions 通过 `withAuth` 包装
+- 统一处理 CORS 来源校验、请求体验证、错误格式化
+- 内部函数互调通过 `x-esim-key` 或 `x-app-key` 头传递密钥
+
 #### Helmet安全头
 ```javascript
 const helmet = require('helmet');
