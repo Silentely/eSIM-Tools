@@ -249,19 +249,42 @@
     var reason = event && event.reason;
     var message = '';
     var stack = '';
+    var allReasonText = '';
 
     if (typeof reason === 'string') {
       message = reason;
+      allReasonText = reason;
     } else if (reason && typeof reason === 'object') {
       message = reason.message || reason.toString();
       stack = reason.stack || '';
+      // 收集 reason 对象的所有属性值，用于检测钱包扩展冲突
+      // 钱包扩展可能 reject {code: 4001, message: "wallet must has at least one account"} 这样的对象
+      var reasonValues = [];
+      try {
+        var keys = Object.keys(reason);
+        for (var i = 0; i < keys.length; i++) {
+          var val = reason[keys[i]];
+          if (val !== null && val !== undefined) {
+            reasonValues.push(String(val));
+          }
+        }
+      } catch (e) {
+        // 忽略遍历错误
+      }
+      allReasonText = reasonValues.join(' ');
     }
 
+    // 检查 message 和 reason 对象的所有属性值是否包含扩展关键词
     var shouldBlock = isExtensionProviderConflict({
       message: message,
       stack: stack,
       mechanismType: 'onunhandledrejection'
     });
+
+    // 额外检查 reason 对象的所有属性值
+    if (!shouldBlock && allReasonText) {
+      shouldBlock = includesExtensionKeyword(allReasonText);
+    }
 
     if (!shouldBlock && event && event.promise) {
       shouldBlock = includesExtensionKeyword(event.promise);
