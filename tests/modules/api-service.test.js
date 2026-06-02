@@ -103,6 +103,31 @@ describe('APIService', () => {
   });
 
   describe('错误处理', () => {
+
+
+    it('应该为每次重试创建新的超时信号', async () => {
+      const timeoutService = new APIService({ baseURL: 'https://api.test.com', timeout: 5000, retries: 2 });
+      const firstSignal = { aborted: true };
+      const secondSignal = { aborted: false };
+      const createTimeoutSpy = jest.spyOn(timeoutService, 'createTimeoutSignal')
+        .mockReturnValueOnce({ signal: firstSignal, clear: jest.fn() })
+        .mockReturnValueOnce({ signal: secondSignal, clear: jest.fn() });
+
+      fetch.mockImplementationOnce(() => Promise.reject(new Error('timeout')));
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ ok: true })
+      });
+
+      const result = await timeoutService.get('/retry-timeout');
+
+      expect(result).toEqual({ ok: true });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(createTimeoutSpy).toHaveBeenCalledTimes(2);
+      expect(fetch.mock.calls[0][1].signal).toBe(firstSignal);
+      expect(fetch.mock.calls[1][1].signal).toBe(secondSignal);
+    });
     it('应该在 HTTP 错误时抛出异常', async () => {
       // mock fetch 返回 error response，但重试会多次调用
       fetch.mockResolvedValue({

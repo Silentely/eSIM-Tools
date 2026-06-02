@@ -5,6 +5,7 @@
 
 const axios = require('axios');
 const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
+const { getInternalHeaders } = require('./_shared/internal-headers');
 
 // 输入验证schema
 const mfaChallengeSchema = {
@@ -70,10 +71,10 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     if (!accessToken) {
       try {
         const cookieVerifyResponse = await axios.post(verifyCookieUrl, { cookie: mergedCookie }, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: getInternalHeaders(),
           timeout: 30000
         });
-        if (cookieVerifyResponse.data?.success && cookieVerifyResponse.data?.accessToken) {
+        if (cookieVerifyResponse.data?.valid && cookieVerifyResponse.data?.accessToken) {
           accessToken = cookieVerifyResponse.data.accessToken;
         }
       } catch (cookieError) {
@@ -174,11 +175,11 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     if (isExpired && mergedCookie) {
       try {
         const cookieVerifyResponse = await axios.post(verifyCookieUrl, { cookie: mergedCookie }, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: getInternalHeaders(),
           timeout: 30000
         });
 
-        if (cookieVerifyResponse.data?.success && cookieVerifyResponse.data?.accessToken) {
+        if (cookieVerifyResponse.data?.valid && cookieVerifyResponse.data?.accessToken) {
           let refreshed = cookieVerifyResponse.data.accessToken;
           const looksLikeJwt = typeof refreshed === 'string' && refreshed.includes('.') && refreshed.length > 200;
 

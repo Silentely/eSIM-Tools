@@ -5,6 +5,7 @@
 
 const axios = require('axios');
 const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
+const { getInternalHeaders } = require('./_shared/internal-headers');
 
 // 输入验证schema
 const graphqlSchema = {
@@ -183,11 +184,11 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
         console.log(`[GGQL] ${ts} | attempting cookie-based token refresh`);
         try {
           const r = await axios.post(verifyCookieUrl, { cookie }, {
-            headers: { 'Content-Type': 'application/json' },
+            headers: getInternalHeaders(),
             timeout: 15000
           });
 
-          if (r.data?.success && r.data?.accessToken) {
+          if (r.data?.valid && r.data?.accessToken) {
             accessToken = r.data.accessToken;
             requestHeaders['Authorization'] = `Bearer ${accessToken}`;
             console.log(`[GGQL] ${ts} | token refreshed, retrying upstream call`);
@@ -199,7 +200,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
             console.log(`[GGQL] ${ts} | retry OK: status=${response.status}`);
             break; // 重试成功，跳出循环
           } else {
-            console.error(`[GGQL] ${ts} | cookie refresh failed: success=${r.data?.success}`);
+            console.error(`[GGQL] ${ts} | cookie refresh failed: valid=${r.data?.valid}`);
             throw err;
           }
         } catch (reErr) {

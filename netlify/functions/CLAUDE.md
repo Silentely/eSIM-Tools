@@ -41,6 +41,11 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
 }, { validateSchema: mySchema, requireAuth: true });
 ```
 
+### 内部调用约束
+- 受保护函数的内部互调必须通过 `x-esim-key` 或 `x-app-key` 头传递内部密钥
+- `authKey` 不再允许通过 body 或 queryStringParameters 传递
+- `verify-cookie` 的失败响应语义为 `success: false, valid: false`，调用方必须以 `valid` 为准
+
 ### 验证 Schema
 ```javascript
 const schema = {
@@ -53,7 +58,7 @@ const schema = {
 - **axios**: HTTP 请求 (Functions 内部调用外部 API)
 - **cheerio**: HTML 解析 (爬虫场景)
 - **@sentry/node**: 错误监控 (生产环境)
-- **环境变量**: `ACCESS_KEY`, `GIFFGAFF_CLIENT_ID`, `GIFFGAFF_CLIENT_SECRET`, `SENTRY_DSN`
+- **环境变量**: `ACCESS_KEY`, `ALLOWED_ORIGIN`, `GIFFGAFF_CLIENT_ID`, `GIFFGAFF_CLIENT_SECRET`, `GIFFGAFF_REDIRECT_URI`, `SIMYO_CLIENT_TOKEN`, `SENTRY_DSN`
 
 ## 数据模型
 
@@ -73,10 +78,14 @@ const schema = {
 ```javascript
 {
   code: string,            // 授权码
-  code_verifier: string,   // PKVE Verifier
-  redirect_uri: string     // 回调 URL
+  code_verifier: string    // PKCE Verifier
 }
 ```
+
+### Token Exchange 行为
+- `redirect_uri` 由服务端环境变量 `GIFFGAFF_REDIRECT_URI` 固定提供
+- 前端不应再把 `redirect_uri` 传给 `/bff/giffgaff-token-exchange`
+- 若 Netlify 环境变量配置了 `GIFFGAFF_REDIRECT_URI`，只影响服务端 token exchange，不会自动改变前端授权跳转 URL
 
 ## 测试与质量
 

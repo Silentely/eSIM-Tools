@@ -38,12 +38,11 @@ export class CookieHandler {
                                 result.accessToken.includes('.') &&
                                 result.accessToken.length > 200;
 
-            if (result.success && result.valid && looksLikeJwt) {
-                // 保存访问令牌和Cookie
+            if (result.valid && looksLikeJwt) {
+                // Cookie 验证通过且拿到可用 JWT → 完全成功
                 stateManager.set('accessToken', result.accessToken);
                 stateManager.saveCookie(cookie);
 
-                // 启动有效性监控
                 this.startValidityMonitor();
 
                 return {
@@ -52,12 +51,14 @@ export class CookieHandler {
                     message: t('giffgaff.cookie.verifySuccess')
                 };
             } else if (result.success && !result.valid) {
+                // Cookie 验证通过但未拿到 JWT → 部分成功，可选继续
                 return {
                     valid: false,
                     partialSuccess: true,
                     message: result.message || t('giffgaff.cookie.partialSuccess')
                 };
             } else {
+                // Cookie 验证失败 → 硬错误，不可继续
                 throw new Error(result.message || t('giffgaff.cookie.error'));
             }
         } catch (error) {
@@ -92,7 +93,7 @@ export class CookieHandler {
 
             const result = await response.json();
 
-            if (result && result.success && result.valid) {
+            if (result && result.valid) {
                 // 刷新访问令牌
                 if (result.accessToken) {
                     stateManager.set('accessToken', result.accessToken);

@@ -4,7 +4,7 @@
 
 ## 模块职责
 
-作为 Backend-For-Frontend 代理层，接收前端 `/bff/*` 请求，在服务端注入 ACCESS_KEY 并转发到对应的 `/.netlify/functions/*` 目标。
+作为 Backend-For-Frontend 代理层，接收前端 `/bff/*` 请求，在服务端注入 ACCESS_KEY 并转发到显式白名单内的 `/.netlify/functions/*` 目标。
 
 ## 入口与启动
 
@@ -20,13 +20,14 @@
 前端请求 /bff/{functionName}
   -> Edge Function (bff-proxy)
     -> 注入 x-esim-key 头 (ACCESS_KEY)
+    -> 校验目标是否在白名单内
     -> 转发到 /.netlify/functions/{functionName}
     -> 透传响应
 ```
 
 ## 关键依赖与配置
 
-- **环境变量**: `ACCESS_KEY`
+- **环境变量**: `ACCESS_KEY`, `ALLOWED_ORIGIN`
 
 ## 测试与质量
 
@@ -36,7 +37,8 @@
 ## 常见问题
 
 1. **ACCESS_KEY 未配置**: 返回 500 Server Misconfigured
-2. **CORS 问题**: Edge Function 不设置 CORS 头，由 Functions 中间件处理
+2. **ALLOWED_ORIGIN 未配置或不匹配**: 返回 403 Forbidden
+3. **CORS 问题**: Edge Function 会补充 CORS 头，但最终函数侧仍会再次执行来源校验
 
 ## 相关文件清单
 

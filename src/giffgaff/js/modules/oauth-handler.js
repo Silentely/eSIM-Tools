@@ -125,7 +125,6 @@ export class OAuthHandler {
                 body: JSON.stringify({
                     code: code,
                     code_verifier: codeVerifier,
-                    redirect_uri: oauthConfig.redirectUri,
                     client_id: oauthConfig.clientId
                 })
             });

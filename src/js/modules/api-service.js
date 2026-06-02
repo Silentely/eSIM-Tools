@@ -70,26 +70,34 @@ class APIService {
         'Content-Type': 'application/json',
         ...options.headers
       },
-      signal: this.createTimeoutSignal(options.timeout || this.timeout)
     };
 
     if (options.body) {
       fetchOptions.body = JSON.stringify(options.body);
     }
 
-    return retry(async () => {
-      const response = await fetch(url, fetchOptions);
+    return await retry(async () => {
+      const timeout = this.createTimeoutSignal(options.timeout || this.timeout);
+      try {
+        const requestOptions = {
+          ...fetchOptions,
+          signal: timeout.signal
+        };
+        const response = await fetch(url, requestOptions);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return response.json();
+        }
+
+        return response.text();
+      } finally {
+        timeout.clear();
       }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return response.json();
-      }
-
-      return response.text();
     }, this.retries);
   }
 
@@ -134,8 +142,11 @@ class APIService {
    */
   createTimeoutSignal(timeout) {
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), timeout);
-    return controller.signal;
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    return {
+      signal: controller.signal,
+      clear: () => clearTimeout(timeoutId)
+    };
   }
 
   /**
