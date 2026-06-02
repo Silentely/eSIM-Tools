@@ -225,14 +225,35 @@ if (typeof window !== 'undefined') {
       allReasonText = reasonValues.join(' ');
     }
 
-    // 检查 message 和 reason 对象的所有属性值是否包含扩展关键词
+    // 收集 reason 对象所有属性值（含嵌套），用于扩展关键词检测
+    if (reason && typeof reason === 'object' && !allReasonText) {
+      try {
+        // 优先用 JSON.stringify 序列化整个对象（含嵌套结构）
+        // 钱包扩展错误常返回嵌套对象如 { error: { message: "..." } }
+        allReasonText = JSON.stringify(reason);
+      } catch (_) {
+        // 循环引用等情况降级到浅层遍历
+        try {
+          const reasonValues = [];
+          Object.keys(reason).forEach(key => {
+            const val = reason[key];
+            if (val !== null && val !== undefined) {
+              reasonValues.push(String(val));
+            }
+          });
+          allReasonText = reasonValues.join(' ');
+        } catch (_) {}
+      }
+    }
+
+    // 先检查 message 和 stack 是否包含扩展关键词
     let shouldBlock = isExtensionProviderConflict({
       message,
       stack,
       mechanismType: 'onunhandledrejection',
     });
 
-    // 额外检查 reason 对象的所有属性值
+    // 额外检查 reason 对象所有属性值（含嵌套）是否包含扩展关键词
     if (!shouldBlock && allReasonText) {
       shouldBlock = includesExtensionKeyword(allReasonText);
     }
