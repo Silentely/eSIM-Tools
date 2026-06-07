@@ -453,6 +453,23 @@ function initSentry() {
           }
         }
 
+        // 1b. 过滤 extra.__serialized__ 中的钱包扩展噪音
+        // 非 Error rejection 对象的原始内容存储在 extra.__serialized__，
+        // ignoreErrors 正则只能匹配 exception.value（已被 SDK 序列化为通用描述），
+        // 无法匹配到原始 rejection 内容，因此需要在此处额外检查
+        if (event.extra?.__serialized__) {
+          const serialized = typeof event.extra.__serialized__ === 'string'
+            ? event.extra.__serialized__
+            : JSON.stringify(event.extra.__serialized__);
+          if (includesExtensionKeyword(serialized)) {
+            recordExtensionNoise('init-beforeSend-serialized', {
+              message: serialized.substring(0, 160),
+              mechanismType: 'onunhandledrejection',
+            });
+            return null;
+          }
+        }
+
         // 2. 删除敏感请求数据
         if (event.request) {
           delete event.request.cookies;
