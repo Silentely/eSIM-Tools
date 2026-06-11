@@ -433,6 +433,8 @@
           // Android WebView / 浏览器注入脚本噪音
           /Error invoking post/i,
           /Method not found/i,
+          // 浏览器扩展注入 CommonJS require 到纯 ES Module 环境
+          /require is not defined/i,
           // 已知浏览器噪音（保留）
           'ResizeObserver loop',
           'Non-Error promise rejection',
