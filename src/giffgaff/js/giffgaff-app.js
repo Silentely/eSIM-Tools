@@ -1242,8 +1242,12 @@ class GiffgaffApp {
                 if (state.memberId && (state.esimActivationCode || state.esimSSN)) {
                     if (state.lpaString) {
                         targetStep = 5;
-                        // LPA已获取，提示清理
+                        // LPA已获取，显示二维码和 LPA 信息（修复 Issue #75）
                         setTimeout(() => {
+                            // 显示二维码和 LPA 字符串
+                            console.log('[Giffgaff] 从 session 恢复 LPA，显示二维码和 LPA 信息');
+                            uiController.showESimResult();
+
                             uiController.showStatus(
                                 uiController.elements.tokenStatus,
                                 t('giffgaff.app.status.lpaFetchedOnce'),

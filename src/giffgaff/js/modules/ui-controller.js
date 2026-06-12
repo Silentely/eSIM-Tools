@@ -535,12 +535,55 @@ export class UIController {
      */
     showESimResult() {
         const state = stateManager.getState();
-        if (!state.lpaString) return;
 
-        this.elements.resultContainer.classList.add('active');
-        this.generateQRCode(state.lpaString);
+        try {
+            // 防御性检查：即使 lpaString 为空也显示容器，给用户明确提示（修复 Issue #75）
+            this.elements.resultContainer.classList.add('active');
 
-        this.elements.esimInfo.innerHTML = `
+            if (!state.lpaString) {
+                // LPA 字符串缺失，显示错误提示和调试信息
+                console.error('[Giffgaff] showESimResult called but lpaString is empty');
+                this.elements.qrcode.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        ${t('giffgaff.app.error.lpaStringMissing') || '获取 LPA 字符串失败'}
+                    </div>
+                `;
+                this.elements.esimInfo.innerHTML = `
+                    <div class="alert alert-warning">
+                        <p><strong>${tl('可能原因')}：</strong></p>
+                        <ul class="mb-0">
+                            <li>后端轮询超时或失败</li>
+                            <li>GraphQL 响应异常</li>
+                            <li>网络连接中断</li>
+                            <li>eSIM 状态异常</li>
+                        </ul>
+                        <hr class="my-2">
+                        <p class="mb-0">
+                            <small>
+                                ${tl('请打开浏览器控制台（F12）查看详细日志')}
+                                <br>
+                                <a href="https://github.com/Silentely/eSIM-Tools/issues" target="_blank" rel="noopener noreferrer">
+                                    ${tl('提交问题反馈')} <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </small>
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 验证 DOM 元素存在
+            if (!this.elements.qrcode || !this.elements.esimInfo) {
+                console.error('[Giffgaff] DOM elements not found: qrcode or esimInfo');
+                return;
+            }
+
+            console.log('[Giffgaff] Displaying eSIM result, LPA length:', state.lpaString.length);
+
+            // 正常流程：先显示 LPA 信息（确保用户至少能看到文本），再生成二维码
+            // 调整顺序：LPA 文本优先，二维码可以慢慢加载
+            this.elements.esimInfo.innerHTML = `
             <div class="mb-3">
                 <h5 class="text-primary">${tl('LPA字符串')}</h5>
                 <p class="text-break"><small>${state.lpaString}</small></p>
@@ -559,30 +602,63 @@ export class UIController {
             </div>
         `;
 
-        // 绑定按钮事件
-        const copyBtn = document.getElementById('copyLpaBtn');
-        const downloadBtn = document.getElementById('downloadQrBtn');
+            // 绑定按钮事件
+            const copyBtn = document.getElementById('copyLpaBtn');
+            const downloadBtn = document.getElementById('downloadQrBtn');
 
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
-                if (window.copyLPAString) {
-                    window.copyLPAString(state.lpaString, copyBtn);
-                }
-            });
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    if (window.copyLPAString) {
+                        window.copyLPAString(state.lpaString, copyBtn);
+                    }
+                });
+            }
+
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    const img = this.elements.qrcode.querySelector('img');
+                    if (img && window.downloadQRCode) {
+                        window.downloadQRCode(img.src, 'giffgaff_esim_qrcode.png');
+                    }
+                });
+            }
+
+            // 生成二维码（放在最后，即使失败也不影响 LPA 文本显示）
+            try {
+                this.generateQRCode(state.lpaString);
+            } catch (error) {
+                console.error('[Giffgaff] generateQRCode failed:', error);
+                this.elements.qrcode.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        二维码生成失败，请使用上方 LPA 字符串手动激活
+                    </div>
+                `;
+            }
+
+            setTimeout(() => {
+                this.elements.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
+        } catch (error) {
+            // 最外层错误捕获：确保即使出现未预期异常，用户也能看到错误提示
+            console.error('[Giffgaff] showESimResult failed:', error);
+            this.elements.qrcode.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    显示 eSIM 信息时发生错误
+                </div>
+            `;
+            this.elements.esimInfo.innerHTML = `
+                <div class="alert alert-warning">
+                    <p><strong>错误详情：</strong> ${error.message}</p>
+                    <p class="mb-0">
+                        <small>
+                            请刷新页面重试，或按 F12 → Application → Session Storage → giffgaff_session 手动获取 lpaString
+                        </small>
+                    </p>
+                </div>
+            `;
         }
-
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                const img = this.elements.qrcode.querySelector('img');
-                if (img && window.downloadQRCode) {
-                    window.downloadQRCode(img.src, 'giffgaff_esim_qrcode.png');
-                }
-            });
-        }
-
-        setTimeout(() => {
-            this.elements.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 500);
     }
 
     /**

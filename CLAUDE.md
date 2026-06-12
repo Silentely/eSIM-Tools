@@ -115,10 +115,44 @@
 
 ---
 
+## 🧠 项目记忆管理
+
+### 项目容器标签
+
+**containerTag**: `esim-tools`
+
+### 关键记忆点
+
+#### 技术栈决策
+- **无框架设计**：坚持原生 JavaScript，避免 React/Vue 依赖，保持最小打包体积
+- **Serverless 架构**：Netlify Functions + Edge Functions，BFF 模式代理
+- **原生 ES6 模块**：业务页面不经 Webpack 打包，浏览器原生加载
+
+#### 踩坑记录
+- **Giffgaff OAuth REDIRECT_URI**：环境变量只影响服务端 token exchange，前端授权 URL 由 `api-config.js` 独立控制
+- **Netlify Free Plan 限制**：Functions 每月 125,000 次调用配额，避免前端轮询
+- **Safari 隐私模式**：IndexedDB 会抛出 QuotaExceededError，需降级到 sessionStorage
+
+#### 编码偏好
+- 缩进：2 空格
+- 引号：单引号优先
+- 分号：必须使用
+- 命名：camelCase（变量/函数），PascalCase（类），kebab-case（文件）
+
+### 自动记忆触发
+
+- 修改 OAuth/认证流程 → 检索 "OAuth PKCE 认证 零信任"
+- 添加 Netlify Functions → 检索 "Functions 中间件 withAuth"
+- 性能优化 → 检索 "性能 瓶颈 IndexedDB"
+- 部署问题 → 检索 "Netlify 部署 环境变量"
+
+---
+
 ## 变更记录
 
 | 时间 | 变更内容 |
 |------|----------|
+| 2026-06-12 | 集成 Not-ace-memory 记忆管理系统 |
 | 2026-06-02 22:54:25 | 增量扫描更新：为 src/giffgaff 和 src/simyo 新建 CLAUDE.md，修复模块结构图 click 链接，校正脚本数量 |
 | 2026-05-25 | 清理 Legacy 残留措辞：删除 verify-legacy-frozen 工具链、修复 server.js 死路由 simyo-static、统一架构表述为"原生 ES6 模块" |
 | 2026-05-18 | 文档清理与路径重构：移除未使用的新模块化版本，修复文档错链，精简重复文档 |
