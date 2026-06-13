@@ -11,7 +11,6 @@ export class UIController {
     constructor() {
         this.tooltips = new Map();
         this._elementsCache = null;
-        this.qrTimeoutId = null; // 二维码超时定时器
         this._qrGeneration = 0; // 生成计数器，防止并发干扰
     }
 
@@ -341,13 +340,6 @@ export class UIController {
      */
     async generateQRCode(data) {
         const size = 300;
-
-        // 清除旧的超时定时器，避免历史调用覆盖当前二维码区域。
-        if (this.qrTimeoutId) {
-            clearTimeout(this.qrTimeoutId);
-            this.qrTimeoutId = null;
-        }
-
         const gen = ++this._qrGeneration;
 
         try {
@@ -410,7 +402,25 @@ export class UIController {
     showQRResult(lpaString) {
         this.elements.resultContainer.style.display = 'block';
         this.elements.resultContainer.classList.add('active');
-        this.generateQRCode(lpaString);
+
+        // async 函数需要 .catch() 处理，避免 unhandled promise rejection
+        this.generateQRCode(lpaString).catch((error) => {
+            console.error('[Simyo] generateQRCode failed:', error);
+
+            // 使用 DOM API 创建错误提示，避免 innerHTML XSS 风险
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger';
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-exclamation-circle me-2';
+            alertDiv.appendChild(icon);
+
+            const message = document.createTextNode(tl('二维码生成失败，请使用上方 LPA 字符串手动激活'));
+            alertDiv.appendChild(message);
+
+            this.elements.qrcode.innerHTML = '';
+            this.elements.qrcode.appendChild(alertDiv);
+        });
 
         this.elements.activationInfo.innerHTML = `
             <div class="mb-3">

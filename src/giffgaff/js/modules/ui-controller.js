@@ -11,7 +11,6 @@ export class UIController {
     constructor() {
         this.elements = this.initElements();
         this.tooltips = new Map();
-        this.qrTimeoutId = null; // 追踪二维码超时定时器（issue #66）
         this._qrGeneration = 0; // 防止并发 generateQRCode 竞态
     }
 
@@ -421,13 +420,6 @@ export class UIController {
      */
     async generateQRCode(data) {
         const size = 300;
-
-        // 清除旧的超时定时器，避免历史调用覆盖当前二维码区域。
-        if (this.qrTimeoutId) {
-            clearTimeout(this.qrTimeoutId);
-            this.qrTimeoutId = null;
-        }
-
         const gen = ++this._qrGeneration;
 
         try {
@@ -561,17 +553,24 @@ export class UIController {
             }
 
             // 生成二维码（放在最后，即使失败也不影响 LPA 文本显示）
-            try {
-                this.generateQRCode(state.lpaString);
-            } catch (error) {
+            // async 函数需要 await 或 .catch() 处理，避免 unhandled promise rejection
+            this.generateQRCode(state.lpaString).catch((error) => {
                 console.error('[Giffgaff] generateQRCode failed:', error);
-                this.elements.qrcode.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        二维码生成失败，请使用上方 LPA 字符串手动激活
-                    </div>
-                `;
-            }
+
+                // 使用 DOM API 创建错误提示，避免 innerHTML XSS 风险
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger';
+
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-exclamation-circle me-2';
+                alertDiv.appendChild(icon);
+
+                const message = document.createTextNode(tl('二维码生成失败，请使用上方 LPA 字符串手动激活'));
+                alertDiv.appendChild(message);
+
+                this.elements.qrcode.innerHTML = '';
+                this.elements.qrcode.appendChild(alertDiv);
+            });
 
             setTimeout(() => {
                 this.elements.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
