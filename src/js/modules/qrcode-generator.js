@@ -11,6 +11,55 @@ const BACKEND_TIMEOUT_MS = 10000;
 let qrCodeLibraryPromise = null;
 
 /**
+ * 上报二维码生成事件到 Sentry 和 Analytics
+ * @param {Object} event - 事件数据
+ * @param {string} event.type - 事件类型：'qr_generation' | 'qr_fallback'
+ * @param {string} event.source - 生成来源：'local' | 'backend' | 'failed'
+ * @param {boolean} event.success - 是否成功
+ * @param {number} event.duration - 耗时（毫秒）
+ * @param {string} [event.error] - 错误信息
+ */
+function trackQRCodeEvent({ type, source, success, duration, error }) {
+  try {
+    // 1. 上报到 Sentry（错误事件）
+    if (!success && typeof window !== 'undefined' && window.Sentry) {
+      window.Sentry.captureMessage(`QR Code ${type} failed`, {
+        level: 'warning',
+        tags: {
+          module: 'qrcode-generation',
+          source,
+          type
+        },
+        extra: {
+          duration,
+          error
+        }
+      });
+    }
+
+    // 2. 上报到 Analytics（成功和失败都上报）
+    if (typeof window !== 'undefined') {
+      window.__esimAnalytics = window.__esimAnalytics || [];
+      window.__esimAnalytics.push({
+        event: type,
+        source,
+        success,
+        duration,
+        error: error || null
+      });
+    }
+
+    // 3. 控制台日志（开发调试）
+    if (!success) {
+      console.warn(`[QRCode Analytics] ${type}: source=${source}, duration=${duration}ms, error=${error}`);
+    }
+  } catch (err) {
+    // 监控上报不应影响正常功能
+    console.debug('[QRCode Analytics] track failed:', err.message);
+  }
+}
+
+/**
  * 标准化二维码尺寸，避免生成过大图片拖慢页面。
  * @param {number} [size=300] 二维码尺寸，单位 px
  * @returns {number} 安全的二维码尺寸
@@ -231,19 +280,61 @@ export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE) {
  * @returns {Promise<{container: HTMLElement, image: HTMLImageElement, tooltip: HTMLElement, source: string}>}
  */
 export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE) {
+  const startTime = Date.now();
   let localError = null;
 
+  // 尝试本地生成
   try {
-    return await generateQRCodeLocal(data, size);
+    const result = await generateQRCodeLocal(data, size);
+    const duration = Date.now() - startTime;
+
+    trackQRCodeEvent({
+      type: 'qr_generation',
+      source: 'local',
+      success: true,
+      duration
+    });
+
+    return result;
   } catch (error) {
     localError = error;
     console.warn('[QRCode] Local generation failed, trying backend fallback:', error.message);
+
+    trackQRCodeEvent({
+      type: 'qr_fallback',
+      source: 'local',
+      success: false,
+      duration: Date.now() - startTime,
+      error: error.message
+    });
   }
 
+  // 本地失败，尝试后端降级
   try {
-    return await generateQRCodeBackend(data, size);
+    const result = await generateQRCodeBackend(data, size);
+    const duration = Date.now() - startTime;
+
+    trackQRCodeEvent({
+      type: 'qr_generation',
+      source: 'backend',
+      success: true,
+      duration
+    });
+
+    return result;
   } catch (backendError) {
+    const duration = Date.now() - startTime;
+
     console.error('[QRCode] Backend fallback failed:', backendError.message);
+
+    trackQRCodeEvent({
+      type: 'qr_generation',
+      source: 'failed',
+      success: false,
+      duration,
+      error: backendError.message
+    });
+
     const finalError = new Error('QR code generation failed after local and backend fallback');
     finalError.localError = localError;
     finalError.backendError = backendError;
