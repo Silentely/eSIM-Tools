@@ -10,7 +10,7 @@
     <script src="/src/js/sentry-config.js"></script>
     <script src="/src/js/sentry-loader.js"></script>
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-ima6f2wiefCYx8vYPlznV9uSR05m2q2GGpFFaME3bHY=' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.googletagmanager.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://*.sentry.io; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.googletagmanager.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://*.sentry.io; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com;">
     <title>eSIM Tools - Giffgaff &amp; Simyo eSIM 在线管理工具 | 设备更换、激活与二维码生成</title>
     <link rel="canonical" href="https://esim.cosr.eu.org/">
     <meta name="robots" content="index, follow">
@@ -869,12 +869,7 @@
     <script type="module" src="/src/js/init-home-i18n.js"></script>
 
     <!-- 通知系统初始化 -->
-    <script type="module">
-        import NotificationService from '/src/js/modules/notification-service.js';
-        document.addEventListener('DOMContentLoaded', () => {
-            NotificationService.init();
-        });
-    </script>
+    <script type="module" src="/src/js/init-notification.js"></script>
 
     <!-- 性能优化脚本 -->
     <script src="/src/js/performance.js"></script>
