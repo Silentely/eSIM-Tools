@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * qrcode-generate Function 单元测试
  */

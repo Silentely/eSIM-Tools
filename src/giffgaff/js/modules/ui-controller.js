@@ -431,7 +431,13 @@ export class UIController {
         const gen = ++this._qrGeneration;
 
         try {
-            const result = await generateQRCodeWithFallback(data, size);
+            const labels = {
+                alt: tl('eSIM 二维码'),
+                ariaLabel: tl('eSIM 安装二维码'),
+                tooltipAlt: tl('eSIM 二维码放大预览')
+            };
+
+            const result = await generateQRCodeWithFallback(data, size, labels);
             if (gen !== this._qrGeneration) return; // 防止并发调用干扰
 
             if (result.tooltip && typeof this.showTooltipElement === 'function' && typeof this.hideTooltipElement === 'function') {
@@ -444,12 +450,20 @@ export class UIController {
         } catch (error) {
             if (gen !== this._qrGeneration) return;
             console.error('[Giffgaff] QR code generation failed:', error);
-            this.elements.qrcode.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    ${t('giffgaff.app.qr.failed')}
-                </div>
-            `;
+
+            // 使用 DOM API 创建元素，避免 innerHTML XSS 风险
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger';
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-exclamation-circle me-2';
+            alertDiv.appendChild(icon);
+
+            const message = document.createTextNode(t('giffgaff.app.qr.failed'));
+            alertDiv.appendChild(message);
+
+            this.elements.qrcode.innerHTML = '';
+            this.elements.qrcode.appendChild(alertDiv);
         }
     }
 

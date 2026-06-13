@@ -47,11 +47,12 @@ function withTimeout(promise, timeoutMs) {
 }
 
 exports.handler = withAuth(async (event, context, { body }) => {
+  // 405 优先于 Schema 验证（确保 HTTP 方法错误优先返回）
   if (event.httpMethod !== 'POST') {
     throw new AuthError('Method Not Allowed', 405);
   }
 
-  // withAuth 不在这里使用 validateSchema，确保非 POST 请求先返回 405。
+  // 手动调用 Schema 验证，确保 405 已经检查过
   validateInput(qrcodeSchema, body);
 
   const size = normalizeSize(body.size);
@@ -76,4 +77,4 @@ exports.handler = withAuth(async (event, context, { body }) => {
     console.error('[qrcode-generate] QR code generation failed:', error.message);
     throw error;
   }
-});
+}, { requireAuth: true });

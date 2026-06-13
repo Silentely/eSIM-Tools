@@ -100,6 +100,7 @@ function validateQRCodeData(data) {
 /**
  * 懒加载浏览器端 qrcode.js 库。
  * 首次调用会插入 CDN script，后续调用复用同一个 Promise，避免重复加载。
+ * 修复 Promise 挂起问题：移除失效脚本、添加超时保护（Issue #75 根因修复）。
  * @returns {Promise<Object>} qrcode.js 暴露的 QRCode 对象
  */
 export async function loadQRCodeLibrary() {
@@ -116,32 +117,71 @@ export async function loadQRCodeLibrary() {
   }
 
   qrCodeLibraryPromise = new Promise((resolve, reject) => {
+    const LOAD_TIMEOUT_MS = 5000;
+    let timeoutId = null;
+
     const existingScript = document.querySelector(`script[src="${QRCODE_CDN_URL}"]`);
-    const script = existingScript || document.createElement('script');
+
+    // 如果脚本已存在且 window.QRCode 已加载，直接返回
+    if (existingScript && window.QRCode) {
+      resolve(window.QRCode);
+      return;
+    }
+
+    // 如果脚本已存在但 window.QRCode 未加载（说明脚本已失效），移除并重新加载
+    if (existingScript) {
+      console.warn('[QRCode] Existing script found but QRCode global is missing, removing stale script');
+      existingScript.remove();
+    }
+
+    // 创建新的脚本元素
+    const script = document.createElement('script');
+
+    const cleanup = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      script.removeEventListener('load', handleLoad);
+      script.removeEventListener('error', handleError);
+    };
 
     const handleLoad = () => {
+      cleanup();
       if (window.QRCode) {
         resolve(window.QRCode);
         return;
       }
+      // 脚本加载成功但 window.QRCode 不存在（CDN 内容异常）
       qrCodeLibraryPromise = null;
+      script.remove();
       reject(new Error('QRCode library loaded but QRCode global is missing'));
     };
 
     const handleError = () => {
+      cleanup();
       qrCodeLibraryPromise = null;
+      script.remove();
       reject(new Error('Failed to load QRCode library from CDN'));
+    };
+
+    const handleTimeout = () => {
+      cleanup();
+      qrCodeLibraryPromise = null;
+      script.remove();
+      reject(new Error(`QRCode library loading timed out after ${LOAD_TIMEOUT_MS}ms`));
     };
 
     script.addEventListener('load', handleLoad, { once: true });
     script.addEventListener('error', handleError, { once: true });
 
-    if (!existingScript) {
-      script.src = QRCODE_CDN_URL;
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      document.head.appendChild(script);
-    }
+    // 添加超时保护，防止 Promise 永久挂起
+    timeoutId = setTimeout(handleTimeout, LOAD_TIMEOUT_MS);
+
+    script.src = QRCODE_CDN_URL;
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
   });
 
   return qrCodeLibraryPromise;
@@ -153,9 +193,19 @@ export async function loadQRCodeLibrary() {
  * @param {string} imageUrl 二维码图片 data URL
  * @param {number} size 二维码显示尺寸
  * @param {string} [largeImageUrl=imageUrl] tooltip 使用的大图 data URL
+ * @param {Object} [labels={}] 可访问性标签（支持 i18n）
+ * @param {string} [labels.alt='eSIM QR Code'] 图片 alt 文本
+ * @param {string} [labels.ariaLabel='eSIM Installation QR Code'] 图片 aria-label
+ * @param {string} [labels.tooltipAlt='eSIM QR Code Preview'] tooltip 大图 alt 文本
  * @returns {{container: HTMLElement, image: HTMLImageElement, tooltip: HTMLElement}}
  */
-function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl) {
+function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl, labels = {}) {
+  const {
+    alt = 'eSIM QR Code',
+    ariaLabel = 'eSIM Installation QR Code',
+    tooltipAlt = 'eSIM QR Code Preview'
+  } = labels;
+
   const container = document.createElement('div');
   container.className = 'qrcode-container';
   container.style.position = 'relative';
@@ -163,10 +213,10 @@ function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl) {
 
   const image = document.createElement('img');
   image.src = imageUrl;
-  image.alt = 'eSIM二维码';
+  image.alt = alt;
   image.className = 'img-fluid';
   image.setAttribute('role', 'img');
-  image.setAttribute('aria-label', 'eSIM 安装二维码');
+  image.setAttribute('aria-label', ariaLabel);
   image.setAttribute('loading', 'lazy');
   image.style.border = '5px solid white';
   image.style.borderRadius = '12px';
@@ -182,7 +232,7 @@ function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl) {
 
   const largeImage = document.createElement('img');
   largeImage.src = largeImageUrl;
-  largeImage.alt = 'eSIM二维码放大预览';
+  largeImage.alt = tooltipAlt;
   largeImage.style.width = '400px';
   largeImage.style.height = '400px';
   tooltip.appendChild(largeImage);
@@ -197,9 +247,10 @@ function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl) {
  * 使用浏览器本地 qrcode.js 生成二维码。
  * @param {string} data 二维码内容
  * @param {number} [size=300] 二维码尺寸
+ * @param {Object} [labels={}] 可访问性标签（支持 i18n）
  * @returns {Promise<{container: HTMLElement, image: HTMLImageElement, tooltip: HTMLElement, source: string}>}
  */
-export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE) {
+export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels = {}) {
   try {
     const safeData = validateQRCodeData(data);
     const safeSize = normalizeQRCodeSize(size);
@@ -220,7 +271,7 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE) {
     });
 
     return {
-      ...createQRCodeContainer(imageUrl, safeSize, largeImageUrl),
+      ...createQRCodeContainer(imageUrl, safeSize, largeImageUrl, labels),
       source: 'local'
     };
   } catch (error) {
@@ -232,9 +283,10 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE) {
  * 调用后端 Function 生成二维码，作为浏览器本地生成失败时的降级方案。
  * @param {string} data 二维码内容
  * @param {number} [size=300] 二维码尺寸
+ * @param {Object} [labels={}] 可访问性标签（支持 i18n）
  * @returns {Promise<{container: HTMLElement, image: HTMLImageElement, tooltip: HTMLElement, source: string}>}
  */
-export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE) {
+export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE, labels = {}) {
   const safeData = validateQRCodeData(data);
   const safeSize = normalizeQRCodeSize(size);
   const controller = new AbortController();
@@ -260,7 +312,7 @@ export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE) {
     }
 
     return {
-      ...createQRCodeContainer(payload.qrcode, safeSize),
+      ...createQRCodeContainer(payload.qrcode, safeSize, payload.qrcode, labels),
       source: 'backend'
     };
   } catch (error) {
@@ -277,15 +329,16 @@ export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE) {
  * 三层降级二维码生成：本地生成 → 后端生成 → 抛错由调用方显示 LPA 手动安装提示。
  * @param {string} data 二维码内容
  * @param {number} [size=300] 二维码尺寸
+ * @param {Object} [labels={}] 可访问性标签（支持 i18n）
  * @returns {Promise<{container: HTMLElement, image: HTMLImageElement, tooltip: HTMLElement, source: string}>}
  */
-export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE) {
+export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE, labels = {}) {
   const startTime = Date.now();
   let localError = null;
 
   // 尝试本地生成
   try {
-    const result = await generateQRCodeLocal(data, size);
+    const result = await generateQRCodeLocal(data, size, labels);
     const duration = Date.now() - startTime;
 
     trackQRCodeEvent({
@@ -311,7 +364,7 @@ export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE) {
 
   // 本地失败，尝试后端降级
   try {
-    const result = await generateQRCodeBackend(data, size);
+    const result = await generateQRCodeBackend(data, size, labels);
     const duration = Date.now() - startTime;
 
     trackQRCodeEvent({
