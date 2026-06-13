@@ -19,15 +19,14 @@
 ### API Integration
 - **Simyo Sessions API** - User Authentication and Session Management
 - **Simyo eSIM API** - eSIM Configuration Retrieval and Management
-- **QR Code API** - QR Code Generation Service with 3-tier fallback: `qrcode.show` → `quickchart.io` → `api.qrserver.com`, 5-second timeout per vendor, falls back to LPA string display when all fail
+- **QR Code Generation** - Local CDN-based generation using qrcode.js library with 3-tier fallback: Local generation → Backend Netlify Function (`/bff/qrcode-generate`) → LPA string display with usage instructions
 
 ### Key API Endpoints
 ```javascript
 const apiEndpoints = {
     login: "https://appapi.simyo.nl/simyoapi/api/v1/sessions",
     getEsim: "https://appapi.simyo.nl/simyoapi/api/v1/esim/get-by-customer",
-    confirmInstall: "https://appapi.simyo.nl/simyoapi/api/v1/esim/reorder-profile-installed",
-    qrcode: "https://qrcode.show/"
+    confirmInstall: "https://appapi.simyo.nl/simyoapi/api/v1/esim/reorder-profile-installed"
 };
 ```
 
@@ -59,7 +58,7 @@ const appState = {
 - `createHeaders()` - Generate Simyo API request headers
 - `showSection(stepNumber)` - Show specified step
 - `showStatus(element, message, type)` - Show status information
-- `generateQRCode(data)` - Generate eSIM QR code with 3-tier vendor fallback (`qrcode.show` → `quickchart.io` → `api.qrserver.com`), 5-second timeout per vendor, timer resets on fallback, displays LPA string when all vendors fail
+- `generateQRCode(data)` - Generate eSIM QR code using `qrcode-generator.js` module with 3-tier fallback mechanism: local CDN generation (qrcode.js) → backend Netlify Function (`/bff/qrcode-generate`) → LPA string display with usage instructions. Eliminates dependency on external QR code services.
 
 ### API Call Example
 ```javascript

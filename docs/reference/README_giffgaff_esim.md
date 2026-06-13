@@ -24,15 +24,14 @@
 - **OAuth 2.0 PKCE** - 安全认证流程
 - **Giffgaff ID API** - 用户认证和 MFA
 - **Giffgaff GraphQL API** - 业务逻辑处理
-- **QR Code API** - 二维码生成服务，三级回退链：`qrcode.show` → `quickchart.io` → `api.qrserver.com`，单服务 5 秒超时，全部失败时显示 LPA 字符串供用户手动复制
+- **qrcode-generator.js** - 本地二维码生成模块，三级回退机制：本地 CDN 加载 `qrcode.js` → 后端 Netlify Function `/bff/qrcode-generate` → 显示 LPA 文本和使用说明
 
 ### 关键 API 端点
 ```javascript
 const apiEndpoints = {
     mfaChallenge: "https://id.giffgaff.com/v4/mfa/challenge/me",
     mfaValidation: "https://id.giffgaff.com/v4/mfa/validation",
-    graphql: "https://publicapi.giffgaff.com/gateway/graphql",
-    qrcode: "https://qrcode.show/"
+    graphql: "https://publicapi.giffgaff.com/gateway/graphql"
 };
 ```
 
@@ -58,7 +57,7 @@ const appState = {
 - `generateCodeChallenge()` - 生成 PKCE 代码挑战
 - `showSection(stepNumber)` - 显示指定步骤
 - `showStatus(element, message, type)` - 显示状态信息
-- `generateQRCode(data)` - 生成二维码，内部维护三级服务商回退链（`qrcode.show` → `quickchart.io` → `api.qrserver.com`），每个服务商 5 秒超时，回退时重置计时器，全部失败时展示 LPA 字符串供用户手动复制
+- `generateQRCode(data)` - 生成二维码，通过 `qrcode-generator.js` 模块实现三级回退：本地 CDN 加载 `qrcode.js` 生成 → 后端 Netlify Function `/bff/qrcode-generate` 降级 → 显示 LPA 文本供用户手动复制
 
 ### GraphQL 查询示例
 ```graphql

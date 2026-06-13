@@ -19,15 +19,14 @@
 ### API 集成
 - **Simyo Sessions API** - 用户认证和会话管理
 - **Simyo eSIM API** - eSIM 配置获取和管理
-- **QR Code API** - 二维码生成服务，三级回退链：`qrcode.show` → `quickchart.io` → `api.qrserver.com`，单服务 5 秒超时，全部失败时显示 LPA 字符串供用户手动复制
+- **本地二维码生成** - 使用 qrcode.js 库（CDN 加载）在浏览器本地生成，后端 Netlify Function `/bff/qrcode-generate` 作为降级方案，全部失败时显示 LPA 字符串供用户手动复制
 
 ### 关键 API 端点
 ```javascript
 const apiEndpoints = {
     login: "https://appapi.simyo.nl/simyoapi/api/v1/sessions",
     getEsim: "https://appapi.simyo.nl/simyoapi/api/v1/esim/get-by-customer",
-    confirmInstall: "https://appapi.simyo.nl/simyoapi/api/v1/esim/reorder-profile-installed",
-    qrcode: "https://qrcode.show/"
+    confirmInstall: "https://appapi.simyo.nl/simyoapi/api/v1/esim/reorder-profile-installed"
 };
 ```
 
@@ -59,7 +58,7 @@ const appState = {
 - `createHeaders()` - 生成 Simyo API 请求头
 - `showSection(stepNumber)` - 显示指定步骤
 - `showStatus(element, message, type)` - 显示状态信息
-- `generateQRCode(data)` - 生成 eSIM 二维码，内部维护三级服务商回退链（`qrcode.show` → `quickchart.io` → `api.qrserver.com`），每个服务商 5 秒超时，回退时重置计时器，全部失败时展示 LPA 字符串供用户手动复制
+- `generateQRCode(data)` - 生成 eSIM 二维码，使用 `qrcode-generator.js` 模块实现三级回退机制：优先本地 CDN 加载 qrcode.js 库生成，失败时调用后端 Netlify Function `/bff/qrcode-generate`，全部失败时展示 LPA 字符串供用户手动复制
 
 ### API 调用示例
 ```javascript

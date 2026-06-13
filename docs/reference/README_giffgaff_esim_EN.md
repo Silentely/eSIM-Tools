@@ -24,15 +24,14 @@
 - **OAuth 2.0 PKCE** - Secure Authentication Process
 - **Giffgaff ID API** - User Authentication and MFA
 - **Giffgaff GraphQL API** - Business Logic Processing
-- **QR Code API** - QR Code Generation Service with 3-tier fallback: `qrcode.show` → `quickchart.io` → `api.qrserver.com`, 5-second timeout per vendor, falls back to LPA string display when all fail
+- **QR Code Generation** - 3-tier fallback mechanism: Local CDN (`qrcode.js`) → Backend Netlify Function (`/bff/qrcode-generate`) → LPA text display with usage instructions
 
 ### Key API Endpoints
 ```javascript
 const apiEndpoints = {
     mfaChallenge: "https://id.giffgaff.com/v4/mfa/challenge/me",
     mfaValidation: "https://id.giffgaff.com/v4/mfa/validation",
-    graphql: "https://publicapi.giffgaff.com/gateway/graphql",
-    qrcode: "https://qrcode.show/"
+    graphql: "https://publicapi.giffgaff.com/gateway/graphql"
 };
 ```
 
@@ -58,7 +57,7 @@ const appState = {
 - `generateCodeChallenge()` - Generate PKCE code challenge
 - `showSection(stepNumber)` - Show specified step
 - `showStatus(element, message, type)` - Show status information
-- `generateQRCode(data)` - Generate QR code with 3-tier vendor fallback (`qrcode.show` → `quickchart.io` → `api.qrserver.com`), 5-second timeout per vendor, timer resets on fallback, displays LPA string when all vendors fail
+- `generateQRCode(data)` - Generate QR code using 3-tier fallback mechanism (local `qrcode.js` library → backend `/bff/qrcode-generate` endpoint → LPA text with instructions), handled by `qrcode-generator.js` module
 
 ### GraphQL Query Example
 ```graphql
