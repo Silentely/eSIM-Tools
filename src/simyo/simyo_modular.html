@@ -47,7 +47,7 @@
     <link rel="preconnect" href="https://appapi.simyo.nl" crossorigin>
 
     <!-- CSP策略 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://*.sentry.io; img-src 'self' data: https:; frame-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-Y7EzdXtZqusaDvI6M/a7FBfvLyIlKLRzZbRaQP+0w7g=' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.google-analytics.com https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://*.sentry.io; img-src 'self' data: https:; frame-src 'self';">
 
     <title>Simyo NL eSIM 工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
@@ -59,12 +59,8 @@
     <link rel="stylesheet" href="/src/assets/fontawesome/all.min.css">
 
     <!-- 共享设计系统 -->
-    <link rel="preload" href="/src/styles/design-system.css" as="style" onload="this.rel='stylesheet'">
-    <link rel="preload" href="/src/styles/animations.css" as="style" onload="this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="/src/styles/design-system.css">
-        <link rel="stylesheet" href="/src/styles/animations.css">
-    </noscript>
+    <link rel="stylesheet" href="/src/styles/design-system.css">
+    <link rel="stylesheet" href="/src/styles/animations.css">
 
     <!-- Simyo专用样式 -->
     <link rel="stylesheet" href="/src/simyo/styles/simyo-base.css">
@@ -552,43 +548,11 @@
     <!-- 外部脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
-    <!-- 防御性错误守卫：捕获 Bootstrap 在特殊浏览器（如 Quark/OpenHarmony）上的非关键异常 -->
-    <script>
-        window.addEventListener('error', function(e) {
-            if (e.message && e.message.includes('bodyTouched')) {
-                e.preventDefault();
-                console.warn('[Bootstrap Guard] 已忽略非关键异常:', e.message);
-            }
-        });
-    </script>
+    <!-- Bootstrap 错误守卫 -->
+    <script src="/src/simyo/js/bootstrap-guard.js"></script>
 
     <!-- 入场动效 -->
-    <script>
-        (function(){
-            const initReveal = () => {
-                const nodes = document.querySelectorAll('.reveal');
-                if (!nodes.length) return;
-                if ('IntersectionObserver' in window) {
-                    const io = new IntersectionObserver((entries) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                entry.target.classList.add('show');
-                                io.unobserve(entry.target);
-                            }
-                        });
-                    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
-                    nodes.forEach(el => io.observe(el));
-                } else {
-                    nodes.forEach(el => el.classList.add('show'));
-                }
-            };
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initReveal, { once: true });
-            } else {
-                initReveal();
-            }
-        })();
-    </script>
+    <script src="/src/simyo/js/reveal-animation.js"></script>
 
     <!-- 国际化初始化 -->
     <script type="module">

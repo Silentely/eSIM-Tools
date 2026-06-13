@@ -272,6 +272,9 @@ class GiffgaffApp {
 
         // 复制控制台代码按钮
         this.bindCopyConsoleSnippet();
+
+        // 复制激活码和 SSN 按钮
+        this.bindCopyCodeButtons();
     }
 
     /**
@@ -594,6 +597,43 @@ class GiffgaffApp {
                 }
             });
         }
+    }
+
+    /**
+     * 绑定复制激活码和 SSN 按钮
+     */
+    bindCopyCodeButtons() {
+        const copyActivationCodeBtn = document.getElementById('copyActivationCodeBtn');
+        const copySSNBtn = document.getElementById('copySSNBtn');
+
+        const bindCopyButton = (btn) => {
+            if (btn && !btn.__bound) {
+                btn.__bound = true;
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const targetElement = document.getElementById(targetId);
+                    if (!targetElement) return;
+
+                    const text = (targetElement.innerText || targetElement.textContent || '').trim();
+                    if (!text) return;
+
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(text)
+                            .then(() => showToast(tl('已复制到剪贴板')))
+                            .catch(() => {
+                                this.fallbackCopy(text);
+                                showToast(tl('已复制'));
+                            });
+                    } else {
+                        this.fallbackCopy(text);
+                        showToast(tl('已复制'));
+                    }
+                });
+            }
+        };
+
+        bindCopyButton(copyActivationCodeBtn);
+        bindCopyButton(copySSNBtn);
     }
 
     /**
