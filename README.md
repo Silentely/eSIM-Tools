@@ -7,10 +7,10 @@
 <br>
 <img src="https://img.shields.io/github/license/Silentely/eSIM-Tools?color=ff69b4" alt="License">
 <img src="https://img.shields.io/github/languages/code-size/Silentely/eSIM-Tools?color=blueviolet" alt="Code size">
-<img src="https://img.shields.io/github/last-commit/Silentely/eSIM-Tools/main?label=%E4%B8%8A%E6%AC%A1%E6%9B%B4%E6%96%B0&color=success" alt="Last commit">
+<img src="https://img.shields.io/github/last-commit/Silentely/eSIM-Tools/main?label=%E4%B8%8A%E6%AC%A1%E6%9B%B4%E6%96%B0&color=success" alt="上次更新">
 <img src="https://api.netlify.com/api/v1/badges/8fc159e2-3996-4e1b-bf9d-1945a3474682/deploy-status" alt="Netlify Status">
 <br>
-[:us: English Version](./README_EN.md)
+<a href="./README_EN.md">🇺🇸 English Version</a>
 <br>
 </div>
 
@@ -27,6 +27,17 @@
 - 📷 生成 eSIM 二维码，扫码即可激活
 
 > 💡 **1-2 分钟即可完成**，无需联系客服，全程自动化
+
+> ⚠️ **适用范围说明**：本工具仅支持已有 Giffgaff 或 Simyo 号码的用户进行 eSIM 设备更换或物理 SIM 转 eSIM，不支持新用户直接申请号码。如需新开卡获取 eSIM，Giffgaff 用户可通过第三方修改版 APK/模块获取 eSIM 二维码后直接扫码激活，Simyo 用户请通过官方 APP 操作。
+
+---
+
+## 🎁 新用户优惠
+
+如果你还没有号码，可以通过以下链接注册并获得话费赠送：
+
+- **🇳🇱 Simyo 用户**: 新开卡享受 [额外 5 欧元话费赠送](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
+- **🇬🇧 Giffgaff 用户**: 新开卡享受 [额外 5 英镑话费赠送](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
 
 ---
 
@@ -79,9 +90,6 @@
 
 ## 🖼️ 界面预览
 
-<details>
-<summary>点击展开查看截图</summary>
-
 ### 主页
 
 ![主页-功能总览](./src/assets/images/home-preview.jpg)
@@ -93,8 +101,6 @@
 ### Simyo eSIM 工具
 
 ![Simyo-工具界面](./src/assets/images/simyo-preview.jpg)
-
-</details>
 
 ---
 
@@ -164,23 +170,12 @@
 
 **A**:
 
-- ✅ 所有数据在本地浏览器处理，不上传服务器
-- ✅ 不存储用户密码或敏感信息
+- ✅ 所有数据处理均在本地进行
+- ✅ 不存储用户凭据信息
 - ✅ 开源透明，代码可审计
 - ✅ 建议在安全网络环境下使用
 
 </details>
-
----
-
-## 🎁 新用户优惠
-
-如果你还没有号码，可以通过以下链接注册并获得话费赠送：
-
-- **🇳🇱 Simyo 用户**: 新开卡享受 [额外 5 欧元话费赠送](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
-- **🇬🇧 Giffgaff 用户**: 新开卡享受 [额外 5 英镑话费赠送](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
-
-> ⚠️ **注意**：本工具不支持新用户直接申请号码，仅支持已有号码的 eSIM 转换和设备更换。
 
 ---
 
@@ -300,22 +295,26 @@ npm start
 
 ---
 
-## 📄 许可证
+## 🤝 贡献者公约
 
-- **代码**: [MIT License](LICENSE)
-- **文档**: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)
-  - 可自由复制、再发行，但需**提供原作者信息**及**协议声明**
-  - **不可用于商业用途**（任何盈利活动均视为商业用途）
+本项目遵循[贡献者公约](CODE_OF_CONDUCT.md)行为准则。
 
----
+## 许可证
 
-## ⚖️ 免责声明
+- 本项目的所有代码除另有说明外,均按照 [MIT License](LICENSE) 发布。
+- 本项目的README.md，wiki等资源基于 [CC BY-NC-SA 4.0][CC-NC-SA-4.0] 这意味着你可以拷贝、并再发行本项目的内容，<br/>
+  但是你将必须同样**提供原作者信息以及协议声明**。同时你也**不能将本项目用于商业用途**，按照我们狭义的理解<br/>
+  (增加附属条款)，凡是**任何盈利的活动皆属于商业用途**。
+- 请在遵守当地相关法律法规的前提下使用本项目。
 
+## 免责声明
 <p align="center">
-  <img src="https://github.com/docker/dockercraft/raw/master/docs/img/contribute.png?raw=true" alt="贡献图示" width="400">
+  <img src="https://github.com/docker/dockercraft/raw/master/docs/img/contribute.png?raw=true" alt="贡献图示">
 </p>
+本工具仅供学习和个人使用，请遵守相关服务条款。使用本工具产生的任何问题，开发者不承担责任。请在遵守当地法律法规的前提下使用。
 
-**本工具仅供学习和个人使用**，请遵守相关服务条款。使用本工具产生的任何问题，开发者不承担责任。请在遵守当地法律法规的前提下使用。
+[github-hosts]: https://raw.githubusercontent.com/racaljk/hosts/master/hosts "hosts on Github"
+[CC-NC-SA-4.0]: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh
 
 ---
 

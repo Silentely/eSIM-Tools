@@ -7,10 +7,10 @@
 <br>
 <img src="https://img.shields.io/github/license/Silentely/eSIM-Tools?color=ff69b4" alt="License">
 <img src="https://img.shields.io/github/languages/code-size/Silentely/eSIM-Tools?color=blueviolet" alt="Code size">
-<img src="https://img.shields.io/github/last-commit/Silentely/eSIM-Tools/main?label=Last%20Update&color=success" alt="Last commit">
+<img src="https://img.shields.io/github/last-commit/Silentely/eSIM-Tools/main?label=Last%20Update&color=success" alt="Last Update">
 <img src="https://api.netlify.com/api/v1/badges/8fc159e2-3996-4e1b-bf9d-1945a3474682/deploy-status" alt="Netlify Status">
 <br>
-[:cn: 中文版本](./README.md)
+<a href="./README.md">🇨🇳 中文版本</a>
 <br>
 </div>
 
@@ -27,6 +27,17 @@
 - 📷 Generate eSIM QR codes for instant activation
 
 > 💡 **Complete in 1-2 minutes**, no customer service contact needed, fully automated
+
+> ⚠️ **Scope**: This tool is for existing Giffgaff or Simyo subscribers only. It supports eSIM device changes and physical SIM to eSIM conversion — not new number registration. To get a new eSIM, Giffgaff users can obtain the QR code via third-party modified APK/modules and scan it directly; Simyo users should use the official app.
+
+---
+
+## 🎁 New User Offers
+
+If you don't have a number yet, register through these links to get bonus credit:
+
+- **🇳🇱 Simyo users**: New SIM activation gets [extra €5 credit](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
+- **🇬🇧 Giffgaff users**: New SIM activation gets [extra £5 credit](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
 
 ---
 
@@ -79,9 +90,6 @@
 
 ## 🖼️ Interface Preview
 
-<details>
-<summary>Click to view screenshots</summary>
-
 ### Home
 
 ![Home - Feature Overview](./src/assets/images/home-preview.jpg)
@@ -93,8 +101,6 @@
 ### Simyo eSIM Tool
 
 ![Simyo - Tool Interface](./src/assets/images/simyo-preview.jpg)
-
-</details>
 
 ---
 
@@ -164,23 +170,12 @@
 
 **A**:
 
-- ✅ All data is processed locally in your browser, not uploaded to servers
-- ✅ No passwords or sensitive information stored
+- ✅ All data processing is performed locally
+- ✅ No user credentials stored
 - ✅ Open source and transparent, code is auditable
 - ✅ Recommended to use in a secure network environment
 
 </details>
-
----
-
-## 🎁 New User Offers
-
-If you don't have a number yet, register through these links to get bonus credit:
-
-- **🇳🇱 Simyo users**: New SIM activation gets [extra €5 credit](https://vriendendeal.simyo.nl/prepaid/AZzwPzb)
-- **🇬🇧 Giffgaff users**: New SIM activation gets [extra £5 credit](https://www.giffgaff.com/orders/affiliate/mowal44_1653194386268)
-
-> ⚠️ **Note**: This tool does not support new number registration. It only supports eSIM conversion and device changes for existing subscribers.
 
 ---
 
@@ -300,22 +295,26 @@ If you encounter issues or have suggestions:
 
 ---
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## 📄 License
 
-- **Code**: [MIT License](LICENSE)
-- **Documentation**: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)
-  - Free to copy and redistribute, but must **provide original author attribution** and **license notice**
-  - **Not for commercial use** (any profit-generating activity is considered commercial use)
-
----
+- All code in this project, unless otherwise stated, is released under the [MIT License](LICENSE).
+- README.md, wiki, and other resources in this project are licensed under [CC BY-NC-SA 4.0][CC-NC-SA-4.0]. This means you may copy and redistribute project content,<br/>
+  but you must also **provide original author attribution and license notice**. At the same time, you **may not use this project for commercial purposes** under our narrow interpretation<br/>
+  (additional clause): any **profit-generating activity is considered commercial use**.
+- Please use this project in compliance with local laws and regulations.
 
 ## ⚖️ Disclaimer
-
 <p align="center">
-  <img src="https://github.com/docker/dockercraft/raw/master/docs/img/contribute.png?raw=true" alt="Contribution illustration" width="400">
+  <img src="https://github.com/docker/dockercraft/raw/master/docs/img/contribute.png?raw=true" alt="Contribution illustration">
 </p>
+This tool is for learning and personal use only. Please comply with the relevant terms of service. The developer is not responsible for any issues caused by using this tool. Please use it in accordance with local laws and regulations.
 
-**This tool is for learning and personal use only**. Please comply with relevant terms of service. The developer is not responsible for any issues caused by using this tool. Please use in accordance with local laws and regulations.
+[github-hosts]: https://raw.githubusercontent.com/racaljk/hosts/master/hosts "hosts on Github"
+[CC-NC-SA-4.0]: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh
 
 ---
 
