@@ -10,6 +10,8 @@
 <img src="https://img.shields.io/github/last-commit/Silentely/eSIM-Tools/main?label=%E4%B8%8A%E6%AC%A1%E6%9B%B4%E6%96%B0&color=success" alt="Last commit">
 <img src="https://api.netlify.com/api/v1/badges/8fc159e2-3996-4e1b-bf9d-1945a3474682/deploy-status" alt="Netlify Status">
 <br>
+[:us: English Version](README_EN.md)
+<br>
 </div>
 
 <p align="center">
@@ -17,8 +19,6 @@
 </p>
 
 专为已有 Giffgaff 和 Simyo 号码的用户设计的 eSIM 管理工具集，基于原生 ES6 模块架构，支持将物理 SIM 卡转换为 eSIM、设备更换和二维码生成。
-
-[:us: English Version](README_EN.md)
 
 
 ## 功能特性

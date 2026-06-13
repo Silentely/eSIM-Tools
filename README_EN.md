@@ -10,6 +10,8 @@
 <img src="https://img.shields.io/github/last-commit/Silentely/eSIM-Tools/main?label=%E4%B8%8A%E6%AC%A1%E6%9B%B4%E6%96%B0&color=success" alt="Last commit">
 <img src="https://api.netlify.com/api/v1/badges/8fc159e2-3996-4e1b-bf9d-1945a3474682/deploy-status" alt="Netlify Status">
 <br>
+[:cn: 中文版本](README.md)
+<br>
 </div>
 
 <p align="center">
@@ -17,8 +19,6 @@
 </p>
 
 A modern eSIM management toolkit for existing Giffgaff and Simyo subscribers, supporting physical SIM to eSIM conversion, device changes, and QR code generation.
-
-[:cn: 中文版本](README.md)
 
 ## ✨ Features
 
