@@ -68,7 +68,7 @@
     "core-js": "^3.45.0",
     "css-loader": "^6.8.1",
     "cssnano": "^6.0.1",
-    "esbuild": "^0.25.8",
+    "esbuild": "^0.28.1",
     "http-proxy-middleware": "^3.0.5",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.2.0",
