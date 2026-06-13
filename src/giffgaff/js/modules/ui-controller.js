@@ -5,12 +5,12 @@
 
 import { stateManager } from './state-manager.js';
 import { t, tl } from '../../../js/modules/i18n.js';
+import { generateQRCodeWithFallback } from '../../../js/modules/qrcode-generator.js';
 
 export class UIController {
     constructor() {
         this.elements = this.initElements();
         this.tooltips = new Map();
-        this.qrTimeoutId = null; // 追踪二维码超时定时器（issue #66）
         this._qrGeneration = 0; // 防止并发 generateQRCode 竞态
     }
 
@@ -416,118 +416,47 @@ export class UIController {
     }
 
     /**
-     * 生成二维码（issue #66: 添加超时处理，长时间加载失败时显示 LPA 字符串）
+     * 生成二维码（本地生成优先，后端 Function 降级）
      */
-    generateQRCode(data) {
+    async generateQRCode(data) {
         const size = 300;
-        const QR_TIMEOUT_MS = 5000; // 单个服务商超时5秒
-
-        // 清除之前的超时定时器，防止旧 timer 覆盖新二维码
-        if (this.qrTimeoutId) {
-            clearTimeout(this.qrTimeoutId);
-            this.qrTimeoutId = null;
-        }
-
-        // generation counter：防止并发调用时旧回调干扰新调用
         const gen = ++this._qrGeneration;
 
-        const vendors = [
-            (s, d) => `https://qrcode.show/${encodeURIComponent(d)}?size=${s}`,
-            (s, d) => `https://quickchart.io/qr?size=${s}&text=${encodeURIComponent(d)}`,
-            (s, d) => `https://api.qrserver.com/v1/create-qr-code/?size=${s}x${s}&data=${encodeURIComponent(d)}`
-        ];
-        let vendorIdx = 0;
-        let isResolved = false; // 防止超时和成功回调同时触发
+        try {
+            const labels = {
+                alt: tl('eSIM 二维码'),
+                ariaLabel: tl('eSIM 安装二维码'),
+                tooltipAlt: tl('eSIM 二维码放大预览')
+            };
 
-        const container = document.createElement('div');
-        container.className = 'qrcode-container';
-        container.style.position = 'relative';
-        container.style.display = 'inline-block';
+            const result = await generateQRCodeWithFallback(data, size, labels);
+            if (gen !== this._qrGeneration) return; // 防止并发调用干扰
 
-        const img = document.createElement('img');
-        const setSrc = () => { img.src = vendors[vendorIdx](size, data); };
-        setSrc();
-        img.setAttribute('loading','lazy');
-        img.alt = tl('eSIM二维码');
-        img.className = 'img-fluid';
-        img.style.border = '5px solid white';
-        img.style.borderRadius = '12px';
-        img.style.maxWidth = `${size}px`;
-
-        // 超时处理：二维码长时间加载失败时，显示 LPA 字符串提示
-        const startTimeout = () => {
-            clearTimeout(this.qrTimeoutId);
-            this.qrTimeoutId = setTimeout(() => {
-                // 如果已被新调用取代，忽略本次超时
-                if (gen !== this._qrGeneration) return;
-                if (!isResolved) {
-                    isResolved = true;
-                    this.qrTimeoutId = null;
-                    console.warn('[Giffgaff] QR code generation timed out');
-                    this.elements.qrcode.innerHTML = `
-                        <div class="alert alert-warning">
-                            <i class="fas fa-clock me-2"></i>
-                            ${t('giffgaff.app.qr.timeout')}
-                        </div>
-                    `;
-                }
-            }, QR_TIMEOUT_MS);
-        };
-
-        startTimeout();
-
-        img.onload = () => {
-            if (gen !== this._qrGeneration) return;
-            if (!isResolved) {
-                isResolved = true;
-                clearTimeout(this.qrTimeoutId);
-                this.qrTimeoutId = null;
+            if (result.tooltip && typeof this.showTooltipElement === 'function' && typeof this.hideTooltipElement === 'function') {
+                result.container.addEventListener('mouseenter', (event) => this.showTooltipElement(result.tooltip, event));
+                result.container.addEventListener('mouseleave', () => this.hideTooltipElement(result.tooltip));
             }
-        };
 
-        img.onerror = () => {
+            this.elements.qrcode.innerHTML = '';
+            this.elements.qrcode.appendChild(result.container);
+        } catch (error) {
             if (gen !== this._qrGeneration) return;
-            if (isResolved) return;
-            if (vendorIdx < vendors.length - 1) {
-                // 回退到下一个服务，重置超时计时器
-                vendorIdx += 1;
-                console.log('[Giffgaff] QR vendor fallback to:', vendorIdx + 1, '/', vendors.length);
-                startTimeout();
-                setSrc();
-            } else {
-                isResolved = true;
-                clearTimeout(this.qrTimeoutId);
-                this.qrTimeoutId = null;
-                this.elements.qrcode.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        ${t('giffgaff.app.qr.failed')}
-                    </div>
-                `;
-            }
-        };
+            console.error('[Giffgaff] QR code generation failed:', error);
 
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.style.padding = '0';
-        tooltip.style.background = 'none';
-        tooltip.style.boxShadow = 'none';
-        tooltip.style.willChange = 'transform';
+            // 使用 DOM API 创建元素，避免 innerHTML XSS 风险
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger';
 
-        const largeImg = document.createElement('img');
-        largeImg.style.width = '400px';
-        largeImg.style.height = '400px';
-        const setLargeSrc = () => { largeImg.src = vendors[vendorIdx](400, data); };
-        setLargeSrc();
-        tooltip.appendChild(largeImg);
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-exclamation-circle me-2';
+            alertDiv.appendChild(icon);
 
-        container.addEventListener('mouseenter', (e) => this.showTooltipElement(tooltip, e));
-        container.addEventListener('mouseleave', () => this.hideTooltipElement(tooltip));
+            const message = document.createTextNode(t('giffgaff.app.qr.failed'));
+            alertDiv.appendChild(message);
 
-        container.appendChild(img);
-        container.appendChild(tooltip);
-        this.elements.qrcode.innerHTML = '';
-        this.elements.qrcode.appendChild(container);
+            this.elements.qrcode.innerHTML = '';
+            this.elements.qrcode.appendChild(alertDiv);
+        }
     }
 
     /**
@@ -624,17 +553,24 @@ export class UIController {
             }
 
             // 生成二维码（放在最后，即使失败也不影响 LPA 文本显示）
-            try {
-                this.generateQRCode(state.lpaString);
-            } catch (error) {
+            // async 函数需要 await 或 .catch() 处理，避免 unhandled promise rejection
+            this.generateQRCode(state.lpaString).catch((error) => {
                 console.error('[Giffgaff] generateQRCode failed:', error);
-                this.elements.qrcode.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        二维码生成失败，请使用上方 LPA 字符串手动激活
-                    </div>
-                `;
-            }
+
+                // 使用 DOM API 创建错误提示，避免 innerHTML XSS 风险
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger';
+
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-exclamation-circle me-2';
+                alertDiv.appendChild(icon);
+
+                const message = document.createTextNode(tl('二维码生成失败，请使用上方 LPA 字符串手动激活'));
+                alertDiv.appendChild(message);
+
+                this.elements.qrcode.innerHTML = '';
+                this.elements.qrcode.appendChild(alertDiv);
+            });
 
             setTimeout(() => {
                 this.elements.resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });

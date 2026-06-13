@@ -103,6 +103,7 @@ const giffgaffTokenExchange = require('./netlify/functions/giffgaff-token-exchan
 const verifyCookie = require('./netlify/functions/verify-cookie');
 const giffgaffSmsActivate = require('./netlify/functions/giffgaff-sms-activate');
 const autoActivateEsim = require('./netlify/functions/auto-activate-esim');
+const qrcodeGenerate = require('./netlify/functions/qrcode-generate');
 const publicConfig = require('./netlify/functions/public-config');
 
 // 包装Netlify Functions为Express路由
@@ -157,6 +158,7 @@ const functionRoutes = [
   ['verify-cookie', verifyCookie],
   ['giffgaff-sms-activate', giffgaffSmsActivate],
   ['auto-activate-esim', autoActivateEsim],
+  ['qrcode-generate', qrcodeGenerate],
   ['public-config', publicConfig]
 ];
 app.locals.bffRoutes = functionRoutes.map(([name]) => `/bff/${name}`);

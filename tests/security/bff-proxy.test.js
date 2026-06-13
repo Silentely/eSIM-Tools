@@ -161,4 +161,25 @@ describe('BFF proxy guardrails', () => {
     expect(proxiedRequest.headers.get('x-esim-key')).toBe('test-access-key');
     expect(proxiedRequest.headers.get('x-app-key')).toBeNull();
   });
+
+  it('allows qrcode-generate BFF target', async () => {
+    const mod = await import('../../netlify/edge-functions/bff-proxy.js');
+    const request = new Request('https://example.com/bff/qrcode-generate', {
+      method: 'POST',
+      headers: {
+        origin: 'https://esim.cosr.eu.org',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ data: 'LPA:1$example', size: 300 })
+    });
+
+    const response = await mod.default(request);
+
+    expect(response.status).toBe(200);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const proxiedRequest = global.fetch.mock.calls[0][0];
+    expect(proxiedRequest.url).toBe('https://example.com/.netlify/functions/qrcode-generate');
+    expect(proxiedRequest.headers.get('x-esim-key')).toBe('test-access-key');
+  });
+
 });

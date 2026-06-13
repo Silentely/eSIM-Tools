@@ -12,6 +12,7 @@ const BFF_ROUTES = new Map([
   ['giffgaff-mfa-validation', ['POST', 'OPTIONS']],
   ['giffgaff-sms-activate', ['POST', 'OPTIONS']],
   ['auto-activate-esim', ['POST', 'OPTIONS']],
+  ['qrcode-generate', ['POST', 'OPTIONS']],
   ['verify-cookie', ['POST', 'OPTIONS']],
   ['public-config', ['GET', 'OPTIONS']]
 ]);
