@@ -552,6 +552,8 @@ export class UIController {
                 });
             }
 
+            // 清空旧二维码容器，防止异步生成期间显示过期内容
+            this.elements.qrcode.replaceChildren();
             // 生成二维码（放在最后，即使失败也不影响 LPA 文本显示）
             // async 函数需要 await 或 .catch() 处理，避免 unhandled promise rejection
             this.generateQRCode(state.lpaString).catch((error) => {

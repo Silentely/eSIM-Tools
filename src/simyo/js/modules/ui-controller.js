@@ -403,6 +403,8 @@ export class UIController {
         this.elements.resultContainer.style.display = 'block';
         this.elements.resultContainer.classList.add('active');
 
+        // 清空旧二维码容器，防止异步生成期间显示过期内容
+        this.elements.qrcode.replaceChildren();
         // generateQRCode 内部已处理所有错误，无需外部 .catch()
         this.generateQRCode(lpaString);
 
