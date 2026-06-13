@@ -128,10 +128,11 @@ describe('qrcode-generator', () => {
       })
     );
 
-    const { generateQRCodeWithFallback } = await import('../../src/js/modules/qrcode-generator.js');
+    const { generateQRCodeBackend } = await import('../../src/js/modules/qrcode-generator.js');
 
-    await expect(generateQRCodeWithFallback('LPA:1$example', 300))
-      .rejects.toThrow('QR code generation failed after local and backend fallback');
+    // 直接测试 generateQRCodeBackend 的超时转换逻辑
+    await expect(generateQRCodeBackend('LPA:1$example', 300))
+      .rejects.toThrow('Backend QR code generation timed out after 10000ms');
   });
 
   it('后端返回无效 JSON 时应该抛出错误', async () => {

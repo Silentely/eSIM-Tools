@@ -75,6 +75,12 @@ exports.handler = withAuth(async (event, context, { body }) => {
   } catch (error) {
     // 不记录 data，避免 LPA 激活信息进入日志或 Sentry。
     console.error('[qrcode-generate] QR code generation failed:', error.message);
-    throw error;
+
+    // 创建一个不含敏感数据的错误对象，防止 LPA 字符串通过 Sentry 泄露
+    const sanitizedError = new Error(error.message);
+    sanitizedError.name = error.name;
+    sanitizedError.stack = error.stack;
+    // 不复制可能包含 body.data 的属性
+    throw sanitizedError;
   }
 }, { requireAuth: true });

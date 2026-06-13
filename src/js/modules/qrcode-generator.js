@@ -1,5 +1,7 @@
 'use strict';
 
+import { tl } from './i18n.js';
+
 const QRCODE_CDN_URL = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js';
 const DEFAULT_QR_SIZE = 300;
 const MIN_QR_SIZE = 200;
@@ -122,12 +124,6 @@ export async function loadQRCodeLibrary() {
 
     const existingScript = document.querySelector(`script[src="${QRCODE_CDN_URL}"]`);
 
-    // 如果脚本已存在且 window.QRCode 已加载，直接返回
-    if (existingScript && window.QRCode) {
-      resolve(window.QRCode);
-      return;
-    }
-
     // 如果脚本已存在但 window.QRCode 未加载（说明脚本已失效），移除并重新加载
     if (existingScript) {
       console.warn('[QRCode] Existing script found but QRCode global is missing, removing stale script');
@@ -204,7 +200,7 @@ function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl, labels 
     alt = 'eSIM QR Code',
     ariaLabel = 'eSIM Installation QR Code',
     tooltipAlt = 'eSIM QR Code Preview'
-  } = labels;
+  } = labels || {};
 
   const container = document.createElement('div');
   container.className = 'qrcode-container';

@@ -403,24 +403,8 @@ export class UIController {
         this.elements.resultContainer.style.display = 'block';
         this.elements.resultContainer.classList.add('active');
 
-        // async 函数需要 .catch() 处理，避免 unhandled promise rejection
-        this.generateQRCode(lpaString).catch((error) => {
-            console.error('[Simyo] generateQRCode failed:', error);
-
-            // 使用 DOM API 创建错误提示，避免 innerHTML XSS 风险
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-danger';
-
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-exclamation-circle me-2';
-            alertDiv.appendChild(icon);
-
-            const message = document.createTextNode(tl('二维码生成失败，请使用上方 LPA 字符串手动激活'));
-            alertDiv.appendChild(message);
-
-            this.elements.qrcode.innerHTML = '';
-            this.elements.qrcode.appendChild(alertDiv);
-        });
+        // generateQRCode 内部已处理所有错误，无需外部 .catch()
+        this.generateQRCode(lpaString);
 
         this.elements.activationInfo.innerHTML = `
             <div class="mb-3">

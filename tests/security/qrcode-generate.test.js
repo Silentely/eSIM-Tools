@@ -7,7 +7,7 @@
 // 必须在 require 函数文件前 Mock qrcode 模块
 jest.mock('qrcode', () => ({
   toDataURL: jest.fn()
-}), { virtual: true });
+}));
 
 const QRCode = require('qrcode');
 
