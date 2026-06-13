@@ -112,7 +112,7 @@ class Logger {
       console.log('视口:', `${window.innerWidth}x${window.innerHeight}`);
       console.log('Cookie:', navigator.cookieEnabled ? '启用' : '禁用');
       console.log('ServiceWorker:', 'serviceWorker' in navigator ? '支持' : '不支持');
-      console.log('NODE_ENV:', typeof process !== 'undefined' ? process.env?.NODE_ENV : 'N/A');
+      console.log('NODE_ENV:', typeof process !== 'undefined' ? process.env.NODE_ENV : 'N/A');
       console.groupEnd();
     } else {
       // 生产环境：关键排错信息（折叠分组，不占空间）

@@ -40,7 +40,7 @@ class PerformanceMonitor {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
-        
+
         this.recordMetric('LCP', {
           value: lastEntry.renderTime || lastEntry.loadTime,
           rating: this.getRating('LCP', lastEntry.renderTime || lastEntry.loadTime),
@@ -209,7 +209,7 @@ class PerformanceMonitor {
     });
 
     // Log in development
-    if (process.env.NODE_ENV === 'development') {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
       Logger.log(`[Performance] ${name}:`, data);
     }
 
@@ -281,7 +281,7 @@ class PerformanceMonitor {
   sendToAnalytics(name, data) {
     // Implement actual analytics integration here
     // Example: Google Analytics, Sentry, DataDog, etc.
-    
+
     // For now, just store in sessionStorage for debugging
     try {
       const stored = JSON.parse(sessionStorage.getItem('performance-metrics') || '{}');
