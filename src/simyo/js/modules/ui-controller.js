@@ -5,6 +5,7 @@
 
 import { stateManager } from './state-manager.js';
 import { t, tl } from '../../../js/modules/i18n.js';
+import { generateQRCodeWithFallback } from '../../../js/modules/qrcode-generator.js';
 
 export class UIController {
     constructor() {
@@ -336,120 +337,40 @@ export class UIController {
     }
 
     /**
-     * 生成二维码（含超时处理，单服务 5 秒超时，回退时重置计时器）
+     * 生成二维码（本地生成优先，后端 Function 降级）
      */
-    generateQRCode(data) {
+    async generateQRCode(data) {
         const size = 300;
-        const QR_TIMEOUT_MS = 5000; // 单个服务商超时5秒
 
-        // 清除之前的超时定时器，防止旧 timer 覆盖新二维码
+        // 清除旧的超时定时器，避免历史调用覆盖当前二维码区域。
         if (this.qrTimeoutId) {
             clearTimeout(this.qrTimeoutId);
             this.qrTimeoutId = null;
         }
 
-        // generation counter：防止并发调用时旧回调干扰新调用
         const gen = ++this._qrGeneration;
 
-        const vendors = [
-            (s, d) => `https://qrcode.show/${encodeURIComponent(d)}?size=${s}`,
-            (s, d) => `https://quickchart.io/qr?size=${s}&text=${encodeURIComponent(d)}`,
-            (s, d) => `https://api.qrserver.com/v1/create-qr-code/?size=${s}x${s}&data=${encodeURIComponent(d)}`
-        ];
-        let vendorIdx = 0;
-        let isResolved = false; // 防止超时和成功回调同时触发
+        try {
+            const result = await generateQRCodeWithFallback(data, size);
+            if (gen !== this._qrGeneration) return; // 防止并发调用干扰
 
-        const container = document.createElement('div');
-        container.className = 'qrcode-container';
-        container.style.position = 'relative';
-        container.style.display = 'inline-block';
-
-        const img = document.createElement('img');
-        const setSrc = () => { img.src = vendors[vendorIdx](size, data); };
-        setSrc();
-        img.alt = tl('eSIM二维码');
-        img.setAttribute('role', 'img');
-        img.setAttribute('aria-label', tl('eSIM 安装二维码'));
-        img.className = 'img-fluid';
-        img.style.border = '5px solid white';
-        img.style.borderRadius = '12px';
-        img.style.maxWidth = `${size}px`;
-        img.setAttribute('loading', 'lazy');
-
-        // 超时处理：二维码长时间加载失败时，显示 LPA 字符串提示
-        const startTimeout = () => {
-            clearTimeout(this.qrTimeoutId);
-            this.qrTimeoutId = setTimeout(() => {
-                // 如果已被新调用取代，忽略本次超时
-                if (gen !== this._qrGeneration) return;
-                if (!isResolved) {
-                    isResolved = true;
-                    this.qrTimeoutId = null;
-                    console.warn('[Simyo] QR code generation timed out');
-                    this.elements.qrcode.innerHTML = `
-                        <div class="alert alert-warning">
-                            <i class="fas fa-clock me-2"></i>
-                            ${t('simyo.app.qr.timeout')}
-                        </div>
-                    `;
-                }
-            }, QR_TIMEOUT_MS);
-        };
-
-        startTimeout();
-
-        img.onload = () => {
-            if (gen !== this._qrGeneration) return;
-            if (!isResolved) {
-                isResolved = true;
-                clearTimeout(this.qrTimeoutId);
-                this.qrTimeoutId = null;
+            if (result.tooltip && typeof this.showTooltipElement === 'function' && typeof this.hideTooltipElement === 'function') {
+                result.container.addEventListener('mouseenter', (event) => this.showTooltipElement(result.tooltip, event));
+                result.container.addEventListener('mouseleave', () => this.hideTooltipElement(result.tooltip));
             }
-        };
 
-        img.onerror = () => {
+            this.elements.qrcode.innerHTML = '';
+            this.elements.qrcode.appendChild(result.container);
+        } catch (error) {
             if (gen !== this._qrGeneration) return;
-            if (isResolved) return;
-            if (vendorIdx < vendors.length - 1) {
-                // 回退到下一个服务，重置超时计时器
-                vendorIdx += 1;
-                console.log('[Simyo] QR vendor fallback to:', vendorIdx + 1, '/', vendors.length);
-                startTimeout();
-                setSrc();
-            } else {
-                isResolved = true;
-                clearTimeout(this.qrTimeoutId);
-                this.qrTimeoutId = null;
-                this.elements.qrcode.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        ${t('simyo.app.qr.failed')}
-                    </div>
-                `;
-            }
-        };
-
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.style.padding = '0';
-        tooltip.style.background = 'none';
-        tooltip.style.boxShadow = 'none';
-        tooltip.style.willChange = 'transform';
-
-        const largeImg = document.createElement('img');
-        const setLargeSrc = () => { largeImg.src = vendors[vendorIdx](400, data); };
-        setLargeSrc();
-        largeImg.style.width = '400px';
-        largeImg.style.height = '400px';
-        tooltip.appendChild(largeImg);
-
-        container.addEventListener('mouseenter', (e) => this.showTooltipElement(tooltip, e));
-        container.addEventListener('mouseleave', () => this.hideTooltipElement(tooltip));
-
-        container.appendChild(img);
-        container.appendChild(tooltip);
-        this.elements.qrcode.innerHTML = '';
-        this.elements.qrcode.appendChild(container);
+            console.error('[Simyo] QR code generation failed:', error);
+            this.elements.qrcode.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    ${t('simyo.app.qr.failed')}
+                </div>
+            `;
+        }
     }
 
     /**
