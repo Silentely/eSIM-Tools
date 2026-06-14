@@ -45,16 +45,16 @@ If you don't have a number yet, register through these links to get bonus credit
 
 ### 🇬🇧 Giffgaff Users
 
-✅ Have an existing Giffgaff number (UK carrier)
-✅ Want to switch from physical SIM to eSIM
-✅ Need to reactivate eSIM on a new device
+- ✅ Have an existing Giffgaff number (UK carrier)
+- ✅ Want to switch from physical SIM to eSIM
+- ✅ Need to reactivate eSIM on a new device
 ❌ New users registering a number (must obtain number through official or third-party channels first)
 
 ### 🇳🇱 Simyo Users
 
-✅ Have an existing Simyo number (Netherlands carrier, starting with 06)
-✅ Need to change device or convert to eSIM
-❌ New users registering a number (must register through official app first)
+- ✅ Have an existing Simyo number (Netherlands carrier, starting with 06)
+- ✅ Need to change device or convert to eSIM
+- ❌ New users registering a number (must register through official app first)
 
 ---
 
