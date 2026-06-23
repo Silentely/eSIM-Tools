@@ -2,10 +2,11 @@
 
 import { tl } from './i18n.js';
 
-// CDN 多源备用列表（全部已验证 HTTP 200，解决 ESIM-TOOLS-15 CDN 故障问题）
-// 包含国际源 + 中国镜像源，覆盖全球用户（包括中国大陆）
+// CDN 多源备用列表（全部已验证 HTTP 200 + 浏览器 UMD 全局变量）
+// 统一使用 qrcode-generator 包（UMD 格式，设置 window.qrcode 全局变量）
+// 注意：jsdelivr 的 qrcode@1.5.4/lib/browser.js 是 CommonJS 模块，浏览器无法使用
 const QRCODE_CDN_URLS = [
-  'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.js',
+  'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
   'https://cdn.bootcdn.net/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
 ];
@@ -112,7 +113,10 @@ function validateQRCodeData(data) {
  * @returns {Promise<Object>} qrcode 库对象
  */
 export async function loadQRCodeLibrary() {
-  // 1. 检查 window.QRCode（可能已被 CDN 脚本加载）
+  // 1. 检查全局变量（可能已被 CDN 脚本加载）
+  if (window.qrcode) {
+    return window.qrcode;
+  }
   if (window.QRCode) {
     return window.QRCode;
   }
@@ -175,12 +179,18 @@ function loadSingleCDN(cdnUrl) {
 
     const handleLoad = () => {
       cleanup();
+      // qrcode-generator 包设置 window.qrcode（小写）
+      if (window.qrcode) {
+        resolve(window.qrcode);
+        return;
+      }
+      // 兼容：部分 CDN 可能设置 window.QRCode（大写）
       if (window.QRCode) {
         resolve(window.QRCode);
         return;
       }
       script.remove();
-      reject(new Error('QRCode library loaded but QRCode global is missing'));
+      reject(new Error('QRCode library loaded but global variable is missing'));
     };
 
     const handleError = () => {
@@ -324,8 +334,8 @@ export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE, labels
     }
 
     const payload = await response.json();
-    if (!payload?.success || typeof payload.qrcode !== 'string') {
-      throw new Error(payload?.error || 'Backend QR code response is invalid');
+    if (!(payload && payload.success) || typeof payload.qrcode !== 'string') {
+      throw new Error((payload && payload.error) || 'Backend QR code response is invalid');
     }
 
     return {
