@@ -238,6 +238,9 @@
   function shouldShowReportDialog(event) {
     var empty = { shouldShow: false, fingerprint: '' };
 
+    // 空事件防御
+    if (!event || typeof event !== 'object') return empty;
+
     // 仅生产环境弹窗
     if (isDev) return empty;
 
@@ -284,7 +287,9 @@
     },
     browserTracingIntegration: function() { return {}; },
     feedbackIntegration: function() { return {}; },
-    replayIntegration: function() { return {}; }
+    replayIntegration: function() { return {}; },
+    showReportDialog: function() {},
+    lastEventId: function() { return null; }
   };
 
   // ===================================
@@ -450,6 +455,14 @@
           window.Sentry.feedbackIntegration({
             colorScheme: 'system',
             enableScreenshot: true,
+            triggerLabel: '反馈',
+            formTitle: '发送反馈',
+            submitButtonLabel: '提交',
+            cancelButtonLabel: '取消',
+            nameLabel: '名称',
+            emailLabel: '邮箱',
+            messageLabel: '描述',
+            successMessageText: '感谢您的反馈！',
           }),
         ],
         // 追踪传播目标 - 指定哪些请求应该添加追踪头
@@ -642,7 +655,7 @@
             lastReportDialogTime = Date.now();
             // 延迟弹窗，确保 Sentry 事件已发送完成
             setTimeout(function() {
-              try { window.Sentry.showReportDialog({ eventId: event.event_id }); } catch (e) { /* 忽略弹窗错误 */ }
+              try { window.Sentry.showReportDialog({ eventId: event.event_id, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitleLine2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' }); } catch (e) { /* 忽略弹窗错误 */ }
             }, 500);
           }
 

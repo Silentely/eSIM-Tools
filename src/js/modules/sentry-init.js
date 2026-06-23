@@ -334,6 +334,9 @@ let lastReportDialogFingerprint = '';
 function shouldShowReportDialog(event) {
   const empty = { shouldShow: false, fingerprint: '' };
 
+  // 空事件防御
+  if (!event || typeof event !== 'object') return empty;
+
   // 仅生产环境弹窗
   if (isDev) return empty;
 
@@ -405,7 +408,11 @@ function initSentry() {
 
       // 性能监控
       integrations: [
-        window.Sentry.browserTracingIntegration(),
+        window.Sentry.browserTracingIntegration({
+          traceFetch: true,
+          traceXHR: true,
+          enableLongTask: true,
+        }),
         // Session Replay - 记录用户操作以重现错误场景
         window.Sentry.replayIntegration({
           maxReplayDuration: 60000,
@@ -416,9 +423,27 @@ function initSentry() {
         window.Sentry.feedbackIntegration({
           colorScheme: 'system',
           enableScreenshot: true,
+          triggerLabel: '反馈',
+          formTitle: '发送反馈',
+          submitButtonLabel: '提交',
+          cancelButtonLabel: '取消',
+          nameLabel: '名称',
+          emailLabel: '邮箱',
+          messageLabel: '描述',
+          successMessageText: '感谢您的反馈！',
         }),
       ],
       tracesSampleRate: 0.1,
+
+      // 追踪传播目标 - 指定哪些请求应该添加追踪头
+      tracePropagationTargets: [
+        'localhost',
+        /^https:\/\/esim\.cosr\.eu\.org/,
+        /^https:\/\/.*\.giffgaff\.com/,
+        /^https:\/\/.*\.simyo\.nl/,
+        /^https:\/\/qrcode\.show/,
+        /^https:\/\/api\.qrserver\.com/,
+      ],
       // Session Replay 采样率
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
@@ -455,8 +480,10 @@ function initSentry() {
         /AbortError/,
         // 第三方脚本噪音
         /turnstile/i,
+        // 浏览器扩展注入 CommonJS require 到纯 ES Module 环境
+        /require is not defined/i,
         // 浏览器扩展注入的 SweetAlert 冲突（t.swal=e() 模式）
-        /swal/i,
+        /t\.swal=e\(\)/i,
         // Google Tag Manager 噪音 (ESIM-TOOLS-18)
         /gtag\/js/,
         /gtm\.js/,
@@ -522,8 +549,31 @@ function initSentry() {
           }
         }
 
-        // 2. 删除敏感请求数据
+        // 2. 脱敏 URL 中的敏感查询参数 + 删除敏感请求数据
+        function sanitizeQueryString(url) {
+          if (!url) return url;
+          const sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
+          try {
+            const urlObj = new URL(url, window.location.origin);
+            sensitiveParams.forEach(param => {
+              if (urlObj.searchParams.has(param)) {
+                urlObj.searchParams.set(param, '***');
+              }
+            });
+            return urlObj.toString();
+          } catch (e) {
+            return url.replace(/([?&])(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1$2=***');
+          }
+        }
+
         if (event.request) {
+          if (event.request.query_string) {
+            event.request.query_string = event.request.query_string
+              .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
+          }
+          if (event.request.url) {
+            event.request.url = sanitizeQueryString(event.request.url);
+          }
           delete event.request.cookies;
           if (event.request.headers) {
             delete event.request.headers['authorization'];
@@ -557,7 +607,7 @@ function initSentry() {
           lastReportDialogTime = Date.now();
           // 延迟弹窗，确保 Sentry 事件已发送完成
           setTimeout(function() {
-            try { showReportDialog({ eventId: event.event_id }); } catch (e) { /* 忽略弹窗错误 */ }
+            try { showReportDialog({ eventId: event.event_id, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitleLine2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' }); } catch (e) { /* 忽略弹窗错误 */ }
           }, 500);
         }
 
@@ -593,6 +643,8 @@ const SentryMock = {
   browserTracingIntegration: () => ({}),
   feedbackIntegration: () => ({}),
   replayIntegration: () => ({}),
+  showReportDialog: () => {},
+  lastEventId: () => null,
 };
 
 // ===================================
