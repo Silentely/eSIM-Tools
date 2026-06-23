@@ -14,10 +14,7 @@ class ResourceHintsManager {
         'https://cdn.jsdelivr.net',
         'https://cdnjs.cloudflare.com'
       ],
-      dnsPrefetch: [
-        'https://api.qrserver.com',
-        'https://qrcode.show'
-      ],
+      dnsPrefetch: [],
       preload: {
         fonts: [],
         scripts: [
@@ -131,7 +128,7 @@ class ResourceHintsManager {
         if (entry.isIntersecting) {
           const link = entry.target;
           const href = link.getAttribute('href');
-          
+
           if (href && !link.dataset.prefetched) {
             this.prefetchRoute(href);
             link.dataset.prefetched = 'true';
@@ -211,7 +208,7 @@ class ResourceHintsManager {
    */
   createLink(attributes) {
     const link = document.createElement('link');
-    
+
     Object.entries(attributes).forEach(([key, value]) => {
       if (value) {
         if (key === 'crossOrigin') {
@@ -255,7 +252,7 @@ class ResourceHintsManager {
     const options = { rel: 'preload', href, as };
     if (type) options.type = type;
     if (as === 'font') options.crossOrigin = 'anonymous';
-    
+
     this.createLink(options);
   }
 

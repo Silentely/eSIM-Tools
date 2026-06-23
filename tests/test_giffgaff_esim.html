@@ -808,9 +808,9 @@
                 const lpaString = tokenResponse.data.eSimDownloadToken.lpaString;
                 testFramework.assertTrue(lpaString.startsWith('LPA:'), 'LPA string should start with LPA:');
 
-                // 模拟二维码生成
-                const qrUrl = `https://qrcode.show/${encodeURIComponent(lpaString)}?size=300`;
-                testFramework.assertTrue(qrUrl.includes('qrcode.show'), 'Should generate QR code URL');
+                // 模拟本地二维码生成（data URL）
+                const qrUrl = `data:image/png;base64,mock-qr-${encodeURIComponent(lpaString)}`;
+                testFramework.assertTrue(qrUrl.startsWith('data:image/png;base64'), 'Should generate QR code data URL');
 
                 return true;
             });

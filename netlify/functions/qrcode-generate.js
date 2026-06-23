@@ -48,6 +48,8 @@ function withTimeout(promise, timeoutMs) {
 }
 
 exports.handler = withAuth(async (event, context, { body }) => {
+  const startTime = Date.now();
+
   // 405 优先于 Schema 验证（确保 HTTP 方法错误优先返回）
   if (event.httpMethod !== 'POST') {
     throw new AuthError('Method Not Allowed', 405);
@@ -58,6 +60,9 @@ exports.handler = withAuth(async (event, context, { body }) => {
 
   const size = normalizeSize(body.size);
 
+  // 记录请求开始（不记录 body.data，避免 LPA 激活信息泄露）
+  console.log(`[qrcode-generate] Request received: size=${size}, dataLength=${body.data ? body.data.length : 0}`);
+
   try {
     const qrcode = await withTimeout(QRCode.toDataURL(body.data, {
       errorCorrectionLevel: 'M',
@@ -65,6 +70,11 @@ exports.handler = withAuth(async (event, context, { body }) => {
       type: 'image/png',
       width: size
     }), QR_TIMEOUT_MS);
+
+    const duration = Date.now() - startTime;
+
+    // 记录成功（不记录 QR 码内容）
+    console.log(`[qrcode-generate] Success: size=${size}, duration=${duration}ms, qrcodeLength=${qrcode.length}`);
 
     return {
       statusCode: 200,
@@ -74,8 +84,10 @@ exports.handler = withAuth(async (event, context, { body }) => {
       })
     };
   } catch (error) {
+    const duration = Date.now() - startTime;
+
     // 不记录 data，避免 LPA 激活信息进入日志或 Sentry。
-    console.error('[qrcode-generate] QR code generation failed:', error.message);
+    console.error(`[qrcode-generate] Failed: error=${error.message}, duration=${duration}ms`);
 
     // 创建一个不含敏感数据的错误对象，防止 LPA 字符串通过 Sentry 泄露
     const sanitizedError = new Error(error.message);

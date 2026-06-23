@@ -3,30 +3,48 @@
  */
 
 describe('qrcode-generator', () => {
+  /** 创建本地生成失败的 qrcode-generator mock */
+  function createFailingQRMock() {
+    return jest.fn(() => ({
+      addData: jest.fn(),
+      make: jest.fn(() => { throw new Error('local failed'); }),
+      getModuleCount: jest.fn(() => 25),
+      createDataURL: jest.fn()
+    }));
+  }
+
   beforeEach(() => {
     jest.resetModules();
     fetch.mockReset();
     delete window.QRCode;
+    delete window.qrcode;
   });
 
   it('应该使用浏览器本地 qrcode.js 生成 img 容器', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn((data, options) => Promise.resolve(`data:image/png;base64,local-${options.width}`))
+    // qrcode-generator 包的 mock：window.qrcode 是一个工厂函数
+    const mockQRInstance = {
+      addData: jest.fn(),
+      make: jest.fn(),
+      getModuleCount: jest.fn(() => 25),  // 25x25 模块的 QR 码
+      createDataURL: jest.fn((cellSize, margin) => `data:image/png;base64,local-${cellSize}`)
     };
+    window.qrcode = jest.fn(() => mockQRInstance);
 
     const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
     const result = await generateQRCodeLocal('LPA:1$example', 300);
 
     expect(result.source).toBe('local');
     expect(result.container.className).toBe('qrcode-container');
-    expect(result.container.querySelector('img').getAttribute('src')).toBe('data:image/png;base64,local-300');
-    expect(window.QRCode.toDataURL).toHaveBeenCalledTimes(2);
+    expect(result.container.querySelector('img').getAttribute('src')).toContain('data:image/png;base64,local-');
+    expect(window.qrcode).toHaveBeenCalledWith(0, 'M');
+    expect(mockQRInstance.addData).toHaveBeenCalledWith('LPA:1$example');
+    expect(mockQRInstance.make).toHaveBeenCalled();
+    expect(mockQRInstance.createDataURL).toHaveBeenCalledTimes(2);  // 正常尺寸 + 大尺寸
   });
 
   it('本地生成失败时应该调用后端 BFF 降级', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn(() => Promise.reject(new Error('local failed')))
-    };
+    window.qrcode = createFailingQRMock();
+
     fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true, qrcode: 'data:image/png;base64,backend' })
@@ -43,9 +61,8 @@ describe('qrcode-generator', () => {
   });
 
   it('本地和后端都失败时应该抛出最终错误', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn(() => Promise.reject(new Error('local failed')))
-    };
+    window.qrcode = createFailingQRMock();
+
     fetch.mockResolvedValueOnce({
       ok: false,
       status: 500
@@ -58,20 +75,18 @@ describe('qrcode-generator', () => {
   });
 
   it('应该拒绝过长的二维码内容', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn()
-    };
+    // 模拟 qrcode-generator 已加载
+    window.qrcode = jest.fn();
 
     const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
 
     await expect(generateQRCodeLocal('x'.repeat(2049), 300))
-      .rejects.toThrow('Local QR code generation failed');
+      .rejects.toThrow('QR code data length must be between');
   });
 
   it('应该拒绝非整数的 size', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn()
-    };
+    // 模拟 qrcode-generator 已加载
+    window.qrcode = jest.fn();
 
     const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
 
@@ -80,9 +95,8 @@ describe('qrcode-generator', () => {
   });
 
   it('应该拒绝低于最小值的 size', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn()
-    };
+    // 模拟 qrcode-generator 已加载
+    window.qrcode = jest.fn();
 
     const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
 
@@ -91,9 +105,8 @@ describe('qrcode-generator', () => {
   });
 
   it('应该拒绝高于最大值的 size', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn()
-    };
+    // 模拟 qrcode-generator 已加载
+    window.qrcode = jest.fn();
 
     const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
 
@@ -102,9 +115,8 @@ describe('qrcode-generator', () => {
   });
 
   it('应该拒绝非字符串的 data', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn()
-    };
+    // 模拟 qrcode-generator 已加载
+    window.qrcode = jest.fn();
 
     const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
 
@@ -113,9 +125,7 @@ describe('qrcode-generator', () => {
   });
 
   it('后端超时时应该抛出超时错误', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn(() => Promise.reject(new Error('local failed')))
-    };
+    window.qrcode = createFailingQRMock();
 
     // Mock fetch 超时（AbortError）
     fetch.mockImplementationOnce(() =>
@@ -136,9 +146,7 @@ describe('qrcode-generator', () => {
   });
 
   it('后端返回无效 JSON 时应该抛出错误', async () => {
-    window.QRCode = {
-      toDataURL: jest.fn(() => Promise.reject(new Error('local failed')))
-    };
+    window.qrcode = createFailingQRMock();
 
     fetch.mockResolvedValueOnce({
       ok: true,
@@ -149,5 +157,145 @@ describe('qrcode-generator', () => {
 
     await expect(generateQRCodeWithFallback('LPA:1$example', 300))
       .rejects.toThrow('QR code generation failed after local and backend fallback');
+  });
+
+  // ========== 日志和 Sentry 上报测试 ==========
+
+  it('本地生成成功时应输出 console.log', async () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+    const mockQRInstance = {
+      addData: jest.fn(),
+      make: jest.fn(),
+      getModuleCount: jest.fn(() => 25),
+      createDataURL: jest.fn((cellSize, margin) => `data:image/png;base64,local-${cellSize}`)
+    };
+    window.qrcode = jest.fn(() => mockQRInstance);
+
+    const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
+    await generateQRCodeLocal('LPA:1$example', 300);
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[QRCode] Local generation success')
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('size=300')
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('本地生成失败时应输出 console.warn 并上报 Sentry', async () => {
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+    window.Sentry = { captureMessage: jest.fn() };
+
+    window.qrcode = createFailingQRMock();
+
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ success: true, qrcode: 'data:image/png;base64,backend' })
+    });
+
+    const { generateQRCodeWithFallback } = await import('../../src/js/modules/qrcode-generator.js');
+    await generateQRCodeWithFallback('LPA:1$example', 300);
+
+    // 验证 console.warn 输出降级日志（第一个参数包含关键信息）
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[QRCode] Local generation failed'),
+      expect.anything()
+    );
+
+    // 验证 Sentry captureMessage 被调用
+    expect(window.Sentry.captureMessage).toHaveBeenCalledWith(
+      'QR Code qr_fallback failed',
+      expect.objectContaining({
+        level: 'warning',
+        tags: expect.objectContaining({
+          module: 'qrcode-generation',
+          source: 'local',
+          type: 'qr_fallback'
+        })
+      })
+    );
+
+    delete window.Sentry;
+    consoleSpy.mockRestore();
+  });
+
+  it('后端生成成功时应输出 console.log', async () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+    window.qrcode = createFailingQRMock();
+
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ success: true, qrcode: 'data:image/png;base64,backend-qr-data' })
+    });
+
+    const { generateQRCodeWithFallback } = await import('../../src/js/modules/qrcode-generator.js');
+    await generateQRCodeWithFallback('LPA:1$example', 300);
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[QRCode] Backend generation success')
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('后端生成失败时应输出 console.error 并上报 Sentry', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    window.Sentry = { captureMessage: jest.fn() };
+
+    window.qrcode = createFailingQRMock();
+
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500
+    });
+
+    const { generateQRCodeWithFallback } = await import('../../src/js/modules/qrcode-generator.js');
+    await expect(generateQRCodeWithFallback('LPA:1$example', 300))
+      .rejects.toThrow('QR code generation failed after local and backend fallback');
+
+    // 验证 console.error 输出后端失败日志（第一个参数包含关键信息）
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[QRCode] Backend fallback failed'),
+      expect.anything()
+    );
+
+    // 验证 Sentry 上报了后端失败事件
+    expect(window.Sentry.captureMessage).toHaveBeenCalledWith(
+      'QR Code qr_generation failed',
+      expect.objectContaining({
+        level: 'warning',
+        tags: expect.objectContaining({
+          source: 'failed'
+        })
+      })
+    );
+
+    delete window.Sentry;
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('CDN 加载成功时应输出 console.log', async () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+    const mockQRInstance = {
+      addData: jest.fn(),
+      make: jest.fn(),
+      getModuleCount: jest.fn(() => 25),
+      createDataURL: jest.fn((cellSize, margin) => `data:image/png;base64,local-${cellSize}`)
+    };
+    window.qrcode = jest.fn(() => mockQRInstance);
+
+    const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
+    await generateQRCodeLocal('LPA:1$example', 300);
+
+    // 如果 window.qrcode 已存在，CDN 不会被加载，所以检查是否有 CDN 或 Local 日志
+    const allCalls = consoleSpy.mock.calls.flat().join(' ');
+    expect(allCalls).toMatch(/\[QRCode\].*(CDN loaded|Local generation success)/);
+
+    consoleSpy.mockRestore();
   });
 });

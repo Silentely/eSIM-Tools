@@ -1,7 +1,5 @@
 'use strict';
 
-import { tl } from './i18n.js';
-
 // CDN 多源备用列表（全部已验证 HTTP 200 + 浏览器 UMD 全局变量）
 // 统一使用 qrcode-generator 包（UMD 格式，设置 window.qrcode 全局变量）
 // 注意：jsdelivr 的 qrcode@1.5.4/lib/browser.js 是 CommonJS 模块，浏览器无法使用
@@ -16,6 +14,9 @@ const MAX_QR_SIZE = 600;
 const MAX_QR_DATA_LENGTH = 2048;
 const BACKEND_ENDPOINT = '/bff/qrcode-generate';
 const BACKEND_TIMEOUT_MS = 10000;
+const CDN_LOAD_TIMEOUT_MS = 5000;
+const QR_MARGIN_MODULES = 8;
+const LARGE_PREVIEW_SIZE = 400;
 
 let qrCodeLibraryPromise = null;
 
@@ -30,8 +31,11 @@ let qrCodeLibraryPromise = null;
  */
 function trackQRCodeEvent({ type, source, success, duration, error }) {
   try {
+    const isBrowser = typeof window !== 'undefined';
+    if (!isBrowser) return;
+
     // 1. 上报到 Sentry（错误事件）
-    if (!success && typeof window !== 'undefined' && window.Sentry) {
+    if (!success && window.Sentry) {
       window.Sentry.captureMessage(`QR Code ${type} failed`, {
         level: 'warning',
         tags: {
@@ -47,16 +51,14 @@ function trackQRCodeEvent({ type, source, success, duration, error }) {
     }
 
     // 2. 上报到 Analytics（成功和失败都上报）
-    if (typeof window !== 'undefined') {
-      window.__esimAnalytics = window.__esimAnalytics || [];
-      window.__esimAnalytics.push({
-        event: type,
-        source,
-        success,
-        duration,
-        error: error || null
-      });
-    }
+    window.__esimAnalytics = window.__esimAnalytics || [];
+    window.__esimAnalytics.push({
+      event: type,
+      source,
+      success,
+      duration,
+      error: error || null
+    });
 
     // 3. 控制台日志（开发调试）
     if (!success) {
@@ -136,12 +138,14 @@ export async function loadQRCodeLibrary() {
  * @returns {Promise<Object>} QRCode 库对象
  */
 async function loadFromCDNWithRetry() {
-  for (const cdnUrl of QRCODE_CDN_URLS) {
+  for (let i = 0; i < QRCODE_CDN_URLS.length; i++) {
+    const cdnUrl = QRCODE_CDN_URLS[i];
     try {
       const lib = await loadSingleCDN(cdnUrl);
+      console.log(`[QRCode] CDN loaded successfully: source=${i + 1}/${QRCODE_CDN_URLS.length}, url=${cdnUrl}`);
       return lib;
     } catch (error) {
-      console.warn(`[QRCode] CDN ${cdnUrl} failed: ${error.message}`);
+      console.warn(`[QRCode] CDN ${i + 1}/${QRCODE_CDN_URLS.length} failed: url=${cdnUrl}, error=${error.message}`);
     }
   }
   qrCodeLibraryPromise = null;
@@ -160,7 +164,6 @@ function loadSingleCDN(cdnUrl) {
       return;
     }
 
-    const LOAD_TIMEOUT_MS = 5000;
     let timeoutId = null;
 
     // 移除已失效的旧脚本
@@ -205,7 +208,7 @@ function loadSingleCDN(cdnUrl) {
       cleanup();
       script.remove();
       reject(new Error(`QRCode library loading timed out from ${cdnUrl}`));
-    }, LOAD_TIMEOUT_MS);
+    }, CDN_LOAD_TIMEOUT_MS);
 
     script.src = cdnUrl;
     script.async = true;
@@ -231,7 +234,7 @@ function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl, labels 
     alt = 'eSIM QR Code',
     ariaLabel = 'eSIM Installation QR Code',
     tooltipAlt = 'eSIM QR Code Preview'
-  } = labels || {};
+  } = labels;
 
   const container = document.createElement('div');
   container.className = 'qrcode-container';
@@ -281,27 +284,35 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
   try {
     const safeData = validateQRCodeData(data);
     const safeSize = normalizeQRCodeSize(size);
-    const qrCode = await loadQRCodeLibrary();
+    const qrCodeLib = await loadQRCodeLibrary();
 
-    const imageUrl = await qrCode.toDataURL(safeData, {
-      errorCorrectionLevel: 'M',
-      margin: 2,
-      type: 'image/png',
-      width: safeSize
-    });
+    // qrcode-generator 包的 API 与 qrcode 包不同
+    // 正确用法：qrcode(typeNumber, errorCorrectionLevel).addData(data).make().createDataURL(cellSize, margin)
+    // typeNumber 0 = 自动检测，errorCorrectionLevel: L/M/Q/H
+    const qr = qrCodeLib(0, 'M');  // 0 = auto type number, M = medium error correction
+    qr.addData(safeData);
+    qr.make();
 
-    const largeImageUrl = await qrCode.toDataURL(safeData, {
-      errorCorrectionLevel: 'M',
-      margin: 2,
-      type: 'image/png',
-      width: 400
-    });
+    // cellSize 计算：根据目标尺寸和 QR 码模块数计算
+    // qr.getModuleCount() 返回 QR 码的模块数（行/列数）
+    const moduleCount = qr.getModuleCount();
+    const cellSize = Math.max(1, Math.floor(safeSize / (moduleCount + QR_MARGIN_MODULES)));
+    const largeCellSize = Math.max(1, Math.floor(LARGE_PREVIEW_SIZE / (moduleCount + QR_MARGIN_MODULES)));
+
+    const imageUrl = qr.createDataURL(cellSize, 2);
+    const largeImageUrl = qr.createDataURL(largeCellSize, 2);
+
+    console.log(`[QRCode] Local generation success: size=${safeSize}, modules=${moduleCount}, cellSize=${cellSize}`);
 
     return {
       ...createQRCodeContainer(imageUrl, safeSize, largeImageUrl, labels),
       source: 'local'
     };
   } catch (error) {
+    // 验证错误（data/size 不合法）直接抛出，不包装
+    if (error.message.startsWith('QR code data') || error.message.startsWith('QR code size')) {
+      throw error;
+    }
     throw new Error(`Local QR code generation failed: ${error.message}`);
   }
 }
@@ -337,6 +348,8 @@ export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE, labels
     if (!(payload && payload.success) || typeof payload.qrcode !== 'string') {
       throw new Error((payload && payload.error) || 'Backend QR code response is invalid');
     }
+
+    console.log(`[QRCode] Backend generation success: size=${safeSize}, qrcodeLength=${payload.qrcode.length}`);
 
     return {
       ...createQRCodeContainer(payload.qrcode, safeSize, payload.qrcode, labels),

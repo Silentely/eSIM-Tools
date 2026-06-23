@@ -115,7 +115,8 @@ describe('Giffgaff Session Restore - LPA Display', () => {
 
     if (state.lpaString) {
       const img = document.createElement('img');
-      img.src = `https://qrcode.show/${encodeURIComponent(state.lpaString)}`;
+      // 模拟本地 QR 码生成（data URL）
+      img.src = `data:image/png;base64,mock-qr-${encodeURIComponent(state.lpaString)}`;
       img.alt = 'eSIM二维码';
       qrcode.appendChild(img);
     }
@@ -123,7 +124,7 @@ describe('Giffgaff Session Restore - LPA Display', () => {
     // 验证二维码生成
     expect(resultContainer.classList.contains('active')).toBe(true);
     expect(qrcode.querySelector('img')).toBeTruthy();
-    expect(qrcode.querySelector('img').src).toContain('qrcode.show');
+    expect(qrcode.querySelector('img').src).toContain('data:image/png;base64');
   });
 
   test('session 恢复应该处理不完整状态（无 SSN）', () => {

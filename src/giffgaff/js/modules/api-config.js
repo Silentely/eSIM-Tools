@@ -34,8 +34,7 @@ export function getApiEndpoints() {
             : "https://publicapi.giffgaff.com/gateway/graphql",
         cookieVerify: "/bff/verify-cookie",
         autoActivate: "/bff/auto-activate-esim",
-        smsActivate: "/bff/giffgaff-sms-activate",
-        qrcode: "https://qrcode.show/"
+        smsActivate: "/bff/giffgaff-sms-activate"
     };
 }
 

@@ -51,10 +51,7 @@ export function getApiEndpoints() {
         // 安装确认
         confirmInstall: isNetlify
             ? "/api/simyo/esim/reorder-profile-installed"
-            : `${localBase}/api/simyo/esim/reorder-profile-installed`,
-
-        // 二维码服务
-        qrcode: "https://qrcode.show/"
+            : `${localBase}/api/simyo/esim/reorder-profile-installed`
     };
 }
 
