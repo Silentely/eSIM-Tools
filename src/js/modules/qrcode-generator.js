@@ -115,11 +115,11 @@ function validateQRCodeData(data) {
  * @returns {Promise<Object>} qrcode 库对象
  */
 export async function loadQRCodeLibrary() {
-  // 1. 检查全局变量（可能已被 CDN 脚本加载）
-  if (window.qrcode) {
+  // 1. 检查全局变量（必须是函数，防止浏览器扩展或其他脚本污染 window.qrcode）
+  if (typeof window.qrcode === 'function') {
     return window.qrcode;
   }
-  if (window.QRCode) {
+  if (typeof window.QRCode === 'function') {
     return window.QRCode;
   }
 
@@ -183,17 +183,18 @@ function loadSingleCDN(cdnUrl) {
     const handleLoad = () => {
       cleanup();
       // qrcode-generator 包设置 window.qrcode（小写）
-      if (window.qrcode) {
+      // 必须 typeof 检查，防止浏览器扩展污染全局变量为非函数值
+      if (typeof window.qrcode === 'function') {
         resolve(window.qrcode);
         return;
       }
       // 兼容：部分 CDN 可能设置 window.QRCode（大写）
-      if (window.QRCode) {
+      if (typeof window.QRCode === 'function') {
         resolve(window.QRCode);
         return;
       }
       script.remove();
-      reject(new Error('QRCode library loaded but global variable is missing'));
+      reject(new Error('QRCode library loaded but global variable is not a function'));
     };
 
     const handleError = () => {
