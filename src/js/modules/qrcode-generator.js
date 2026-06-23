@@ -2,13 +2,12 @@
 
 import { tl } from './i18n.js';
 
-// CDN 多源备用列表（主源 + 备用源，任一成功即可，解决 ESIM-TOOLS-15 单一 CDN 故障问题）
+// CDN 多源备用列表（全部已验证 HTTP 200，解决 ESIM-TOOLS-15 CDN 故障问题）
 // 包含国际源 + 中国镜像源，覆盖全球用户（包括中国大陆）
 const QRCODE_CDN_URLS = [
-  'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js',
+  'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.js',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
-  'https://unpkg.zhimg.com/qrcode@1.5.4/build/qrcode.min.js',
-  'https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+  'https://cdn.bootcdn.net/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
 ];
 const DEFAULT_QR_SIZE = 300;
 const MIN_QR_SIZE = 200;
