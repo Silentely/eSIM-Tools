@@ -329,51 +329,37 @@ let lastReportDialogFingerprint = '';
 /**
  * 判断是否应该显示反馈弹窗
  * @param {Object} event - Sentry 事件对象
- * @returns {boolean}
+ * @returns {{ shouldShow: boolean, fingerprint: string }}
  */
 function shouldShowReportDialog(event) {
+  const empty = { shouldShow: false, fingerprint: '' };
+
   // 仅生产环境弹窗
-  if (isDev) return false;
+  if (isDev) return empty;
 
   // 仅对异常事件弹窗（captureMessage 等不弹）
-  if (!event.exception || !event.exception.values || !event.exception.values.length) return false;
-
-  // 冷却检查：避免短时间内反复弹窗
-  var now = Date.now();
-  if (now - lastReportDialogTime < REPORT_DIALOG_COOLDOWN_MS) return false;
+  if (!event.exception || !event.exception.values || !event.exception.values.length) {
+    return empty;
+  }
 
   // 生成错误指纹：取第一个异常的 type + value 组合
-  var firstException = event.exception.values[0];
-  var fingerprint = (firstException.type || '') + ':' + (firstException.value || '');
+  const firstException = event.exception.values[0];
+  const fingerprint = (firstException.type || '') + ':' + (firstException.value || '');
+
+  // 冷却检查：避免短时间内反复弹窗
+  const now = Date.now();
+  if (now - lastReportDialogTime < REPORT_DIALOG_COOLDOWN_MS) {
+    return { shouldShow: false, fingerprint };
+  }
 
   // 同一错误不重复弹窗
-  if (fingerprint === lastReportDialogFingerprint) return false;
-
-  return true;
-}
-
-/**
- * 记录弹窗状态并显示反馈对话框
- * @param {string} eventId - Sentry 事件 ID
- */
-function triggerReportDialog(eventId) {
-  lastReportDialogTime = Date.now();
-  var sentry = getSentry();
-  if (sentry.showReportDialog) {
-    sentry.showReportDialog({
-      eventId: eventId,
-      title: '问题反馈',
-      subtitle: '抱歉，发生了错误',
-      subtitleLine2: '您的反馈将帮助我们改进服务',
-      labelName: '名称',
-      labelEmail: '邮箱',
-      labelComments: '问题描述（选填）',
-      labelClose: '关闭',
-      labelSubmit: '提交反馈',
-      successMessage: '感谢您的反馈！',
-    });
+  if (fingerprint === lastReportDialogFingerprint) {
+    return { shouldShow: false, fingerprint };
   }
+
+  return { shouldShow: true, fingerprint };
 }
+
 
 // ===================================
 // Sentry 配置
@@ -565,11 +551,13 @@ function initSentry() {
         }
 
         // 4. 错误后自动弹出反馈对话框（仅生产环境、异常事件、冷却期内不重复）
-        if (shouldShowReportDialog(event) && event.event_id) {
-          var fingerprint = (event.exception.values[0].type || '') + ':' + (event.exception.values[0].value || '');
-          lastReportDialogFingerprint = fingerprint;
+        // 注：在 beforeSend 中触发 UI 交互是刻意设计，因为需要 event_id 关联反馈
+        const reportCheck = shouldShowReportDialog(event);
+        if (reportCheck.shouldShow && event.event_id) {
+          lastReportDialogFingerprint = reportCheck.fingerprint;
+          lastReportDialogTime = Date.now();
           // 延迟弹窗，确保 Sentry 事件已发送完成
-          setTimeout(function () { triggerReportDialog(event.event_id); }, 100);
+          setTimeout(function() { showReportDialog({ eventId: event.event_id }); }, 100);
         }
 
         return event;
