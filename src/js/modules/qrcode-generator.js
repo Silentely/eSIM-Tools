@@ -2,7 +2,11 @@
 
 import { tl } from './i18n.js';
 
-const QRCODE_CDN_URL = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js';
+// CDN 多源备用列表（主源 + 备用源，任一成功即可，解决 ESIM-TOOLS-15 单一 CDN 故障问题）
+const QRCODE_CDN_URLS = [
+  'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
+];
 const DEFAULT_QR_SIZE = 300;
 const MIN_QR_SIZE = 200;
 const MAX_QR_SIZE = 600;
@@ -100,44 +104,69 @@ function validateQRCodeData(data) {
 }
 
 /**
- * 懒加载浏览器端 qrcode.js 库。
- * 首次调用会插入 CDN script，后续调用复用同一个 Promise，避免重复加载。
- * 修复 Promise 挂起问题：移除失效脚本、添加超时保护（Issue #75 根因修复）。
- * @returns {Promise<Object>} qrcode.js 暴露的 QRCode 对象
+ * 获取 QRCode 库实例。
+ * 两级加载策略：window.QRCode (已加载) → 动态加载 CDN (多源重试)
+ * 解决 ESIM-TOOLS-15：单 CDN 故障导致 116 个用户 QR 码生成失败。
+ * @returns {Promise<Object>} qrcode 库对象
  */
 export async function loadQRCodeLibrary() {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    throw new Error('QRCode local generation requires a browser environment');
-  }
-
+  // 1. 检查 window.QRCode（可能已被 CDN 脚本加载）
   if (window.QRCode) {
     return window.QRCode;
   }
 
+  // 2. 缓存中的 Promise（防止并发重复加载）
   if (qrCodeLibraryPromise) {
     return qrCodeLibraryPromise;
   }
 
-  qrCodeLibraryPromise = new Promise((resolve, reject) => {
+  // 3. 动态加载 CDN（带多源重试）
+  qrCodeLibraryPromise = loadFromCDNWithRetry();
+  return qrCodeLibraryPromise;
+}
+
+/**
+ * 从 CDN 加载 QRCode 库，支持多源重试。
+ * @returns {Promise<Object>} QRCode 库对象
+ */
+async function loadFromCDNWithRetry() {
+  for (const cdnUrl of QRCODE_CDN_URLS) {
+    try {
+      const lib = await loadSingleCDN(cdnUrl);
+      return lib;
+    } catch (error) {
+      console.warn(`[QRCode] CDN ${cdnUrl} failed: ${error.message}`);
+    }
+  }
+  qrCodeLibraryPromise = null;
+  throw new Error('All QRCode CDN sources failed');
+}
+
+/**
+ * 从单个 CDN URL 加载 QRCode 库。
+ * @param {string} cdnUrl CDN 地址
+ * @returns {Promise<Object>} QRCode 库对象
+ */
+function loadSingleCDN(cdnUrl) {
+  return new Promise((resolve, reject) => {
+    if (typeof document === 'undefined') {
+      reject(new Error('QRCode local generation requires a browser environment'));
+      return;
+    }
+
     const LOAD_TIMEOUT_MS = 5000;
     let timeoutId = null;
 
-    const existingScript = document.querySelector(`script[src="${QRCODE_CDN_URL}"]`);
-
-    // 如果脚本已存在但 window.QRCode 未加载（说明脚本已失效），移除并重新加载
+    // 移除已失效的旧脚本
+    const existingScript = document.querySelector(`script[src="${cdnUrl}"]`);
     if (existingScript) {
-      console.warn('[QRCode] Existing script found but QRCode global is missing, removing stale script');
       existingScript.remove();
     }
 
-    // 创建新的脚本元素
     const script = document.createElement('script');
 
     const cleanup = () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
+      if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
       script.removeEventListener('load', handleLoad);
       script.removeEventListener('error', handleError);
     };
@@ -148,39 +177,29 @@ export async function loadQRCodeLibrary() {
         resolve(window.QRCode);
         return;
       }
-      // 脚本加载成功但 window.QRCode 不存在（CDN 内容异常）
-      qrCodeLibraryPromise = null;
       script.remove();
       reject(new Error('QRCode library loaded but QRCode global is missing'));
     };
 
     const handleError = () => {
       cleanup();
-      qrCodeLibraryPromise = null;
       script.remove();
-      reject(new Error('Failed to load QRCode library from CDN'));
-    };
-
-    const handleTimeout = () => {
-      cleanup();
-      qrCodeLibraryPromise = null;
-      script.remove();
-      reject(new Error(`QRCode library loading timed out after ${LOAD_TIMEOUT_MS}ms`));
+      reject(new Error(`Failed to load QRCode library from ${cdnUrl}`));
     };
 
     script.addEventListener('load', handleLoad, { once: true });
     script.addEventListener('error', handleError, { once: true });
+    timeoutId = setTimeout(() => {
+      cleanup();
+      script.remove();
+      reject(new Error(`QRCode library loading timed out from ${cdnUrl}`));
+    }, LOAD_TIMEOUT_MS);
 
-    // 添加超时保护，防止 Promise 永久挂起
-    timeoutId = setTimeout(handleTimeout, LOAD_TIMEOUT_MS);
-
-    script.src = QRCODE_CDN_URL;
+    script.src = cdnUrl;
     script.async = true;
     script.crossOrigin = 'anonymous';
     document.head.appendChild(script);
   });
-
-  return qrCodeLibraryPromise;
 }
 
 /**

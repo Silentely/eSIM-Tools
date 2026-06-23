@@ -409,6 +409,10 @@ function initSentry() {
         /turnstile/i,
         // 浏览器扩展注入的 SweetAlert 冲突（t.swal=e() 模式）
         /swal/i,
+        // Google Tag Manager 噪音 (ESIM-TOOLS-18)
+        /gtag\/js/,
+        /gtm\.js/,
+        /Unexpected token '<'/,
       ],
 
       denyUrls: [

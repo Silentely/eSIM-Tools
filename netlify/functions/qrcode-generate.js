@@ -6,7 +6,8 @@ const { withAuth, validateInput, AuthError } = require('./_shared/middleware');
 const DEFAULT_QR_SIZE = 300;
 const MIN_QR_SIZE = 200;
 const MAX_QR_SIZE = 600;
-const QR_TIMEOUT_MS = 10000;
+// 增加超时到 15 秒，解决 Netlify Functions 冷启动 + QR 码生成时间问题 (ESIM-TOOLS-16)
+const QR_TIMEOUT_MS = 15000;
 
 const qrcodeSchema = {
   data: {
