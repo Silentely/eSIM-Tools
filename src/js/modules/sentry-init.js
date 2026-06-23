@@ -556,7 +556,9 @@ function initSentry() {
           lastReportDialogFingerprint = reportCheck.fingerprint;
           lastReportDialogTime = Date.now();
           // 延迟弹窗，确保 Sentry 事件已发送完成
-          setTimeout(function() { showReportDialog({ eventId: event.event_id }); }, 100);
+          setTimeout(function() {
+            try { showReportDialog({ eventId: event.event_id }); } catch (e) { /* 忽略弹窗错误 */ }
+          }, 500);
         }
 
         return event;

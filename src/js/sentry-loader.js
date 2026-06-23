@@ -33,6 +33,12 @@
   var sentryInitialized = false;
   var EXTENSION_NOISE_STORE_KEY = '__sentryExtensionNoiseStats';
   var EXTENSION_NOISE_SAMPLE_LIMIT = 20;
+
+  // 错误反馈弹窗冷却机制
+  var REPORT_DIALOG_COOLDOWN_MS = 60000; // 60 秒冷却时间
+  var lastReportDialogTime = 0;
+  var lastReportDialogFingerprint = '';
+
   var EXTENSION_ERROR_KEYWORDS = [
     'cannot redefine property',
     'redefine property',
@@ -221,6 +227,44 @@
   }
 
   // ===================================
+  // 错误反馈弹窗冷却机制
+  // ===================================
+
+  /**
+   * 判断是否应该显示反馈弹窗
+   * @param {Object} event - Sentry 事件对象
+   * @returns {{ shouldShow: boolean, fingerprint: string }}
+   */
+  function shouldShowReportDialog(event) {
+    var empty = { shouldShow: false, fingerprint: '' };
+
+    // 仅生产环境弹窗
+    if (isDev) return empty;
+
+    // 仅对异常事件弹窗（captureMessage 等不弹）
+    if (!event.exception || !event.exception.values || !event.exception.values.length) {
+      return empty;
+    }
+
+    // 生成错误指纹：取第一个异常的 type + value 组合
+    var firstException = event.exception.values[0];
+    var fingerprint = (firstException.type || '') + ':' + (firstException.value || '');
+
+    // 冷却检查：避免短时间内反复弹窗
+    var now = Date.now();
+    if (now - lastReportDialogTime < REPORT_DIALOG_COOLDOWN_MS) {
+      return { shouldShow: false, fingerprint: fingerprint };
+    }
+
+    // 同一错误不重复弹窗
+    if (fingerprint === lastReportDialogFingerprint) {
+      return { shouldShow: false, fingerprint: fingerprint };
+    }
+
+    return { shouldShow: true, fingerprint: fingerprint };
+  }
+
+  // ===================================
   // Mock 对象（开发环境或加载失败时使用）
   // ===================================
   var SentryMock = {
@@ -396,6 +440,17 @@
             // 启用页面加载和导航追踪
             enableLongTask: true
           }),
+          // Session Replay - 记录用户操作以重现错误场景
+          window.Sentry.replayIntegration({
+            maxReplayDuration: 60000,
+            maskAllText: true,
+            maskAllInputs: true,
+          }),
+          // User Feedback Widget - 用户随时可提交反馈
+          window.Sentry.feedbackIntegration({
+            colorScheme: 'system',
+            enableScreenshot: true,
+          }),
         ],
         // 追踪传播目标 - 指定哪些请求应该添加追踪头
         tracePropagationTargets: [
@@ -407,6 +462,10 @@
           /^https:\/\/api\.qrserver\.com/
         ],
         tracesSampleRate: 0.1,  // 10% 采样率，节省免费配额
+
+        // Session Replay 采样率
+        replaysSessionSampleRate: 0.1,
+        replaysOnErrorSampleRate: 1.0,
 
         // 错误采样率
         sampleRate: 1.0,
@@ -574,6 +633,17 @@
                   .replace(/refresh_token[=:]\s*[^\s,]+/gi, 'refresh_token=***');
               }
             });
+          }
+
+          // 4. 错误后自动弹出反馈对话框（仅生产环境、异常事件、冷却期内不重复）
+          var reportCheck = shouldShowReportDialog(event);
+          if (reportCheck.shouldShow && event.event_id) {
+            lastReportDialogFingerprint = reportCheck.fingerprint;
+            lastReportDialogTime = Date.now();
+            // 延迟弹窗，确保 Sentry 事件已发送完成
+            setTimeout(function() {
+              try { window.Sentry.showReportDialog({ eventId: event.event_id }); } catch (e) { /* 忽略弹窗错误 */ }
+            }, 500);
           }
 
           return event;
