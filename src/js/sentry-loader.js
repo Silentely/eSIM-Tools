@@ -628,7 +628,7 @@
   // ===================================
 
   // Sentry SDK URL - 使用官方 CDN（带 tracing 和 replay）
-  var SENTRY_SDK_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.min.js';
+  var SENTRY_SDK_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.replay.feedback.min.js';
 
   // 创建 script 标签
   var script = document.createElement('script');
