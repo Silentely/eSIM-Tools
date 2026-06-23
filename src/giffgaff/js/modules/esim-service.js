@@ -52,7 +52,7 @@ export class ESimService {
 
             if (data.errors) {
                 const errorObj = data.errors[0];
-                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
+                const errorMessage = (errorObj && errorObj.message) || (errorObj && errorObj.error) || JSON.stringify(errorObj);
                 throw new Error(errorMessage);
             }
 
@@ -111,7 +111,7 @@ export class ESimService {
 
             if (data.errors) {
                 const errorObj = data.errors[0];
-                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
+                const errorMessage = (errorObj && errorObj.message) || (errorObj && errorObj.error) || JSON.stringify(errorObj);
                 throw new Error(errorMessage);
             }
 
@@ -189,7 +189,7 @@ export class ESimService {
                 throw new Error(errorMessage);
             }
 
-            const newSim = swapData?.data?.swapSim?.new;
+            const newSim = swapData && swapData.data && swapData.data.swapSim && swapData.data.swapSim.new;
             if (!newSim || !newSim.ssn) {
                 throw new Error(t('giffgaff.esim.errors.swapMissingSim'));
             }
@@ -245,7 +245,7 @@ export class ESimService {
 
             if (data.errors) {
                 const errorObj = data.errors[0];
-                const errorMessage = errorObj?.message || errorObj?.error || JSON.stringify(errorObj);
+                const errorMessage = (errorObj && errorObj.message) || (errorObj && errorObj.error) || JSON.stringify(errorObj);
                 throw new Error(errorMessage);
             }
 
@@ -429,10 +429,10 @@ export class ESimService {
         const data = await response.json();
         if (data.errors) {
             const errorObj = data.errors[0];
-            throw new Error(errorObj?.message || errorObj?.error || JSON.stringify(errorObj));
+            throw new Error((errorObj && errorObj.message) || (errorObj && errorObj.error) || JSON.stringify(errorObj));
         }
 
-        return data?.data?.eSims || [];
+        return (data && data.data && data.data.eSims) || [];
     }
 
     /**
@@ -485,7 +485,7 @@ export class ESimService {
             // 兼容 GraphQL 错误格式 { errors: [{ message: '...' }] }
             if (parsed && typeof parsed === 'object' && Array.isArray(parsed.errors) && parsed.errors.length > 0) {
                 const firstError = parsed.errors[0] || {};
-                const message = firstError?.message || (typeof firstError === 'string' ? firstError : null);
+                const message = (firstError && firstError.message) || (typeof firstError === 'string' ? firstError : null);
                 if (message) {
                     return { ...parsed, message };
                 }
@@ -503,7 +503,7 @@ export class ESimService {
      * @returns {string} 友好的错误提示
      */
     _friendlyGraphqlError(status, parsed) {
-        const msg = parsed?.message || parsed?.error || '';
+        const msg = (parsed && parsed.message) || (parsed && parsed.error) || '';
 
         // 401: token 过期
         if (status === 401) {

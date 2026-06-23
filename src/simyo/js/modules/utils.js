@@ -104,7 +104,8 @@ export function openHelp() {
         align-items: center; justify-content: center; padding: 20px;
     `;
     overlay.innerHTML = helpContent;
-    overlay.querySelector('[data-action="close-help"]')?.addEventListener('click', () => {
+    const closeBtn = overlay.querySelector('[data-action="close-help"]');
+    if (closeBtn) closeBtn.addEventListener('click', () => {
         overlay.remove();
     });
     overlay.addEventListener('click', (e) => {

@@ -77,32 +77,32 @@ class SimyoApp {
         const { elements } = uiController;
 
         // ===== Step 1: 登录 =====
-        elements.loginBtn?.addEventListener('click', () => this.handleLogin());
+        if (elements.loginBtn) elements.loginBtn.addEventListener('click', () => this.handleLogin());
 
         // ===== 设备更换流程 =====
         this.bindDeviceChangeFlow();
 
         // ===== Step 2: 获取eSIM =====
-        elements.getEsimBtn?.addEventListener('click', () => this.handleGetEsim());
+        if (elements.getEsimBtn) elements.getEsimBtn.addEventListener('click', () => this.handleGetEsim());
 
         // ===== Step 3: 生成二维码 =====
-        elements.generateQrBtn?.addEventListener('click', () => this.handleGenerateQR());
+        if (elements.generateQrBtn) elements.generateQrBtn.addEventListener('click', () => this.handleGenerateQR());
 
         // 下一步：确认安装
         const nextToConfirmBtn = document.getElementById('nextToConfirmBtn');
-        nextToConfirmBtn?.addEventListener('click', () => {
+        if (nextToConfirmBtn) nextToConfirmBtn.addEventListener('click', () => {
             uiController.showSection(4);
         });
 
         // ===== Step 4: 确认安装 =====
-        elements.confirmInstallBtn?.addEventListener('click', () => this.handleConfirmInstall());
+        if (elements.confirmInstallBtn) elements.confirmInstallBtn.addEventListener('click', () => this.handleConfirmInstall());
 
         // ===== 通用操作 =====
-        elements.clearSessionBtn?.addEventListener('click', () => this.handleClearSession());
+        if (elements.clearSessionBtn) elements.clearSessionBtn.addEventListener('click', () => this.handleClearSession());
 
         // 帮助按钮
         const helpBtn = document.getElementById('helpBtn');
-        helpBtn?.addEventListener('click', () => openHelp());
+        if (helpBtn) helpBtn.addEventListener('click', () => openHelp());
 
         // 步骤点击跳转
         this.bindStepNavigation();
@@ -423,7 +423,7 @@ class SimyoApp {
 
             console.log('[Simyo] 步骤2: 生成 LPA 字符串...');
             const qrResult = esimService.generateLPAString();
-            console.log('[Simyo] LPA 字符串生成成功, 长度:', qrResult.lpaString?.length);
+            console.log('[Simyo] LPA 字符串生成成功, 长度:', qrResult.lpaString && qrResult.lpaString.length);
 
             uiController.showQRResult(qrResult.lpaString);
             uiController.showStatus(elements.qrStatus, t('simyo.app.status.generateSuccess'), "success");

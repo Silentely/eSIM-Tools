@@ -12,7 +12,7 @@ export class AuthHandler {
     constructor() {
         this.apiEndpoints = getApiEndpoints();
     }
-    
+
     /**
      * 登录Simyo账户
      * @param {string} phoneNumber - 手机号
@@ -24,11 +24,11 @@ export class AuthHandler {
         if (!validatePhoneNumber(phoneNumber)) {
             throw new Error(t('simyo.errors.invalidPhone'));
         }
-        
+
         if (!password) {
             throw new Error(t('simyo.errors.requirePassword'));
         }
-        
+
         try {
             const response = await fetch(this.apiEndpoints.login, {
                 method: 'POST',
@@ -38,23 +38,23 @@ export class AuthHandler {
                     password: password
                 })
             });
-            
+
             const data = await handleApiResponse(response);
-            
+
             // 提取session token
-            const sessionToken = data.result?.sessionToken;
-            
+            const sessionToken = data.result && data.result.sessionToken;
+
             if (!sessionToken) {
                 throw new Error(data.message || t('simyo.auth.loginMissingToken'));
             }
-            
+
             // 保存到状态
             stateManager.setState({
                 sessionToken: sessionToken,
                 phoneNumber: phoneNumber,
                 password: password
             });
-            
+
             return {
                 success: true,
                 message: t('simyo.auth.loginSuccess'),
@@ -65,7 +65,7 @@ export class AuthHandler {
             throw error;
         }
     }
-    
+
     /**
      * 检查登录状态
      * @returns {boolean} 是否已登录
@@ -73,7 +73,7 @@ export class AuthHandler {
     isLoggedIn() {
         return !!stateManager.get('sessionToken');
     }
-    
+
     /**
      * 获取当前session token
      * @returns {string} session token

@@ -95,7 +95,7 @@ export class DeviceChangeHandler {
             return {
                 success: true,
                 message: data.message || t('simyo.device.verifySuccess'),
-                remainingTries: data.result?.remainingNumberOfTries
+                remainingTries: data.result && data.result.remainingNumberOfTries
             };
         } catch (error) {
             console.error(t('simyo.device.log.verifyFailed'), error);

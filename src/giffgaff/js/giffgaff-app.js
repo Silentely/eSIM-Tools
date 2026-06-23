@@ -143,7 +143,7 @@ class GiffgaffApp {
     }
 
     isIgnoredUnhandledRejection(error) {
-        const payload = `${error?.message ?? ''}\n${error?.stack ?? ''}`.toLowerCase();
+        const payload = `${(error && error.message) || ''}\n${(error && error.stack) || ''}`.toLowerCase();
         const ignoredKeywords = [
             'wallet must has at least one account',
             'wallet must have at least one account',
@@ -516,7 +516,8 @@ class GiffgaffApp {
         if (!confirmBtn.__bound) {
             confirmBtn.__bound = true;
             confirmBtn.addEventListener('click', () => {
-                const selected = container.querySelector('input[name="directFetchSsn"]:checked')?.value;
+                const selectedEl = container.querySelector('input[name="directFetchSsn"]:checked');
+                const selected = selectedEl && selectedEl.value;
                 if (!selected) return;
                 container.style.display = 'none';
                 this.handleDirectFetchPull(selected);
@@ -743,7 +744,7 @@ class GiffgaffApp {
 
             console.log('[Giffgaff] 调用 oauthHandler.processCallback()...');
             const result = await oauthHandler.processCallback(callbackUrl);
-            console.log('[Giffgaff] OAuth 回调处理成功, hasAccessToken:', !!result?.accessToken);
+            console.log('[Giffgaff] OAuth 回调处理成功, hasAccessToken:', !!(result && result.accessToken));
 
             uiController.showStatus(elements.callbackStatus, t('giffgaff.app.status.oauthSuccess'), "success");
 
@@ -927,7 +928,7 @@ class GiffgaffApp {
 
             console.log('[Giffgaff] 调用 esimService.getMemberInfo()...');
             const result = await esimService.getMemberInfo();
-            console.log('[Giffgaff] 会员信息获取成功, memberId:', result.data?.memberProfile?.id);
+            console.log('[Giffgaff] 会员信息获取成功, memberId:', result.data && result.data.memberProfile && result.data.memberProfile.id);
 
             uiController.showStatus(elements.memberStatus, t('giffgaff.app.status.memberFetched'), "success");
             uiController.showMemberInfo(result.data);
@@ -939,8 +940,8 @@ class GiffgaffApp {
             console.error('[Giffgaff] 获取会员信息失败:', error.message, error);
 
             // 针对"账号无号码"错误提供专门提示
-            const isWalletEmpty = error.message?.includes('wallet must') ||
-                                   error.message?.includes('at least one account') ||
+            const isWalletEmpty = (error.message && error.message.includes('wallet must')) ||
+                                   (error.message && error.message.includes('at least one account')) ||
                                    error.code === 4001;
 
             if (isWalletEmpty) {
@@ -998,7 +999,7 @@ class GiffgaffApp {
 
             console.log('[Giffgaff] 调用 esimService.reserveESim()...');
             const result = await esimService.reserveESim();
-            console.log('[Giffgaff] eSIM 预订成功, deliveryStatus:', result.data?.esim?.deliveryStatus);
+            console.log('[Giffgaff] eSIM 预订成功, deliveryStatus:', result.data && result.data.esim && result.data.esim.deliveryStatus);
 
             const status = result.data.esim.deliveryStatus || 'RESERVED';
             uiController.showStatus(elements.esimReserveStatus, t('giffgaff.app.status.reserveSuccess', { status }), "success");
@@ -1054,7 +1055,7 @@ class GiffgaffApp {
         const statusEl = document.getElementById('smsInlineStatus');
         console.log('[Giffgaff] === SMS 验证码校验 ===');
 
-        const code = (codeInput?.value ?? '').trim();
+        const code = (codeInput && codeInput.value || '').trim();
 
         if (!/^\d{6}$/.test(code)) {
             console.warn('[Giffgaff] 验证码格式无效:', code.length, '位');
@@ -1106,8 +1107,8 @@ class GiffgaffApp {
         const activationInput = document.getElementById('manualActivationCode');
         const ssnInput = document.getElementById('manualSSN');
 
-        const activationCode = (activationInput?.value ?? '').trim();
-        const ssn = (ssnInput?.value ?? '').trim();
+        const activationCode = (activationInput && activationInput.value || '').trim();
+        const ssn = (ssnInput && ssnInput.value || '').trim();
         console.log('[Giffgaff] === 手动 eSIM 信息保存 ===');
         console.log('[Giffgaff] 激活码长度:', activationCode.length, ', SSN长度:', ssn.length);
 
@@ -1197,7 +1198,7 @@ class GiffgaffApp {
             console.error('[Giffgaff] eSIM Token 获取失败:', error.message, error);
 
             // 根据错误类型进行差异化处理
-            if (error.status === 401 || error.message?.includes('401')) {
+            if (error.status === 401 || (error.message && error.message.includes('401'))) {
                 uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.authExpired'), "error");
                 setTimeout(() => {
                     if (confirm(t('giffgaff.app.prompt.relogin'))) {
@@ -1205,7 +1206,7 @@ class GiffgaffApp {
                         uiController.showSection(1);
                     }
                 }, 500);
-            } else if (error.status === 422 || error.message?.includes('422')) {
+            } else if (error.status === 422 || (error.message && error.message.includes('422'))) {
                 uiController.showStatus(elements.tokenStatus, t('giffgaff.app.error.ssnNotFound'), "error");
                 setTimeout(() => uiController.showSection(4), 2000);
             } else {
@@ -1241,7 +1242,7 @@ class GiffgaffApp {
      * 处理Cookie过期
      */
     handleCookieExpired(event) {
-        console.log('[Giffgaff] === Cookie 已过期 ===', event?.detail);
+        console.log('[Giffgaff] === Cookie 已过期 ===', event && event.detail);
         uiController.showSection(1);
         uiController.selectLoginMethod('cookie');
 
