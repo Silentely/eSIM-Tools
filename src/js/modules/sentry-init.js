@@ -360,7 +360,6 @@ function shouldShowReportDialog(event) {
   return { shouldShow: true, fingerprint };
 }
 
-
 // ===================================
 // Sentry 配置
 // ===================================
@@ -590,6 +589,8 @@ const SentryMock = {
   setContext: () => {},
   withScope: (callback) => callback({ setContext: () => {}, setTag: () => {} }),
   browserTracingIntegration: () => ({}),
+  feedbackIntegration: () => ({}),
+  replayIntegration: () => ({}),
 };
 
 // ===================================

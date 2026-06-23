@@ -238,7 +238,9 @@
     withScope: function(callback) {
       callback({ setContext: function() {}, setTag: function() {} });
     },
-    browserTracingIntegration: function() { return {}; }
+    browserTracingIntegration: function() { return {}; },
+    feedbackIntegration: function() { return {}; },
+    replayIntegration: function() { return {}; }
   };
 
   // ===================================
