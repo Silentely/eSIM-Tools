@@ -318,6 +318,52 @@ const isDev = (() => {
 })();
 
 // ===================================
+// 错误反馈弹窗冷却机制
+// 避免同一错误或短时间内反复弹窗打扰用户
+// ===================================
+
+const REPORT_DIALOG_COOLDOWN_MS = 60000; // 60 秒冷却时间
+let lastReportDialogTime = 0;
+let lastReportDialogFingerprint = '';
+
+/**
+ * 判断是否应该显示反馈弹窗
+ * @param {Object} event - Sentry 事件对象
+ * @returns {{ shouldShow: boolean, fingerprint: string }}
+ */
+function shouldShowReportDialog(event) {
+  const empty = { shouldShow: false, fingerprint: '' };
+
+  // 空事件防御
+  if (!event || typeof event !== 'object') return empty;
+
+  // 仅生产环境弹窗
+  if (isDev) return empty;
+
+  // 仅对异常事件弹窗（captureMessage 等不弹）
+  if (!event.exception || !event.exception.values || !event.exception.values.length) {
+    return empty;
+  }
+
+  // 生成错误指纹：取第一个异常的 type + value 组合
+  const firstException = event.exception.values[0];
+  const fingerprint = (firstException.type || '') + ':' + (firstException.value || '');
+
+  // 冷却检查：避免短时间内反复弹窗
+  const now = Date.now();
+  if (now - lastReportDialogTime < REPORT_DIALOG_COOLDOWN_MS) {
+    return { shouldShow: false, fingerprint };
+  }
+
+  // 同一错误不重复弹窗
+  if (fingerprint === lastReportDialogFingerprint) {
+    return { shouldShow: false, fingerprint };
+  }
+
+  return { shouldShow: true, fingerprint };
+}
+
+// ===================================
 // Sentry 配置
 // ===================================
 
@@ -362,15 +408,42 @@ function initSentry() {
 
       // 性能监控
       integrations: [
-        window.Sentry.browserTracingIntegration(),
+        window.Sentry.browserTracingIntegration({
+          traceFetch: true,
+          traceXHR: true,
+          enableLongTask: true,
+        }),
         // Session Replay - 记录用户操作以重现错误场景
         window.Sentry.replayIntegration({
           maxReplayDuration: 60000,
           maskAllText: true,
           maskAllInputs: true,
         }),
+        // User Feedback Widget - 用户随时可提交反馈
+        window.Sentry.feedbackIntegration({
+          colorScheme: 'system',
+          enableScreenshot: true,
+          triggerLabel: '反馈',
+          formTitle: '发送反馈',
+          submitButtonLabel: '提交',
+          cancelButtonLabel: '取消',
+          nameLabel: '名称',
+          emailLabel: '邮箱',
+          messageLabel: '描述',
+          successMessageText: '感谢您的反馈！',
+        }),
       ],
       tracesSampleRate: 0.1,
+
+      // 追踪传播目标 - 指定哪些请求应该添加追踪头
+      tracePropagationTargets: [
+        'localhost',
+        /^https:\/\/esim\.cosr\.eu\.org/,
+        /^https:\/\/.*\.giffgaff\.com/,
+        /^https:\/\/.*\.simyo\.nl/,
+        /^https:\/\/qrcode\.show/,
+        /^https:\/\/api\.qrserver\.com/,
+      ],
       // Session Replay 采样率
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
@@ -408,7 +481,7 @@ function initSentry() {
         // 第三方脚本噪音
         /turnstile/i,
         // 浏览器扩展注入的 SweetAlert 冲突（t.swal=e() 模式）
-        /swal/i,
+        /t\.swal=e\(\)/i,
         // Google Tag Manager 噪音 (ESIM-TOOLS-18)
         /gtag\/js/,
         /gtm\.js/,
@@ -474,8 +547,43 @@ function initSentry() {
           }
         }
 
-        // 2. 删除敏感请求数据
+        // 2. 脱敏 URL 中的敏感查询参数 + 删除敏感请求数据
+        function sanitizeQueryString(url) {
+          if (!url) return url;
+          const sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
+          try {
+            const urlObj = new URL(url, window.location.origin);
+            // 先收集所有键再遍历，避免迭代时修改 searchParams 底层列表
+            const keys = Array.from(urlObj.searchParams.keys());
+            keys.forEach(key => {
+              if (sensitiveParams.includes(key.toLowerCase())) {
+                urlObj.searchParams.set(key, '***');
+              }
+            });
+            return urlObj.toString();
+          } catch (e) {
+            return url.replace(/([?&])(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1$2=***');
+          }
+        }
+
         if (event.request) {
+          if (event.request.query_string) {
+            if (typeof event.request.query_string === 'string') {
+              event.request.query_string = event.request.query_string
+                .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
+            } else if (typeof event.request.query_string === 'object') {
+              const sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
+              // Case-insensitive matching while preserving original keys
+              for (const [key] of Object.entries(event.request.query_string)) {
+                if (sensitiveParams.includes(key.toLowerCase())) {
+                  event.request.query_string[key] = '***';
+                }
+              }
+            }
+          }
+          if (event.request.url) {
+            event.request.url = sanitizeQueryString(event.request.url);
+          }
           delete event.request.cookies;
           if (event.request.headers) {
             delete event.request.headers['authorization'];
@@ -484,7 +592,18 @@ function initSentry() {
           }
         }
 
-        // 3. 脱敏异常消息中的敏感信息
+        // 3. 弹窗决策：在脱敏前基于原始异常值计算指纹，避免脱敏后不同错误产生相同指纹
+        // 注：在 beforeSend 中触发 UI 交互是刻意设计，因为需要 event_id 关联反馈
+        let reportCheck = { shouldShow: false, fingerprint: '' };
+        if (event.exception?.values) {
+          // 保存原始异常值用于指纹计算
+          const originalValues = event.exception.values.map(e => e.value);
+          reportCheck = shouldShowReportDialog(event);
+          // 恢复原始值，确保后续脱敏基于原始数据
+          event.exception.values.forEach((e, i) => { e.value = originalValues[i]; });
+        }
+
+        // 4. 脱敏异常消息中的敏感信息
         if (event.exception?.values) {
           event.exception.values.forEach(exception => {
             if (exception.value) {
@@ -499,6 +618,25 @@ function initSentry() {
                 .replace(/refresh_token[=:]\s*[^\s,]+/gi, 'refresh_token=***');
             }
           });
+        }
+
+        // 5. 错误后自动弹出反馈对话框（仅生产环境、异常事件、冷却期内不重复）
+        if (reportCheck.shouldShow && event.event_id) {
+          const eventId = event.event_id;
+          const fingerprint = reportCheck.fingerprint;
+          // 立即更新冷却状态，避免多个错误同时触发弹窗
+          lastReportDialogFingerprint = fingerprint;
+          lastReportDialogTime = Date.now();
+          // 延迟弹窗，确保 Sentry 事件已发送完成
+          setTimeout(function() {
+            try {
+              showReportDialog({ eventId: eventId, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitle2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' });
+            } catch (e) {
+              // 弹窗失败时回滚冷却状态，允许后续重试
+              lastReportDialogFingerprint = '';
+              lastReportDialogTime = 0;
+            }
+          }, 500);
         }
 
         return event;
@@ -531,6 +669,10 @@ const SentryMock = {
   setContext: () => {},
   withScope: (callback) => callback({ setContext: () => {}, setTag: () => {} }),
   browserTracingIntegration: () => ({}),
+  feedbackIntegration: () => ({}),
+  replayIntegration: () => ({}),
+  showReportDialog: () => {},
+  lastEventId: () => null,
 };
 
 // ===================================
@@ -634,7 +776,7 @@ export function showReportDialog(options = {}) {
       eventId: options.eventId || lastEventId(),
       title: options.title || '报告问题',
       subtitle: options.subtitle || '告诉我们发生了什么',
-      subtitleLine2: options.subtitleLine2 || '您的反馈将帮助我们改进',
+      subtitle2: options.subtitle2 || '您的反馈将帮助我们改进',
       labelName: options.labelName || '名称',
       labelEmail: options.labelEmail || '邮箱',
       labelComments: options.labelComments || '问题描述',

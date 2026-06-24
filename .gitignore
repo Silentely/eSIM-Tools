@@ -98,6 +98,8 @@ dist/
 *.bak
 *.orig
 *.tmp
+docs/superpowers/
+.sdd/
 
 # Editor files
 *.sublime-project

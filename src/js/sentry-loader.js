@@ -6,6 +6,10 @@
  * 2. 自动完成初始化配置
  * 3. 暴露 testSentry() 到 window 供测试
  *
+ * 架构说明：本文件使用 CDN 版本（8.40.0）作为生产主实现路径，
+ * 确保在 npm 构建不可用时仍能正常加载 Sentry SDK。
+ * npm bundle 版本（10.x）由 sentry-entry.js 提供，作为 Webpack 构建的备选方案。
+ *
  * 使用方法：
  * <script>
  *   window.SENTRY_DSN = '你的DSN';
@@ -33,6 +37,12 @@
   var sentryInitialized = false;
   var EXTENSION_NOISE_STORE_KEY = '__sentryExtensionNoiseStats';
   var EXTENSION_NOISE_SAMPLE_LIMIT = 20;
+
+  // 错误反馈弹窗冷却机制
+  var REPORT_DIALOG_COOLDOWN_MS = 60000; // 60 秒冷却时间
+  var lastReportDialogTime = 0;
+  var lastReportDialogFingerprint = '';
+
   var EXTENSION_ERROR_KEYWORDS = [
     'cannot redefine property',
     'redefine property',
@@ -221,6 +231,47 @@
   }
 
   // ===================================
+  // 错误反馈弹窗冷却机制
+  // ===================================
+
+  /**
+   * 判断是否应该显示反馈弹窗
+   * @param {Object} event - Sentry 事件对象
+   * @returns {{ shouldShow: boolean, fingerprint: string }}
+   */
+  function shouldShowReportDialog(event) {
+    var empty = { shouldShow: false, fingerprint: '' };
+
+    // 空事件防御
+    if (!event || typeof event !== 'object') return empty;
+
+    // 仅生产环境弹窗
+    if (isDev) return empty;
+
+    // 仅对异常事件弹窗（captureMessage 等不弹）
+    if (!event.exception || !event.exception.values || !event.exception.values.length) {
+      return empty;
+    }
+
+    // 生成错误指纹：取第一个异常的 type + value 组合
+    var firstException = event.exception.values[0];
+    var fingerprint = (firstException.type || '') + ':' + (firstException.value || '');
+
+    // 冷却检查：避免短时间内反复弹窗
+    var now = Date.now();
+    if (now - lastReportDialogTime < REPORT_DIALOG_COOLDOWN_MS) {
+      return { shouldShow: false, fingerprint: fingerprint };
+    }
+
+    // 同一错误不重复弹窗
+    if (fingerprint === lastReportDialogFingerprint) {
+      return { shouldShow: false, fingerprint: fingerprint };
+    }
+
+    return { shouldShow: true, fingerprint: fingerprint };
+  }
+
+  // ===================================
   // Mock 对象（开发环境或加载失败时使用）
   // ===================================
   var SentryMock = {
@@ -238,7 +289,11 @@
     withScope: function(callback) {
       callback({ setContext: function() {}, setTag: function() {} });
     },
-    browserTracingIntegration: function() { return {}; }
+    browserTracingIntegration: function() { return {}; },
+    feedbackIntegration: function() { return {}; },
+    replayIntegration: function() { return {}; },
+    showReportDialog: function() {},
+    lastEventId: function() { return null; }
   };
 
   // ===================================
@@ -394,8 +449,29 @@
             // 启用页面加载和导航追踪
             enableLongTask: true
           }),
+          // Session Replay - 记录用户操作以重现错误场景
+          window.Sentry.replayIntegration({
+            maxReplayDuration: 60000,
+            maskAllText: true,
+            maskAllInputs: true,
+          }),
+          // User Feedback Widget - 用户随时可提交反馈
+          window.Sentry.feedbackIntegration({
+            colorScheme: 'system',
+            enableScreenshot: true,
+            triggerLabel: '反馈',
+            formTitle: '发送反馈',
+            submitButtonLabel: '提交',
+            cancelButtonLabel: '取消',
+            nameLabel: '名称',
+            emailLabel: '邮箱',
+            messageLabel: '描述',
+            successMessageText: '感谢您的反馈！',
+          }),
         ],
         // 追踪传播目标 - 指定哪些请求应该添加追踪头
+        // 注意：第三方域名（qrcode.show, api.qrserver.com）可能触发 CORS preflight，
+        // 但 Sentry SDK 内部已做兼容处理，保留以确保追踪完整性
         tracePropagationTargets: [
           'localhost',
           /^https:\/\/esim\.cosr\.eu\.org/,
@@ -405,6 +481,10 @@
           /^https:\/\/api\.qrserver\.com/
         ],
         tracesSampleRate: 0.1,  // 10% 采样率，节省免费配额
+
+        // Session Replay 采样率
+        replaysSessionSampleRate: 0.1,
+        replaysOnErrorSampleRate: 1.0,
 
         // 错误采样率
         sampleRate: 1.0,
@@ -530,9 +610,11 @@
             var sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
             try {
               var urlObj = new URL(url, window.location.origin);
-              sensitiveParams.forEach(function(param) {
-                if (urlObj.searchParams.has(param)) {
-                  urlObj.searchParams.set(param, '***');
+              // 大小写不敏感匹配：先收集所有键再遍历
+              var paramKeys = Array.from(urlObj.searchParams.keys());
+              paramKeys.forEach(function(key) {
+                if (sensitiveParams.indexOf(key.toLowerCase()) !== -1) {
+                  urlObj.searchParams.set(key, '***');
                 }
               });
               return urlObj.toString();
@@ -543,8 +625,20 @@
 
           if (event.request) {
             if (event.request.query_string) {
-              event.request.query_string = event.request.query_string
-                .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
+              if (typeof event.request.query_string === 'string') {
+                event.request.query_string = event.request.query_string
+                  .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
+              } else if (typeof event.request.query_string === 'object') {
+                var sensitiveQSParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
+                // Case-insensitive matching while preserving original keys
+                var queryKeys = Object.keys(event.request.query_string);
+                for (var i = 0; i < queryKeys.length; i++) {
+                  var key = queryKeys[i];
+                  if (sensitiveQSParams.indexOf(key.toLowerCase()) !== -1) {
+                    event.request.query_string[key] = '***';
+                  }
+                }
+              }
             }
             if (event.request.url) {
               event.request.url = sanitizeQueryString(event.request.url);
@@ -557,7 +651,17 @@
             }
           }
 
-          // 3. 脱敏异常消息中的敏感信息
+          // 3. 弹窗决策：在脱敏前基于原始异常值计算指纹，避免脱敏后不同错误产生相同指纹
+          var reportCheck = { shouldShow: false, fingerprint: '' };
+          if (event.exception && event.exception.values) {
+            // 保存原始异常值用于指纹计算
+            var originalValues = event.exception.values.map(function(e) { return e.value; });
+            reportCheck = shouldShowReportDialog(event);
+            // 恢复原始值，确保后续脱敏基于原始数据
+            event.exception.values.forEach(function(e, i) { e.value = originalValues[i]; });
+          }
+
+          // 4. 脱敏异常消息中的敏感信息
           if (event.exception && event.exception.values) {
             event.exception.values.forEach(function(exception) {
               if (exception.value) {
@@ -572,6 +676,26 @@
                   .replace(/refresh_token[=:]\s*[^\s,]+/gi, 'refresh_token=***');
               }
             });
+          }
+
+          // 5. 错误后自动弹出反馈对话框（仅生产环境、异常事件、冷却期内不重复）
+          // 注意：中文硬编码是因为 Sentry 初始化时机早于 i18n 模块就绪，无法使用动态翻译
+          if (reportCheck.shouldShow && event.event_id) {
+            var eventId = event.event_id;
+            var fingerprint = reportCheck.fingerprint;
+            // 立即更新冷却状态，避免多个错误同时触发弹窗
+            lastReportDialogFingerprint = fingerprint;
+            lastReportDialogTime = Date.now();
+            // 延迟弹窗，确保 Sentry 事件已发送完成
+            setTimeout(function() {
+              try {
+                window.Sentry.showReportDialog({ eventId: eventId, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitle2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' });
+              } catch (e) {
+                // 弹窗失败时回滚冷却状态，允许后续重试
+                lastReportDialogFingerprint = '';
+                lastReportDialogTime = 0;
+              }
+            }, 500);
           }
 
           return event;
@@ -628,7 +752,7 @@
   // ===================================
 
   // Sentry SDK URL - 使用官方 CDN（带 tracing 和 replay）
-  var SENTRY_SDK_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.min.js';
+  var SENTRY_SDK_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.replay.feedback.min.js';
 
   // 创建 script 标签
   var script = document.createElement('script');
