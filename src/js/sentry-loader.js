@@ -735,8 +735,23 @@
     }
   }
 
+  /**
+   * 获取 Sentry 健康状态
+   */
+  function getSentryHealth() {
+    return {
+      sdkLoaded: !!window.Sentry && window.Sentry !== SentryMock,
+      initialized: sentryInitialized,
+      isDev: isDev,
+      dsnConfigured: !!SENTRY_DSN,
+      environment: SENTRY_ENVIRONMENT,
+      release: SENTRY_RELEASE,
+    };
+  }
+
   // 暴露测试函数到全局
   window.testSentry = testSentry;
+  window.getSentryHealth = getSentryHealth;
 
   // ===================================
   // 开发环境：立即设置 Mock
