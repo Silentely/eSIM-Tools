@@ -285,7 +285,17 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
   try {
     const safeData = validateQRCodeData(data);
     const safeSize = normalizeQRCodeSize(size);
-    const qrCodeLib = await loadQRCodeLibrary();
+    let qrCodeLib = await loadQRCodeLibrary();
+
+    // 验证加载结果是否可调用（ESIM-TOOLS-15 防御：浏览器扩展污染或缓存竞态可能导致返回 null）
+    if (typeof qrCodeLib !== 'function') {
+      console.warn(`[QRCode] loadQRCodeLibrary returned non-function: ${typeof qrCodeLib}, retrying with fresh CDN load`);
+      qrCodeLibraryPromise = null;
+      qrCodeLib = await loadQRCodeLibrary();
+      if (typeof qrCodeLib !== 'function') {
+        throw new Error(`QRCode library is not callable after retry (got ${typeof qrCodeLib})`);
+      }
+    }
 
     // qrcode-generator 包的 API 与 qrcode 包不同
     // 正确用法：qrcode(typeNumber, errorCorrectionLevel).addData(data).make().createDataURL(cellSize, margin)
