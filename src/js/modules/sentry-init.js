@@ -480,8 +480,6 @@ function initSentry() {
         /AbortError/,
         // 第三方脚本噪音
         /turnstile/i,
-        // 浏览器扩展注入 CommonJS require 到纯 ES Module 环境
-        /require is not defined/i,
         // 浏览器扩展注入的 SweetAlert 冲突（t.swal=e() 模式）
         /t\.swal=e\(\)/i,
         // Google Tag Manager 噪音 (ESIM-TOOLS-18)
@@ -555,11 +553,12 @@ function initSentry() {
           const sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
           try {
             const urlObj = new URL(url, window.location.origin);
-            sensitiveParams.forEach(param => {
-              if (urlObj.searchParams.has(param)) {
-                urlObj.searchParams.set(param, '***');
+            // 大小写不敏感匹配：遍历所有参数，将 key 转小写后比较
+            for (const [key] of urlObj.searchParams) {
+              if (sensitiveParams.includes(key.toLowerCase())) {
+                urlObj.searchParams.set(key, '***');
               }
-            });
+            }
             return urlObj.toString();
           } catch (e) {
             return url.replace(/([?&])(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1$2=***');
@@ -568,8 +567,17 @@ function initSentry() {
 
         if (event.request) {
           if (event.request.query_string) {
-            event.request.query_string = event.request.query_string
-              .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
+            if (typeof event.request.query_string === 'string') {
+              event.request.query_string = event.request.query_string
+                .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
+            } else if (typeof event.request.query_string === 'object') {
+              const sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
+              sensitiveParams.forEach(param => {
+                if (param in event.request.query_string) {
+                  event.request.query_string[param] = '***';
+                }
+              });
+            }
           }
           if (event.request.url) {
             event.request.url = sanitizeQueryString(event.request.url);
@@ -582,7 +590,18 @@ function initSentry() {
           }
         }
 
-        // 3. 脱敏异常消息中的敏感信息
+        // 3. 弹窗决策：在脱敏前基于原始异常值计算指纹，避免脱敏后不同错误产生相同指纹
+        // 注：在 beforeSend 中触发 UI 交互是刻意设计，因为需要 event_id 关联反馈
+        let reportCheck = { shouldShow: false, fingerprint: '' };
+        if (event.exception?.values) {
+          // 保存原始异常值用于指纹计算
+          const originalValues = event.exception.values.map(e => e.value);
+          reportCheck = shouldShowReportDialog(event);
+          // 恢复原始值，确保后续脱敏基于原始数据
+          event.exception.values.forEach((e, i) => { e.value = originalValues[i]; });
+        }
+
+        // 4. 脱敏异常消息中的敏感信息
         if (event.exception?.values) {
           event.exception.values.forEach(exception => {
             if (exception.value) {
@@ -599,15 +618,18 @@ function initSentry() {
           });
         }
 
-        // 4. 错误后自动弹出反馈对话框（仅生产环境、异常事件、冷却期内不重复）
-        // 注：在 beforeSend 中触发 UI 交互是刻意设计，因为需要 event_id 关联反馈
-        const reportCheck = shouldShowReportDialog(event);
+        // 5. 错误后自动弹出反馈对话框（仅生产环境、异常事件、冷却期内不重复）
         if (reportCheck.shouldShow && event.event_id) {
-          lastReportDialogFingerprint = reportCheck.fingerprint;
-          lastReportDialogTime = Date.now();
+          const eventId = event.event_id;
+          const fingerprint = reportCheck.fingerprint;
           // 延迟弹窗，确保 Sentry 事件已发送完成
           setTimeout(function() {
-            try { showReportDialog({ eventId: event.event_id, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitleLine2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' }); } catch (e) { /* 忽略弹窗错误 */ }
+            try {
+              showReportDialog({ eventId: eventId, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitle2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' });
+              // 弹窗成功后更新冷却状态，避免弹窗失败时空转 60 秒
+              lastReportDialogFingerprint = fingerprint;
+              lastReportDialogTime = Date.now();
+            } catch (e) { /* 忽略弹窗错误 */ }
           }, 500);
         }
 
@@ -748,7 +770,7 @@ export function showReportDialog(options = {}) {
       eventId: options.eventId || lastEventId(),
       title: options.title || '报告问题',
       subtitle: options.subtitle || '告诉我们发生了什么',
-      subtitleLine2: options.subtitleLine2 || '您的反馈将帮助我们改进',
+      subtitle2: options.subtitle2 || '您的反馈将帮助我们改进',
       labelName: options.labelName || '名称',
       labelEmail: options.labelEmail || '邮箱',
       labelComments: options.labelComments || '问题描述',

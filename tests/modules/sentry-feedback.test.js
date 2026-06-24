@@ -1,8 +1,13 @@
+'use strict';
+
 /**
  * Sentry 错误反馈弹窗专项测试
  *
  * 覆盖 shouldShowReportDialog 冷却机制、弹窗触发条件、
  * showReportDialog 中文参数、SentryMock fallback 等场景
+ *
+ * 注意：本测试中的 createShouldShowReportDialog 是生产代码逻辑的独立复现，
+ * 修改 sentry-loader.js / sentry-init.js 中的冷却逻辑时需同步更新此处
  */
 
 // ===================================
@@ -235,7 +240,7 @@ describe('Sentry 错误反馈弹窗', () => {
         eventId: 'test-123',
         title: '问题反馈',
         subtitle: '抱歉，发生了错误',
-        subtitleLine2: '您的反馈将帮助我们改进服务',
+        subtitle2: '您的反馈将帮助我们改进服务',
         labelName: '名称',
         labelEmail: '邮箱',
         labelComments: '问题描述（选填）',
@@ -250,7 +255,7 @@ describe('Sentry 错误反馈弹窗', () => {
           eventId: 'test-123',
           title: '问题反馈',
           subtitle: '抱歉，发生了错误',
-          subtitleLine2: '您的反馈将帮助我们改进服务',
+          subtitle2: '您的反馈将帮助我们改进服务',
           labelName: '名称',
           labelEmail: '邮箱',
           labelComments: '问题描述（选填）',
