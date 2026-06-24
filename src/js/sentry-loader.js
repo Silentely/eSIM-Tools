@@ -610,9 +610,11 @@
             var sensitiveParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
             try {
               var urlObj = new URL(url, window.location.origin);
-              sensitiveParams.forEach(function(param) {
-                if (urlObj.searchParams.has(param)) {
-                  urlObj.searchParams.set(param, '***');
+              // 大小写不敏感匹配：先收集所有键再遍历
+              var paramKeys = Array.from(urlObj.searchParams.keys());
+              paramKeys.forEach(function(key) {
+                if (sensitiveParams.indexOf(key.toLowerCase()) !== -1) {
+                  urlObj.searchParams.set(key, '***');
                 }
               });
               return urlObj.toString();
@@ -688,7 +690,11 @@
             setTimeout(function() {
               try {
                 window.Sentry.showReportDialog({ eventId: eventId, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitle2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' });
-              } catch (e) { /* 忽略弹窗错误 */ }
+              } catch (e) {
+                // 弹窗失败时回滚冷却状态，允许后续重试
+                lastReportDialogFingerprint = '';
+                lastReportDialogTime = 0;
+              }
             }, 500);
           }
 
