@@ -458,7 +458,7 @@
           // User Feedback Widget - 用户随时可提交反馈
           window.Sentry.feedbackIntegration({
             colorScheme: 'system',
-            enableScreenshot: true,
+            enableScreenshot: false, // 禁用截图以避免泄露 eSIM 凭据（QR/LPA/激活码）
             triggerLabel: '反馈',
             formTitle: '发送反馈',
             submitButtonLabel: '提交',
