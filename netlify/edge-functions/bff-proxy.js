@@ -14,7 +14,8 @@ const BFF_ROUTES = new Map([
   ['auto-activate-esim', ['POST', 'OPTIONS']],
   ['qrcode-generate', ['POST', 'OPTIONS']],
   ['verify-cookie', ['POST', 'OPTIONS']],
-  ['public-config', ['GET', 'OPTIONS']]
+  ['public-config', ['GET', 'OPTIONS']],
+  ['health', ['GET', 'OPTIONS']]
 ]);
 
 // 注意：此文件运行在 Deno（Edge Function），无法直接引用 Node.js 的 _shared/cors.js。
@@ -80,7 +81,7 @@ export default async (request, context) => {
   const sameOrigin = requestOrigin === url.origin;
   const configuredOrigin = allowedOrigins.includes(requestOrigin);
   const corsOrigin = sameOrigin || configuredOrigin ? requestOrigin : '';
-  const allowMissingOriginForPublicGet = targetName === 'public-config' && request.method === 'GET';
+  const allowMissingOriginForPublicGet = (targetName === 'public-config' || targetName === 'health') && request.method === 'GET';
   const fallbackCorsOrigin = allowedOrigins[0] || DEFAULT_ALLOWED_ORIGIN;
   const errorCorsHeaders = buildCorsHeaders(corsOrigin || fallbackCorsOrigin);
 
