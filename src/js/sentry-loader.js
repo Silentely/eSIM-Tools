@@ -628,10 +628,12 @@
                   .replace(/(token|key|password|code|state|access_token|refresh_token|auth|secret)=[^&]*/gi, '$1=***');
               } else if (typeof event.request.query_string === 'object') {
                 var sensitiveQSParams = ['token', 'key', 'password', 'code', 'state', 'access_token', 'refresh_token', 'auth', 'secret'];
-                sensitiveQSParams.forEach(function(param) {
-                  if (param in event.request.query_string) {
-                    event.request.query_string[param] = '***';
-                  }
+                // Case-insensitive masking: collect keys to mask
+                var keysToMask = Object.keys(event.request.query_string).filter(function(key) {
+                  return sensitiveQSParams.indexOf(key.toLowerCase()) !== -1;
+                });
+                keysToMask.forEach(function(key) {
+                  event.request.query_string[key] = '***';
                 });
               }
             }
@@ -678,13 +680,13 @@
           if (reportCheck.shouldShow && event.event_id) {
             var eventId = event.event_id;
             var fingerprint = reportCheck.fingerprint;
+            // 立即更新冷却状态，防止在 setTimeout 执行前收到多个错误导致重复弹窗
+            lastReportDialogFingerprint = fingerprint;
+            lastReportDialogTime = Date.now();
             // 延迟弹窗，确保 Sentry 事件已发送完成
             setTimeout(function() {
               try {
                 window.Sentry.showReportDialog({ eventId: eventId, title: '问题反馈', subtitle: '抱歉，发生了错误', subtitle2: '您的反馈将帮助我们改进服务', labelName: '名称', labelEmail: '邮箱', labelComments: '问题描述（选填）', labelClose: '关闭', labelSubmit: '提交反馈', successMessage: '感谢您的反馈！' });
-                // 弹窗成功后更新冷却状态，避免弹窗失败时空转 60 秒
-                lastReportDialogFingerprint = fingerprint;
-                lastReportDialogTime = Date.now();
               } catch (e) { /* 忽略弹窗错误 */ }
             }, 500);
           }
