@@ -211,12 +211,15 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
       source: 'local'
     };
   } catch (error) {
+    // qrcode-generator 库可能 throw 字符串而非 Error 对象，统一转换为 Error
+    const err = error instanceof Error ? error : new Error(String(error));
+
     // 依赖 validateQRCodeData/normalizeQRCodeSize 的错误消息前缀来区分验证错误和生成错误
     // 如果修改了这些函数的错误消息，需同步更新此处条件
-    if (error.message.startsWith('QR code data') || error.message.startsWith('QR code size')) {
-      throw error;
+    if (err.message.startsWith('QR code data') || err.message.startsWith('QR code size')) {
+      throw err;
     }
-    throw new Error(`Local QR code generation failed: ${error.message}`);
+    throw new Error(`Local QR code generation failed: ${err.message}`);
   }
 }
 

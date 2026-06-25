@@ -115,6 +115,9 @@ export default async (request, context) => {
     let qrBody;
     try {
       qrBody = await request.json();
+      if (qrBody === null || typeof qrBody !== 'object') {
+        throw new Error('body must be a JSON object');
+      }
     } catch {
       console.warn('[edge:qrcode-generate] Invalid JSON body');
       return jsonResponse(400, { error: 'Invalid JSON body' }, corsHeaders);
