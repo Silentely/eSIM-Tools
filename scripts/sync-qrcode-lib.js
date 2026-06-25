@@ -17,7 +17,7 @@ const BROWSER_LIB = path.resolve(__dirname, '../src/js/modules/qrcode-lib.js');
 const EDGE_LIB = path.resolve(__dirname, '../netlify/edge-functions/qrcode-lib.js');
 
 function extractLibraryCode(filePath) {
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const content = fs.readFileSync(filePath, 'utf-8').replace(/\r\n/g, '\n');
   // 提取 'use strict'; 和 export 之间的库代码
   const lines = content.split('\n');
   const libLines = lines.filter(line =>

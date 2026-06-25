@@ -295,6 +295,10 @@ export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE, l
   const startTime = Date.now();
   let localError = null;
 
+  // 校验错误直接抛出，不走降级路径
+  validateQRCodeData(data);
+  normalizeQRCodeSize(size);
+
   // 尝试本地生成
   try {
     const result = await generateQRCodeLocal(data, size, labels);
