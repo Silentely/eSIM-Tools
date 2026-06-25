@@ -31,7 +31,6 @@ describe('Local server route coverage', () => {
       '/bff/giffgaff-mfa-validation',
       '/bff/giffgaff-sms-activate',
       '/bff/auto-activate-esim',
-      '/bff/qrcode-generate',
       '/bff/verify-cookie',
       '/bff/public-config'
     ];

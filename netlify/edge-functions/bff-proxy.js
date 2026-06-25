@@ -3,7 +3,10 @@
  * - 接收前端对 /bff/* 的请求
  * - 在服务端附加 x-esim-key（来自环境变量 ACCESS_KEY）
  * - 仅转发显式允许的 /.netlify/functions/* 目标
+ * - QR 码生成直接在 Edge Function 中处理（无冷启动延迟）
  */
+
+import qrCodeLib from './qrcode-lib.js';
 
 const BFF_ROUTES = new Map([
   ['giffgaff-token-exchange', ['POST', 'OPTIONS']],
@@ -17,6 +20,13 @@ const BFF_ROUTES = new Map([
   ['public-config', ['GET', 'OPTIONS']],
   ['health', ['GET', 'OPTIONS']]
 ]);
+
+// QR 码生成参数校验常量
+// 注意：与 src/js/modules/qrcode-generator.js 的 MIN_QR_SIZE/MAX_QR_SIZE/MAX_QR_DATA_LENGTH 保持同步
+const QR_MIN_SIZE = 200;
+const QR_MAX_SIZE = 600;
+const QR_MAX_DATA_LENGTH = 2048;
+const QR_MARGIN_MODULES = 8;
 
 // 注意：此文件运行在 Deno（Edge Function），无法直接引用 Node.js 的 _shared/cors.js。
 // 下方 parseAllowedOrigins 逻辑需与 netlify/functions/_shared/cors.js 的 parseOrigins 保持同步。
@@ -96,6 +106,68 @@ export default async (request, context) => {
   }
 
   console.log(`[BFF] ${ts} | ${request.method} ${url.pathname} → target=${targetName}`);
+
+  // === QR 码生成：Edge Function 直接处理（无冷启动） ===
+  // 安全模型：此端点不使用 ACCESS_KEY 认证，仅依赖 CORS origin 检查。
+  // 原因：① QR 码内容由前端生成（LPA 激活码），不涉及服务端敏感数据；
+  //        ② Edge Function 无 withAuth 中间件，ACCESS_KEY 仅用于转发到其他 Functions；
+  //        ③ CORS 已限制仅允许配置的 origin 调用。
+  // 输出格式：GIF data URL（qrcode-generator 库的 createDataURL 固定输出 GIF）。
+  // 旧 Netlify Function 使用 qrcode 包输出 PNG；格式变更不影响前端（img 标签兼容两种格式）。
+  if (targetName === 'qrcode-generate') {
+    const qrStartTime = Date.now();
+
+    // 到达此处时 request.method 一定是 POST（BFF_ROUTES 限制 + OPTIONS 拦截）
+    let qrBody;
+    try {
+      qrBody = await request.json();
+      if (qrBody === null || typeof qrBody !== 'object') {
+        throw new Error('body must be a JSON object');
+      }
+    } catch {
+      console.warn('[edge:qrcode-generate] Invalid JSON body');
+      return jsonResponse(400, { error: 'Invalid JSON body' }, corsHeaders);
+    }
+
+    const { data, size = 300 } = qrBody;
+
+    // 参数校验（与 src/js/modules/qrcode-generator.js 的 validateQRCodeData/normalizeQRCodeSize 保持同步）
+    if (typeof data !== 'string' || data.length < 1 || data.length > QR_MAX_DATA_LENGTH) {
+      console.warn(`[edge:qrcode-generate] Invalid data: type=${typeof data}, length=${data ? data.length : 0}`);
+      return jsonResponse(400, {
+        error: `data must be a string between 1 and ${QR_MAX_DATA_LENGTH} characters`
+      }, corsHeaders);
+    }
+
+    const numSize = Number(size);
+    if (!Number.isInteger(numSize) || numSize < QR_MIN_SIZE || numSize > QR_MAX_SIZE) {
+      console.warn(`[edge:qrcode-generate] Invalid size: ${size}`);
+      return jsonResponse(400, {
+        error: `size must be an integer between ${QR_MIN_SIZE} and ${QR_MAX_SIZE}`
+      }, corsHeaders);
+    }
+
+    // 生成 QR 码（纯 CPU 操作，< 10ms）
+    try {
+      const qr = qrCodeLib(0, 'M');
+      qr.addData(data);
+      qr.make();
+      const moduleCount = qr.getModuleCount();
+      const cellSize = Math.max(1, Math.floor(numSize / (moduleCount + QR_MARGIN_MODULES)));
+      const qrcode = qr.createDataURL(cellSize, cellSize * 2);
+
+      const duration = Date.now() - qrStartTime;
+      console.log(`[edge:qrcode-generate] Success: size=${numSize}, modules=${moduleCount}, cellSize=${cellSize}, duration=${duration}ms, qrcodeLength=${qrcode.length}`);
+
+      return jsonResponse(200, { success: true, qrcode }, corsHeaders);
+    } catch (error) {
+      // qrcode-generator 库可能 throw 字符串而非 Error 对象，统一转换
+      const err = error instanceof Error ? error : new Error(String(error));
+      const duration = Date.now() - qrStartTime;
+      console.error(`[edge:qrcode-generate] Failed: error=${err.message}, duration=${duration}ms`);
+      return jsonResponse(500, { error: err.message }, corsHeaders);
+    }
+  }
 
   // 目标 Netlify Function URL（同域）
   const functionUrl = new URL(`/.netlify/functions/${targetName}` , request.url);

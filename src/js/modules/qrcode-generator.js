@@ -1,24 +1,28 @@
 'use strict';
 
-// CDN 多源备用列表（全部已验证 HTTP 200 + 浏览器 UMD 全局变量）
-// 统一使用 qrcode-generator 包（UMD 格式，设置 window.qrcode 全局变量）
-// 注意：jsdelivr 的 qrcode@1.5.4/lib/browser.js 是 CommonJS 模块，浏览器无法使用
-const QRCODE_CDN_URLS = [
-  'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
-  'https://cdn.bootcdn.net/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
-];
+import qrcodeLib from './qrcode-lib.js';
+
 const DEFAULT_QR_SIZE = 300;
+// 注意：以下校验常量与 netlify/edge-functions/bff-proxy.js 的 QR_MIN_SIZE/QR_MAX_SIZE/QR_MAX_DATA_LENGTH 保持同步
 const MIN_QR_SIZE = 200;
 const MAX_QR_SIZE = 600;
 const MAX_QR_DATA_LENGTH = 2048;
 const BACKEND_ENDPOINT = '/bff/qrcode-generate';
 const BACKEND_TIMEOUT_MS = 10000;
-const CDN_LOAD_TIMEOUT_MS = 5000;
 const QR_MARGIN_MODULES = 8;
 const LARGE_PREVIEW_SIZE = 400;
 
-let qrCodeLibraryPromise = null;
+/**
+ * QR 码校验错误类。
+ * 用于区分校验错误（data/size 不合法）和生成错误（库调用失败），
+ * 避免依赖 error.message 字符串前缀做控制流判断。
+ */
+class QRCodeValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'QRCodeValidationError';
+  }
+}
 
 /**
  * 上报二维码生成事件到 Sentry 和 Analytics
@@ -74,17 +78,17 @@ function trackQRCodeEvent({ type, source, success, duration, error }) {
  * 标准化二维码尺寸，避免生成过大图片拖慢页面。
  * @param {number} [size=300] 二维码尺寸，单位 px
  * @returns {number} 安全的二维码尺寸
- * @throws {Error} 尺寸不合法时抛出
+ * @throws {QRCodeValidationError} 尺寸不合法时抛出
  */
 function normalizeQRCodeSize(size = DEFAULT_QR_SIZE) {
   const normalizedSize = Number(size);
 
   if (!Number.isInteger(normalizedSize)) {
-    throw new Error('QR code size must be an integer');
+    throw new QRCodeValidationError('QR code size must be an integer');
   }
 
   if (normalizedSize < MIN_QR_SIZE || normalizedSize > MAX_QR_SIZE) {
-    throw new Error(`QR code size must be between ${MIN_QR_SIZE} and ${MAX_QR_SIZE}`);
+    throw new QRCodeValidationError(`QR code size must be between ${MIN_QR_SIZE} and ${MAX_QR_SIZE}`);
   }
 
   return normalizedSize;
@@ -94,128 +98,35 @@ function normalizeQRCodeSize(size = DEFAULT_QR_SIZE) {
  * 校验二维码内容，防止空值和异常大 payload 进入生成流程。
  * @param {string} data 二维码内容
  * @returns {string} 校验后的二维码内容
- * @throws {Error} 内容不合法时抛出
+ * @throws {QRCodeValidationError} 内容不合法时抛出
  */
 function validateQRCodeData(data) {
   if (typeof data !== 'string') {
-    throw new Error('QR code data must be a string');
+    throw new QRCodeValidationError('QR code data must be a string');
   }
 
   if (data.length < 1 || data.length > MAX_QR_DATA_LENGTH) {
-    throw new Error(`QR code data length must be between 1 and ${MAX_QR_DATA_LENGTH}`);
+    throw new QRCodeValidationError(`QR code data length must be between 1 and ${MAX_QR_DATA_LENGTH}`);
   }
 
   return data;
 }
 
 /**
- * 获取 QRCode 库实例。
- * 两级加载策略：window.QRCode (已加载) → 动态加载 CDN (多源重试)
- * 解决 ESIM-TOOLS-15：单 CDN 故障导致 116 个用户 QR 码生成失败。
- * @returns {Promise<Object>} qrcode 库对象
+ * 获取本地打包的 QRCode 库实例。
+ * 库已内联到项目中，无需网络请求。
+ * @returns {Object} qrcode 工厂函数
+ * @throws {Error} 库未正确加载时抛出
  */
-export async function loadQRCodeLibrary() {
-  // 1. 检查全局变量（必须是函数，防止浏览器扩展或其他脚本污染 window.qrcode）
-  if (typeof window.qrcode === 'function') {
+function getQRCodeLibrary() {
+  if (typeof qrcodeLib === 'function') {
+    return qrcodeLib;
+  }
+  // 降级：检查全局变量（兼容极端情况）
+  if (typeof window !== 'undefined' && typeof window.qrcode === 'function') {
     return window.qrcode;
   }
-  if (typeof window.QRCode === 'function') {
-    return window.QRCode;
-  }
-
-  // 2. 缓存中的 Promise（防止并发重复加载）
-  if (qrCodeLibraryPromise) {
-    return qrCodeLibraryPromise;
-  }
-
-  // 3. 动态加载 CDN（带多源重试）
-  qrCodeLibraryPromise = loadFromCDNWithRetry();
-  return qrCodeLibraryPromise;
-}
-
-/**
- * 从 CDN 加载 QRCode 库，支持多源重试。
- * @returns {Promise<Object>} QRCode 库对象
- */
-async function loadFromCDNWithRetry() {
-  for (let i = 0; i < QRCODE_CDN_URLS.length; i++) {
-    const cdnUrl = QRCODE_CDN_URLS[i];
-    try {
-      const lib = await loadSingleCDN(cdnUrl);
-      console.log(`[QRCode] CDN loaded successfully: source=${i + 1}/${QRCODE_CDN_URLS.length}, url=${cdnUrl}`);
-      return lib;
-    } catch (error) {
-      console.warn(`[QRCode] CDN ${i + 1}/${QRCODE_CDN_URLS.length} failed: url=${cdnUrl}, error=${error.message}`);
-    }
-  }
-  qrCodeLibraryPromise = null;
-  throw new Error('All QRCode CDN sources failed');
-}
-
-/**
- * 从单个 CDN URL 加载 QRCode 库。
- * @param {string} cdnUrl CDN 地址
- * @returns {Promise<Object>} QRCode 库对象
- */
-function loadSingleCDN(cdnUrl) {
-  return new Promise((resolve, reject) => {
-    if (typeof document === 'undefined') {
-      reject(new Error('QRCode local generation requires a browser environment'));
-      return;
-    }
-
-    let timeoutId = null;
-
-    // 移除已失效的旧脚本
-    const existingScript = document.querySelector(`script[src="${cdnUrl}"]`);
-    if (existingScript) {
-      existingScript.remove();
-    }
-
-    const script = document.createElement('script');
-
-    const cleanup = () => {
-      if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
-      script.removeEventListener('load', handleLoad);
-      script.removeEventListener('error', handleError);
-    };
-
-    const handleLoad = () => {
-      cleanup();
-      // qrcode-generator 包设置 window.qrcode（小写）
-      // 必须 typeof 检查，防止浏览器扩展污染全局变量为非函数值
-      if (typeof window.qrcode === 'function') {
-        resolve(window.qrcode);
-        return;
-      }
-      // 兼容：部分 CDN 可能设置 window.QRCode（大写）
-      if (typeof window.QRCode === 'function') {
-        resolve(window.QRCode);
-        return;
-      }
-      script.remove();
-      reject(new Error('QRCode library loaded but global variable is not a function'));
-    };
-
-    const handleError = () => {
-      cleanup();
-      script.remove();
-      reject(new Error(`Failed to load QRCode library from ${cdnUrl}`));
-    };
-
-    script.addEventListener('load', handleLoad, { once: true });
-    script.addEventListener('error', handleError, { once: true });
-    timeoutId = setTimeout(() => {
-      cleanup();
-      script.remove();
-      reject(new Error(`QRCode library loading timed out from ${cdnUrl}`));
-    }, CDN_LOAD_TIMEOUT_MS);
-
-    script.src = cdnUrl;
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
-  });
+  throw new Error('QRCode library not available');
 }
 
 /**
@@ -276,6 +187,8 @@ function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl, labels 
 
 /**
  * 使用浏览器本地 qrcode.js 生成二维码。
+ * 注意：函数体内无 await（getQRCodeLibrary 已是同步调用），保留 async 是为了
+ * 兼容调用方的 await 签名以及未来可能恢复异步加载（如 WebAssembly 版 QR 库）。
  * @param {string} data 二维码内容
  * @param {number} [size=300] 二维码尺寸
  * @param {Object} [labels={}] 可访问性标签（支持 i18n）
@@ -285,17 +198,7 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
   try {
     const safeData = validateQRCodeData(data);
     const safeSize = normalizeQRCodeSize(size);
-    let qrCodeLib = await loadQRCodeLibrary();
-
-    // 验证加载结果是否可调用（ESIM-TOOLS-15 防御：浏览器扩展污染或缓存竞态可能导致返回 null）
-    if (typeof qrCodeLib !== 'function') {
-      console.warn(`[QRCode] loadQRCodeLibrary returned non-function: ${typeof qrCodeLib}, retrying with fresh CDN load`);
-      qrCodeLibraryPromise = null;
-      qrCodeLib = await loadQRCodeLibrary();
-      if (typeof qrCodeLib !== 'function') {
-        throw new Error(`QRCode library is not callable after retry (got ${typeof qrCodeLib})`);
-      }
-    }
+    const qrCodeLib = getQRCodeLibrary();
 
     // qrcode-generator 包的 API 与 qrcode 包不同
     // 正确用法：qrcode(typeNumber, errorCorrectionLevel).addData(data).make().createDataURL(cellSize, margin)
@@ -320,16 +223,21 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
       source: 'local'
     };
   } catch (error) {
-    // 验证错误（data/size 不合法）直接抛出，不包装
-    if (error.message.startsWith('QR code data') || error.message.startsWith('QR code size')) {
-      throw error;
+    // qrcode-generator 库可能 throw 字符串而非 Error 对象，统一转换
+    const err = error instanceof Error ? error : new Error(String(error));
+
+    // 校验错误直接抛出，不包装为生成错误
+    if (err instanceof QRCodeValidationError) {
+      throw err;
     }
-    throw new Error(`Local QR code generation failed: ${error.message}`);
+    throw new Error(`Local QR code generation failed: ${err.message}`);
   }
 }
 
 /**
- * 调用后端 Function 生成二维码，作为浏览器本地生成失败时的降级方案。
+ * 调用后端 Edge Function 生成二维码，作为浏览器本地生成失败时的降级方案。
+ * 注意：此路径仅在 Netlify 部署环境中可用（Edge Function）。
+ * 本地开发环境（server.js）不代理此端点，降级路径会返回 404。
  * @param {string} data 二维码内容
  * @param {number} [size=300] 二维码尺寸
  * @param {Object} [labels={}] 可访问性标签（支持 i18n）
@@ -386,6 +294,10 @@ export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE, labels
 export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE, labels = {}) {
   const startTime = Date.now();
   let localError = null;
+
+  // 校验错误直接抛出，不走降级路径
+  validateQRCodeData(data);
+  normalizeQRCodeSize(size);
 
   // 尝试本地生成
   try {
