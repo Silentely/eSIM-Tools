@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * qrcode-generator@1.4.4 — Deno ES module 版本
  * 用于 Edge Function 中的 QR 码生成，消除 Netlify Function 冷启动延迟。
