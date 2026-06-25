@@ -10,9 +10,7 @@ class ResourceHintsManager {
         'https://api.giffgaff.com',
         'https://id.giffgaff.com',
         'https://publicapi.giffgaff.com',
-        'https://appapi.simyo.nl',
-        'https://cdn.jsdelivr.net',
-        'https://cdnjs.cloudflare.com'
+        'https://appapi.simyo.nl'
       ],
       dnsPrefetch: [],
       preload: {
