@@ -22,6 +22,7 @@ const BFF_ROUTES = new Map([
 ]);
 
 // QR 码生成参数校验常量
+// 注意：与 src/js/modules/qrcode-generator.js 的 MIN_QR_SIZE/MAX_QR_SIZE/MAX_QR_DATA_LENGTH 保持同步
 const QR_MIN_SIZE = 200;
 const QR_MAX_SIZE = 600;
 const QR_MAX_DATA_LENGTH = 2048;
@@ -109,22 +110,18 @@ export default async (request, context) => {
   if (targetName === 'qrcode-generate') {
     const qrStartTime = Date.now();
 
-    if (request.method !== 'POST') {
-      console.log(`[edge:qrcode-generate] Method not allowed: ${request.method}`);
-      return jsonResponse(405, { error: 'Method Not Allowed' }, corsHeaders);
-    }
-
-    let body;
+    // 到达此处时 request.method 一定是 POST（BFF_ROUTES 限制 + OPTIONS 拦截）
+    let qrBody;
     try {
-      body = await request.json();
+      qrBody = await request.json();
     } catch {
       console.warn('[edge:qrcode-generate] Invalid JSON body');
       return jsonResponse(400, { error: 'Invalid JSON body' }, corsHeaders);
     }
 
-    const { data, size = 300 } = body;
+    const { data, size = 300 } = qrBody;
 
-    // 参数校验（不记录 data 内容，避免 LPA 激活信息泄露）
+    // 参数校验（与 src/js/modules/qrcode-generator.js 的 validateQRCodeData/normalizeQRCodeSize 保持同步）
     if (typeof data !== 'string' || data.length < 1 || data.length > QR_MAX_DATA_LENGTH) {
       console.warn(`[edge:qrcode-generate] Invalid data: type=${typeof data}, length=${data ? data.length : 0}`);
       return jsonResponse(400, {

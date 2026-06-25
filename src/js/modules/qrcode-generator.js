@@ -3,6 +3,7 @@
 import qrcodeLib from './qrcode-lib.js';
 
 const DEFAULT_QR_SIZE = 300;
+// 注意：以下校验常量与 netlify/edge-functions/bff-proxy.js 的 QR_MIN_SIZE/QR_MAX_SIZE/QR_MAX_DATA_LENGTH 保持同步
 const MIN_QR_SIZE = 200;
 const MAX_QR_SIZE = 600;
 const MAX_QR_DATA_LENGTH = 2048;
