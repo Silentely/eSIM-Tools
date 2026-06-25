@@ -108,6 +108,12 @@ export default async (request, context) => {
   console.log(`[BFF] ${ts} | ${request.method} ${url.pathname} → target=${targetName}`);
 
   // === QR 码生成：Edge Function 直接处理（无冷启动） ===
+  // 安全模型：此端点不使用 ACCESS_KEY 认证，仅依赖 CORS origin 检查。
+  // 原因：① QR 码内容由前端生成（LPA 激活码），不涉及服务端敏感数据；
+  //        ② Edge Function 无 withAuth 中间件，ACCESS_KEY 仅用于转发到其他 Functions；
+  //        ③ CORS 已限制仅允许配置的 origin 调用。
+  // 输出格式：GIF data URL（qrcode-generator 库的 createDataURL 固定输出 GIF）。
+  // 旧 Netlify Function 使用 qrcode 包输出 PNG；格式变更不影响前端（img 标签兼容两种格式）。
   if (targetName === 'qrcode-generate') {
     const qrStartTime = Date.now();
 
@@ -148,16 +154,18 @@ export default async (request, context) => {
       qr.make();
       const moduleCount = qr.getModuleCount();
       const cellSize = Math.max(1, Math.floor(numSize / (moduleCount + QR_MARGIN_MODULES)));
-      const qrcode = qr.createDataURL(cellSize, 2);
+      const qrcode = qr.createDataURL(cellSize, cellSize * 2);
 
       const duration = Date.now() - qrStartTime;
       console.log(`[edge:qrcode-generate] Success: size=${numSize}, modules=${moduleCount}, cellSize=${cellSize}, duration=${duration}ms, qrcodeLength=${qrcode.length}`);
 
       return jsonResponse(200, { success: true, qrcode }, corsHeaders);
     } catch (error) {
+      // qrcode-generator 库可能 throw 字符串而非 Error 对象，统一转换
+      const err = error instanceof Error ? error : new Error(String(error));
       const duration = Date.now() - qrStartTime;
-      console.error(`[edge:qrcode-generate] Failed: error=${error.message}, duration=${duration}ms`);
-      return jsonResponse(500, { error: error.message }, corsHeaders);
+      console.error(`[edge:qrcode-generate] Failed: error=${err.message}, duration=${duration}ms`);
+      return jsonResponse(500, { error: err.message }, corsHeaders);
     }
   }
 

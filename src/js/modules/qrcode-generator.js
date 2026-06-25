@@ -13,6 +13,18 @@ const QR_MARGIN_MODULES = 8;
 const LARGE_PREVIEW_SIZE = 400;
 
 /**
+ * QR 码校验错误类。
+ * 用于区分校验错误（data/size 不合法）和生成错误（库调用失败），
+ * 避免依赖 error.message 字符串前缀做控制流判断。
+ */
+class QRCodeValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'QRCodeValidationError';
+  }
+}
+
+/**
  * 上报二维码生成事件到 Sentry 和 Analytics
  * @param {Object} event - 事件数据
  * @param {string} event.type - 事件类型：'qr_generation' | 'qr_fallback'
@@ -66,17 +78,17 @@ function trackQRCodeEvent({ type, source, success, duration, error }) {
  * 标准化二维码尺寸，避免生成过大图片拖慢页面。
  * @param {number} [size=300] 二维码尺寸，单位 px
  * @returns {number} 安全的二维码尺寸
- * @throws {Error} 尺寸不合法时抛出
+ * @throws {QRCodeValidationError} 尺寸不合法时抛出
  */
 function normalizeQRCodeSize(size = DEFAULT_QR_SIZE) {
   const normalizedSize = Number(size);
 
   if (!Number.isInteger(normalizedSize)) {
-    throw new Error('QR code size must be an integer');
+    throw new QRCodeValidationError('QR code size must be an integer');
   }
 
   if (normalizedSize < MIN_QR_SIZE || normalizedSize > MAX_QR_SIZE) {
-    throw new Error(`QR code size must be between ${MIN_QR_SIZE} and ${MAX_QR_SIZE}`);
+    throw new QRCodeValidationError(`QR code size must be between ${MIN_QR_SIZE} and ${MAX_QR_SIZE}`);
   }
 
   return normalizedSize;
@@ -86,15 +98,15 @@ function normalizeQRCodeSize(size = DEFAULT_QR_SIZE) {
  * 校验二维码内容，防止空值和异常大 payload 进入生成流程。
  * @param {string} data 二维码内容
  * @returns {string} 校验后的二维码内容
- * @throws {Error} 内容不合法时抛出
+ * @throws {QRCodeValidationError} 内容不合法时抛出
  */
 function validateQRCodeData(data) {
   if (typeof data !== 'string') {
-    throw new Error('QR code data must be a string');
+    throw new QRCodeValidationError('QR code data must be a string');
   }
 
   if (data.length < 1 || data.length > MAX_QR_DATA_LENGTH) {
-    throw new Error(`QR code data length must be between 1 and ${MAX_QR_DATA_LENGTH}`);
+    throw new QRCodeValidationError(`QR code data length must be between 1 and ${MAX_QR_DATA_LENGTH}`);
   }
 
   return data;
@@ -211,12 +223,11 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
       source: 'local'
     };
   } catch (error) {
-    // qrcode-generator 库可能 throw 字符串而非 Error 对象，统一转换为 Error
+    // qrcode-generator 库可能 throw 字符串而非 Error 对象，统一转换
     const err = error instanceof Error ? error : new Error(String(error));
 
-    // 依赖 validateQRCodeData/normalizeQRCodeSize 的错误消息前缀来区分验证错误和生成错误
-    // 如果修改了这些函数的错误消息，需同步更新此处条件
-    if (err.message.startsWith('QR code data') || err.message.startsWith('QR code size')) {
+    // 校验错误直接抛出，不包装为生成错误
+    if (err instanceof QRCodeValidationError) {
       throw err;
     }
     throw new Error(`Local QR code generation failed: ${err.message}`);
@@ -224,7 +235,9 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
 }
 
 /**
- * 调用后端 Function 生成二维码，作为浏览器本地生成失败时的降级方案。
+ * 调用后端 Edge Function 生成二维码，作为浏览器本地生成失败时的降级方案。
+ * 注意：此路径仅在 Netlify 部署环境中可用（Edge Function）。
+ * 本地开发环境（server.js）不代理此端点，降级路径会返回 404。
  * @param {string} data 二维码内容
  * @param {number} [size=300] 二维码尺寸
  * @param {Object} [labels={}] 可访问性标签（支持 i18n）

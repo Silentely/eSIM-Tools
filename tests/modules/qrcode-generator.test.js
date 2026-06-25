@@ -292,4 +292,19 @@ describe('qrcode-generator', () => {
     await expect(generateQRCodeLocal('LPA:1$example', 300))
       .rejects.toThrow('Local QR code generation failed');
   });
+
+  it('库 throw 字符串时应正确捕获并包装', async () => {
+    // qrcode-generator 库在某些异常路径下会 throw 字符串而非 Error 对象
+    mockState.lib = jest.fn(() => ({
+      addData: jest.fn(),
+      make: jest.fn(() => { throw 'code length overflow'; }),
+      getModuleCount: jest.fn(),
+      createDataURL: jest.fn()
+    }));
+
+    const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
+
+    await expect(generateQRCodeLocal('LPA:1$example', 300))
+      .rejects.toThrow('Local QR code generation failed: code length overflow');
+  });
 });
