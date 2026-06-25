@@ -213,8 +213,8 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
     const cellSize = Math.max(1, Math.floor(safeSize / (moduleCount + QR_MARGIN_MODULES)));
     const largeCellSize = Math.max(1, Math.floor(LARGE_PREVIEW_SIZE / (moduleCount + QR_MARGIN_MODULES)));
 
-    const imageUrl = qr.createDataURL(cellSize, 2);
-    const largeImageUrl = qr.createDataURL(largeCellSize, 2);
+    const imageUrl = qr.createDataURL(cellSize, cellSize * 4);
+    const largeImageUrl = qr.createDataURL(largeCellSize, largeCellSize * 4);
 
     console.log(`[QRCode] Local generation success: size=${safeSize}, modules=${moduleCount}, cellSize=${cellSize}`);
 

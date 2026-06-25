@@ -154,7 +154,7 @@ export default async (request, context) => {
       qr.make();
       const moduleCount = qr.getModuleCount();
       const cellSize = Math.max(1, Math.floor(numSize / (moduleCount + QR_MARGIN_MODULES)));
-      const qrcode = qr.createDataURL(cellSize, cellSize * 2);
+      const qrcode = qr.createDataURL(cellSize, cellSize * 4);
 
       const duration = Date.now() - qrStartTime;
       console.log(`[edge:qrcode-generate] Success: size=${numSize}, modules=${moduleCount}, cellSize=${cellSize}, duration=${duration}ms, qrcodeLength=${qrcode.length}`);
