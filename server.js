@@ -59,10 +59,10 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://browser.sentry-cdn.com", "https://sentry.io", "https://*.sentry.io"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://browser.sentry-cdn.com", "https://sentry.io", "https://*.sentry.io"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
             imgSrc: ["'self'", "data:", "https:", "http:"],
-            connectSrc: ["'self'", "https://appapi.simyo.nl", "https://api.giffgaff.com", "https://id.giffgaff.com", "https://publicapi.giffgaff.com", "https://cdn.jsdelivr.net", "https://browser.sentry-cdn.com", "https://sentry.io", "https://*.sentry.io"],
+            connectSrc: ["'self'", "https://appapi.simyo.nl", "https://api.giffgaff.com", "https://id.giffgaff.com", "https://publicapi.giffgaff.com", "https://browser.sentry-cdn.com", "https://sentry.io", "https://*.sentry.io"],
             fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
             frameSrc: ["'self'", "https://*.sentry.io"],
             workerSrc: ["'self'", "blob:"],
