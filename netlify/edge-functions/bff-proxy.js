@@ -26,6 +26,7 @@ const BFF_ROUTES = new Map([
 const QR_MIN_SIZE = 200;
 const QR_MAX_SIZE = 600;
 const QR_MAX_DATA_LENGTH = 2048;
+const QR_MARGIN_MODULES = 8;
 
 // 注意：此文件运行在 Deno（Edge Function），无法直接引用 Node.js 的 _shared/cors.js。
 // 下方 parseAllowedOrigins 逻辑需与 netlify/functions/_shared/cors.js 的 parseOrigins 保持同步。
@@ -143,7 +144,7 @@ export default async (request, context) => {
       qr.addData(data);
       qr.make();
       const moduleCount = qr.getModuleCount();
-      const cellSize = Math.max(1, Math.floor(numSize / (moduleCount + 8)));
+      const cellSize = Math.max(1, Math.floor(numSize / (moduleCount + QR_MARGIN_MODULES)));
       const qrcode = qr.createDataURL(cellSize, 2);
 
       const duration = Date.now() - qrStartTime;

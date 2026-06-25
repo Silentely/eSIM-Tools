@@ -175,6 +175,8 @@ function createQRCodeContainer(imageUrl, size, largeImageUrl = imageUrl, labels 
 
 /**
  * 使用浏览器本地 qrcode.js 生成二维码。
+ * 注意：函数体内无 await（getQRCodeLibrary 已是同步调用），保留 async 是为了
+ * 兼容调用方的 await 签名以及未来可能恢复异步加载（如 WebAssembly 版 QR 库）。
  * @param {string} data 二维码内容
  * @param {number} [size=300] 二维码尺寸
  * @param {Object} [labels={}] 可访问性标签（支持 i18n）
@@ -209,7 +211,8 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
       source: 'local'
     };
   } catch (error) {
-    // 验证错误（data/size 不合法）直接抛出，不包装
+    // 依赖 validateQRCodeData/normalizeQRCodeSize 的错误消息前缀来区分验证错误和生成错误
+    // 如果修改了这些函数的错误消息，需同步更新此处条件
     if (error.message.startsWith('QR code data') || error.message.startsWith('QR code size')) {
       throw error;
     }
