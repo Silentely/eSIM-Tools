@@ -3,7 +3,10 @@
  * - 接收前端对 /bff/* 的请求
  * - 在服务端附加 x-esim-key（来自环境变量 ACCESS_KEY）
  * - 仅转发显式允许的 /.netlify/functions/* 目标
+ * - QR 码生成直接在 Edge Function 中处理（无冷启动延迟）
  */
+
+import qrCodeLib from './qrcode-lib.js';
 
 const BFF_ROUTES = new Map([
   ['giffgaff-token-exchange', ['POST', 'OPTIONS']],
@@ -17,6 +20,11 @@ const BFF_ROUTES = new Map([
   ['public-config', ['GET', 'OPTIONS']],
   ['health', ['GET', 'OPTIONS']]
 ]);
+
+// QR 码生成参数校验常量
+const QR_MIN_SIZE = 200;
+const QR_MAX_SIZE = 600;
+const QR_MAX_DATA_LENGTH = 2048;
 
 // 注意：此文件运行在 Deno（Edge Function），无法直接引用 Node.js 的 _shared/cors.js。
 // 下方 parseAllowedOrigins 逻辑需与 netlify/functions/_shared/cors.js 的 parseOrigins 保持同步。
@@ -96,6 +104,61 @@ export default async (request, context) => {
   }
 
   console.log(`[BFF] ${ts} | ${request.method} ${url.pathname} → target=${targetName}`);
+
+  // === QR 码生成：Edge Function 直接处理（无冷启动） ===
+  if (targetName === 'qrcode-generate') {
+    const qrStartTime = Date.now();
+
+    if (request.method !== 'POST') {
+      console.log(`[edge:qrcode-generate] Method not allowed: ${request.method}`);
+      return jsonResponse(405, { error: 'Method Not Allowed' }, corsHeaders);
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      console.warn('[edge:qrcode-generate] Invalid JSON body');
+      return jsonResponse(400, { error: 'Invalid JSON body' }, corsHeaders);
+    }
+
+    const { data, size = 300 } = body;
+
+    // 参数校验（不记录 data 内容，避免 LPA 激活信息泄露）
+    if (typeof data !== 'string' || data.length < 1 || data.length > QR_MAX_DATA_LENGTH) {
+      console.warn(`[edge:qrcode-generate] Invalid data: type=${typeof data}, length=${data ? data.length : 0}`);
+      return jsonResponse(400, {
+        error: `data must be a string between 1 and ${QR_MAX_DATA_LENGTH} characters`
+      }, corsHeaders);
+    }
+
+    const numSize = Number(size);
+    if (!Number.isInteger(numSize) || numSize < QR_MIN_SIZE || numSize > QR_MAX_SIZE) {
+      console.warn(`[edge:qrcode-generate] Invalid size: ${size}`);
+      return jsonResponse(400, {
+        error: `size must be an integer between ${QR_MIN_SIZE} and ${QR_MAX_SIZE}`
+      }, corsHeaders);
+    }
+
+    // 生成 QR 码（纯 CPU 操作，< 10ms）
+    try {
+      const qr = qrCodeLib(0, 'M');
+      qr.addData(data);
+      qr.make();
+      const moduleCount = qr.getModuleCount();
+      const cellSize = Math.max(1, Math.floor(numSize / (moduleCount + 8)));
+      const qrcode = qr.createDataURL(cellSize, 2);
+
+      const duration = Date.now() - qrStartTime;
+      console.log(`[edge:qrcode-generate] Success: size=${numSize}, modules=${moduleCount}, cellSize=${cellSize}, duration=${duration}ms, qrcodeLength=${qrcode.length}`);
+
+      return jsonResponse(200, { success: true, qrcode }, corsHeaders);
+    } catch (error) {
+      const duration = Date.now() - qrStartTime;
+      console.error(`[edge:qrcode-generate] Failed: error=${error.message}, duration=${duration}ms`);
+      return jsonResponse(500, { error: error.message }, corsHeaders);
+    }
+  }
 
   // 目标 Netlify Function URL（同域）
   const functionUrl = new URL(`/.netlify/functions/${targetName}` , request.url);

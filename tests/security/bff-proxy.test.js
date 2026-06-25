@@ -52,6 +52,11 @@ describe('BFF proxy guardrails', () => {
       const text = typeof this.body === 'string' ? this.body : JSON.stringify(this.body || '');
       return new TextEncoder().encode(text).buffer;
     }
+
+    async json() {
+      const text = typeof this.body === 'string' ? this.body : JSON.stringify(this.body || '');
+      return JSON.parse(text);
+    }
   }
 
   class MockResponse {
@@ -162,7 +167,7 @@ describe('BFF proxy guardrails', () => {
     expect(proxiedRequest.headers.get('x-app-key')).toBeNull();
   });
 
-  it('allows qrcode-generate BFF target', async () => {
+  it('allows qrcode-generate BFF target (Edge 内联处理，无 proxy)', async () => {
     const mod = await import('../../netlify/edge-functions/bff-proxy.js');
     const request = new Request('https://example.com/bff/qrcode-generate', {
       method: 'POST',
@@ -176,10 +181,12 @@ describe('BFF proxy guardrails', () => {
     const response = await mod.default(request);
 
     expect(response.status).toBe(200);
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    const proxiedRequest = global.fetch.mock.calls[0][0];
-    expect(proxiedRequest.url).toBe('https://example.com/.netlify/functions/qrcode-generate');
-    expect(proxiedRequest.headers.get('x-esim-key')).toBe('test-access-key');
+    // Edge 内联处理，不应调用 fetch 代理到 Netlify Function
+    expect(global.fetch).toHaveBeenCalledTimes(0);
+    // 响应应包含 QR 码 data URL
+    const body = JSON.parse(response.body);
+    expect(body.success).toBe(true);
+    expect(body.qrcode).toMatch(/^data:image\/gif;base64,/);
   });
 
 });
