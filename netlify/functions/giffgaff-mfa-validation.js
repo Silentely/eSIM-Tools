@@ -22,7 +22,15 @@ const mfaValidationSchema = {
   }
 };
 
-exports.handler = withAuth(async (event, context, { auth, body }) => {
+exports.handler = withAuth(async (event, ctx, { auth, body }) => {
+  const logger = ctx.logger;
+
+  logger.info('invoked', {
+    hasRef: !!body.ref,
+    hasCode: !!body.code,
+    hasCookie: !!body.cookie,
+  });
+
   // 输入验证
   validateInput(mfaValidationSchema, body);
 
@@ -126,6 +134,10 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       throw err;
     }
   }
+
+  logger.info('validation_ok', {
+    hasSignature: !!response?.data?.signature,
+  });
 
   return {
     statusCode: 200,

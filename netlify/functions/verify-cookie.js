@@ -19,7 +19,12 @@ const verifyCookieSchema = {
   }
 };
 
-exports.handler = withAuth(async (event, context, { auth, body }) => {
+exports.handler = withAuth(async (event, ctx, { auth, body }) => {
+  const logger = ctx.logger;
+  const startTime = Date.now();
+
+  logger.info('invoked', { hasCookie: !!body.cookie });
+
   // 输入验证
   validateInput(verifyCookieSchema, body);
 
@@ -41,6 +46,12 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   // success: Cookie 验证请求本身是否成功（HTTP 层面）
   // valid:   Cookie 是否可用于后续 API 调用（需同时拿到可用的 JWT 令牌）
   // 调用方（前端 & 内部函数）应以 valid 字段作为能否继续的唯一判断依据。
+  logger.info('cookie_verify_result', {
+    success: result.success,
+    hasAccessToken: !!result.accessToken,
+    duration: Date.now() - startTime,
+  });
+
   if (result.success) {
     const looksLikeJwt = typeof result.accessToken === 'string' &&
                          result.accessToken.includes('.') &&

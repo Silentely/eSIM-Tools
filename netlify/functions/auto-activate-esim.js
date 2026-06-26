@@ -16,7 +16,16 @@ const autoActivateSchema = {
   }
 };
 
-exports.handler = withAuth(async (event, context, { auth, body }) => {
+exports.handler = withAuth(async (event, ctx, { auth, body }) => {
+  const logger = ctx.logger;
+  const startTime = Date.now();
+
+  logger.info('invoked', {
+    hasActivationCode: !!body.activationCode,
+    hasCookie: !!body.cookie,
+    hasAccessToken: !!body.accessToken,
+  });
+
   // 输入验证
   validateInput(autoActivateSchema, body);
 
@@ -24,6 +33,11 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
 
   // 调用Giffgaff激活API
   const result = await callGiffgaffActivationAPI(activationCode, cookie, accessToken);
+
+  logger.info('activation_result', {
+    success: result.success,
+    duration: Date.now() - startTime,
+  });
 
   if (result.success) {
     return {

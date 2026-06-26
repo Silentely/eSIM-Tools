@@ -49,7 +49,14 @@ const tokenExchangeSchema = {
   }
 };
 
-exports.handler = withAuth(async (event, context, { auth, body }) => {
+exports.handler = withAuth(async (event, ctx, { auth, body }) => {
+  const logger = ctx.logger;
+
+  logger.info('invoked', {
+    hasCode: !!body.code,
+    hasCodeVerifier: !!body.code_verifier,
+  });
+
   // 输入验证
   validateInput(tokenExchangeSchema, body);
 
@@ -60,6 +67,8 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
 
   const tokenUrl = process.env.GIFFGAFF_TOKEN_URL || 'https://id.giffgaff.com/auth/oauth/token';
   const defaultRedirectUri = process.env.GIFFGAFF_REDIRECT_URI || 'giffgaff://auth/callback/';
+
+  logger.info('exchanging_token');
 
   // 构建 Basic Auth header（不再自动修复密钥）
   const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -79,6 +88,12 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       'User-Agent': 'giffgaff/1332 CFNetwork/1568.300.101 Darwin/24.2.0'
     },
     timeout: 30000
+  });
+
+  logger.info('token_exchange_ok', {
+    hasAccessToken: !!response.data?.access_token,
+    hasRefreshToken: !!response.data?.refresh_token,
+    expiresIn: response.data?.expires_in,
   });
 
   return {

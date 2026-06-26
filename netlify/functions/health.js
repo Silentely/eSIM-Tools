@@ -43,9 +43,18 @@ function checkEnvStatus() {
 }
 
 const handler = async (event, context, { auth }) => {
+  const logger = context.logger;
+
   // 基础健康信息（公开）
   const envStatus = checkEnvStatus();
   const isHealthy = envStatus.missing === 0;
+
+  logger.info('health_check', {
+    isHealthy,
+    configured: envStatus.configured,
+    missing: envStatus.missing,
+  });
+
   const health = {
     status: isHealthy ? 'healthy' : 'degraded',
     service: 'eSIM-Tools',

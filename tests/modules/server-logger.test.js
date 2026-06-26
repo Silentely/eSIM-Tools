@@ -51,6 +51,25 @@ describe('server-logger', () => {
       expect(output.duration).toBe(42);
     });
 
+    it('context 为 null 或 undefined 时不应报错', () => {
+      const logger = createLogger('test-fn', 'req-1');
+      expect(() => logger.info('msg', null)).not.toThrow();
+      expect(() => logger.info('msg', undefined)).not.toThrow();
+      expect(() => logger.warn('msg', null)).not.toThrow();
+      expect(() => logger.error('msg', null)).not.toThrow();
+      const output = JSON.parse(consoleSpy.log.mock.calls[0][0]);
+      expect(output.message).toBe('msg');
+      expect(output.requestId).toBe('req-1');
+    });
+
+    it('context 中同名字段应覆盖基础字段（Object.assign 语义）', () => {
+      const logger = createLogger('test-fn', 'req-1');
+      logger.info('override test', { message: 'overridden' });
+      const output = JSON.parse(consoleSpy.log.mock.calls[0][0]);
+      // Object.assign 后 context 中的 message 覆盖基础字段
+      expect(output.message).toBe('overridden');
+    });
+
     it('warn 应该输出到 console.warn', () => {
       const logger = createLogger('test-fn', 'req-1');
       logger.warn('warning msg');
@@ -87,6 +106,50 @@ describe('server-logger', () => {
       expect(output.message).toBe('debug msg');
       if (originalLevel) process.env.LOG_LEVEL = originalLevel;
       else delete process.env.LOG_LEVEL;
+    });
+
+    it('LOG_LEVEL=ERROR 时应该抑制 INFO 和 WARN', () => {
+      const originalLevel = process.env.LOG_LEVEL;
+      process.env.LOG_LEVEL = 'ERROR';
+      const logger = createLogger('test-fn', 'req-1');
+      logger.info('should not appear');
+      logger.warn('should not appear');
+      expect(consoleSpy.log).not.toHaveBeenCalled();
+      expect(consoleSpy.warn).not.toHaveBeenCalled();
+      // ERROR 仍然输出
+      logger.error('should appear');
+      expect(consoleSpy.error).toHaveBeenCalledTimes(1);
+      if (originalLevel) process.env.LOG_LEVEL = originalLevel;
+      else delete process.env.LOG_LEVEL;
+    });
+
+    it('LOG_LEVEL=WARN 时应该抑制 INFO 和 DEBUG', () => {
+      const originalLevel = process.env.LOG_LEVEL;
+      process.env.LOG_LEVEL = 'WARN';
+      const logger = createLogger('test-fn', 'req-1');
+      logger.info('should not appear');
+      logger.debug('should not appear');
+      expect(consoleSpy.log).not.toHaveBeenCalled();
+      // WARN 和 ERROR 仍然输出
+      logger.warn('should appear');
+      logger.error('should appear');
+      expect(consoleSpy.warn).toHaveBeenCalledTimes(1);
+      expect(consoleSpy.error).toHaveBeenCalledTimes(1);
+      if (originalLevel) process.env.LOG_LEVEL = originalLevel;
+      else delete process.env.LOG_LEVEL;
+    });
+
+    it('多个 logger 实例应该互不干扰', () => {
+      const logger1 = createLogger('fn-a', 'req-1');
+      const logger2 = createLogger('fn-b', 'req-2');
+      logger1.info('from a');
+      logger2.info('from b');
+      const out1 = JSON.parse(consoleSpy.log.mock.calls[0][0]);
+      const out2 = JSON.parse(consoleSpy.log.mock.calls[1][0]);
+      expect(out1.function).toBe('fn-a');
+      expect(out1.requestId).toBe('req-1');
+      expect(out2.function).toBe('fn-b');
+      expect(out2.requestId).toBe('req-2');
     });
   });
 

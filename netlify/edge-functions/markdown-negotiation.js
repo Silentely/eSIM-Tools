@@ -5,6 +5,18 @@
  * - 浏览器请求保持 HTML 默认响应
  */
 
+// Deno 环境内联结构化日志（与 bff-proxy.js 格式一致）
+const MD_LOG_LEVELS = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
+function createMdLogger(functionName, requestId) {
+  const currentLevel = MD_LOG_LEVELS.INFO;
+  function log(level, message, context = {}) {
+    if (MD_LOG_LEVELS[level] < currentLevel) return;
+    const entry = { level, message, function: functionName, requestId, timestamp: new Date().toISOString(), ...context };
+    console.log(JSON.stringify(entry));
+  }
+  return { info: (msg, ctx) => log('INFO', msg, ctx), warn: (msg, ctx) => log('WARN', msg, ctx), error: (msg, ctx) => log('ERROR', msg, ctx) };
+}
+
 // HTML 到 Markdown 的简易转换器
 function htmlToMarkdown(html) {
   if (!html) return '';
@@ -174,6 +186,8 @@ A: 所有数据处理均在本地浏览器完成。但使用第三方工具可�
 `;
 
 export default async (request, context) => {
+  const requestId = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const logger = createMdLogger('markdown-negotiation', requestId);
   const accept = request.headers.get('Accept') || '';
 
   // 仅在请求 Accept 包含 text/markdown 时处理
@@ -206,6 +220,12 @@ export default async (request, context) => {
   }
 
   // 返回 Markdown 响应
+  logger.info('markdown_conversion', {
+    path: pathname,
+    tokenCount: markdown.split(/\s+/).length,
+    source: pathname === '/' || pathname === '/index.html' ? 'preset' : 'converted',
+  });
+
   return new Response(markdown, {
     status: 200,
     headers: {

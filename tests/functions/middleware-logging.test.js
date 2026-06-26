@@ -131,14 +131,14 @@ describe('withAuth 日志集成', () => {
       { httpMethod: 'GET', path: '/a', headers: { origin: 'https://esim.cosr.eu.org' } },
       { functionName: 'fn1' }
     );
-    const reqId1 = mockLogs[0]?.ctx?.requestId;
+    const reqId1 = mockLogs[0]?.reqId;
 
     mockLogs.length = 0;
     await wrapped(
       { httpMethod: 'GET', path: '/b', headers: { origin: 'https://esim.cosr.eu.org' } },
       { functionName: 'fn2' }
     );
-    const reqId2 = mockLogs[0]?.ctx?.requestId;
+    const reqId2 = mockLogs[0]?.reqId;
 
     expect(reqId1).toBeDefined();
     expect(reqId2).toBeDefined();
@@ -155,5 +155,98 @@ describe('withAuth 日志集成', () => {
     );
 
     expect(createLogger).toHaveBeenCalledWith('my-function', expect.any(String));
+  });
+
+  it('CORS 鉴权失败时应该输出 request_error 日志', async () => {
+    const mockHandler = jest.fn(async () => ({ statusCode: 200, body: '{}' }));
+    const wrapped = withAuth(mockHandler, { requireAuth: false });
+
+    await wrapped(
+      { httpMethod: 'GET', path: '/bff/test', headers: { origin: 'https://evil.com' } },
+      { functionName: 'test-fn' }
+    );
+
+    const errorLog = mockLogs.find((l) => l.msg === 'request_error');
+    expect(errorLog).toBeDefined();
+    expect(errorLog.ctx.status).toBe(403);
+    expect(errorLog.ctx.errorName).toBe('AuthError');
+    // handler 不应被调用
+    expect(mockHandler).not.toHaveBeenCalled();
+  });
+
+  it('无效 JSON body 时应该输出 request_error 日志', async () => {
+    const mockHandler = jest.fn(async () => ({ statusCode: 200, body: '{}' }));
+    const wrapped = withAuth(mockHandler, { requireAuth: false });
+
+    await wrapped(
+      {
+        httpMethod: 'POST',
+        path: '/bff/test',
+        headers: { origin: 'https://esim.cosr.eu.org' },
+        body: 'not-valid-json{{{',
+      },
+      { functionName: 'test-fn' }
+    );
+
+    const errorLog = mockLogs.find((l) => l.msg === 'request_error');
+    expect(errorLog).toBeDefined();
+    expect(errorLog.ctx.status).toBe(400);
+    expect(errorLog.ctx.errorMessage).toBe('Invalid JSON body');
+    expect(mockHandler).not.toHaveBeenCalled();
+  });
+
+  it('输入验证失败时应该输出 request_error 日志', async () => {
+    const mockHandler = jest.fn(async () => ({ statusCode: 200, body: '{}' }));
+    const schema = { name: { required: true, type: 'string' } };
+    const wrapped = withAuth(mockHandler, { requireAuth: false, validateSchema: schema });
+
+    await wrapped(
+      {
+        httpMethod: 'POST',
+        path: '/bff/test',
+        headers: { origin: 'https://esim.cosr.eu.org' },
+        body: JSON.stringify({}),
+      },
+      { functionName: 'test-fn' }
+    );
+
+    const errorLog = mockLogs.find((l) => l.msg === 'request_error');
+    expect(errorLog).toBeDefined();
+    expect(errorLog.ctx.status).toBe(400);
+    expect(errorLog.ctx.errorMessage).toMatch(/name is required/);
+    expect(mockHandler).not.toHaveBeenCalled();
+  });
+
+  it('error 日志应包含耗时字段', async () => {
+    const mockHandler = jest.fn(async () => {
+      throw new Error('slow fail');
+    });
+    const wrapped = withAuth(mockHandler, { requireAuth: false });
+
+    await wrapped(
+      { httpMethod: 'GET', path: '/bff/test', headers: { origin: 'https://esim.cosr.eu.org' } },
+      { functionName: 'test-fn' }
+    );
+
+    const errorLog = mockLogs.find((l) => l.msg === 'request_error');
+    expect(errorLog.ctx.duration).toBeDefined();
+    expect(typeof errorLog.ctx.duration).toBe('number');
+    expect(errorLog.ctx.duration).toBeGreaterThanOrEqual(0);
+  });
+
+  it('OPTIONS 预检请求不输出 request_start 日志（提前返回）', async () => {
+    const mockHandler = jest.fn(async () => ({ statusCode: 200, body: '{}' }));
+    const wrapped = withAuth(mockHandler, { requireAuth: false });
+
+    await wrapped(
+      { httpMethod: 'OPTIONS', path: '/bff/test', headers: { origin: 'https://esim.cosr.eu.org' } },
+      { functionName: 'test-fn' }
+    );
+
+    // request_start 仍然会输出（在鉴权之前），但 request_end 不会（预检提前返回）
+    const startLog = mockLogs.find((l) => l.msg === 'request_start');
+    expect(startLog).toBeDefined();
+    // handler 不应被调用
+    expect(mockHandler).not.toHaveBeenCalled();
   });
 });

@@ -3,8 +3,10 @@
  * 提供鉴权、CORS、错误处理等功能
  */
 
+const crypto = require('crypto');
 const { captureException, flush, setContext } = require('./sentry');
 const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _resolveCorsOrigin } = require('./cors');
+const { createLogger } = require('./server-logger');
 
 const ACCESS_KEY = process.env.ACCESS_KEY;
 const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
@@ -124,16 +126,17 @@ function createHeaders(origin = null, additionalHeaders = {}) {
  * 统一错误处理
  * @param {Error} error - 错误对象
  * @param {string} context - 错误上下文
+ * @param {Object} [logger] - 结构化日志实例（可选，优先使用）
  * @returns {Object} Netlify response 对象
  */
-function handleError(error, context = 'unknown') {
+function handleError(error, context = 'unknown', logger) {
   const isDev = process.env.NODE_ENV === 'development';
   const statusCode = error.statusCode || (error.response?.status) || 500;
 
   // 结构化日志（生产环境应集成专业日志服务）
   const logData = {
     context,
-    message: error.message,
+    errorMessage: error.message,
     status: statusCode,
     timestamp: new Date().toISOString()
   };
@@ -143,7 +146,10 @@ function handleError(error, context = 'unknown') {
     logData.data = error.response?.data;
   }
 
-  console.error(`[${context}] Error:`, JSON.stringify(logData));
+  // 仅在无 logger 时输出兜底日志（withAuth 已通过 request_error 覆盖错误场景）
+  if (!logger) {
+    console.error(`[${context}] Error:`, JSON.stringify(logData));
+  }
 
   // Sentry 错误上报（仅上报 5xx 服务端错误，4xx 客户端错误不上报）
   if (statusCode >= 500) {
@@ -225,7 +231,7 @@ function validateInput(schema, data) {
 }
 
 /**
- * 包装 Function Handler，自动处理鉴权和错误
+ * 包装 Function Handler，自动处理鉴权、错误和结构化日志
  * @param {Function} handler - 业务逻辑处理函数
  * @param {Object} options - 配置选项
  * @returns {Function} 包装后的 handler
@@ -233,6 +239,16 @@ function validateInput(schema, data) {
 function withAuth(handler, options = {}) {
   return async (event, context) => {
     const functionName = context.functionName || 'unknown';
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+    const logger = createLogger(functionName, requestId);
+
+    // 请求开始日志（requestId 已在 logger 基础字段中，无需重复传入）
+    logger.info('request_start', {
+      method: event.httpMethod || 'GET',
+      path: event.path || '/',
+      source: (event.headers?.origin || event.headers?.['x-forwarded-for'] || '').substring(0, 100),
+    });
 
     try {
       // 鉴权（requireAuth: false 时跳过密钥校验，仅保留 CORS 检查）
@@ -293,10 +309,18 @@ function withAuth(handler, options = {}) {
         validateInput(options.validateSchema, parsedBody);
       }
 
-      // 执行业务逻辑
-      const result = await handler(event, context, { auth, body: parsedBody });
+      // 执行业务逻辑（注入 logger 到 context）
+      const result = await handler(event, { ...context, logger }, { auth, body: parsedBody });
 
       const responseOrigin = auth.origin;
+      const duration = Date.now() - startTime;
+      const statusCode = result.statusCode || 200;
+
+      // 请求结束日志
+      logger.info('request_end', {
+        status: statusCode,
+        duration,
+      });
 
       // 确保返回正确的响应格式
       if (!result.statusCode) {
@@ -312,7 +336,17 @@ function withAuth(handler, options = {}) {
       return result;
 
     } catch (error) {
-      const response = handleError(error, functionName);
+      const response = handleError(error, functionName, logger);
+      const duration = Date.now() - startTime;
+
+      // 请求错误日志
+      logger.error('request_error', {
+        status: response.statusCode,
+        errorMessage: error.message,
+        errorName: error.name || 'Error',
+        duration,
+      });
+
       // Serverless 环境需要显式 flush 确保错误发送到 Sentry
       await flush(2000);
       return response;

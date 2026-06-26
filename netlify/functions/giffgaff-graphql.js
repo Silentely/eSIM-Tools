@@ -21,9 +21,14 @@ const graphqlSchema = {
   }
 };
 
-exports.handler = withAuth(async (event, context, { auth, body }) => {
-  const ts = new Date().toISOString();
-  console.log(`[GGQL] ${ts} | invoked, operationName=${body.operationName || 'none'}, hasAccessToken=${!!body.accessToken}, hasMfaSignature=${!!body.mfaSignature}, hasCookie=${!!body.cookie}`);
+exports.handler = withAuth(async (event, ctx, { auth, body }) => {
+  const logger = ctx.logger;
+  logger.info('invoked', {
+    operationName: body.operationName || 'none',
+    hasAccessToken: !!body.accessToken,
+    hasMfaSignature: !!body.mfaSignature,
+    hasCookie: !!body.cookie,
+  });
 
   // 解析请求体
   const { mfaSignature, mfaRef, query, variables, operationName, cookie } = body;
@@ -130,7 +135,12 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   const verifyCookieUrl = hostHdr ? `${protoHdr}://${hostHdr}/.netlify/functions/verify-cookie` : ((process.env.URL || '').replace(/\/$/, '') + '/.netlify/functions/verify-cookie');
 
   // 调用Giffgaff GraphQL API
-  console.log(`[GGQL] ${ts} | calling upstream: op=${opName}, isSwap=${isSwap}, hasMfaSignature=${!!mfaSignature}, hasResolvedMfaRef=${!!resolvedMfaRef}`);
+  logger.info('calling_upstream', {
+    operationName: opName,
+    isSwap,
+    hasMfaSignature: !!mfaSignature,
+    hasResolvedMfaRef: !!resolvedMfaRef,
+  });
 
   // swapSim 操作在遇到上游 500 错误时自动重试（最多 2 次）
   const maxRetries = isSwap ? 2 : 0;
@@ -139,7 +149,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
       const delayMs = attempt * 1500;
-      console.log(`[GGQL] ${ts} | retry #${attempt} for ${opName} after ${delayMs}ms`);
+      logger.info('retry_attempt', { attempt, operationName: opName, delayMs });
       await new Promise(r => setTimeout(r, delayMs));
     }
 
@@ -149,18 +159,22 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
         graphqlBody,
         { headers: requestHeaders, timeout: 30000 }
       );
-      console.log(`[GGQL] ${ts} | upstream OK: status=${response.status}, hasData=${!!response.data}, hasErrors=${!!response.data?.errors}`);
+      logger.info('upstream_ok', {
+        status: response.status,
+        hasData: !!response.data,
+        hasErrors: !!response.data?.errors,
+      });
 
       // Giffgaff 返回 HTTP 200 但 GraphQL body 包含 errors 时，视为业务失败
       if (response.data?.errors?.length > 0) {
         const gqlErr = response.data.errors[0];
         const gqlMsg = gqlErr?.message || gqlErr?.error || JSON.stringify(gqlErr);
-        console.error(`[GGQL] ${ts} | GraphQL errors from upstream: ${gqlMsg}`);
+        logger.error('upstream_graphql_errors', { errorMessage: gqlMsg });
 
         // 区分上游服务器错误（500）和业务校验错误
         const isUpstream500 = /500|internal.?server.?error/i.test(gqlMsg);
         if (isUpstream500 && attempt < maxRetries) {
-          console.warn(`[GGQL] ${ts} | upstream 500 on attempt #${attempt}, will retry`);
+          logger.warn('upstream_500_retry', { attempt, operationName: opName });
           continue; // 重试
         }
 
@@ -177,11 +191,11 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       const status = err.response?.status;
       const data = err.response?.data || {};
       const isUnauthorized = status === 401 || data?.error === 'unauthorized' || /invalid_token/i.test(String(data?.error || ''));
-      console.error(`[GGQL] ${ts} | upstream FAILED: status=${status}, isUnauthorized=${isUnauthorized}, errMsg=${err.message}`);
+      logger.error('upstream_failed', { status, isUnauthorized, errorMessage: err.message });
 
       // 失败 401 时尝试用 cookie 刷新后重试一次
       if (isUnauthorized && cookie) {
-        console.log(`[GGQL] ${ts} | attempting cookie-based token refresh`);
+        logger.info('attempting_token_refresh');
         try {
           const r = await axios.post(verifyCookieUrl, { cookie }, {
             headers: getInternalHeaders(),
@@ -191,20 +205,20 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
           if (r.data?.valid && r.data?.accessToken) {
             accessToken = r.data.accessToken;
             requestHeaders['Authorization'] = `Bearer ${accessToken}`;
-            console.log(`[GGQL] ${ts} | token refreshed, retrying upstream call`);
+            logger.info('token_refreshed');
             response = await axios.post(
               'https://publicapi.giffgaff.com/gateway/graphql',
               graphqlBody,
               { headers: requestHeaders, timeout: 30000 }
             );
-            console.log(`[GGQL] ${ts} | retry OK: status=${response.status}`);
+            logger.info('retry_ok', { status: response.status });
             break; // 重试成功，跳出循环
           } else {
-            console.error(`[GGQL] ${ts} | cookie refresh failed: valid=${r.data?.valid}`);
+            logger.error('cookie_refresh_failed', { valid: r.data?.valid });
             throw err;
           }
         } catch (reErr) {
-          console.error(`[GGQL] ${ts} | token refresh/retry FAILED: ${reErr.message}`);
+          logger.error('token_refresh_retry_failed', { errorMessage: reErr.message });
           throw new AuthError('Access token expired. Please re-login with cookie.', 401);
         }
       } else {

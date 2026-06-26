@@ -20,8 +20,15 @@ const mfaChallengeSchema = {
   }
 };
 
-exports.handler = withAuth(async (event, context, { auth, body }) => {
+exports.handler = withAuth(async (event, ctx, { auth, body }) => {
+  const logger = ctx.logger;
   const { source = "esim", preferredChannels = ["EMAIL"], cookie } = body;
+
+  logger.info('invoked', {
+    source,
+    preferredChannels: Array.isArray(preferredChannels) ? preferredChannels.join(',') : 'unknown',
+    hasCookie: !!cookie,
+  });
 
   // 从请求体或 Authorization 头提取 accessToken（兼容两种方式）
   const lowerCaseHeaders = Object.fromEntries(
@@ -154,6 +161,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
   );
 
   let response;
+  const challengeStartTime = Date.now();
   try {
     // 优先走 Cookie 的 Web 通道
     if (mergedCookie) {
@@ -199,6 +207,12 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       throw err;
     }
   }
+
+  logger.info('challenge_sent', {
+    status: response?.status,
+    method: mergedCookie ? 'v3_cookie' : 'v4_token',
+    duration: Date.now() - challengeStartTime,
+  });
 
   return {
     statusCode: 200,

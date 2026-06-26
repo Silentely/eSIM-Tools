@@ -21,7 +21,19 @@ const smsActivateSchema = {
   }
 };
 
-exports.handler = withAuth(async (event, context, { auth, body }) => {
+exports.handler = withAuth(async (event, ctx, { auth, body }) => {
+  const logger = ctx.logger;
+  const startTime = Date.now();
+
+  logger.info('invoked', {
+    hasRef: !!body.ref,
+    hasAccessToken: !!body.accessToken,
+    hasCookie: !!body.cookie,
+    hasMemberId: !!body.memberId,
+    hasSsn: !!body.ssn,
+    hasActivationCode: !!body.activationCode,
+  });
+
   // 输入验证
   validateInput(smsActivateSchema, body);
 
@@ -34,12 +46,6 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     ssn,
     activationCode
   } = body;
-
-  // 站点URL用于内部调用其他函数
-  const lower = Object.fromEntries(Object.entries(event.headers || {}).map(([k, v]) => [String(k).toLowerCase(), v]));
-  const host = lower['x-forwarded-host'] || lower['host'] || '';
-  const proto = lower['x-forwarded-proto'] || 'https';
-  const baseUrl = host ? `${proto}://${host}` : String(process.env.URL || '').replace(/\/$/, '');
 
   // 统一创建 GraphQL 客户端
   const createGraphql = (token, extraHeaders = {}) => (body) => axios.post(
@@ -146,8 +152,11 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
 
   const mfaSignature = validationResp.data?.signature;
   if (!mfaSignature) {
+    logger.error('mfa_signature_missing');
     throw new AuthError('未获取到MFA签名', 500);
   }
+
+  logger.info('mfa_validation_ok', { hasMfaSignature: !!mfaSignature });
 
   // 3) 若无 ssn/activationCode,则获取 memberId → 预订 eSIM
   let currentMemberId = memberId || null;
@@ -183,6 +192,8 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     }
     currentSSN = reservation.esim.ssn;
     currentActivationCode = reservation.esim.activationCode;
+
+    logger.info('esim_reserved', { hasSsn: !!currentSSN, hasActivationCode: !!currentActivationCode });
   }
 
   // 4) 执行 swapSim
@@ -206,8 +217,10 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     if (sw?.new?.ssn) {
       currentSSN = sw.new.ssn;
       currentActivationCode = sw.new.activationCode || currentActivationCode;
+      logger.info('swap_completed', { hasNewSsn: !!sw.new.ssn });
     }
   } catch (e) {
+    logger.warn('swap_failed_continuing_poll', { errorMessage: e.message });
     // 允许继续轮询
   }
 
@@ -225,6 +238,7 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
       const r = await gql(downloadQuery);
       lastData = r.data?.data?.eSimDownloadToken || null;
       if (lastData?.lpaString) {
+        logger.info('lpa_obtained', { duration: Date.now() - startTime });
         return {
           statusCode: 200,
           body: JSON.stringify({
@@ -241,6 +255,8 @@ exports.handler = withAuth(async (event, context, { auth, body }) => {
     }
     await new Promise(r => setTimeout(r, 4000));
   }
+
+  logger.warn('lpa_poll_timeout', { duration: Date.now() - startTime });
 
   return {
     statusCode: 202,

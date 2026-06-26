@@ -54,7 +54,7 @@ function createLogger(functionName, requestId) {
    * @param {Object} [context] - 附加字段
    * @param {Function} [outputFn] - 输出函数（默认 console.log）
    */
-  function log(level, message, context, outputFn) {
+  function log(level, message, context = {}, outputFn) {
     if (LOG_LEVELS[level] < getCurrentLevel()) return;
 
     const entry = {
@@ -65,9 +65,7 @@ function createLogger(functionName, requestId) {
       timestamp: new Date().toISOString(),
     };
 
-    if (context && typeof context === 'object') {
-      Object.assign(entry, context);
-    }
+    Object.assign(entry, context);
 
     outputFn(JSON.stringify(entry));
   }

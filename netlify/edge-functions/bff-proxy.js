@@ -8,6 +8,34 @@
 
 import qrCodeLib from './qrcode-lib.js';
 
+// === Deno 环境内联结构化日志（与 netlify/functions/_shared/server-logger.js 输出格式一致） ===
+const EDGE_LOG_LEVELS = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
+
+function createEdgeLogger(functionName, requestId) {
+  const currentLevel = EDGE_LOG_LEVELS[getEnv('LOG_LEVEL')] ?? EDGE_LOG_LEVELS.INFO;
+  function log(level, message, context = {}) {
+    if (EDGE_LOG_LEVELS[level] < currentLevel) return;
+    const entry = {
+      level,
+      message,
+      function: functionName,
+      requestId,
+      timestamp: new Date().toISOString(),
+      ...context,
+    };
+    const line = JSON.stringify(entry);
+    if (level === 'ERROR') console.error(line);
+    else if (level === 'WARN') console.warn(line);
+    else console.log(line);
+  }
+  return {
+    info: (msg, ctx) => log('INFO', msg, ctx),
+    warn: (msg, ctx) => log('WARN', msg, ctx),
+    error: (msg, ctx) => log('ERROR', msg, ctx),
+    debug: (msg, ctx) => log('DEBUG', msg, ctx),
+  };
+}
+
 const BFF_ROUTES = new Map([
   ['giffgaff-token-exchange', ['POST', 'OPTIONS']],
   ['giffgaff-graphql', ['POST', 'OPTIONS']],
@@ -64,7 +92,8 @@ function buildCorsHeaders(origin) {
 
 export default async (request, context) => {
   const url = new URL(request.url);
-  const ts = new Date().toISOString();
+  const requestId = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const logger = createEdgeLogger('bff-proxy', requestId);
 
   // 仅处理 /bff/* 路径
   if (!url.pathname.startsWith('/bff/')) {
@@ -78,7 +107,7 @@ export default async (request, context) => {
 
   const allowedMethods = BFF_ROUTES.get(targetName);
   if (!allowedMethods) {
-    console.warn(`[BFF] ${ts} | blocked unknown target=${targetName}`);
+    logger.warn('blocked_unknown_target', { target: targetName });
     return jsonResponse(404, { error: 'Not Found', message: 'BFF target not allowed' });
   }
 
@@ -96,7 +125,7 @@ export default async (request, context) => {
   const errorCorsHeaders = buildCorsHeaders(corsOrigin || fallbackCorsOrigin);
 
   if (!corsOrigin && !allowMissingOriginForPublicGet) {
-    console.warn(`[BFF] ${ts} | blocked origin=${requestOrigin || 'missing'} target=${targetName}`);
+    logger.warn('blocked_origin', { origin: requestOrigin || 'missing', target: targetName });
     return jsonResponse(403, { error: 'Forbidden', message: 'Origin not allowed' }, errorCorsHeaders);
   }
 
@@ -105,7 +134,12 @@ export default async (request, context) => {
     return new Response('', { status: 200, headers: corsHeaders });
   }
 
-  console.log(`[BFF] ${ts} | ${request.method} ${url.pathname} → target=${targetName}`);
+  logger.info('request_start', {
+    method: request.method,
+    path: url.pathname,
+    target: targetName,
+    origin: requestOrigin || 'same-origin',
+  });
 
   // === QR 码生成：Edge Function 直接处理（无冷启动） ===
   // 安全模型：此端点不使用 ACCESS_KEY 认证，仅依赖 CORS origin 检查。
@@ -125,7 +159,7 @@ export default async (request, context) => {
         throw new Error('body must be a JSON object');
       }
     } catch {
-      console.warn('[edge:qrcode-generate] Invalid JSON body');
+      logger.warn('qr_invalid_body');
       return jsonResponse(400, { error: 'Invalid JSON body' }, corsHeaders);
     }
 
@@ -133,7 +167,7 @@ export default async (request, context) => {
 
     // 参数校验（与 src/js/modules/qrcode-generator.js 的 validateQRCodeData/normalizeQRCodeSize 保持同步）
     if (typeof data !== 'string' || data.length < 1 || data.length > QR_MAX_DATA_LENGTH) {
-      console.warn(`[edge:qrcode-generate] Invalid data: type=${typeof data}, length=${data ? data.length : 0}`);
+      logger.warn('qr_invalid_data', { type: typeof data, length: data ? data.length : 0 });
       return jsonResponse(400, {
         error: `data must be a string between 1 and ${QR_MAX_DATA_LENGTH} characters`
       }, corsHeaders);
@@ -141,7 +175,7 @@ export default async (request, context) => {
 
     const numSize = Number(size);
     if (!Number.isInteger(numSize) || numSize < QR_MIN_SIZE || numSize > QR_MAX_SIZE) {
-      console.warn(`[edge:qrcode-generate] Invalid size: ${size}`);
+      logger.warn('qr_invalid_size', { size });
       return jsonResponse(400, {
         error: `size must be an integer between ${QR_MIN_SIZE} and ${QR_MAX_SIZE}`
       }, corsHeaders);
@@ -157,14 +191,14 @@ export default async (request, context) => {
       const qrcode = qr.createDataURL(cellSize, cellSize * 4);
 
       const duration = Date.now() - qrStartTime;
-      console.log(`[edge:qrcode-generate] Success: size=${numSize}, modules=${moduleCount}, cellSize=${cellSize}, duration=${duration}ms, qrcodeLength=${qrcode.length}`);
+      logger.info('qr_generate_ok', { size: numSize, modules: moduleCount, cellSize, duration, qrcodeLength: qrcode.length });
 
       return jsonResponse(200, { success: true, qrcode }, corsHeaders);
     } catch (error) {
       // qrcode-generator 库可能 throw 字符串而非 Error 对象，统一转换
       const err = error instanceof Error ? error : new Error(String(error));
       const duration = Date.now() - qrStartTime;
-      console.error(`[edge:qrcode-generate] Failed: error=${err.message}, duration=${duration}ms`);
+      logger.error('qr_generate_failed', { errorMessage: err.message, duration });
       return jsonResponse(500, { error: err.message }, corsHeaders);
     }
   }
@@ -176,10 +210,10 @@ export default async (request, context) => {
   // Netlify Edge 使用 Deno 运行时
   const accessKey = getEnv('ACCESS_KEY');
   if (!accessKey) {
-    console.error(`[BFF] ${ts} | ACCESS_KEY missing in Edge env`);
+    logger.error('access_key_missing');
     return jsonResponse(500, { error: 'Server Misconfigured', message: 'ACCESS_KEY not configured' }, corsHeaders);
   }
-  console.log(`[BFF] ${ts} | ACCESS_KEY present, proceeding`);
+  logger.debug('access_key_present');
 
   // 复制请求头并添加服务端密钥头；客户端提供的内部密钥一律不透传。
   const headers = new Headers(request.headers);
@@ -192,9 +226,9 @@ export default async (request, context) => {
   if (isMutating) {
     try {
       body = await request.arrayBuffer();
-      console.log(`[BFF] ${ts} | body read OK, size=${body.byteLength} bytes`);
+      logger.info('body_read', { size: body.byteLength });
     } catch (bodyErr) {
-      console.error(`[BFF] ${ts} | body read FAILED: ${bodyErr.message}`);
+      logger.error('body_read_failed', { errorMessage: bodyErr.message });
       return jsonResponse(400, { error: 'Bad Request', message: 'Failed to read request body' }, corsHeaders);
     }
   }
@@ -205,17 +239,17 @@ export default async (request, context) => {
     body
   });
 
-  console.log(`[BFF] ${ts} | forwarding to ${functionUrl.pathname}`);
+  logger.info('forwarding', { targetPath: functionUrl.pathname });
   let response;
   try {
     response = await fetch(proxiedRequest);
   } catch (fetchErr) {
-    console.error(`[BFF] ${ts} | fetch to Function FAILED: ${fetchErr.message}`);
+    logger.error('fetch_failed', { errorMessage: fetchErr.message });
     return jsonResponse(502, { error: 'Bad Gateway', message: 'Failed to reach upstream function' }, corsHeaders);
   }
 
   // 响应日志（不包含敏感信息）
-  console.log(`[BFF] ${ts} | response from ${functionUrl.pathname}: status=${response.status} ok=${response.ok}`);
+  logger.info('response_received', { targetPath: functionUrl.pathname, status: response.status, ok: response.ok });
 
   const responseHeaders = new Headers(response.headers);
   Object.entries(corsHeaders).forEach(([key, value]) => responseHeaders.set(key, value));
