@@ -8,22 +8,18 @@
 
 import qrCodeLib from './qrcode-lib.js';
 
-// === Deno 环境内联结构化日志（与 netlify/functions/_shared/server-logger.js 输出格式一致） ===
+// === Deno 环境内联日志（与 netlify/functions/_shared/server-logger.js 输出格式一致） ===
+// 输出人类可读格式，方便用户查看和复制给开发者排查
 const EDGE_LOG_LEVELS = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
 
 function createEdgeLogger(functionName, requestId) {
   const currentLevel = EDGE_LOG_LEVELS[getEnv('LOG_LEVEL')] ?? EDGE_LOG_LEVELS.INFO;
   function log(level, message, context = {}) {
     if (EDGE_LOG_LEVELS[level] < currentLevel) return;
-    const entry = {
-      level,
-      message,
-      function: functionName,
-      requestId,
-      timestamp: new Date().toISOString(),
-      ...context,
-    };
-    const line = JSON.stringify(entry);
+    const pairs = Object.entries(context).map(([k, v]) => `${k}=${v}`).join(' ');
+    const line = pairs
+      ? `[${level}] [${functionName}] [${requestId}] ${message} | ${pairs}`
+      : `[${level}] [${functionName}] [${requestId}] ${message}`;
     if (level === 'ERROR') console.error(line);
     else if (level === 'WARN') console.warn(line);
     else console.log(line);

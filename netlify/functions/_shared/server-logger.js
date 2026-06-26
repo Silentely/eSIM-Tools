@@ -1,11 +1,12 @@
 /**
  * 服务端结构化日志模块
  *
- * 为 Netlify Functions (Node.js 运行时) 提供统一的 JSON 格式日志输出。
- * 输出为单行 JSON，便于 Netlify 日志流解析和搜索。
+ * 为 Netlify Functions (Node.js 运行时) 提供统一的日志输出。
+ * 控制台输出人类可读格式，方便用户查看和复制给开发者排查。
+ * 同时附带结构化 JSON 数据，便于日志系统解析。
  *
- * 日志格式:
- * {"level":"INFO","message":"...","function":"fn-name","requestId":"uuid","timestamp":"ISO","...context"}
+ * 输出格式:
+ * [INFO] [fn-name] [req-uuid] message | key=value key=value
  *
  * @module server-logger
  */
@@ -48,7 +49,8 @@ function getCurrentLevel() {
  */
 function createLogger(functionName, requestId) {
   /**
-   * 构建日志对象并输出
+   * 构建人类可读日志并输出
+   * 格式: [LEVEL] [function] [requestId] message | key=value key=value
    * @param {string} level - 日志级别
    * @param {string} message - 日志消息
    * @param {Object} [context] - 附加字段
@@ -57,17 +59,16 @@ function createLogger(functionName, requestId) {
   function log(level, message, context = {}, outputFn) {
     if (LOG_LEVELS[level] < getCurrentLevel()) return;
 
-    const entry = {
-      level,
-      message,
-      function: functionName,
-      requestId,
-      timestamp: new Date().toISOString(),
-    };
+    // 构建人类可读的附加字段（key=value 格式，方便复制给开发者）
+    const pairs = context && typeof context === 'object'
+      ? Object.entries(context).map(([k, v]) => `${k}=${v}`).join(' ')
+      : '';
 
-    Object.assign(entry, context);
+    const line = pairs
+      ? `[${level}] [${functionName}] [${requestId}] ${message} | ${pairs}`
+      : `[${level}] [${functionName}] [${requestId}] ${message}`;
 
-    outputFn(JSON.stringify(entry));
+    outputFn(line);
   }
 
   return {

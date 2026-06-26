@@ -5,14 +5,18 @@
  * - 浏览器请求保持 HTML 默认响应
  */
 
-// Deno 环境内联结构化日志（与 bff-proxy.js 格式一致）
+// Deno 环境内联日志（与 bff-proxy.js 输出格式一致）
+// 输出人类可读格式，方便用户查看和复制给开发者排查
 const MD_LOG_LEVELS = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
 function createMdLogger(functionName, requestId) {
   const currentLevel = MD_LOG_LEVELS.INFO;
   function log(level, message, context = {}) {
     if (MD_LOG_LEVELS[level] < currentLevel) return;
-    const entry = { level, message, function: functionName, requestId, timestamp: new Date().toISOString(), ...context };
-    console.log(JSON.stringify(entry));
+    const pairs = Object.entries(context).map(([k, v]) => `${k}=${v}`).join(' ');
+    const line = pairs
+      ? `[${level}] [${functionName}] [${requestId}] ${message} | ${pairs}`
+      : `[${level}] [${functionName}] [${requestId}] ${message}`;
+    console.log(line);
   }
   return { info: (msg, ctx) => log('INFO', msg, ctx), warn: (msg, ctx) => log('WARN', msg, ctx), error: (msg, ctx) => log('ERROR', msg, ctx) };
 }
