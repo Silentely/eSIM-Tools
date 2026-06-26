@@ -199,7 +199,7 @@ cp env.example .env
 # 编辑 .env 填写必要配置
 
 # 4. 启动开发服务器
-npm start
+npm run dev
 
 # 5. 访问 http://localhost:3000
 ```
@@ -230,10 +230,8 @@ npm start
   - [Giffgaff 使用教程](./docs/User_Guide.md) | [English](./docs/User_Guide_EN.md)
 
 - **技术参考**（开发者）
-  - [架构说明](./docs/ARCHITECTURE.md)
-  - [Giffgaff 技术参考](./docs/reference/README_giffgaff_esim.md) | [English](./docs/reference/README_giffgaff_esim_EN.md)
-  - [Simyo 技术参考](./docs/reference/README_simyo_esim.md) | [English](./docs/reference/README_simyo_esim_EN.md)
-  - [CORS 解决方案](./docs/guides/CORS_SOLUTION.md)
+  - [通知系统使用指南](./docs/guides/notification-system.md)
+  - [安全指南](./docs/SECURITY.md)
 
 ---
 
@@ -245,7 +243,7 @@ npm start
 - 📦 **离线可用** - 支持断网使用，网络波动不影响操作
 - 🎯 **现代标准** - PWA、Web Vitals 优化，移动端友好
 
-> 💻 **开发者文档**: 查看 [技术架构说明](./docs/ARCHITECTURE.md) 了解实现细节
+> 💻 **开发者文档**: 查看 [通知系统指南](./docs/guides/notification-system.md) 和 [安全指南](./docs/SECURITY.md)
 
 ---
 

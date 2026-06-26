@@ -48,7 +48,7 @@ If you don't have a number yet, register through these links to get bonus credit
 - ✅ Have an existing Giffgaff number (UK carrier)
 - ✅ Want to switch from physical SIM to eSIM
 - ✅ Need to reactivate eSIM on a new device
-❌ New users registering a number (must obtain number through official or third-party channels first)
+- ❌ New users registering a number (must obtain number through official or third-party channels first)
 
 ### 🇳🇱 Simyo Users
 
@@ -199,7 +199,7 @@ cp env.example .env
 # Edit .env to fill in required configuration
 
 # 4. Start development server
-npm start
+npm run dev
 
 # 5. Visit http://localhost:3000
 ```
@@ -230,10 +230,8 @@ npm start
   - [Giffgaff User Guide](./docs/User_Guide_EN.md) | [中文](./docs/User_Guide.md)
 
 - **Technical Reference** (Developers)
-  - [Architecture](./docs/ARCHITECTURE.md)
-  - [Giffgaff Technical Reference](./docs/reference/README_giffgaff_esim_EN.md) | [中文](./docs/reference/README_giffgaff_esim.md)
-  - [Simyo Technical Reference](./docs/reference/README_simyo_esim_EN.md) | [中文](./docs/reference/README_simyo_esim.md)
-  - [CORS Solutions](./docs/guides/CORS_SOLUTION.md)
+  - [Notification System Guide](./docs/guides/notification-system.md)
+  - [Security Guide](./docs/SECURITY.md)
 
 ---
 
@@ -245,7 +243,7 @@ npm start
 - 📦 **Offline Ready** - Works offline, network fluctuations don't affect operations
 - 🎯 **Modern Standards** - PWA, Web Vitals optimized, mobile-friendly
 
-> 💻 **Developer Documentation**: See [Technical Architecture](./docs/ARCHITECTURE.md) for implementation details
+> 💻 **Developer Documentation**: See [Notification System Guide](./docs/guides/notification-system.md) and [Security Guide](./docs/SECURITY.md)
 
 ---
 

@@ -14,12 +14,12 @@
 - 使用 `npm run security-check` 运行自定义安全检查
 
 #### 已知漏洞修复
-- ✅ tar-fs: 路径遍历漏洞已修复
-- ✅ got: UNIX socket重定向漏洞已修复
-- ✅ ipx: 路径遍历绕过漏洞已修复
-- ✅ http-proxy-middleware: writeBody重复调用漏洞已修复
-- ✅ esbuild: 开发服务器安全问题已修复
-- ✅ on-headers: HTTP响应头操作漏洞已修复
+- [x] tar-fs: 路径遍历漏洞已修复
+- [x] got: UNIX socket重定向漏洞已修复
+- [x] ipx: 路径遍历绕过漏洞已修复
+- [x] http-proxy-middleware: writeBody重复调用漏洞已修复
+- [x] esbuild: 开发服务器安全问题已修复
+- [x] on-headers: HTTP响应头操作漏洞已修复
 
 ### 2. 服务器安全
 
@@ -35,6 +35,7 @@
 
 #### Helmet安全头
 ```javascript
+// server.js 使用 Node.js CommonJS 模块系统
 const helmet = require('helmet');
 app.use(helmet());
 ```
@@ -56,7 +57,7 @@ app.use(cors({
 
 ### 3. 内容安全策略 (CSP)
 
-所有 HTML 文件都配置了严格的 CSP 策略。以下为本地开发服务器 (`server.js`) 中的 Helmet CSP 配置，生产环境通过 HTML `<meta>` 标签实现，具体值可能略有差异，请以 `server.js` 中的配置为参考基准：
+所有 HTML 文件都配置了严格的 CSP 策略。以下为本地开发服务器 (`server.js`) 中的 Helmet CSP 配示例（CommonJS 模块系统），生产环境通过 HTML `<meta>` 标签实现，具体值可能略有差异，请以 `server.js` 中的配置为参考基准：
 
 ```javascript
 app.use(helmet({
