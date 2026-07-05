@@ -527,6 +527,8 @@
           /gtag\/js/,
           /gtm\.js/,
           /Unexpected token '<'/,
+          // 第三方脚本/扩展注入的 i18n 噪音（ESIM-TOOLS-1F）
+          /getInitLang/,
         ],
 
         denyUrls: [
