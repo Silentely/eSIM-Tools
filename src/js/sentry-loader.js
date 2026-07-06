@@ -529,6 +529,10 @@
           /Unexpected token '<'/,
           // 第三方脚本/扩展注入的 i18n 噪音（ESIM-TOOLS-1F）
           /getInitLang/,
+          // Mobile Safari fetch 网络错误噪音（ESIM-TOOLS-1G）
+          /Load failed/,
+          // 浏览器扩展注入代码 .split() 调用失败噪音（ESIM-TOOLS-1H）
+          /Cannot read properties of undefined \(reading 'split'\)/,
         ],
 
         denyUrls: [

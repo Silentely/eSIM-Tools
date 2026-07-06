@@ -486,6 +486,10 @@ function initSentry() {
         /gtag\/js/,
         /gtm\.js/,
         /Unexpected token '<'/,
+        // Mobile Safari fetch 网络错误噪音（ESIM-TOOLS-1G）
+        /Load failed/,
+        // 浏览器扩展注入代码 .split() 调用失败噪音（ESIM-TOOLS-1H）
+        /Cannot read properties of undefined \(reading 'split'\)/,
       ],
 
       denyUrls: [
