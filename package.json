@@ -106,6 +106,7 @@
     "serialize-javascript": "^7.0.5",
     "path-to-regexp": "^0.1.13",
     "rollup": "^2.80.0",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.0",
+    "ws": "^8.21.0"
   }
 }
