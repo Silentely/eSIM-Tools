@@ -54,13 +54,26 @@
 .reveal {
     opacity: 0;
     transform: translateY(12px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
-    will-change: opacity, transform;
+    transition:
+        opacity var(--transition-base, 240ms ease),
+        transform var(--transition-base, 240ms ease);
 }
 
 .reveal.show {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* 步骤内容进入 */
+@keyframes section-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 降低动效：尊重用户的减少动态偏好 */

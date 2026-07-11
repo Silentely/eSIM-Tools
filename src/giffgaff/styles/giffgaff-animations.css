@@ -45,96 +45,68 @@
     60% { transform: translateY(-3px); }
 }
 
-/* ===== 服务时间动画 ===== */
+/* ===== 服务时间动画（仅 opacity / 阴影，禁止 scale 以降低干扰与耗电） ===== */
 @keyframes breathing-light {
     0%, 100% {
-        box-shadow: 0 0 5px rgba(220, 38, 38, 0.3);
-        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.25);
     }
     50% {
-        box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
-        transform: scale(1.05);
+        opacity: 0.92;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
     }
 }
 
 @keyframes breathing-light-orange {
     0%, 100% {
-        box-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
-        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.25);
     }
     50% {
-        box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
-        transform: scale(1.05);
+        opacity: 0.92;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
     }
 }
 
 @keyframes breathing-light-green {
-    0%, 100% {
-        box-shadow: 0 0 5px rgba(22, 163, 74, 0.3);
-        transform: scale(1);
-    }
-    50% {
-        box-shadow: 0 0 20px rgba(22, 163, 74, 0.6);
-        transform: scale(1.05);
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.88; }
 }
 
 @keyframes breathing-light-purple {
-    0%, 100% {
-        box-shadow: 0 0 5px rgba(99, 102, 241, 0.3);
-        transform: scale(1);
-    }
-    50% {
-        box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
-        transform: scale(1.05);
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.88; }
 }
 
+/* 警告：轻微 opacity，不再缩放 */
 @keyframes warning-pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
 }
 
 @keyframes success-bounce {
-    0%, 100% {
-        transform: scale(1);
-    }
-    25% {
-        transform: scale(1.02);
-    }
-    75% {
-        transform: scale(1.02);
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.9; }
 }
 
 @keyframes pulse-glow {
     0%, 100% {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     50% {
-        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.18);
     }
 }
 
+/* 时间数字更新：一次轻触反馈，由 JS 触发类名时使用 */
 @keyframes time-update {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
+    0% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 @keyframes time-breathe {
-    0%, 100% { transform: translateZ(0) scale(1); }
-    50% { transform: translateZ(0) scale(1.02); }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.92; }
 }
 
 @keyframes modalSlideIn {
@@ -144,5 +116,20 @@
 
 /* ===== 服务时间图标过渡 ===== */
 #serviceTimeIcon {
-    transition: all 0.3s ease;
+    transition:
+        color var(--transition-base, 240ms ease),
+        transform var(--transition-base, 240ms ease),
+        opacity var(--transition-base, 240ms ease);
+}
+
+/* 步骤内容进入（与 design-system / animations 对齐的本地兜底） */
+@keyframes section-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

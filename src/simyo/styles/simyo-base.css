@@ -19,7 +19,7 @@ body {
     color: #212529;
     min-height: 100vh;
     padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif);
     margin: 0;
 }
 
@@ -83,7 +83,7 @@ body {
     margin-top: 8px;
 }
 
-/* 步骤指示器 */
+/* 步骤指示器（进度轨见 design-system .step-indicator::before/::after） */
 .step-indicator {
     display: flex;
     justify-content: space-between;
@@ -105,6 +105,7 @@ body {
     z-index: 2;
     width: 120px;
     position: relative;
+    transition: opacity var(--transition-fast, 160ms ease);
 }
 
 .step-number {
@@ -121,20 +122,45 @@ body {
     color: #212529;
     border: 2px solid rgba(255, 107, 0, 0.55);
     box-shadow: inset 0 0 0 2px rgba(255, 107, 0, 0.18);
+    transition:
+        background var(--transition-base, 240ms ease),
+        border-color var(--transition-base, 240ms ease),
+        box-shadow var(--transition-base, 240ms ease),
+        color var(--transition-base, 240ms ease),
+        transform var(--transition-fast, 160ms ease);
+}
+
+.step.completed .step-number {
+    background: linear-gradient(135deg, #ff8a2b, #ff6b00);
+    color: #fff;
+    border-color: rgba(255, 107, 0, 0.9);
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+.step.completed .step-text {
+    color: #c2410c;
+    font-weight: 600;
 }
 
 .step.active .step-number {
     background: linear-gradient(135deg, #ff7a1a, #ffb066);
-    color: white;
+    color: #fff;
+    border-color: rgba(255, 107, 0, 0.85);
     box-shadow: 0 6px 16px rgba(255, 107, 0, 0.45);
-    border-color: rgba(255, 107, 0, 0.8);
+    transform: scale(1.06);
+}
+
+.step.active .step-text {
+    color: #9a3412;
+    font-weight: 700;
 }
 
 .step-text {
     font-size: 14px;
     text-align: center;
-    color: #212529;
+    color: #64748b;
     font-weight: 500;
+    transition: color var(--transition-fast, 160ms ease);
 }
 
 /* 表单元素 */
@@ -154,7 +180,10 @@ textarea, input {
     background: rgba(255, 255, 255, 0.9);
     color: #212529;
     font-size: 16px;
-    transition: all 0.3s ease;
+    transition:
+        border-color var(--transition-base, 240ms ease),
+        box-shadow var(--transition-base, 240ms ease),
+        background-color var(--transition-base, 240ms ease);
     box-sizing: border-box;
 }
 
@@ -184,13 +213,14 @@ textarea:focus-visible {
     outline-offset: 2px;
 }
 
-/* 区块显示控制 */
+/* 区块显示控制：进入时淡入上移 */
 .section {
     display: none;
 }
 
 .section.active {
     display: block;
+    animation: section-enter 0.35s var(--ease-out, cubic-bezier(.2, .8, .2, 1)) both;
 }
 
 #resultContainer {
@@ -199,6 +229,14 @@ textarea:focus-visible {
 
 #resultContainer.active {
     display: block;
+    animation: section-enter 0.35s var(--ease-out, cubic-bezier(.2, .8, .2, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .section.active,
+    #resultContainer.active {
+        animation: none !important;
+    }
 }
 
 /* 加载动画 */
@@ -237,6 +275,100 @@ textarea:focus-visible {
 
 .tooltip.show {
     opacity: 1;
+}
+
+/* ===== 暗色模式 ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --secondary: #2a1f16;
+        --light: #1a1a1a;
+        --dark: #e9ecef;
+        --gray: #adb5bd;
+    }
+
+    body {
+        background: linear-gradient(135deg, #1a1410 0%, #12100e 50%, #0c0b0a 100%);
+        color: #e9ecef;
+    }
+
+    .app-title {
+        background: linear-gradient(to right, #ff8a3d, #6eb0ff);
+        background-clip: text;
+        -webkit-background-clip: text;
+    }
+
+    .page-title h1 {
+        color: #f1f5f9;
+    }
+
+    .page-title p {
+        color: rgba(233, 236, 239, 0.72);
+    }
+
+    .step-indicator {
+        background: linear-gradient(135deg, #1e1e1e, #252525);
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .step-number {
+        background: #2a2118;
+        color: #f8fafc;
+        border-color: rgba(255, 107, 0, 0.45);
+        box-shadow: inset 0 0 0 2px rgba(255, 107, 0, 0.12);
+    }
+
+    .step-text {
+        color: #94a3b8;
+    }
+
+    .step.completed .step-text {
+        color: #fdba74;
+    }
+
+    .step.active .step-text {
+        color: #ffedd5;
+    }
+
+    textarea,
+    input {
+        background: rgba(30, 30, 30, 0.92);
+        color: #e9ecef;
+        border-color: rgba(255, 107, 0, 0.28);
+    }
+
+    textarea:focus,
+    input:focus {
+        background: rgba(36, 36, 36, 1);
+        box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.18);
+    }
+
+    .text-dark {
+        color: #e9ecef !important;
+    }
+
+    .bg-light {
+        background-color: #2a2a2a !important;
+        color: #e9ecef;
+    }
+
+    .alert-danger {
+        background-color: rgba(127, 29, 29, 0.35) !important;
+        border-color: rgba(248, 113, 113, 0.35) !important;
+        color: #fecaca !important;
+    }
+
+    .alert-warning {
+        background-color: rgba(120, 53, 15, 0.35) !important;
+        border-color: rgba(251, 191, 36, 0.35) !important;
+        color: #fde68a !important;
+    }
+
+    .alert-info {
+        background-color: rgba(30, 58, 138, 0.35) !important;
+        border-color: rgba(96, 165, 250, 0.35) !important;
+        color: #bfdbfe !important;
+    }
 }
 
 /* Toast通知样式 */

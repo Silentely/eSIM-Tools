@@ -363,10 +363,9 @@ a:not(.btn) {
    性能优化
    ======================================== */
 
-/* GPU加速 */
+/* GPU 加速：仅在动画中临时使用，避免常驻 will-change */
 .gpu-accelerated {
   transform: translateZ(0);
-  will-change: transform;
 }
 
 /* 减少重绘 */

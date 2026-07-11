@@ -29,7 +29,7 @@ body {
     color: #212529;
     min-height: 100vh;
     padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif);
     margin: 0;
 }
 
@@ -61,7 +61,10 @@ textarea, input {
     background: rgba(255, 255, 255, 0.9);
     color: #212529;
     font-size: 16px;
-    transition: all 0.3s ease;
+    transition:
+        border-color var(--transition-base, 240ms ease),
+        box-shadow var(--transition-base, 240ms ease),
+        background-color var(--transition-base, 240ms ease);
     box-sizing: border-box;
 }
 
@@ -77,21 +80,24 @@ textarea:focus, input:focus {
     background: rgba(255, 255, 255, 1);
 }
 
-/* 卡片样式 */
+/* 卡片样式：内容卡仅微调阴影，避免填表时大幅上浮 */
 .card {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
     border-radius: 16px;
     border: 1px solid rgba(255, 204, 0, 0.3);
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin-bottom: 30px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition:
+        box-shadow var(--transition-base, 240ms ease),
+        border-color var(--transition-base, 240ms ease);
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 204, 0, 0.5);
+@media (hover: hover) {
+    .card:hover {
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+        border-color: rgba(255, 204, 0, 0.45);
+    }
 }
 
 .card-header {
@@ -132,4 +138,107 @@ textarea:focus, input:focus {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* ===== 暗色模式 ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --secondary: #1e1e1e;
+        --light: #1a1a1a;
+        --dark: #e9ecef;
+        --gray: #adb5bd;
+        --st-muted: #94a3b8;
+        --st-strong: #f1f5f9;
+        --st-card-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+        --st-soft-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --st-border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    body {
+        background: linear-gradient(135deg, #1a1610 0%, #12100c 45%, #0c0b09 100%);
+        color: #e9ecef;
+    }
+
+    textarea,
+    input {
+        background: rgba(30, 30, 30, 0.92);
+        color: #e9ecef;
+        border-color: rgba(255, 204, 0, 0.28);
+    }
+
+    textarea:focus,
+    input:focus {
+        background: rgba(36, 36, 36, 1);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.15);
+    }
+
+    .card {
+        background: rgba(30, 30, 30, 0.92);
+        border-color: rgba(255, 204, 0, 0.22);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    @media (hover: hover) {
+        .card:hover {
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+            border-color: rgba(255, 204, 0, 0.38);
+        }
+    }
+
+    .card-header {
+        background: rgba(255, 204, 0, 0.1);
+        color: #f8f9fa;
+        border-bottom-color: rgba(255, 204, 0, 0.18);
+    }
+
+    .status-panel {
+        background: linear-gradient(135deg, rgba(36, 32, 20, 0.95) 0%, rgba(28, 26, 18, 0.95) 100%);
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .status-panel h3 {
+        color: #e9ecef;
+    }
+
+    /* Bootstrap 工具类在暗色下的可读性 */
+    .text-dark {
+        color: #e9ecef !important;
+    }
+
+    .bg-light {
+        background-color: #2a2a2a !important;
+        color: #e9ecef;
+    }
+
+    .bg-warning.text-dark,
+    .card-header.bg-warning {
+        color: #111 !important;
+    }
+
+    .alert-danger {
+        background-color: rgba(127, 29, 29, 0.35) !important;
+        border-color: rgba(248, 113, 113, 0.35) !important;
+        color: #fecaca !important;
+    }
+
+    .alert-warning {
+        background-color: rgba(120, 53, 15, 0.35) !important;
+        border-color: rgba(251, 191, 36, 0.35) !important;
+        color: #fde68a !important;
+    }
+
+    .alert-info {
+        background-color: rgba(30, 58, 138, 0.35) !important;
+        border-color: rgba(96, 165, 250, 0.35) !important;
+        color: #bfdbfe !important;
+    }
+
+    pre.bg-light,
+    .border.bg-light {
+        background-color: #242424 !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #e2e8f0;
+    }
 }

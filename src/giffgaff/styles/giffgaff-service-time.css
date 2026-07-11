@@ -117,32 +117,35 @@
 }
 
 #serviceTimeIcon.warning {
-    background: #e6f6ee;
-    color: #10b981;
-    box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
-    animation: breathing-light-green 2s ease-in-out infinite;
+    background: #fef3c7;
+    color: #d97706;
+    box-shadow: inset 0 0 0 2px rgba(245,158,11,0.2);
+    /* 警告态保留极轻 opacity 脉动，成功态静态 */
+    animation: warning-pulse 2.8s ease-in-out infinite;
 }
 
 #serviceTimeIcon.success {
     background: #e6f6ee;
     color: #10b981;
     box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
-    animation: breathing-light-green 2s ease-in-out infinite;
+    animation: none;
 }
 
-#serviceTimeIcon:hover {
-    transform: scale(1.1);
+@media (hover: hover) {
+    #serviceTimeIcon:hover {
+        transform: scale(1.04);
+    }
 }
 
 .alert-warning #serviceTimeIcon {
-    animation: warning-pulse 2s ease-in-out infinite;
+    animation: warning-pulse 2.8s ease-in-out infinite;
     background: #f8ecbb;
     color: #f59d06;
     box-shadow: inset 0 0 0 2px rgba(245,158,11,0.15);
 }
 
 .alert-success #serviceTimeIcon {
-    animation: breathing-light-green 2s ease-in-out infinite;
+    animation: none;
     background: #e0f6eb;
     color: #10b981;
     box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
@@ -157,7 +160,11 @@
     line-height: 1.2;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-base, 240ms ease),
+        background-color var(--transition-base, 240ms ease),
+        border-color var(--transition-base, 240ms ease);
     z-index: 10;
     flex-shrink: 0;
     text-align: center;
@@ -167,7 +174,7 @@
     background: #f0fdf4;
     color: #16a34a;
     border: 2px solid #16a34a;
-    animation: breathing-light-green 2s ease-in-out infinite;
+    animation: none;
 }
 
 .service-time-action-badge.warning {
@@ -176,7 +183,8 @@
     border: 2px solid #dc2626;
     font-weight: 800;
     text-shadow: none;
-    animation: breathing-light 2s ease-in-out infinite;
+    /* 仅警告徽章保留轻量脉动 */
+    animation: breathing-light 3s ease-in-out infinite;
 }
 
 .service-time-action-badge:hover {
@@ -199,7 +207,8 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    animation: pulse-glow 2s ease-in-out infinite;
+    /* 时间卡静态展示，避免持续 glow 动画 */
+    animation: none;
 }
 
 .current-time-card::after {
@@ -219,7 +228,7 @@
     display: grid;
     place-items: center;
     box-shadow: inset 0 0 0 1px rgba(99,102,241,0.22);
-    animation: breathing-light-purple 2s ease-in-out infinite;
+    animation: none;
 }
 
 .time-card-icon i {
@@ -247,11 +256,92 @@
     letter-spacing: 1.2px;
     color: #0b1324;
     text-shadow: 0 1px 0 rgba(255,255,255,0.6);
-    animation: time-breathe 3s ease-in-out infinite;
+    /* 静态可读，避免持续呼吸动画 */
+    animation: none;
 }
 
 .time-card-hint {
     font-size: 12px;
     color: #6b7280;
     margin-top: 6px;
+}
+
+/* 服务时间：暗色模式 */
+@media (prefers-color-scheme: dark) {
+    .service-time-grid {
+        background: linear-gradient(135deg, #2a2418 0%, #1f1b14 100%);
+        border-color: rgba(255, 193, 7, 0.22);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .service-time-left {
+        background: linear-gradient(135deg, #322b1c 60%, #241f16 60%);
+        border-color: rgba(255, 193, 7, 0.2);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .service-time-title {
+        color: #f8fafc;
+    }
+
+    .service-time-message {
+        color: #cbd5e1;
+    }
+
+    .current-time-card {
+        background: linear-gradient(135deg, #2a2418 60%, #322b1c 60%);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+    }
+
+    .current-time-card::after {
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+    }
+
+    .time-card-value {
+        color: #f8fafc;
+        text-shadow: none;
+    }
+
+    .time-card-hint {
+        color: #94a3b8;
+    }
+
+    #serviceTimeIcon {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+
+    .alert-warning #serviceTimeIcon,
+    #serviceTimeIcon.warning {
+        background: rgba(245, 158, 11, 0.18);
+        color: #fbbf24;
+        box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.28);
+    }
+
+    .service-time-action-badge.success {
+        background: rgba(22, 163, 74, 0.15);
+        color: #4ade80;
+        border-color: #16a34a;
+    }
+
+    .service-time-action-badge.warning {
+        background: rgba(220, 38, 38, 0.15);
+        color: #f87171;
+        border-color: #dc2626;
+    }
+
+    .time-card-icon {
+        background: linear-gradient(135deg, #1e1b2e, #252038);
+        box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.28);
+    }
+}
+
+/* 尊重减少动态偏好：去掉剩余状态脉动 */
+@media (prefers-reduced-motion: reduce) {
+    #serviceTimeIcon.warning,
+    .alert-warning #serviceTimeIcon,
+    .service-time-action-badge.warning {
+        animation: none !important;
+    }
 }

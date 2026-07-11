@@ -50,7 +50,11 @@
     align-items: center;
     justify-content: center;
     border-radius: 30px;
-    transition: all 0.3s;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-fast, 160ms ease),
+        border-color var(--transition-base, 240ms ease),
+        background var(--transition-base, 240ms ease);
     gap: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-decoration: none;
@@ -59,11 +63,13 @@
     flex-shrink: 0;
 }
 
-.login-btn:hover {
-    background: linear-gradient(to right, #ffffff, #ffcc00);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 204, 0, 0.5);
+@media (hover: hover) {
+    .login-btn:hover {
+        background: linear-gradient(to right, #ffffff, #ffcc00);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        border-color: rgba(255, 204, 0, 0.5);
+    }
 }
 
 .github-btn {
@@ -77,7 +83,12 @@
     align-items: center;
     justify-content: center;
     border-radius: 30px;
-    transition: all 0.3s;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-fast, 160ms ease),
+        border-color var(--transition-base, 240ms ease),
+        background var(--transition-base, 240ms ease),
+        color var(--transition-fast, 160ms ease);
     gap: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-decoration: none;
@@ -87,12 +98,14 @@
     flex-shrink: 0;
 }
 
-.github-btn:hover {
-    background: linear-gradient(to right, #666666, #333333);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(51, 51, 51, 0.5);
-    color: #ffffff;
+@media (hover: hover) {
+    .github-btn:hover {
+        background: linear-gradient(to right, #666666, #333333);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        border-color: rgba(51, 51, 51, 0.5);
+        color: #ffffff;
+    }
 }
 
 .btn-group {
@@ -108,7 +121,11 @@
     font-size: 17px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-fast, 160ms ease),
+        background var(--transition-base, 240ms ease),
+        opacity var(--transition-fast, 160ms ease);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -121,10 +138,12 @@
     color: #212529;
 }
 
-.btn-primary:hover {
-    background: linear-gradient(to right, #ffffff, #ffcc00);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+    .btn-primary:hover {
+        background: linear-gradient(to right, #ffffff, #ffcc00);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.12);
+    }
 }
 
 .btn:disabled {
@@ -142,15 +161,20 @@
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-fast, 160ms ease),
+        background var(--transition-base, 240ms ease);
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.clear-session-btn:hover {
-    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
-    transform: translateY(-1px);
+@media (hover: hover) {
+    .clear-session-btn:hover {
+        background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+        transform: translateY(-1px);
+    }
 }
 
 /* ===== 页面标题 ===== */
@@ -189,7 +213,7 @@
     content: counter(list-item) ".\00A0\00A0";
 }
 
-/* ===== 步骤指示器 ===== */
+/* ===== 步骤指示器（进度轨见 design-system） ===== */
 .step-indicator {
     display: flex;
     justify-content: space-between;
@@ -211,6 +235,7 @@
     z-index: 2;
     width: 120px;
     position: relative;
+    transition: opacity var(--transition-fast, 160ms ease);
 }
 
 .step-number {
@@ -227,20 +252,45 @@
     color: #212529;
     border: 2px solid rgba(255, 193, 7, 0.55);
     box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.18);
+    transition:
+        background var(--transition-base, 240ms ease),
+        border-color var(--transition-base, 240ms ease),
+        box-shadow var(--transition-base, 240ms ease),
+        color var(--transition-base, 240ms ease),
+        transform var(--transition-fast, 160ms ease);
+}
+
+.step.completed .step-number {
+    background: linear-gradient(135deg, #f0c000, #e6b800);
+    color: #212529;
+    border-color: rgba(230, 184, 0, 0.9);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.35);
+}
+
+.step.completed .step-text {
+    color: #854d0e;
+    font-weight: 600;
 }
 
 .step.active .step-number {
     background: linear-gradient(135deg, #ffcc00, #ffd84d);
-    color: white;
+    color: #212529;
     box-shadow: 0 6px 16px rgba(255, 193, 7, 0.45);
-    border-color: rgba(255, 193, 7, 0.8);
+    border-color: rgba(255, 193, 7, 0.85);
+    transform: scale(1.06);
+}
+
+.step.active .step-text {
+    color: #713f12;
+    font-weight: 700;
 }
 
 .step-text {
     font-size: 14px;
     text-align: center;
-    color: #212529;
+    color: #64748b;
     font-weight: 500;
+    transition: color var(--transition-fast, 160ms ease);
 }
 
 /* ===== 状态显示 ===== */
@@ -378,7 +428,8 @@
     margin: 20px 0;
     padding: 16px 20px;
     box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
-    animation: subtle-pulse 3s ease-in-out infinite;
+    /* 静态展示，避免持续脉冲 */
+    animation: none;
 }
 
 .promo-content {
@@ -392,7 +443,7 @@
 .promo-icon {
     color: #212529;
     font-size: 20px;
-    animation: bounce 2s ease-in-out infinite;
+    animation: none;
 }
 
 .promo-text {
@@ -406,7 +457,7 @@
     color: #212529;
     text-decoration: underline;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: color var(--transition-fast, 160ms ease), text-shadow var(--transition-fast, 160ms ease);
 }
 
 .promo-link:hover {
@@ -415,14 +466,14 @@
     text-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
 }
 
-/* ===== 章节控制 ===== */
+/* ===== 章节控制：进入时淡入上移 ===== */
 .section {
     display: none;
-    animation: slideIn 0.5s ease;
 }
 
 .section.active {
     display: block;
+    animation: section-enter 0.35s var(--ease-out, cubic-bezier(.2, .8, .2, 1)) both;
 }
 
 .verification-section {
@@ -432,7 +483,14 @@
 
 .verification-section.active {
     display: block;
-    animation: fadeIn 0.5s ease;
+    animation: section-enter 0.35s var(--ease-out, cubic-bezier(.2, .8, .2, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .section.active,
+    .verification-section.active {
+        animation: none !important;
+    }
 }
 
 /* ===== 表单标签 ===== */
@@ -611,4 +669,78 @@
 #resultContainer.active {
     display: block;
     animation: fadeIn 0.4s ease;
+}
+
+/* ===== 暗色模式：组件层 ===== */
+@media (prefers-color-scheme: dark) {
+    .page-title h1 {
+        color: #f8fafc;
+    }
+
+    .page-title p {
+        color: rgba(233, 236, 239, 0.72);
+    }
+
+    .step-indicator {
+        background: linear-gradient(135deg, #1e1e1e, #252525);
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .step-number {
+        background: #2a2618;
+        color: #f8fafc;
+        border-color: rgba(255, 193, 7, 0.45);
+        box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.12);
+    }
+
+    .step-text {
+        color: #94a3b8;
+    }
+
+    .step.completed .step-text {
+        color: #fde68a;
+    }
+
+    .step.active .step-text {
+        color: #fef3c7;
+    }
+
+    .status {
+        background: rgba(30, 30, 30, 0.92);
+        color: #e9ecef;
+    }
+
+    .status-item {
+        background: rgba(42, 42, 42, 0.9);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .status-label {
+        color: #adb5bd;
+    }
+
+    .status-value {
+        color: #d0d0d0;
+    }
+
+    .form-label {
+        color: #e9ecef;
+    }
+
+    .new-user-notice {
+        background: linear-gradient(135deg, rgba(127, 29, 29, 0.35), rgba(69, 10, 10, 0.45));
+        border-color: rgba(248, 113, 113, 0.35);
+        color: #fecaca;
+    }
+
+    .promo-banner {
+        box-shadow: 0 4px 18px rgba(255, 204, 0, 0.18);
+        animation: none;
+    }
+
+    .login-btn {
+        color: #111;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
 }

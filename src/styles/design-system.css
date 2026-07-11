@@ -1,8 +1,7 @@
 /* Design System: tokens, utilities, base components
    Scope: shared across brand pages. Brands override --primary/--secondary in page-level :root.
+   字体使用系统栈，避免阻塞式 Google Fonts @import。
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* 按钮组与打赏按钮样式 */
 .header-actions {
@@ -22,10 +21,9 @@
   justify-content: center;
   border-radius: 999px;
   gap: 8px;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
   text-decoration: none !important;
   box-shadow: var(--shadow-sm);
-  will-change: transform;
   border: 1px solid rgba(255,255,255,0.1);
 }
 
@@ -90,12 +88,13 @@
   --shadow-md: 0 4px 18px rgba(0,0,0,0.12);
   --shadow-lg: 0 8px 28px rgba(0,0,0,0.18);
 
-  /* Motion */
-  --ease-out: cubic-bezier(.22,.61,.36,1);
-  --ease-in: cubic-bezier(.55,.085,.68,.53);
-  --transition-fast: 120ms var(--ease-out);
-  --transition-base: 200ms var(--ease-out);
-  --transition-slow: 320ms var(--ease-out);
+  /* Motion：全站唯一时长/缓动源，品牌页与 animations.css 禁止覆盖为其它格式 */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-in: cubic-bezier(.55, .085, .68, .53);
+  --ease-standard: var(--ease-out);
+  --transition-fast: 160ms var(--ease-out);
+  --transition-base: 240ms var(--ease-out);
+  --transition-slow: 360ms var(--ease-out);
 
   /* Focus ring */
   --ring-color: rgba(76,154,255,.35);
@@ -110,8 +109,8 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  /* Typography：系统字体栈，含中文回退 */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
 /* Dark Mode Support */
@@ -161,9 +160,21 @@
     color: var(--text);
   }
 
+  /* body 背景由各品牌页 / 首页自行定义，避免全局硬覆盖品牌色渐变 */
   body {
-    background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
     color: var(--text);
+  }
+
+  .card-header-soft {
+    color: var(--text);
+  }
+
+  .status-label {
+    color: var(--muted);
+  }
+
+  .loading-overlay {
+    background: rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -265,9 +276,8 @@ html[data-locale="en"] .lang-en { display: inline !important; }
 /* Reveal-on-scroll animation */
 .reveal {
   opacity: 0;
-  transform: translateY(16px);
+  transform: translateY(12px);
   transition: opacity var(--transition-base), transform var(--transition-base);
-  will-change: opacity, transform;
 }
 .reveal.show {
   opacity: 1;
@@ -289,10 +299,6 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   .reveal.show { opacity: 1 !important; transform: none !important; }
   * { scroll-behavior: auto !important; }
 }
-
-/* Fine-tune reveal transition to be lightweight and smooth */
-.reveal { will-change: opacity, transform; }
-.reveal.show { transition: transform var(--transition-base), opacity var(--transition-base); }
 
 /* 4) Components */
 .card-elevated {
@@ -461,17 +467,17 @@ html[data-locale="en"] .lang-en { display: inline !important; }
 }
 .tooltip.show { opacity: 1; }
 
-/* Promo banner */
+/* Promo banner：静态展示，避免持续 scale 动画 */
 .promo-banner {
   border-radius: var(--radius-md);
   margin: 20px 0;
   padding: 16px 20px;
   box-shadow: 0 4px 15px color-mix(in srgb, var(--primary) 30%, transparent);
-  animation: subtle-pulse 3s ease-in-out infinite;
+  animation: none;
 }
 @keyframes subtle-pulse {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.92; }
 }
 
 /* Reveal helpers for QR preview hovers may reuse .tooltip from above */
@@ -528,10 +534,65 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   }
 }
 
-/* Step Indicator Pulse */
+/* Step Indicator：当前步脉冲（颜色跟随 --primary） */
 .step.active .step-number {
-  box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7);
-  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-ring 2s var(--ease-out) infinite;
+}
+
+/* 步骤指示器进度轨（--step-progress: 0~1，由 JS 写入） */
+.step-indicator {
+  --step-progress: 0;
+}
+
+.step-indicator::before,
+.step-indicator::after {
+  content: '';
+  position: absolute;
+  top: calc(16px + 28px);
+  left: 10%;
+  right: 10%;
+  height: 3px;
+  border-radius: 999px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.step-indicator::before {
+  background: color-mix(in srgb, var(--muted, #6c757d) 22%, transparent);
+}
+
+.step-indicator::after {
+  right: auto;
+  width: calc((100% - 20%) * var(--step-progress, 0));
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 75%, transparent),
+    var(--primary)
+  );
+  transition: width var(--transition-slow);
+}
+
+@media (max-width: 768px) {
+  .step-indicator::before,
+  .step-indicator::after {
+    top: calc(16px + 20px);
+  }
+}
+
+@media (max-width: 480px) {
+  .step-indicator::before,
+  .step-indicator::after {
+    top: calc(16px + 17px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step.active .step-number {
+    animation: none !important;
+  }
+  .step-indicator::after {
+    transition: none !important;
+  }
 }
 
 /* Keyboard focus visibility for custom buttons built on <a> */

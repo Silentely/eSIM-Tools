@@ -2,7 +2,8 @@
 <html lang="zh-CN" data-page="home">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
     <meta name="description" content="eSIM 设备管理工具集，支持已有 Giffgaff 与 Simyo 号码的 eSIM 转换、设备更换、二维码生成及验证码处理。">
 
     <!-- Sentry 错误监控配置（必须在其他脚本之前） -->
@@ -95,36 +96,38 @@
             --accent-warn:#f59e0b; /* amber-500 */
             --accent-danger:#ef4444; /* red-500 */
 
-            /* Surface & Text */
-            /* 背景改为淡色 #f2f5c4 */
-            --bg-grad-start:#f2f5c4;
-            --bg-grad-end:#f1f5bb;
+            /* Surface & Text：中性 indigo/slate，替代旧黄绿背景 */
+            --bg-grad-start:#eef2ff;
+            --bg-grad-end:#f8fafc;
             --surface:#ffffff;
-            --surface-alpha:92%;
+            --surface-alpha:94%;
             --text-primary:#1f2937;   /* slate-800 */
             --text-secondary:#374151; /* gray-700 */
             --text-muted:#6b7280;     /* gray-500 */
 
             /* Radius & Elevation & Spacing */
             --radius-lg:18px;
-            --shadow-sm:0 4px 10px rgba(0,0,0,.08);
-            --shadow-md:0 10px 30px rgba(0,0,0,.10);
-            --shadow-lg:0 18px 40px rgba(0,0,0,.15);
+            --shadow-sm:0 4px 12px rgba(15,23,42,.06);
+            --shadow-md:0 10px 28px rgba(15,23,42,.08);
+            --shadow-lg:0 22px 50px rgba(15,23,42,.10);
             --ring:0 0 0 3px rgba(99,102,241,.35);
 
             --s1:8px; --s2:12px; --s3:16px; --s4:20px; --s5:24px; --s6:32px;
 
-            /* Motion */
+            /* Motion：与 design-system 对齐 */
             --ease-standard:cubic-bezier(.2,.8,.2,1);
-            --duration-fast:.18s;
-            --duration-normal:.28s;
+            --duration-fast:160ms;
+            --duration-normal:240ms;
         }
 
         *{margin:0;padding:0;box-sizing:border-box}
 
         body{
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(1100px 560px at 8% -8%, rgba(99,102,241,.14), transparent 58%),
+                radial-gradient(900px 480px at 100% 0%, rgba(139,92,246,.10), transparent 52%),
+                linear-gradient(160deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -135,15 +138,15 @@
 
         .main-container{
             background: color-mix(in oklab, white var(--surface-alpha), transparent);
-            -webkit-backdrop-filter: blur(8px);
-            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
             border-radius: var(--radius-lg);
             padding: clamp(20px, 4vw, 40px);
             box-shadow: var(--shadow-lg);
             max-width: 960px;
             width: 100%;
             text-align: center;
-            border: 1px solid color-mix(in oklab, white 70%, transparent);
+            border: 1px solid color-mix(in oklab, white 78%, rgba(99,102,241,.18));
         }
 
         .language-switcher{
@@ -159,15 +162,18 @@
             padding:6px 16px;
             border-radius:999px;
             border:1px solid rgba(99,102,241,.25);
-            background: rgba(255,255,255,.7);
+            background: rgba(255,255,255,.75);
             color: var(--text-primary);
             font-weight:600;
             cursor:pointer;
-            transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+            transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
         }
-        .lang-switch:hover{
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-sm);
+        @media (hover: hover){
+            .lang-switch:hover{
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-sm);
+                background: rgba(255,255,255,.92);
+            }
         }
         .lang-switch:focus-visible{
             outline:none;
@@ -205,19 +211,19 @@
             align-items:center;
             justify-content:center;
             border-radius: 999px;
-            transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+            transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
             gap: 8px;
             box-shadow: var(--shadow-sm);
             text-decoration: none !important;
             outline: none;
-            will-change: transform;
             border: 1px solid rgba(255,255,255,.18);
         }
         .github-btn{ background: #24292e; color:#fff !important; }
-        .github-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); background:#111; }
-
         .kofi-btn{ background: #FF5E5B; color:#fff !important; }
-        .kofi-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); background:#e64a47; }
+        @media (hover: hover){
+            .github-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); background:#111; }
+            .kofi-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); background:#e64a47; }
+        }
 
         .github-btn:focus-visible, .kofi-btn:focus-visible{ outline: none; box-shadow: var(--ring); }
 
@@ -230,15 +236,14 @@
         @media (max-width: 720px){ .tools-grid{ grid-template-columns: 1fr; } }
 
         .tool-card{
-            background: var(--surface);
+            background: color-mix(in oklab, var(--surface) 96%, transparent);
             border-radius: var(--radius-lg);
             padding: clamp(20px, 3.2vw, 28px);
             box-shadow: var(--shadow-md);
-            transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
-            border: 2px solid transparent;
+            transition: transform var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), border-color var(--duration-normal) var(--ease-standard);
+            border: 1px solid color-mix(in oklab, var(--primary) 12%, transparent);
             position: relative;
             overflow: hidden;
-            will-change: transform, box-shadow;
         }
         .tool-card::before{
             content: '';
@@ -247,12 +252,14 @@
             height: 4px;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
-        .tool-card:hover{
-            transform: translateY(-6px);
-            box-shadow: var(--shadow-lg);
-            border-color: color-mix(in oklab, var(--primary) 40%, transparent);
+        @media (hover: hover){
+            .tool-card:hover{
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-lg);
+                border-color: color-mix(in oklab, var(--primary) 36%, transparent);
+            }
         }
-        .tool-card:focus-within{ box-shadow: var(--ring); }
+        .tool-card:focus-within{ box-shadow: var(--ring), var(--shadow-md); }
 
         /* 品牌色注入 */
         .giffgaff-card{ --primary:#ff6b00; --secondary:#ff8c42; }
@@ -304,12 +311,14 @@
             align-items: center;
             gap: 10px;
             transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
-            box-shadow: 0 6px 16px color-mix(in oklab, var(--primary) 35%, transparent);
+            box-shadow: 0 6px 16px color-mix(in oklab, var(--primary) 32%, transparent);
             outline: none;
-            will-change: transform, filter;
         }
-        .tool-btn:hover{ transform: translateY(-2px); text-decoration: none; color: #fff; filter: brightness(1.03); }
+        @media (hover: hover){
+            .tool-btn:hover{ transform: translateY(-2px); text-decoration: none; color: #fff; filter: brightness(1.04); box-shadow: 0 10px 22px color-mix(in oklab, var(--primary) 38%, transparent); }
+        }
         .tool-btn:focus-visible{ box-shadow: var(--ring); }
+        .tool-btn:active{ transform: scale(0.98); }
 
         .footer{
             margin-top: var(--s6);
@@ -322,13 +331,13 @@
         }
 
         /* 入场动画：IntersectionObserver 触发，避免 setTimeout 抖动 */
-        .reveal{ opacity: 0; transform: translateY(12px); transition: opacity .5s var(--ease-standard), transform .5s var(--ease-standard); will-change: opacity, transform; }
+        .reveal{ opacity: 0; transform: translateY(12px); transition: opacity var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard); }
         .reveal.show{ opacity: 1; transform: translateY(0); }
 
         /* 降低动效：尊重用户的减少动态偏好 */
         @media (prefers-reduced-motion: reduce){
             .reveal{ transition: none; transform: none; opacity: 1; }
-            .tool-card, .github-btn, .tool-btn{ transition: none!important; }
+            .tool-card, .github-btn, .kofi-btn, .tool-btn, .lang-switch{ transition: none!important; }
         }
 
         /* 小屏进一步优化 */
@@ -524,6 +533,12 @@
             background: var(--surface);
             border-radius: var(--radius-lg);
             overflow: hidden;
+            border: 1px solid color-mix(in oklab, var(--brand-start) 10%, transparent);
+            transition: box-shadow var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+        }
+        .faq-item[open]{
+            border-color: color-mix(in oklab, var(--brand-start) 22%, transparent);
+            box-shadow: var(--shadow-sm);
         }
         .faq-item summary{
             padding: var(--s3) var(--s4);
@@ -531,16 +546,25 @@
             font-size: .95rem;
             color: var(--text-primary);
             cursor: pointer;
-            transition: background var(--duration-fast) var(--ease-standard);
+            list-style: none;
+            transition: background-color var(--duration-fast) var(--ease-standard);
         }
-        .faq-item summary:hover{
-            background: color-mix(in oklab, var(--brand-start) 5%, transparent);
+        .faq-item summary::-webkit-details-marker{ display: none; }
+        @media (hover: hover){
+            .faq-item summary:hover{
+                background: color-mix(in oklab, var(--brand-start) 6%, transparent);
+            }
         }
         .faq-item p{
             padding: 0 var(--s4) var(--s3);
             font-size: .9rem;
             color: var(--text-secondary);
             line-height: 1.6;
+            animation: section-enter var(--duration-normal) var(--ease-standard) both;
+        }
+        @keyframes section-enter{
+            from{ opacity: 0; transform: translateY(8px); }
+            to{ opacity: 1; transform: translateY(0); }
         }
 
         /* 安全声明 */
@@ -580,11 +604,94 @@
             margin: 0;
             line-height: 1.5;
         }
+
+        /* ===== 暗色模式 ===== */
+        @media (prefers-color-scheme: dark){
+            :root{
+                --bg-grad-start:#0f1220;
+                --bg-grad-end:#0b0d14;
+                --surface:#1a1d2a;
+                --surface-alpha:88%;
+                --text-primary:#e8eaf0;
+                --text-secondary:#c4c9d4;
+                --text-muted:#9aa3b2;
+                --shadow-sm:0 4px 12px rgba(0,0,0,.35);
+                --shadow-md:0 10px 28px rgba(0,0,0,.4);
+                --shadow-lg:0 22px 50px rgba(0,0,0,.5);
+                --ring:0 0 0 3px rgba(129,140,248,.4);
+            }
+
+            body{
+                background:
+                    radial-gradient(1100px 560px at 8% -8%, rgba(99,102,241,.18), transparent 58%),
+                    radial-gradient(900px 480px at 100% 0%, rgba(139,92,246,.12), transparent 52%),
+                    linear-gradient(160deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+                color: var(--text-primary);
+            }
+
+            .main-container{
+                background: color-mix(in oklab, #161926 var(--surface-alpha), transparent);
+                border-color: color-mix(in oklab, white 12%, rgba(99,102,241,.2));
+            }
+
+            .lang-switch{
+                background: rgba(255,255,255,.08);
+                border-color: rgba(165,180,252,.3);
+                color: var(--text-primary);
+            }
+            @media (hover: hover){
+                .lang-switch:hover{ background: rgba(255,255,255,.12); }
+            }
+
+            .tool-card{
+                background: color-mix(in oklab, var(--surface) 96%, transparent);
+                border-color: color-mix(in oklab, var(--primary) 22%, transparent);
+            }
+
+            .compat-card,
+            .tutorial-card,
+            .region-card,
+            .glossary-item,
+            .faq-item,
+            .disclaimer-item{
+                background: var(--surface);
+                border-color: color-mix(in oklab, var(--brand-start) 18%, transparent);
+            }
+
+            .compat-check{
+                background: color-mix(in oklab, var(--accent-ok) 14%, transparent);
+            }
+            .compat-check code{
+                background: rgba(255,255,255,.08);
+                color: #e2e8f0;
+            }
+
+            .compare-table{
+                background: var(--surface);
+            }
+            .compare-table th{
+                background: color-mix(in oklab, var(--brand-start) 18%, transparent);
+                color: var(--text-primary);
+            }
+            .compare-table td{
+                border-bottom-color: rgba(255,255,255,.06);
+                color: var(--text-secondary);
+            }
+
+            .footer{
+                border-top-color: rgba(255,255,255,.08);
+                color: #94a3b8;
+            }
+
+            .tutorial-note{
+                background: color-mix(in oklab, var(--accent-warn) 14%, transparent);
+            }
+        }
     </style>
 
     <!-- Google tag (gtag.js) 延迟加载 -->
     <script type="module" src="/src/js/captcha-client.js"></script>
-    <script defer src="https://www.googletagmanager.com/gtag/js?id=G-HGX38HMNL1" crossorigin="anonymous"></script></script>
+    <script defer src="https://www.googletagmanager.com/gtag/js?id=G-HGX38HMNL1" crossorigin="anonymous"></script>
 </head>
 <body aria-label="eSIM 工具选择">
     <div class="main-container" role="region" aria-label="eSIM 工具选择">

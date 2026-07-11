@@ -85,18 +85,40 @@ export class UIController {
      * 更新步骤指示器
      */
     updateSteps(currentStep) {
-        this.elements.steps.forEach((step, index) => {
+        const steps = this.elements.steps;
+        const total = steps.length;
+
+        steps.forEach((step, index) => {
             const stepNo = index + 1;
-            if (stepNo <= currentStep) {
+            step.classList.remove('active', 'completed');
+
+            if (stepNo < currentStep) {
+                step.classList.add('completed');
+                step.style.cursor = 'pointer';
+                step.title = tl('点击返回此步骤');
+                step.setAttribute('aria-current', 'false');
+            } else if (stepNo === currentStep) {
                 step.classList.add('active');
                 step.style.cursor = 'pointer';
-                step.title = stepNo < currentStep ? tl('点击返回此步骤') : '';
+                step.title = '';
+                step.setAttribute('aria-current', 'step');
             } else {
-                step.classList.remove('active');
                 step.style.cursor = 'not-allowed';
                 step.title = tl('请按顺序完成前序步骤');
+                step.setAttribute('aria-current', 'false');
             }
         });
+
+        // 进度轨：已完成区间占比（1 步时为 0，末步为 1）
+        const indicator = steps[0] && steps[0].closest
+            ? steps[0].closest('.step-indicator')
+            : null;
+        if (indicator && total > 1) {
+            const progress = Math.max(0, Math.min(1, (currentStep - 1) / (total - 1)));
+            indicator.style.setProperty('--step-progress', String(progress));
+        } else if (indicator) {
+            indicator.style.setProperty('--step-progress', currentStep > 0 ? '1' : '0');
+        }
     }
 
     /**

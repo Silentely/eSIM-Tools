@@ -3,21 +3,24 @@
  * 定义卡片、按钮、状态面板等组件样式
  */
 
-/* 卡片样式 */
+/* 卡片样式：内容卡仅微调阴影，避免填表时大幅上浮 */
 .card {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
     border-radius: 16px;
     border: 1px solid rgba(255, 107, 0, 0.3);
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin-bottom: 30px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition:
+        box-shadow var(--transition-base, 240ms ease),
+        border-color var(--transition-base, 240ms ease);
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 107, 0, 0.5);
+@media (hover: hover) {
+    .card:hover {
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+        border-color: rgba(255, 107, 0, 0.45);
+    }
 }
 
 .card-header {
@@ -55,7 +58,11 @@
     font-size: 17px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-fast, 160ms ease),
+        background var(--transition-base, 240ms ease),
+        opacity var(--transition-fast, 160ms ease);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -68,10 +75,12 @@
     color: #212529;
 }
 
-.btn-primary:hover {
-    background: linear-gradient(to right, #ffffff, #ff6b00);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+    .btn-primary:hover {
+        background: linear-gradient(to right, #ffffff, #ff6b00);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.12);
+    }
 }
 
 .btn:disabled {
@@ -92,7 +101,11 @@
     align-items: center;
     justify-content: center;
     border-radius: 30px;
-    transition: all 0.3s;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-fast, 160ms ease),
+        border-color var(--transition-base, 240ms ease),
+        background var(--transition-base, 240ms ease);
     gap: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-decoration: none;
@@ -101,11 +114,13 @@
     flex-shrink: 0;
 }
 
-.help-btn:hover {
-    background: linear-gradient(to right, #ffffff, #ff6b00);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 107, 0, 0.5);
+@media (hover: hover) {
+    .help-btn:hover {
+        background: linear-gradient(to right, #ffffff, #ff6b00);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        border-color: rgba(255, 107, 0, 0.5);
+    }
 }
 
 .github-btn {
@@ -119,7 +134,12 @@
     align-items: center;
     justify-content: center;
     border-radius: 30px;
-    transition: all 0.3s;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        box-shadow var(--transition-fast, 160ms ease),
+        border-color var(--transition-base, 240ms ease),
+        background var(--transition-base, 240ms ease),
+        color var(--transition-fast, 160ms ease);
     gap: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-decoration: none;
@@ -129,12 +149,14 @@
     flex-shrink: 0;
 }
 
-.github-btn:hover {
-    background: linear-gradient(to right, #666666, #333333);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    border-color: rgba(51, 51, 51, 0.5);
-    color: #ffffff;
+@media (hover: hover) {
+    .github-btn:hover {
+        background: linear-gradient(to right, #666666, #333333);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        border-color: rgba(51, 51, 51, 0.5);
+        color: #ffffff;
+    }
 }
 
 /* 状态显示 */
@@ -259,15 +281,19 @@
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition:
+        transform var(--transition-fast, 160ms ease),
+        background var(--transition-base, 240ms ease);
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.clear-session-btn:hover {
-    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
-    transform: translateY(-1px);
+@media (hover: hover) {
+    .clear-session-btn:hover {
+        background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+        transform: translateY(-1px);
+    }
 }
 
 /* 信息卡片 */
@@ -298,7 +324,7 @@
     margin: 20px 0;
     padding: 16px 20px;
     box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
-    animation: subtle-pulse 3s ease-in-out infinite;
+    animation: none;
 }
 
 .promo-content {
@@ -312,7 +338,7 @@
 .promo-icon {
     color: white;
     font-size: 20px;
-    animation: bounce 2s ease-in-out infinite;
+    animation: none;
 }
 
 .promo-text {
@@ -326,7 +352,7 @@
     color: white;
     text-decoration: underline;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: color var(--transition-fast, 160ms ease), text-shadow var(--transition-fast, 160ms ease);
 }
 
 .promo-link:hover {
@@ -344,4 +370,63 @@
 
 .qrcode-container:hover .tooltip {
     opacity: 1;
+}
+
+/* ===== 暗色模式：组件层 ===== */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: rgba(30, 30, 30, 0.92);
+        border-color: rgba(255, 107, 0, 0.28);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    @media (hover: hover) {
+        .card:hover {
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+            border-color: rgba(255, 107, 0, 0.42);
+        }
+    }
+
+    .card-header {
+        background: rgba(255, 107, 0, 0.12);
+        color: #f8f9fa;
+        border-bottom-color: rgba(255, 107, 0, 0.2);
+    }
+
+    .status {
+        background: rgba(30, 30, 30, 0.92);
+        color: #e9ecef;
+    }
+
+    .status-item {
+        background: rgba(42, 42, 42, 0.9);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .status-label {
+        color: #adb5bd;
+    }
+
+    .status-value {
+        color: #d0d0d0;
+    }
+
+    .form-label {
+        color: #e9ecef;
+    }
+
+    .info-card {
+        background: linear-gradient(135deg, #2a1f16 0%, #3d2818 100%);
+        color: #f8fafc;
+        border-color: rgba(255, 107, 0, 0.3);
+    }
+
+    .promo-banner {
+        animation: none;
+        box-shadow: 0 4px 18px rgba(255, 107, 0, 0.22);
+    }
+
+    .promo-icon {
+        animation: none;
+    }
 }

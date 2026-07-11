@@ -1,70 +1,48 @@
-/* 微交互动画和触摸反馈 */
+/* 微交互动画与触摸反馈
+   依赖 design-system.css 的 motion tokens，禁止在此重新定义 --transition-* 时长格式
+*/
 
-/* 基础动画变量 */
+/* 本地缓动别名（与 design-system 对齐，作兜底） */
 :root {
-  --transition-fast: 0.15s ease-out;
-  --transition-normal: 0.3s ease-out;
-  --transition-slow: 0.5s ease-out;
   --bounce-ease: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --smooth-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --smooth-ease: var(--ease-out, cubic-bezier(0.22, 0.61, 0.36, 1));
 }
 
-/* 按钮点击反馈动画 */
+/* 按钮点击反馈 */
 .btn {
   position: relative;
   overflow: hidden;
-  transition: all var(--transition-normal) var(--smooth-ease);
-  transform: translateZ(0);
-  will-change: transform;
+  transition:
+    transform var(--transition-fast, 120ms var(--smooth-ease)),
+    box-shadow var(--transition-fast, 120ms var(--smooth-ease)),
+    background-color var(--transition-base, 200ms var(--smooth-ease)),
+    border-color var(--transition-base, 200ms var(--smooth-ease)),
+    color var(--transition-fast, 120ms var(--smooth-ease)),
+    opacity var(--transition-fast, 120ms var(--smooth-ease));
 }
 
 .btn:active {
-  transform: scale(0.95) translateZ(0);
+  transform: scale(0.98);
 }
 
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.btn:active::before {
-  width: 300px;
-  height: 300px;
-}
-
-/* 卡片悬停效果 */
+/* 卡片：仅声明过渡，上浮由可导航卡片自行定义 */
 .card {
-  transition: all var(--transition-normal) var(--smooth-ease);
-  transform: translateZ(0);
-  will-change: transform, box-shadow;
+  transition:
+    transform var(--transition-base, 200ms var(--smooth-ease)),
+    box-shadow var(--transition-base, 200ms var(--smooth-ease)),
+    border-color var(--transition-base, 200ms var(--smooth-ease));
 }
 
-.card:hover {
-  transform: translateY(-2px) translateZ(0);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.card:active {
-  transform: translateY(0) translateZ(0);
-}
-
-/* 输入框焦点动画 */
+/* 输入框焦点：ring 即可，避免 scale 造成布局抖动 */
 .form-control {
-  transition: all var(--transition-normal) var(--smooth-ease);
-  transform: translateZ(0);
+  transition:
+    border-color var(--transition-base, 200ms var(--smooth-ease)),
+    box-shadow var(--transition-base, 200ms var(--smooth-ease)),
+    background-color var(--transition-base, 200ms var(--smooth-ease));
 }
 
 .form-control:focus {
-  transform: scale(1.02) translateZ(0);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  box-shadow: 0 0 0 3px var(--ring-color, rgba(0, 123, 255, 0.15));
 }
 
 /* 加载状态指示器 */
@@ -95,7 +73,7 @@
 
 /* 淡入动画 */
 .fade-in {
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn 0.35s var(--smooth-ease);
 }
 
 @keyframes fadeIn {
@@ -103,14 +81,26 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* 步骤内容区进入动画 */
+@keyframes section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 滑入动画 */
 .slide-in {
-  animation: slideIn 0.3s ease-out;
+  animation: slideIn 0.3s var(--smooth-ease);
 }
 
 @keyframes slideIn {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 /* 弹跳动画 */
@@ -131,18 +121,9 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
-  
+
   .btn:active {
     transform: scale(0.98);
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-  
-  .card:active {
-    transform: scale(0.98);
-  }
-  
-  .form-control:focus {
-    transform: none;
   }
 }
 
@@ -177,7 +158,9 @@
   z-index: 9999;
   opacity: 0;
   visibility: hidden;
-  transition: all var(--transition-normal);
+  transition:
+    opacity var(--transition-base, 200ms var(--smooth-ease)),
+    visibility var(--transition-base, 200ms var(--smooth-ease));
 }
 
 .loading-overlay.show {
@@ -188,7 +171,7 @@
 /* 进度条动画 */
 .progress-bar {
   height: 4px;
-  background: linear-gradient(90deg, #007bff, #28a745);
+  background: linear-gradient(90deg, var(--primary, #007bff), #28a745);
   border-radius: 2px;
   overflow: hidden;
   position: relative;
@@ -210,10 +193,12 @@
   100% { left: 100%; }
 }
 
-/* 工具提示动画优化 */
+/* 工具提示动画 */
 .tooltip {
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
-  transform: scale(0.9);
+  transition:
+    opacity var(--transition-fast, 120ms var(--smooth-ease)),
+    transform var(--transition-fast, 120ms var(--smooth-ease));
+  transform: scale(0.96);
   transform-origin: center bottom;
 }
 
@@ -223,19 +208,18 @@
 
 /* 状态切换动画 */
 .status-transition {
-  transition: all var(--transition-normal) var(--smooth-ease);
+  transition:
+    color var(--transition-base, 200ms var(--smooth-ease)),
+    transform var(--transition-base, 200ms var(--smooth-ease));
 }
 
 .status-transition.connected {
   color: #28a745;
-  transform: scale(1.05);
 }
 
 .status-transition.disconnected {
   color: #dc3545;
-  transform: scale(0.95);
 }
-
 
 /* 骨架屏动画 */
 @keyframes skeleton-loading {
@@ -243,10 +227,15 @@
   100% { background-position: -200% 0; }
 }
 
-/* 步骤脉冲环动画 */
+/* 步骤脉冲环（颜色跟随品牌 --primary） */
 @keyframes pulse-ring {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary, #0d6efd) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--primary, #0d6efd) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary, #0d6efd) 0%, transparent);
+  }
 }
- 

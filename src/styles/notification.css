@@ -2,8 +2,8 @@
 
 .notification-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: max(16px, calc(env(safe-area-inset-top, 0px) + 12px));
+  right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px));
   z-index: 10000;
   display: flex;
   flex-direction: column;
@@ -25,9 +25,8 @@
   pointer-events: auto;
   transform: translateX(calc(100% + 20px));
   opacity: 0;
-  transition: transform var(--transition-base, 200ms) var(--ease-out, cubic-bezier(.22,.61,.36,1)),
-              opacity var(--transition-base, 200ms) var(--ease-out, cubic-bezier(.22,.61,.36,1));
-  will-change: transform, opacity;
+  transition: transform var(--transition-base, 240ms var(--ease-out, cubic-bezier(.2,.8,.2,1))),
+              opacity var(--transition-base, 240ms var(--ease-out, cubic-bezier(.2,.8,.2,1)));
 }
 
 .notification.show {
@@ -64,10 +63,12 @@
   background: none;
   border: none;
   padding: 4px;
+  min-width: 32px;
+  min-height: 32px;
   cursor: pointer;
   color: inherit;
   opacity: 0.7;
-  transition: opacity var(--transition-fast, 120ms);
+  transition: opacity var(--transition-fast, 160ms);
   flex-shrink: 0;
   border-radius: 4px;
 }
@@ -102,17 +103,26 @@
   color: white;
 }
 
-/* 响应式设计 */
+/* 响应式 + 安全区 */
 @media (max-width: 768px) {
   .notification-container {
-    top: 10px;
-    right: 10px;
-    left: 10px;
+    top: max(10px, calc(env(safe-area-inset-top, 0px) + 8px));
+    right: max(10px, calc(env(safe-area-inset-right, 0px) + 8px));
+    left: max(10px, calc(env(safe-area-inset-left, 0px) + 8px));
     max-width: none;
   }
 
   .notification {
     padding: 14px 16px;
+    transform: translateY(calc(-100% - 16px));
+  }
+
+  .notification.show {
+    transform: translateY(0);
+  }
+
+  .notification.hide {
+    transform: translateY(calc(-100% - 16px));
   }
 
   .notification-message {
@@ -136,11 +146,11 @@
   }
 }
 
-/* 网络状态指示器样式 (Ported from index.html) */
+/* 网络状态指示器 */
 .network-status {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: max(16px, calc(env(safe-area-inset-top, 0px) + 12px));
+    right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px));
     padding: 12px 20px;
     border-radius: 8px;
     color: white;
@@ -148,7 +158,7 @@
     z-index: 10000;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateX(100%);
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-base, 240ms ease);
 }
 
 .network-status.success {
@@ -169,21 +179,15 @@
 
 .update-notification {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+    right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px));
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: white;
     padding: 16px 20px;
     border-radius: 12px;
     box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
     z-index: 10000;
-    max-width: 300px;
-}
-
-.notification-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    max-width: min(300px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
 }
 
 /* 加载状态样式 */
@@ -201,7 +205,7 @@
     align-items: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--transition-base, 240ms ease);
 }
 
 .loading-overlay.show {
@@ -236,4 +240,26 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  .loading-overlay {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  .loading-content {
+    background: #1e1e1e;
+    color: #e9ecef;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+  }
+
+  .loading-content p {
+    color: #adb5bd;
+  }
+
+  .loading-spinner {
+    border-color: #333;
+    border-top-color: var(--primary, #8b5cf6);
+  }
 }
