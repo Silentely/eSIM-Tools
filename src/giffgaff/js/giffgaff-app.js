@@ -1255,20 +1255,18 @@ class GiffgaffApp {
     handleCookieExpired(event) {
         console.log('[Giffgaff] === Cookie 已过期 ===', event && event.detail);
         uiController.showSection(1);
-        uiController.selectLoginMethod('cookie');
+        // Cookie 入口暂不可用，引导用户改用 OAuth
+        uiController.selectLoginMethod('oauth');
 
         if (uiController.elements.loginMethodStatus) {
             uiController.showStatus(
                 uiController.elements.loginMethodStatus,
-                tl('Cookie已失效，请重新获取并验证。'),
+                tl('Cookie 已失效且暂不可用，请使用 OAuth 登录。'),
                 'error'
             );
         }
 
-        showToast(tl('Cookie已失效，请在第一步重新验证。'));
-
-        const input = document.getElementById('cookieInput');
-        if (input) setTimeout(() => input.focus(), 100);
+        showToast(tl('Cookie 已失效，请使用 OAuth 重新登录。'));
     }
 
     /**
