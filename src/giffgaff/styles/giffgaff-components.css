@@ -214,6 +214,7 @@
 }
 
 /* ===== 步骤指示器（进度轨见 design-system） ===== */
+/* 背景与页面卡片统一：暖奶油/橘黄，避免冷灰白 */
 .step-indicator {
     display: flex;
     justify-content: space-between;
@@ -223,9 +224,9 @@
     counter-reset: step;
     padding: 16px 24px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #f8fafc, #eef2f7);
-    border: 1px solid rgba(0,0,0,0.06);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    background: linear-gradient(135deg, #fffdf7 0%, #fff8e6 55%, #fff3d6 100%);
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
 }
 
 .step {
@@ -289,7 +290,7 @@
 .step-text {
     font-size: 14px;
     text-align: center;
-    color: #64748b;
+    color: #6b5a2e;
     font-weight: 500;
     transition: color var(--transition-fast, 160ms ease);
 }
@@ -690,9 +691,9 @@
     }
 
     .step-indicator {
-        background: linear-gradient(135deg, #1e1e1e, #252525);
-        border-color: rgba(255, 255, 255, 0.08);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        background: linear-gradient(135deg, #2a2418 0%, #322b1c 55%, #3a2f1a 100%);
+        border-color: rgba(255, 204, 0, 0.22);
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.35);
     }
 
     .step-number {
@@ -703,7 +704,7 @@
     }
 
     .step-text {
-        color: #94a3b8;
+        color: #d6c48a;
     }
 
     .step.completed .step-text {

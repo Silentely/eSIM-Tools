@@ -84,6 +84,7 @@ body {
 }
 
 /* 步骤指示器（进度轨见 design-system .step-indicator::before/::after） */
+/* 背景与 Simyo 卡片统一：暖橙奶油色，避免冷灰白 */
 .step-indicator {
     display: flex;
     justify-content: space-between;
@@ -93,9 +94,9 @@ body {
     counter-reset: step;
     padding: 16px 24px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #f8fafc, #eef2f7);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, #fffaf5 0%, #fff1e6 55%, #ffe8d6 100%);
+    border: 1px solid rgba(255, 107, 0, 0.3);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
 }
 
 .step {
@@ -159,7 +160,7 @@ body {
 .step-text {
     font-size: 14px;
     text-align: center;
-    color: #64748b;
+    color: #7c4a28;
     font-weight: 500;
     transition: color var(--transition-fast, 160ms ease);
 }
@@ -307,9 +308,9 @@ textarea:focus-visible {
     }
 
     .step-indicator {
-        background: linear-gradient(135deg, #1e1e1e, #252525);
-        border-color: rgba(255, 255, 255, 0.08);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        background: linear-gradient(135deg, #2a1f16 0%, #322318 55%, #3a2818 100%);
+        border-color: rgba(255, 107, 0, 0.28);
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.35);
     }
 
     .step-number {
@@ -320,7 +321,7 @@ textarea:focus-visible {
     }
 
     .step-text {
-        color: #94a3b8;
+        color: #d4a574;
     }
 
     .step.completed .step-text {
