@@ -190,6 +190,14 @@
     max-width: min(300px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
 }
 
+/* 限定在更新提示内，避免覆盖通用 .notification-content */
+.update-notification .notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
 /* 加载状态样式 */
 .loading-overlay {
     position: fixed;

@@ -29,7 +29,8 @@ export class UIController {
      */
     initElements() {
         return {
-            steps: document.querySelectorAll('.step'),
+            // 仅选择进度条内的步骤，避免与其它 .step 类名冲突
+            steps: document.querySelectorAll('.step-indicator .step'),
             sections: document.querySelectorAll('.section'),
 
             // 状态显示元素
