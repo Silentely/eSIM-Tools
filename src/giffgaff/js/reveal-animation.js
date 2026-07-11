@@ -1,9 +1,14 @@
 /**
  * 入场动效初始化
  * 使用 IntersectionObserver 实现滚动触发动画
+ * 并在页面隐藏时暂停装饰循环动画
  */
 
 (function(){
+  const syncPageHidden = () => {
+    document.documentElement.dataset.pageHidden = document.hidden ? 'true' : 'false';
+  };
+
   const initReveal = () => {
     const nodes = document.querySelectorAll('.reveal');
     if (!nodes.length) return;
@@ -21,9 +26,16 @@
       nodes.forEach(el => el.classList.add('show'));
     }
   };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initReveal, { once: true });
-  } else {
+
+  const init = () => {
+    syncPageHidden();
     initReveal();
+  };
+
+  document.addEventListener('visibilitychange', syncPageHidden);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
   }
 })();

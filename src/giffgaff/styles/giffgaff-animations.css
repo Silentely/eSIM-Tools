@@ -33,7 +33,20 @@
     animation: fadeInUp 0.6s ease-out;
 }
 
-/* ===== 推广横幅动画 ===== */
+/*
+ * 装饰动画时长 token（非静态优化：统一节奏、便于微调）
+ * --anim-fast: 横幅图标弹跳
+ * --anim-base: 呼吸/警告脉冲
+ * --anim-slow: 时间卡 glow / 数字呼吸
+ */
+:root {
+    --anim-ease-pulse: cubic-bezier(0.45, 0, 0.55, 1);
+    --anim-fast: 2s;
+    --anim-base: 2.75s;
+    --anim-slow: 3.25s;
+}
+
+/* ===== 推广横幅动画（原有效果：scale 1.02 / bounce 位移） ===== */
 @keyframes subtle-pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.02); }
@@ -45,68 +58,80 @@
     60% { transform: translateY(-3px); }
 }
 
-/* ===== 服务时间动画（仅 opacity / 阴影，禁止 scale 以降低干扰与耗电） ===== */
+/* ===== 服务时间动画（原有效果幅度，时长用 token 略放缓） ===== */
 @keyframes breathing-light {
     0%, 100% {
-        opacity: 1;
-        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.25);
+        box-shadow: 0 0 5px rgba(220, 38, 38, 0.3);
+        transform: scale(1);
     }
     50% {
-        opacity: 0.92;
-        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
+        box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
+        transform: scale(1.05);
     }
 }
 
 @keyframes breathing-light-orange {
     0%, 100% {
-        opacity: 1;
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.25);
+        box-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
+        transform: scale(1);
     }
     50% {
-        opacity: 0.92;
-        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+        transform: scale(1.05);
     }
 }
 
 @keyframes breathing-light-green {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.88; }
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(22, 163, 74, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(22, 163, 74, 0.6);
+        transform: scale(1.05);
+    }
 }
 
 @keyframes breathing-light-purple {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.88; }
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(99, 102, 241, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+        transform: scale(1.05);
+    }
 }
 
-/* 警告：轻微 opacity，不再缩放 */
 @keyframes warning-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.85; }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 @keyframes success-bounce {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.9; }
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.02); }
+    75% { transform: scale(1.02); }
 }
 
 @keyframes pulse-glow {
     0%, 100% {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     50% {
-        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.18);
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
     }
 }
 
-/* 时间数字更新：一次轻触反馈，由 JS 触发类名时使用 */
 @keyframes time-update {
-    0% { opacity: 0.7; }
-    100% { opacity: 1; }
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
 @keyframes time-breathe {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.92; }
+    0%, 100% { transform: translateZ(0) scale(1); }
+    50% { transform: translateZ(0) scale(1.02); }
 }
 
 @keyframes modalSlideIn {

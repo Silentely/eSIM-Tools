@@ -117,35 +117,35 @@
 }
 
 #serviceTimeIcon.warning {
-    background: #fef3c7;
-    color: #d97706;
-    box-shadow: inset 0 0 0 2px rgba(245,158,11,0.2);
-    /* 警告态保留极轻 opacity 脉动，成功态静态 */
-    animation: warning-pulse 2.8s ease-in-out infinite;
+    background: #e6f6ee;
+    color: #10b981;
+    box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
+    animation: breathing-light-green var(--anim-base, 2.75s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
 #serviceTimeIcon.success {
     background: #e6f6ee;
     color: #10b981;
     box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
-    animation: none;
+    animation: breathing-light-green var(--anim-base, 2.75s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
+/* hover 用 filter，避免覆盖 animation 的 transform */
 @media (hover: hover) {
     #serviceTimeIcon:hover {
-        transform: scale(1.04);
+        filter: brightness(1.06);
     }
 }
 
 .alert-warning #serviceTimeIcon {
-    animation: warning-pulse 2.8s ease-in-out infinite;
+    animation: warning-pulse var(--anim-base, 2.75s) var(--anim-ease-pulse, ease-in-out) infinite;
     background: #f8ecbb;
     color: #f59d06;
     box-shadow: inset 0 0 0 2px rgba(245,158,11,0.15);
 }
 
 .alert-success #serviceTimeIcon {
-    animation: none;
+    animation: breathing-light-green var(--anim-base, 2.75s) var(--anim-ease-pulse, ease-in-out) infinite;
     background: #e0f6eb;
     color: #10b981;
     box-shadow: inset 0 0 0 2px rgba(16,185,129,0.15);
@@ -174,7 +174,7 @@
     background: #f0fdf4;
     color: #16a34a;
     border: 2px solid #16a34a;
-    animation: none;
+    animation: breathing-light-green var(--anim-base, 2.75s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
 .service-time-action-badge.warning {
@@ -183,13 +183,14 @@
     border: 2px solid #dc2626;
     font-weight: 800;
     text-shadow: none;
-    /* 仅警告徽章保留轻量脉动 */
-    animation: breathing-light 3s ease-in-out infinite;
+    animation: breathing-light var(--anim-base, 2.75s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
-.service-time-action-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+    .service-time-action-badge:hover {
+        filter: brightness(1.04);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
 }
 
 /* ===== 时间卡片 ===== */
@@ -207,8 +208,7 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
-    /* 时间卡静态展示，避免持续 glow 动画 */
-    animation: none;
+    animation: pulse-glow var(--anim-slow, 3.25s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
 .current-time-card::after {
@@ -228,7 +228,7 @@
     display: grid;
     place-items: center;
     box-shadow: inset 0 0 0 1px rgba(99,102,241,0.22);
-    animation: none;
+    animation: breathing-light-purple var(--anim-base, 2.75s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
 .time-card-icon i {
@@ -256,8 +256,7 @@
     letter-spacing: 1.2px;
     color: #0b1324;
     text-shadow: 0 1px 0 rgba(255,255,255,0.6);
-    /* 静态可读，避免持续呼吸动画 */
-    animation: none;
+    animation: time-breathe var(--anim-slow, 3.25s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
 .time-card-hint {
@@ -337,11 +336,17 @@
     }
 }
 
-/* 尊重减少动态偏好：去掉剩余状态脉动 */
+/* 尊重减少动态偏好 */
 @media (prefers-reduced-motion: reduce) {
     #serviceTimeIcon.warning,
+    #serviceTimeIcon.success,
     .alert-warning #serviceTimeIcon,
-    .service-time-action-badge.warning {
+    .alert-success #serviceTimeIcon,
+    .service-time-action-badge.warning,
+    .service-time-action-badge.success,
+    .current-time-card,
+    .time-card-icon,
+    .time-card-value {
         animation: none !important;
     }
 }

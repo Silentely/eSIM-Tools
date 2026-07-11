@@ -96,6 +96,12 @@
   --transition-base: 240ms var(--ease-out);
   --transition-slow: 360ms var(--ease-out);
 
+  /* 装饰循环动画（保留原有效果，时长略柔和） */
+  --anim-ease-pulse: cubic-bezier(0.45, 0, 0.55, 1);
+  --anim-fast: 2s;
+  --anim-base: 2.75s;
+  --anim-slow: 3.25s;
+
   /* Focus ring */
   --ring-color: rgba(76,154,255,.35);
   --ring-outline: #4c9aff;
@@ -467,17 +473,41 @@ html[data-locale="en"] .lang-en { display: inline !important; }
 }
 .tooltip.show { opacity: 1; }
 
-/* Promo banner：静态展示，避免持续 scale 动画 */
+/* Promo banner：原有 subtle-pulse 效果，时长/缓动用 token 统一 */
 .promo-banner {
   border-radius: var(--radius-md);
   margin: 20px 0;
   padding: 16px 20px;
   box-shadow: 0 4px 15px color-mix(in srgb, var(--primary) 30%, transparent);
-  animation: none;
+  animation: subtle-pulse var(--anim-slow, 3.25s) var(--anim-ease-pulse, cubic-bezier(0.45, 0, 0.55, 1)) infinite;
 }
 @keyframes subtle-pulse {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0.92; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@media (hover: hover) {
+  .promo-banner:hover {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-banner {
+    animation: none !important;
+  }
+}
+
+/* 页面不可见时暂停装饰循环，省电且不改视觉设计 */
+html[data-page-hidden="true"] .promo-banner,
+html[data-page-hidden="true"] .promo-icon,
+html[data-page-hidden="true"] #serviceTimeIcon,
+html[data-page-hidden="true"] .service-time-action-badge,
+html[data-page-hidden="true"] .current-time-card,
+html[data-page-hidden="true"] .time-card-icon,
+html[data-page-hidden="true"] .time-card-value,
+html[data-page-hidden="true"] .step.active .step-number {
+  animation-play-state: paused !important;
 }
 
 /* Reveal helpers for QR preview hovers may reuse .tooltip from above */
@@ -536,7 +566,7 @@ html[data-locale="en"] .lang-en { display: inline !important; }
 
 /* Step Indicator：当前步脉冲（颜色跟随 --primary） */
 .step.active .step-number {
-  animation: pulse-ring 2s var(--ease-out) infinite;
+  animation: pulse-ring var(--anim-base, 2.75s) var(--anim-ease-pulse, var(--ease-out)) infinite;
 }
 
 /* 步骤指示器进度轨（--step-progress: 0~1，由 JS 写入） */

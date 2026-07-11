@@ -324,7 +324,7 @@
     margin: 20px 0;
     padding: 16px 20px;
     box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
-    animation: none;
+    animation: subtle-pulse var(--anim-slow, 3.25s) var(--anim-ease-pulse, ease-in-out) infinite;
 }
 
 .promo-content {
@@ -338,7 +338,14 @@
 .promo-icon {
     color: white;
     font-size: 20px;
-    animation: none;
+    animation: bounce var(--anim-fast, 2s) var(--anim-ease-pulse, ease-in-out) infinite;
+}
+
+@media (hover: hover) {
+    .promo-banner:hover,
+    .promo-banner:hover .promo-icon {
+        animation-play-state: paused;
+    }
 }
 
 .promo-text {
@@ -422,11 +429,13 @@
     }
 
     .promo-banner {
-        animation: none;
         box-shadow: 0 4px 18px rgba(255, 107, 0, 0.22);
     }
+}
 
+@media (prefers-reduced-motion: reduce) {
+    .promo-banner,
     .promo-icon {
-        animation: none;
+        animation: none !important;
     }
 }

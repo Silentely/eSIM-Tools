@@ -7,6 +7,13 @@ gtag('js', new Date());
 gtag('config', 'G-HGX38HMNL1');
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 页面隐藏时暂停装饰循环动画
+  const syncPageHidden = () => {
+    document.documentElement.dataset.pageHidden = document.hidden ? 'true' : 'false';
+  };
+  syncPageHidden();
+  document.addEventListener('visibilitychange', syncPageHidden);
+
   // 对所有 reveal 元素应用入场动画
   const revealElements = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window) {
