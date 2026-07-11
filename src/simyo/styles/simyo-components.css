@@ -3,23 +3,41 @@
  * 定义卡片、按钮、状态面板等组件样式
  */
 
-/* 卡片样式：内容卡仅微调阴影，避免填表时大幅上浮 */
+/* 卡片样式（恢复原上浮效果） */
 .card {
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 16px;
     border: 1px solid rgba(255, 107, 0, 0.3);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
     overflow: hidden;
     transition:
+        transform var(--transition-base, 240ms ease),
         box-shadow var(--transition-base, 240ms ease),
         border-color var(--transition-base, 240ms ease);
 }
 
 @media (hover: hover) {
     .card:hover {
-        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
-        border-color: rgba(255, 107, 0, 0.45);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        border-color: rgba(255, 107, 0, 0.5);
+    }
+}
+
+.card.disabled,
+.card[aria-disabled="true"] {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    transform: none !important;
+}
+
+@media (hover: hover) {
+    .card.disabled:hover,
+    .card[aria-disabled="true"]:hover {
+        transform: none !important;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1) !important;
     }
 }
 
@@ -389,7 +407,8 @@
 
     @media (hover: hover) {
         .card:hover {
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
             border-color: rgba(255, 107, 0, 0.42);
         }
     }

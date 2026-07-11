@@ -146,8 +146,9 @@ body {
     background: linear-gradient(135deg, #ff7a1a, #ffb066);
     color: #fff;
     border-color: rgba(255, 107, 0, 0.85);
-    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.45);
-    transform: scale(1.06);
+    /* 脉冲环用偏深橙，在橙色圆上仍清晰 */
+    --step-pulse-color: rgba(194, 65, 12, 0.75);
+    animation: pulse-ring var(--anim-base, 2.75s) var(--anim-ease-pulse, cubic-bezier(0.4, 0, 0.6, 1)) infinite;
 }
 
 .step.active .step-text {

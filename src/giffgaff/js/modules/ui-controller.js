@@ -203,6 +203,20 @@ export class UIController {
             this.elements.cookieLoginSection.style.display = 'none';
             this.showStatus(this.elements.loginMethodStatus, tl('已选择OAuth 2.0登录方式'), "success");
         } else if (method === 'cookie') {
+            // Cookie 登录当前暂不可用（与页面文案一致）
+            const cookieCard = document.getElementById('cookieCard');
+            if (
+                cookieCard &&
+                (cookieCard.classList.contains('disabled') ||
+                    cookieCard.getAttribute('aria-disabled') === 'true')
+            ) {
+                this.showStatus(
+                    this.elements.loginMethodStatus,
+                    tl('Cookie 登录暂不可用，请使用 OAuth 登录'),
+                    'error'
+                );
+                return;
+            }
             this.elements.oauthLoginSection.style.display = 'none';
             this.elements.cookieLoginSection.style.display = 'block';
             this.showStatus(this.elements.loginMethodStatus, tl('已选择Cookie登录方式'), "success");

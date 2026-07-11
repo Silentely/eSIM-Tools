@@ -275,9 +275,10 @@
 .step.active .step-number {
     background: linear-gradient(135deg, #ffcc00, #ffd84d);
     color: #212529;
-    box-shadow: 0 6px 16px rgba(255, 193, 7, 0.45);
     border-color: rgba(255, 193, 7, 0.85);
-    transform: scale(1.06);
+    /* 静态阴影交给 pulse-ring 动画；颜色用高对比琥珀，避免黄底上看不见 */
+    --step-pulse-color: rgba(180, 83, 9, 0.75);
+    animation: pulse-ring var(--anim-base, 2.75s) var(--anim-ease-pulse, cubic-bezier(0.4, 0, 0.6, 1)) infinite;
 }
 
 .step.active .step-text {

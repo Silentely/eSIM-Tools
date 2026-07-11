@@ -287,7 +287,17 @@ class GiffgaffApp {
         const bindCard = (el, method) => {
             if (!el || el.__bound) return;
             el.__bound = true;
-            const handler = () => uiController.selectLoginMethod(method);
+            const handler = () => {
+                // 禁用态（含 Cookie 暂不可用）不响应
+                if (
+                    el.classList.contains('disabled') ||
+                    el.getAttribute('aria-disabled') === 'true' ||
+                    el.style.pointerEvents === 'none'
+                ) {
+                    return;
+                }
+                uiController.selectLoginMethod(method);
+            };
             el.addEventListener('click', handler);
             el.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -298,6 +308,7 @@ class GiffgaffApp {
         };
 
         bindCard(oauthCard, 'oauth');
+        // Cookie 入口保留绑定以便未来恢复，但 updateLoginCardsState 会始终禁用
         bindCard(cookieCard, 'cookie');
     }
 
@@ -1466,30 +1477,40 @@ class GiffgaffApp {
         const oauthCard = document.getElementById('oauthCard');
         const cookieCard = document.getElementById('cookieCard');
 
-        // 更新卡片状态
-        [oauthCard, cookieCard].forEach(card => {
-            if (!card) return;
-
+        // 仅 OAuth 受服务时间影响
+        if (oauthCard) {
             if (isAvailable) {
-                // 服务时间内：启用卡片
-                card.classList.remove('disabled', 'service-time-disabled');
-                card.style.cursor = 'pointer';
-                card.style.opacity = '1';
-                card.style.pointerEvents = 'auto';
-                card.removeAttribute('aria-disabled');
-                card.setAttribute('role', 'button');
-                card.setAttribute('tabindex', '0');
+                oauthCard.classList.remove('disabled', 'service-time-disabled');
+                oauthCard.style.cursor = 'pointer';
+                oauthCard.style.opacity = '1';
+                oauthCard.style.pointerEvents = 'auto';
+                oauthCard.removeAttribute('aria-disabled');
+                oauthCard.setAttribute('role', 'button');
+                oauthCard.setAttribute('tabindex', '0');
             } else {
-                // 服务时间外：禁用卡片
-                card.classList.add('disabled', 'service-time-disabled');
-                card.style.cursor = 'not-allowed';
-                card.style.opacity = '0.5';
-                card.style.pointerEvents = 'none';
-                card.setAttribute('aria-disabled', 'true');
-                card.removeAttribute('role');
-                card.setAttribute('tabindex', '-1');
+                oauthCard.classList.add('disabled', 'service-time-disabled');
+                oauthCard.style.cursor = 'not-allowed';
+                oauthCard.style.opacity = '0.5';
+                oauthCard.style.pointerEvents = 'none';
+                oauthCard.setAttribute('aria-disabled', 'true');
+                oauthCard.removeAttribute('role');
+                oauthCard.setAttribute('tabindex', '-1');
             }
-        });
+        }
+
+        // Cookie 登录当前暂不可用：始终禁用，切勿随服务时间重新启用
+        if (cookieCard) {
+            cookieCard.classList.add('disabled');
+            cookieCard.classList.remove('service-time-disabled');
+            cookieCard.style.cursor = 'not-allowed';
+            cookieCard.style.opacity = '0.5';
+            cookieCard.style.pointerEvents = 'none';
+            cookieCard.style.backgroundColor = '#f8f9fa';
+            cookieCard.setAttribute('aria-disabled', 'true');
+            cookieCard.setAttribute('aria-label', 'Cookie 登录暂不可用');
+            cookieCard.removeAttribute('role');
+            cookieCard.setAttribute('tabindex', '-1');
+        }
     }
 
     /**

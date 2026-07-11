@@ -564,9 +564,10 @@ html[data-page-hidden="true"] .step.active .step-number {
   }
 }
 
-/* Step Indicator：当前步脉冲（颜色跟随 --primary） */
+/* Step Indicator：当前步脉冲（keyframes 见 animations.css） */
 .step.active .step-number {
-  animation: pulse-ring var(--anim-base, 2.75s) var(--anim-ease-pulse, var(--ease-out)) infinite;
+  --step-pulse-color: rgba(13, 110, 253, 0.7);
+  animation: pulse-ring var(--anim-base, 2.75s) var(--anim-ease-pulse, cubic-bezier(0.4, 0, 0.6, 1)) infinite;
 }
 
 /* 步骤指示器进度轨（--step-progress: 0~1，由 JS 写入） */

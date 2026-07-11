@@ -227,15 +227,22 @@
   100% { background-position: -200% 0; }
 }
 
-/* 步骤脉冲环（颜色跟随品牌 --primary） */
+/*
+ * 步骤当前态脉冲环（恢复原效果：scale + 外扩阴影）
+ * --step-pulse-color 默认用高对比蓝；品牌页可覆盖
+ * 注意：不可用与步骤圆同色的 --primary（如 giffgaff 黄），否则几乎看不见
+ */
 @keyframes pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary, #0d6efd) 55%, transparent);
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 var(--step-pulse-color, rgba(13, 110, 253, 0.7));
   }
   70% {
-    box-shadow: 0 0 0 10px color-mix(in srgb, var(--primary, #0d6efd) 0%, transparent);
+    transform: scale(1);
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--step-pulse-color, rgba(13, 110, 253, 0.7)) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary, #0d6efd) 0%, transparent);
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--step-pulse-color, rgba(13, 110, 253, 0.7)) 0%, transparent);
   }
 }
