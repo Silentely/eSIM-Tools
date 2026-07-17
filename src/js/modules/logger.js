@@ -3,9 +3,23 @@
  * 生产环境禁用console.log，开发环境保留
  */
 
-const isDev = typeof process !== 'undefined' ?
-  process.env.NODE_ENV === 'development' :
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost');
+function detectDev() {
+  // Node / 测试 / 构建注入：严格以 NODE_ENV === 'development' 为准
+  // （test / production 均视为非开发，避免 Jest 误开 debug 输出）
+  if (typeof process !== 'undefined' && process.env && typeof process.env.NODE_ENV === 'string') {
+    return process.env.NODE_ENV === 'development';
+  }
+  // 纯浏览器（无 process 注入）：与 sentry-loader 开发判定保持一致
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname || '';
+    return hostname === 'localhost'
+      || hostname === '127.0.0.1'
+      || hostname.startsWith('192.168.');
+  }
+  return false;
+}
+
+const isDev = detectDev();
 
 class Logger {
   /**

@@ -31,7 +31,7 @@ export class OAuthHandler {
                 sessionStorage.setItem('gg_pkce_map', JSON.stringify(pkceMap));
                 sessionStorage.setItem('gg_oauth_last_state', state);
             } catch (e) {
-                console.error(t('giffgaff.oauth.log.savePkceFailed'), e);
+                Logger.error(t('giffgaff.oauth.log.savePkceFailed'), e);
             }
 
             // 构建授权URL
@@ -63,7 +63,7 @@ export class OAuthHandler {
                 message: t('giffgaff.oauth.status.windowOpened')
             };
         } catch (error) {
-            console.error(t('giffgaff.oauth.log.prepareFailed'), error);
+            Logger.error(t('giffgaff.oauth.log.prepareFailed'), error);
             throw error;
         }
     }
@@ -110,7 +110,7 @@ export class OAuthHandler {
                         }
                     }
                 } catch (e) {
-                    console.error(t('giffgaff.oauth.log.restoreVerifierFailed'), e);
+                    Logger.error(t('giffgaff.oauth.log.restoreVerifierFailed'), e);
                 }
             }
 
@@ -148,7 +148,7 @@ export class OAuthHandler {
                 }
                 sessionStorage.setItem('gg_pkce_map', JSON.stringify(pkceMap));
             } catch (e) {
-                console.error(t('giffgaff.oauth.log.cleanupFailed'), e);
+                Logger.error(t('giffgaff.oauth.log.cleanupFailed'), e);
             }
 
             return {
@@ -156,7 +156,7 @@ export class OAuthHandler {
                 accessToken: tokenData.access_token
             };
         } catch (error) {
-            console.error(t('giffgaff.oauth.log.callbackFailed'), error);
+            Logger.error(t('giffgaff.oauth.log.callbackFailed'), error);
             throw error;
         }
     }

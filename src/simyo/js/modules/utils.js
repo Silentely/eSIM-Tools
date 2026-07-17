@@ -5,6 +5,9 @@ import { t, tl } from '../../../js/modules/i18n.js';
  * 提供通用的辅助函数
  */
 
+// 公共剪贴板实现（保持既有导出路径不变，避免调用方脱链）
+export { copyToClipboard } from '../../../js/modules/clipboard.js';
+
 /**
  * 验证荷兰手机号格式
  * @param {string} phoneNumber - 手机号
@@ -24,39 +27,27 @@ export function validateVerificationCode(code) {
 }
 
 /**
- * 复制到剪贴板
- * @param {string} text - 要复制的文本
- */
-export function copyToClipboard(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text);
-    } else {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return Promise.resolve();
-    }
-}
-
-/**
  * 显示Toast通知
+ * 使用 textContent 渲染消息，避免接口错误文案经 innerHTML 注入
  * @param {string} message - 通知消息
  */
 export function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
-    toast.innerHTML = `
-        <div class="toast-content">
-            <i class="fas fa-check-circle me-2"></i>
-            ${message}
-        </div>
-    `;
 
+    const content = document.createElement('div');
+    content.className = 'toast-content';
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-check-circle me-2';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const text = document.createElement('span');
+    text.textContent = message == null ? '' : String(message);
+
+    content.appendChild(icon);
+    content.appendChild(text);
+    toast.appendChild(content);
     document.body.appendChild(toast);
 
     setTimeout(() => {

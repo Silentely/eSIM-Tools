@@ -31,15 +31,15 @@ class SimyoApp {
     async init() {
         if (this.initialized) return;
 
-        console.log(t('simyo.app.console.initStart'));
+        Logger.log(t('simyo.app.console.initStart'));
         try { Logger.env(); } catch (_) {}
-        console.log('[Simyo] 页面:', window.location.href);
-        console.log('[Simyo] UserAgent:', navigator.userAgent);
-        console.log('[Simyo] 语言:', navigator.language);
+        Logger.log('[Simyo] 页面:', window.location.href);
+        Logger.log('[Simyo] UserAgent:', navigator.userAgent);
+        Logger.log('[Simyo] 语言:', navigator.language);
 
         // 订阅状态变化
         stateManager.subscribe((state) => {
-            console.log('[Simyo] 状态变更:', JSON.stringify({
+            Logger.log('[Simyo] 状态变更:', JSON.stringify({
                 hasSessionToken: !!state.sessionToken,
                 hasPhoneNumber: !!state.phoneNumber,
                 hasActivationCode: !!state.activationCode,
@@ -49,13 +49,13 @@ class SimyoApp {
         });
 
         // 绑定事件监听器
-        console.log('[Simyo] 绑定事件监听器...');
+        Logger.log('[Simyo] 绑定事件监听器...');
         this.bindEventListeners();
 
         // 恢复会话
-        console.log('[Simyo] 尝试恢复会话...');
+        Logger.log('[Simyo] 尝试恢复会话...');
         const sessionRestored = stateManager.loadSession();
-        console.log('[Simyo] 会话恢复结果:', sessionRestored ? '成功' : '无会话');
+        Logger.log('[Simyo] 会话恢复结果:', sessionRestored ? '成功' : '无会话');
 
         if (sessionRestored) {
             this.handleSessionRestore();
@@ -67,7 +67,7 @@ class SimyoApp {
         uiController.updateStatusPanel();
 
         this.initialized = true;
-        console.log(t('simyo.app.console.initDone'));
+        Logger.log(t('simyo.app.console.initDone'));
     }
 
     /**
@@ -220,7 +220,7 @@ class SimyoApp {
         const passwordEl = document.getElementById('password');
         const loginBtn = document.getElementById('loginBtn');
         const loginStatus = document.getElementById('loginStatus');
-        console.log('[Simyo] === 登录开始 ===');
+        Logger.log('[Simyo] === 登录开始 ===');
 
         // 手机环境检测：非PC环境弹出提醒
         if (isMobileBrowser()) {
@@ -228,16 +228,16 @@ class SimyoApp {
         }
 
         if (!phoneNumberEl || !passwordEl) {
-            console.error('[Simyo] 登录表单元素未找到！');
+            Logger.error('[Simyo] 登录表单元素未找到！');
             return;
         }
 
         const phoneNumber = phoneNumberEl.value.trim();
         const password = passwordEl.value.trim();
-        console.log('[Simyo] 手机号长度:', phoneNumber.length, ', 密码长度:', password.length);
+        Logger.log('[Simyo] 手机号长度:', phoneNumber.length, ', 密码长度:', password.length);
 
         if (!phoneNumber || !password) {
-            console.warn('[Simyo] 手机号或密码为空');
+            Logger.warn('[Simyo] 手机号或密码为空');
             uiController.showStatus(loginStatus, t('simyo.app.validation.loginForm'), "error");
             return;
         }
@@ -248,9 +248,9 @@ class SimyoApp {
 
             uiController.showStatus(loginStatus, t('simyo.app.status.loginValidating'), "success");
 
-            console.log('[Simyo] 调用 authHandler.login()...');
+            Logger.log('[Simyo] 调用 authHandler.login()...');
             const result = await authHandler.login(phoneNumber, password);
-            console.log('[Simyo] 登录成功:', result.message);
+            Logger.log('[Simyo] 登录成功:', result.message);
 
             uiController.showStatus(loginStatus, result.message || t('simyo.app.status.loginSuccess'), "success");
 
@@ -259,7 +259,7 @@ class SimyoApp {
             uiController.showDeviceChangeSteps();
             this.bindDeviceChangeFlow();
         } catch (error) {
-            console.error('[Simyo] 登录失败:', error.message, error);
+            Logger.error('[Simyo] 登录失败:', error.message, error);
             uiController.showStatus(loginStatus, t('simyo.app.error.loginFailed', { message: error.message }), "error");
         } finally {
             loginBtn.innerHTML = `<i class="fas fa-sign-in-alt me-2"></i> ${tl('登录账户')}`;
@@ -273,7 +273,7 @@ class SimyoApp {
     async handleApplyNewEsim() {
         const applyBtn = document.getElementById('applyNewEsimBtn');
         const statusEl = document.getElementById('applyNewEsimStatus');
-        console.log('[Simyo] === 请求设备更换 ===');
+        Logger.log('[Simyo] === 请求设备更换 ===');
 
         // 手机环境检测：非PC环境弹出提醒
         if (isMobileBrowser()) {
@@ -286,9 +286,9 @@ class SimyoApp {
 
             uiController.showStatus(statusEl, t('simyo.app.status.applyProcessing'), "success");
 
-            console.log('[Simyo] 调用 deviceChangeHandler.applyNewEsim()...');
+            Logger.log('[Simyo] 调用 deviceChangeHandler.applyNewEsim()...');
             const result = await deviceChangeHandler.applyNewEsim();
-            console.log('[Simyo] 设备更换请求成功:', result.message);
+            Logger.log('[Simyo] 设备更换请求成功:', result.message);
 
             uiController.showStatus(statusEl, result.message || t('simyo.app.status.applySuccess'), "success");
 
@@ -307,7 +307,7 @@ class SimyoApp {
                 uiController.showStatus(statusEl, result.nextStep, "info");
             }
         } catch (error) {
-            console.error('[Simyo] 设备更换请求失败:', error.message, error);
+            Logger.error('[Simyo] 设备更换请求失败:', error.message, error);
             uiController.showStatus(statusEl, t('simyo.app.error.applyFailed', { message: error.message }), "error");
         } finally {
             applyBtn.innerHTML = `<i class="fas fa-plus me-2"></i>${tl('请求设备更换')}`;
@@ -322,10 +322,10 @@ class SimyoApp {
         const verifyBtn = document.getElementById('verifyCodeBtn');
         const statusEl = document.getElementById('verifyCodeStatus');
         const codeInput = document.getElementById('validationCodeInput');
-        console.log('[Simyo] === 验证码校验 ===');
+        Logger.log('[Simyo] === 验证码校验 ===');
 
         const validationCode = codeInput.value.trim();
-        console.log('[Simyo] 验证码长度:', validationCode.length);
+        Logger.log('[Simyo] 验证码长度:', validationCode.length);
 
         try {
             verifyBtn.innerHTML = `<span class="loading"></span> ${tl('验证中...')}`;
@@ -333,9 +333,9 @@ class SimyoApp {
 
             uiController.showStatus(statusEl, t('simyo.app.status.verifyProcessing'), "success");
 
-            console.log('[Simyo] 调用 deviceChangeHandler.verifyCode()...');
+            Logger.log('[Simyo] 调用 deviceChangeHandler.verifyCode()...');
             const result = await deviceChangeHandler.verifyCode(validationCode);
-            console.log('[Simyo] 验证码校验成功:', result.message);
+            Logger.log('[Simyo] 验证码校验成功:', result.message);
 
             uiController.showStatus(statusEl, result.message || t('simyo.app.status.verifySuccess'), "success");
 
@@ -348,7 +348,7 @@ class SimyoApp {
             await delay(2000);
             uiController.skipDeviceChange();
         } catch (error) {
-            console.error('[Simyo] 验证码校验失败:', error.message, error);
+            Logger.error('[Simyo] 验证码校验失败:', error.message, error);
             uiController.showStatus(statusEl, t('simyo.app.error.verifyFailed', { message: error.message }), "error");
         } finally {
             verifyBtn.innerHTML = `<i class="fas fa-check me-2"></i>${tl('确认验证码')}`;
@@ -361,7 +361,7 @@ class SimyoApp {
      */
     async handleGetEsim() {
         const { elements } = uiController;
-        console.log('[Simyo] === 获取 eSIM ===');
+        Logger.log('[Simyo] === 获取 eSIM ===');
 
         try {
             elements.getEsimBtn.innerHTML = `<span class="loading"></span> ${tl('获取中...')}`;
@@ -369,9 +369,9 @@ class SimyoApp {
 
             uiController.showStatus(elements.esimStatus, t('simyo.app.status.getEsimProcessing'), "success");
 
-            console.log('[Simyo] 调用 esimService.getEsim()...');
+            Logger.log('[Simyo] 调用 esimService.getEsim()...');
             const result = await esimService.getEsim();
-            console.log('[Simyo] eSIM 获取成功:', result.message);
+            Logger.log('[Simyo] eSIM 获取成功:', result.message);
 
             uiController.showStatus(elements.esimStatus, result.message || t('simyo.app.status.getEsimSuccess'), "success");
             uiController.showEsimInfo(result.data);
@@ -380,7 +380,7 @@ class SimyoApp {
             await delay(2000);
             uiController.showSection(3);
         } catch (error) {
-            console.error('[Simyo] eSIM 获取失败:', error.message, error);
+            Logger.error('[Simyo] eSIM 获取失败:', error.message, error);
             uiController.showStatus(elements.esimStatus, t('simyo.app.error.getEsimFailed', { message: error.message }), "error");
         } finally {
             elements.getEsimBtn.innerHTML = `<i class="fas fa-sim-card me-2"></i> ${tl('获取eSIM')}`;
@@ -393,7 +393,7 @@ class SimyoApp {
      */
     async handleGenerateQR() {
         const { elements } = uiController;
-        console.log('[Simyo] === 生成二维码 ===');
+        Logger.log('[Simyo] === 生成二维码 ===');
 
         const requestId = 'generateQR_' + Date.now();
 
@@ -405,13 +405,13 @@ class SimyoApp {
             // 第一步：获取eSIM信息
             uiController.showStatus(elements.qrStatus, t('simyo.app.status.getEsimProcessing'), "success");
 
-            console.log('[Simyo] 步骤1: 获取 eSIM 信息...');
+            Logger.log('[Simyo] 步骤1: 获取 eSIM 信息...');
             const esimResult = await esimService.getEsim();
 
             // 用户已通过导航守卫离开当前步骤，忽略过期请求的结果
             if (!this.activeRequests.has(requestId)) return;
 
-            console.log('[Simyo] eSIM 信息获取成功');
+            Logger.log('[Simyo] eSIM 信息获取成功');
 
             uiController.showStatus(elements.qrStatus, esimResult.message || t('simyo.app.status.getEsimSuccess'), "success");
             uiController.showEsimInfo(esimResult.data);
@@ -421,9 +421,9 @@ class SimyoApp {
             // 第二步：生成二维码
             uiController.showStatus(elements.qrStatus, t('simyo.app.status.generateProcessing'), "success");
 
-            console.log('[Simyo] 步骤2: 生成 LPA 字符串...');
+            Logger.log('[Simyo] 步骤2: 生成 LPA 字符串...');
             const qrResult = esimService.generateLPAString();
-            console.log('[Simyo] LPA 字符串生成成功, 长度:', qrResult.lpaString && qrResult.lpaString.length);
+            Logger.log('[Simyo] LPA 字符串生成成功, 长度:', qrResult.lpaString && qrResult.lpaString.length);
 
             uiController.showQRResult(qrResult.lpaString);
             uiController.showStatus(elements.qrStatus, t('simyo.app.status.generateSuccess'), "success");
@@ -442,7 +442,7 @@ class SimyoApp {
             // 用户已通过导航守卫离开当前步骤，忽略过期请求的错误
             if (!this.activeRequests.has(requestId)) return;
 
-            console.error('[Simyo] 二维码生成失败:', error.message, error);
+            Logger.error('[Simyo] 二维码生成失败:', error.message, error);
             uiController.showStatus(elements.qrStatus, t('simyo.app.error.generateFailed', { message: error.message }), "error");
         } finally {
             this.activeRequests.delete(requestId);
@@ -465,7 +465,7 @@ class SimyoApp {
                     await copyToClipboard(lpaString);
                     showToast(t('simyo.app.toast.lpaCopied'));
                 } catch (error) {
-                    console.warn('[Simyo] Failed to copy LPA string:', error);
+                    Logger.warn('[Simyo] Failed to copy LPA string:', error);
                     showToast(tl('复制失败，请手动选择文本复制'));
                 }
             });
@@ -484,7 +484,7 @@ class SimyoApp {
      */
     async handleConfirmInstall() {
         const { elements } = uiController;
-        console.log('[Simyo] === 确认安装 ===');
+        Logger.log('[Simyo] === 确认安装 ===');
 
         const requestId = 'confirmInstall_' + Date.now();
 
@@ -495,20 +495,20 @@ class SimyoApp {
 
             uiController.showStatus(elements.confirmStatus, t('simyo.app.status.confirmProcessing'), "success");
 
-            console.log('[Simyo] 调用 esimService.confirmInstall()...');
+            Logger.log('[Simyo] 调用 esimService.confirmInstall()...');
             const result = await esimService.confirmInstall();
 
             // 用户已通过导航守卫离开当前步骤，忽略过期请求的结果
             if (!this.activeRequests.has(requestId)) return;
 
-            console.log('[Simyo] 安装确认成功:', result.message);
+            Logger.log('[Simyo] 安装确认成功:', result.message);
 
             uiController.showStatus(elements.confirmStatus, result.message || t('simyo.app.status.confirmSuccess'), "success");
         } catch (error) {
             // 用户已通过导航守卫离开当前步骤，忽略过期请求的错误
             if (!this.activeRequests.has(requestId)) return;
 
-            console.error('[Simyo] 安装确认失败:', error.message, error);
+            Logger.error('[Simyo] 安装确认失败:', error.message, error);
             uiController.showStatus(elements.confirmStatus, t('simyo.app.error.confirmFailed', { message: error.message }), "error");
         } finally {
             this.activeRequests.delete(requestId);
@@ -521,16 +521,16 @@ class SimyoApp {
      * 处理清除会话
      */
     handleClearSession() {
-        console.log('[Simyo] === 清除会话 ===');
+        Logger.log('[Simyo] === 清除会话 ===');
         if (confirm(t('simyo.app.prompt.clearSession'))) {
             stateManager.clearSession();
             this._beforeunloadExempt = false; // 重置 beforeunload 豁免
             this.activeRequests.clear(); // 清除所有活跃请求
-            console.log('[Simyo] 会话已清除');
+            Logger.log('[Simyo] 会话已清除');
             uiController.resetUI();
             uiController.showStatus(uiController.elements.loginStatus, t('simyo.app.toast.sessionCleared'), "success");
         } else {
-            console.log('[Simyo] 用户取消清除会话');
+            Logger.log('[Simyo] 用户取消清除会话');
         }
     }
 
@@ -540,8 +540,8 @@ class SimyoApp {
     handleSessionRestore() {
         const state = stateManager.getState();
 
-        console.log('[Simyo] === 会话恢复 ===');
-        console.log('[Simyo] 状态:', JSON.stringify({
+        Logger.log('[Simyo] === 会话恢复 ===');
+        Logger.log('[Simyo] 状态:', JSON.stringify({
             hasSessionToken: !!state.sessionToken,
             hasPhoneNumber: !!state.phoneNumber,
             hasActivationCode: !!state.activationCode,
@@ -586,7 +586,7 @@ class SimyoApp {
                 const deviceChangeSteps = document.getElementById('deviceChangeSteps');
                 const step1 = document.getElementById('step1');
 
-                console.log('恢复设备更换模式...');
+                Logger.log('恢复设备更换模式...');
 
                 // 隐藏登录页面
                 if (step1) {
@@ -607,7 +607,7 @@ class SimyoApp {
                 uiController.updateSteps(stateManager.get('currentStep'));
             } else {
                 // 直接显示设备更换流程
-                console.log('显示设备更换流程...');
+                Logger.log('显示设备更换流程...');
                 uiController.showDeviceChangeSteps();
             }
         }

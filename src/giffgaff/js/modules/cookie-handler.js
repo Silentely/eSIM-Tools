@@ -6,6 +6,7 @@
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints } from './api-config.js';
 import { t, tl } from '../../../js/modules/i18n.js';
+import Logger from '../../../js/modules/logger.js';
 
 export class CookieHandler {
     constructor() {
@@ -62,7 +63,7 @@ export class CookieHandler {
                 throw new Error(result.message || t('giffgaff.cookie.error'));
             }
         } catch (error) {
-            console.error(t('giffgaff.cookie.log.error'), error);
+            Logger.error(t('giffgaff.cookie.log.error'), error);
             throw error;
         }
     }
@@ -104,7 +105,7 @@ export class CookieHandler {
             this.handleCookieExpired();
             return { valid: false };
         } catch (err) {
-            console.error(t('giffgaff.cookie.log.checkError'), err);
+            Logger.error(t('giffgaff.cookie.log.checkError'), err);
             return { transientError: true, error: err && err.message };
         }
     }

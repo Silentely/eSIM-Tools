@@ -3,6 +3,7 @@
  * 负责应用状态的集中管理、持久化和恢复
  */
 import secureStorage from '../../../js/modules/secure-storage.js';
+import Logger from '../../../js/modules/logger.js';
 
 export class StateManager {
     constructor() {
@@ -93,7 +94,7 @@ export class StateManager {
             try {
                 listener(this.state);
             } catch (error) {
-                console.error('状态监听器执行错误:', error);
+                Logger.error('状态监听器执行错误:', error);
             }
         });
     }
@@ -105,7 +106,7 @@ export class StateManager {
         try {
             return localStorage.getItem(key);
         } catch (error) {
-            console.warn(`读取本地存储失败(${key}):`, error);
+            Logger.warn(`读取本地存储失败(${key}):`, error);
             return null;
         }
     }
@@ -118,7 +119,7 @@ export class StateManager {
             localStorage.setItem(key, value);
             return true;
         } catch (error) {
-            console.warn(`写入本地存储失败(${key}):`, error);
+            Logger.warn(`写入本地存储失败(${key}):`, error);
             return false;
         }
     }
@@ -131,7 +132,7 @@ export class StateManager {
             localStorage.removeItem(key);
             return true;
         } catch (error) {
-            console.warn(`删除本地存储失败(${key}):`, error);
+            Logger.warn(`删除本地存储失败(${key}):`, error);
             return false;
         }
     }
@@ -157,7 +158,7 @@ export class StateManager {
             };
             secureStorage.setItem(this.SESSION_KEY, sessionData);
         } catch (error) {
-            console.error('保存会话失败:', error);
+            Logger.error('保存会话失败:', error);
         }
     }
 
@@ -214,7 +215,7 @@ export class StateManager {
             this.notifyListeners();
             return true;
         } catch (error) {
-            console.error('恢复会话失败:', error);
+            Logger.error('恢复会话失败:', error);
             this.safeStorageRemove(this.SESSION_KEY);
             return false;
         }

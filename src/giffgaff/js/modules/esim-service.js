@@ -7,6 +7,7 @@ import { stateManager } from './state-manager.js';
 import { getApiEndpoints, graphqlQueries } from './api-config.js';
 import { mfaHandler } from './mfa-handler.js';
 import { t } from '../../../js/modules/i18n.js';
+import Logger from '../../../js/modules/logger.js';
 
 export class ESimService {
     constructor() {
@@ -69,7 +70,7 @@ export class ESimService {
                 message: t('giffgaff.app.status.memberFetched')
             };
         } catch (error) {
-            console.error(t('giffgaff.esim.log.memberFailed'), error);
+            Logger.error(t('giffgaff.esim.log.memberFailed'), error);
             throw error;
         }
     }
@@ -130,7 +131,7 @@ export class ESimService {
                 })
             };
         } catch (error) {
-            console.error(t('giffgaff.esim.log.reserveFailed'), error);
+            Logger.error(t('giffgaff.esim.log.reserveFailed'), error);
             throw error;
         }
     }
@@ -207,7 +208,7 @@ export class ESimService {
                 message: t('giffgaff.esim.status.swapSuccess')
             };
         } catch (error) {
-            console.error(t('giffgaff.esim.log.swapFailed'), error);
+            Logger.error(t('giffgaff.esim.log.swapFailed'), error);
             throw error;
         }
     }
@@ -258,7 +259,7 @@ export class ESimService {
                 message: t('giffgaff.app.status.tokenFetchedSuccess')
             };
         } catch (error) {
-            console.error(t('giffgaff.esim.log.downloadFailed'), error);
+            Logger.error(t('giffgaff.esim.log.downloadFailed'), error);
             throw error;
         }
     }
@@ -315,7 +316,7 @@ export class ESimService {
                 throw new Error(result.message || t('giffgaff.esim.errors.activateGeneric'));
             }
         } catch (error) {
-            console.error(t('giffgaff.esim.log.autoActivateFailed'), error);
+            Logger.error(t('giffgaff.esim.log.autoActivateFailed'), error);
             throw error;
         }
     }
@@ -334,7 +335,7 @@ export class ESimService {
             } catch (err) {
                 if (err.statusCode === 410) {
                     // ref 过期：发送新 challenge，要求用户输入新验证码
-                    console.warn(t('giffgaff.esim.log.refExpiredRetrying'));
+                    Logger.warn(t('giffgaff.esim.log.refExpiredRetrying'));
                     await mfaHandler.sendSimSwapMFAChallenge();
                     const refreshErr = new Error(t('giffgaff.esim.errors.refExpired'));
                     refreshErr.code = 'REF_REFRESHED_NEEDS_NEW_CODE';
@@ -368,7 +369,7 @@ export class ESimService {
                 message: t('giffgaff.esim.status.smsFlowComplete')
             };
         } catch (error) {
-            console.error(t('giffgaff.esim.log.smsFlowFailed'), error);
+            Logger.error(t('giffgaff.esim.log.smsFlowFailed'), error);
             throw error;
         }
     }
@@ -387,7 +388,7 @@ export class ESimService {
                     return result;
                 }
             } catch (error) {
-                console.warn(t('giffgaff.esim.log.lpaAttemptFailed', {
+                Logger.warn(t('giffgaff.esim.log.lpaAttemptFailed', {
                     attempt: i + 1,
                     total: maxRetries
                 }), error);

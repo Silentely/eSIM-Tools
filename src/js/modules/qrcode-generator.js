@@ -1,6 +1,7 @@
 'use strict';
 
 import qrcodeLib from './qrcode-lib.js';
+import Logger from './logger.js';
 
 const DEFAULT_QR_SIZE = 300;
 // 注意：以下校验常量与 netlify/edge-functions/bff-proxy.js 的 QR_MIN_SIZE/QR_MAX_SIZE/QR_MAX_DATA_LENGTH 保持同步
@@ -66,11 +67,11 @@ function trackQRCodeEvent({ type, source, success, duration, error }) {
 
     // 3. 控制台日志（开发调试）
     if (!success) {
-      console.warn(`[QRCode Analytics] ${type}: source=${source}, duration=${duration}ms, error=${error}`);
+      Logger.warn(`[QRCode Analytics] ${type}: source=${source}, duration=${duration}ms, error=${error}`);
     }
   } catch (err) {
     // 监控上报不应影响正常功能
-    console.debug('[QRCode Analytics] track failed:', err.message);
+    Logger.debug('[QRCode Analytics] track failed:', err.message);
   }
 }
 
@@ -216,7 +217,7 @@ export async function generateQRCodeLocal(data, size = DEFAULT_QR_SIZE, labels =
     const imageUrl = qr.createDataURL(cellSize, cellSize * 4);
     const largeImageUrl = qr.createDataURL(largeCellSize, largeCellSize * 4);
 
-    console.log(`[QRCode] Local generation success: size=${safeSize}, modules=${moduleCount}, cellSize=${cellSize}`);
+    Logger.log(`[QRCode] Local generation success: size=${safeSize}, modules=${moduleCount}, cellSize=${cellSize}`);
 
     return {
       ...createQRCodeContainer(imageUrl, safeSize, largeImageUrl, labels),
@@ -268,7 +269,7 @@ export async function generateQRCodeBackend(data, size = DEFAULT_QR_SIZE, labels
       throw new Error((payload && payload.error) || 'Backend QR code response is invalid');
     }
 
-    console.log(`[QRCode] Backend generation success: size=${safeSize}, qrcodeLength=${payload.qrcode.length}`);
+    Logger.log(`[QRCode] Backend generation success: size=${safeSize}, qrcodeLength=${payload.qrcode.length}`);
 
     return {
       ...createQRCodeContainer(payload.qrcode, safeSize, payload.qrcode, labels),
@@ -314,7 +315,7 @@ export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE, l
     return result;
   } catch (error) {
     localError = error;
-    console.warn('[QRCode] Local generation failed, trying backend fallback:', error.message);
+    Logger.warn('[QRCode] Local generation failed, trying backend fallback:', error.message);
 
     trackQRCodeEvent({
       type: 'qr_fallback',
@@ -341,7 +342,7 @@ export async function generateQRCodeWithFallback(data, size = DEFAULT_QR_SIZE, l
   } catch (backendError) {
     const duration = Date.now() - startTime;
 
-    console.error('[QRCode] Backend fallback failed:', backendError.message);
+    Logger.error('[QRCode] Backend fallback failed:', backendError.message);
 
     trackQRCodeEvent({
       type: 'qr_generation',

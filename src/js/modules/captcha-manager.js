@@ -1,3 +1,4 @@
+import Logger from './logger.js';
 const CONFIG_ENDPOINT = '/.netlify/functions/public-config';
 const RECAPTCHA_SRC = 'https://www.google.com/recaptcha/api.js?render=explicit';
 
@@ -16,7 +17,7 @@ class CaptchaManager {
   async init() {
     if (!this.initPromise) {
       this.initPromise = this.bootstrap().catch(err => {
-        console.error('[CaptchaManager] 初始化失败', err);
+        Logger.error('[CaptchaManager] 初始化失败', err);
         this.provider = 'off';
         window.__captchaProvider = 'off';
       });
@@ -44,7 +45,7 @@ class CaptchaManager {
         return await resp.json();
       }
     } catch (error) {
-      console.warn('[CaptchaManager] 获取配置失败', error);
+      Logger.warn('[CaptchaManager] 获取配置失败', error);
     }
     return { provider: 'off' };
   }
@@ -83,13 +84,13 @@ class CaptchaManager {
             if (this.recaptchaErrorCount <= this.recaptchaMaxRetries) {
               setTimeout(() => this.executeRecaptcha(), 1000);
             } else {
-              console.warn('[CaptchaManager] reCAPTCHA 连续失败次数超限，停止重试');
+              Logger.warn('[CaptchaManager] reCAPTCHA 连续失败次数超限，停止重试');
             }
           }
         });
         this.executeRecaptcha();
       } catch (err) {
-        console.error('[CaptchaManager] 渲染 reCAPTCHA 失败', err);
+        Logger.error('[CaptchaManager] 渲染 reCAPTCHA 失败', err);
       } finally {
         if (this.recaptchaReadyResolver) {
           this.recaptchaReadyResolver();
@@ -113,7 +114,7 @@ class CaptchaManager {
     try {
       window.grecaptcha.execute(this.recaptchaWidgetId);
     } catch (err) {
-      console.error('[CaptchaManager] reCAPTCHA 执行失败:', err);
+      Logger.error('[CaptchaManager] reCAPTCHA 执行失败:', err);
     }
   }
 

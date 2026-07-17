@@ -7,6 +7,7 @@ import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
 import { validatePhoneNumber } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
+import Logger from '../../../js/modules/logger.js';
 
 export class AuthHandler {
     constructor() {
@@ -48,11 +49,11 @@ export class AuthHandler {
                 throw new Error(data.message || t('simyo.auth.loginMissingToken'));
             }
 
-            // 保存到状态
+            // 仅保存会话令牌与手机号；密码不落内存状态，降低调试/快照泄露面
             stateManager.setState({
                 sessionToken: sessionToken,
                 phoneNumber: phoneNumber,
-                password: password
+                password: ''
             });
 
             return {
@@ -61,7 +62,7 @@ export class AuthHandler {
                 sessionToken: sessionToken
             };
         } catch (error) {
-            console.error(t('simyo.auth.log.loginFailed'), error);
+            Logger.error(t('simyo.auth.log.loginFailed'), error);
             throw error;
         }
     }

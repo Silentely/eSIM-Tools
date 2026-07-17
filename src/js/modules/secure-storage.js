@@ -56,7 +56,7 @@ class SecureStorage {
         this.fallbackStorage.set(key, data);
       }
     } catch (error) {
-      console.error('[SecureStorage] setItem failed:', error.message);
+      Logger.error('[SecureStorage] setItem failed:', error.message);
       // 降级到内存存储
       this.fallbackStorage.set(key, data);
     }
@@ -88,7 +88,7 @@ class SecureStorage {
 
       return data.value;
     } catch (error) {
-      console.error('[SecureStorage] getItem failed:', error.message);
+      Logger.error('[SecureStorage] getItem failed:', error.message);
       return null;
     }
   }
@@ -104,7 +104,7 @@ class SecureStorage {
       }
       this.fallbackStorage.delete(key);
     } catch (error) {
-      console.error('[SecureStorage] removeItem failed:', error.message);
+      Logger.error('[SecureStorage] removeItem failed:', error.message);
     }
   }
 
@@ -118,7 +118,7 @@ class SecureStorage {
       }
       this.fallbackStorage.clear();
     } catch (error) {
-      console.error('[SecureStorage] clear failed:', error.message);
+      Logger.error('[SecureStorage] clear failed:', error.message);
     }
   }
 
@@ -149,7 +149,7 @@ class SecureStorage {
         Logger.log(`[SecureStorage] Migrated ${key} from localStorage`);
       }
     } catch (error) {
-      console.error('[SecureStorage] Migration failed:', error.message);
+      Logger.error('[SecureStorage] Migration failed:', error.message);
     }
   }
 
@@ -184,7 +184,7 @@ try {
   }
 } catch (e) {
   // 降级到内存存储，模块仍可正常使用
-  console.warn('[SecureStorage] Module-level initialization failed:', e.message);
+  Logger.warn('[SecureStorage] Module-level initialization failed:', e.message);
 }
 
 export default secureStorage;

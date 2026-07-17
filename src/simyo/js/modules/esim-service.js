@@ -7,6 +7,7 @@ import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
 import { generateLPA } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
+import Logger from '../../../js/modules/logger.js';
 
 export class EsimService {
     constructor() {
@@ -52,7 +53,7 @@ export class EsimService {
                 }
             };
         } catch (error) {
-            console.error(t('simyo.esim.log.fetchFailed'), error);
+            Logger.error(t('simyo.esim.log.fetchFailed'), error);
             throw error;
         }
     }
@@ -107,7 +108,7 @@ export class EsimService {
                     : (data.result.message || t('simyo.esim.status.confirmFallback'))
             };
         } catch (error) {
-            console.error(t('simyo.esim.log.confirmFailed'), error);
+            Logger.error(t('simyo.esim.log.confirmFailed'), error);
             throw error;
         }
     }

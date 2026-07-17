@@ -7,6 +7,7 @@ import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
 import { validateVerificationCode } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
+import Logger from '../../../js/modules/logger.js';
 
 export class DeviceChangeHandler {
     constructor() {
@@ -53,7 +54,7 @@ export class DeviceChangeHandler {
                 remainingTries: data.result.remainingNumberOfTries
             };
         } catch (error) {
-            console.error(t('simyo.device.log.applyFailed'), error);
+            Logger.error(t('simyo.device.log.applyFailed'), error);
             throw error;
         }
     }
@@ -98,7 +99,7 @@ export class DeviceChangeHandler {
                 remainingTries: data.result && data.result.remainingNumberOfTries
             };
         } catch (error) {
-            console.error(t('simyo.device.log.verifyFailed'), error);
+            Logger.error(t('simyo.device.log.verifyFailed'), error);
             throw error;
         }
     }

@@ -3,6 +3,7 @@
  * 防御 XSS 攻击
  */
 
+import Logger from './logger.js';
 class HTMLSanitizer {
   /**
    * 转义 HTML 特殊字符
@@ -112,7 +113,7 @@ class HTMLSanitizer {
    */
   static setInnerHTML(element, html, allowedTags) {
     if (!element) {
-      console.error('[HTMLSanitizer] Invalid element');
+      Logger.error('[HTMLSanitizer] Invalid element');
       return;
     }
 
@@ -134,7 +135,7 @@ class HTMLSanitizer {
     Object.entries(attributes).forEach(([key, value]) => {
       // 禁止设置事件处理器
       if (key.startsWith('on')) {
-        console.warn(`[HTMLSanitizer] Blocked event handler: ${key}`);
+        Logger.warn(`[HTMLSanitizer] Blocked event handler: ${key}`);
         return;
       }
 
@@ -184,7 +185,7 @@ class HTMLSanitizer {
     // 移除 javascript:, data:text/html 等危险协议
     const dangerousProtocols = /^(javascript:|data:text\/html[,:]|vbscript:)/i;
     if (dangerousProtocols.test(url)) {
-      console.warn('[HTMLSanitizer] Blocked dangerous URL:', url);
+      Logger.warn('[HTMLSanitizer] Blocked dangerous URL:', url);
       return '#';
     }
 

@@ -1,5 +1,6 @@
 import { t } from '../../../js/modules/i18n.js';
 import secureStorage from '../../../js/modules/secure-storage.js';
+import Logger from '../../../js/modules/logger.js';
 
 /**
  * Simyo状态管理模块
@@ -83,7 +84,7 @@ export class StateManager {
             try {
                 listener(this.state);
             } catch (error) {
-                console.error(t('simyo.state.log.listenerFailed'), error);
+                Logger.error(t('simyo.state.log.listenerFailed'), error);
             }
         });
     }
@@ -104,7 +105,7 @@ export class StateManager {
             };
             secureStorage.setItem(this.SESSION_KEY, sessionData);
         } catch (error) {
-            console.error(t('simyo.state.log.saveFailed'), error);
+            Logger.error(t('simyo.state.log.saveFailed'), error);
         }
     }
 
@@ -140,7 +141,7 @@ export class StateManager {
             this.notifyListeners();
             return true;
         } catch (error) {
-            console.error(t('simyo.state.log.restoreFailed'), error);
+            Logger.error(t('simyo.state.log.restoreFailed'), error);
             localStorage.removeItem(this.SESSION_KEY);
             return false;
         }

@@ -58,7 +58,7 @@ export class MFAHandler {
                 throw new Error(t('giffgaff.mfa.errors.sendFailedRetry'));
             }
         } catch (error) {
-            console.error(t('giffgaff.mfa.log.sendFailed'), error);
+            Logger.error(t('giffgaff.mfa.log.sendFailed'), error);
             throw error;
         }
     }
@@ -114,7 +114,7 @@ export class MFAHandler {
                 throw new Error(t('giffgaff.mfa.errors.missingSignature'));
             }
         } catch (error) {
-            console.error(t('giffgaff.mfa.log.verifyFailed'), error);
+            Logger.error(t('giffgaff.mfa.log.verifyFailed'), error);
             throw error;
         }
     }
@@ -181,7 +181,7 @@ export class MFAHandler {
                 message: t('giffgaff.mfa.status.codeSent')
             };
         } catch (error) {
-            console.error(t('giffgaff.mfa.log.swapSendFailed'), error);
+            Logger.error(t('giffgaff.mfa.log.swapSendFailed'), error);
             throw error;
         }
     }

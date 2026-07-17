@@ -2,6 +2,8 @@
  * Utility functions for common operations
  */
 
+import Logger from './logger.js';
+
 /**
  * Debounce function - delays execution until after wait time has elapsed
  * since last call
@@ -181,7 +183,7 @@ export function safeJsonParse(json, fallback = null) {
   try {
     return JSON.parse(json);
   } catch (error) {
-    console.warn('JSON parse failed:', error);
+    Logger.warn('JSON parse failed:', error);
     return fallback;
   }
 }

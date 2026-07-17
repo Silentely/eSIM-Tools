@@ -4,6 +4,11 @@
  */
 import { tl, getCurrentLocale } from '../../../js/modules/i18n.js';
 import NotificationManager from '../../../js/modules/notification-manager.js';
+import Logger from '../../../js/modules/logger.js';
+
+// 公共剪贴板实现（保持既有导出路径不变，避免调用方脱链）
+export { copyToClipboard } from '../../../js/modules/clipboard.js';
+import { copyToClipboard } from '../../../js/modules/clipboard.js';
 
 /**
  * 生成PKCE Code Verifier
@@ -197,25 +202,6 @@ export function showServiceTimeWarning() {
 }
 
 /**
- * 复制到剪贴板
- */
-export function copyToClipboard(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text);
-    } else {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return Promise.resolve();
-    }
-}
-
-/**
  * 显示Toast通知
  * @deprecated 使用 NotificationManager.info() 代替
  */
@@ -249,7 +235,7 @@ export function copyTextFromCode(codeElementId, btnEl) {
         // 统一使用通知系统
         NotificationManager.success(tl('复制成功'));
     }).catch((e) => {
-        console.error(tl('复制失败:'), e);
+        Logger.error(tl('复制失败:'), e);
         NotificationManager.error(tl('复制失败，请手动选择文本复制'));
     });
 }
@@ -308,7 +294,7 @@ export function copyLPAString(lpaString, btnEl) {
         // 显示成功提示
         NotificationManager.success(tl('LPA字符串已复制到剪贴板'));
     }).catch((error) => {
-        console.error(tl('复制失败:'), error);
+        Logger.error(tl('复制失败:'), error);
         NotificationManager.error(tl('复制失败，请手动选择文本复制'));
     });
 }
@@ -345,14 +331,14 @@ export async function downloadQRCode(qrUrl, filename = 'esim-qrcode.png') {
         // 显示成功提示
         NotificationManager.success(tl('二维码已下载'));
     } catch (error) {
-        console.error('Download failed:', error);
+        Logger.error('Download failed:', error);
 
         // 失败时回退到打开新窗口
         try {
             window.open(qrUrl, '_blank', 'noopener,noreferrer');
             NotificationManager.info(tl('已在新窗口打开二维码，请右键保存'));
         } catch (fallbackError) {
-            console.error('Fallback failed:', fallbackError);
+            Logger.error('Fallback failed:', fallbackError);
             NotificationManager.error(tl('下载失败，请右键图片另存为'));
         }
     }
