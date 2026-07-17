@@ -17,6 +17,7 @@ import {
 import { t, tl } from '../../js/modules/i18n.js';
 import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
 import Logger from '../../js/modules/logger.js';
+import { installDiagnosticsGlobal } from '../../js/modules/diagnostics.js';
 
 class SimyoApp {
     constructor() {
@@ -65,6 +66,12 @@ class SimyoApp {
 
         // 更新状态显示
         uiController.updateStatusPanel();
+
+        // 控制台：copyEsimDiagnostics() 复制脱敏诊断信息到剪贴板（便于贴 Issue）
+        installDiagnosticsGlobal({
+            app: 'simyo',
+            getState: () => stateManager.getState()
+        });
 
         this.initialized = true;
         Logger.log(t('simyo.app.console.initDone'));

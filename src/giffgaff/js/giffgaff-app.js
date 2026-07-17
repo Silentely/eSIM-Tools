@@ -23,6 +23,7 @@ import { t, tl } from '../../js/modules/i18n.js';
 import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
 import captchaManager from '../../js/modules/captcha-manager.js';
 import Logger from '../../js/modules/logger.js';
+import { installDiagnosticsGlobal } from '../../js/modules/diagnostics.js';
 
 class GiffgaffApp {
     constructor() {
@@ -224,6 +225,12 @@ class GiffgaffApp {
         if (cookie) {
             cookieHandler.startValidityMonitor();
         }
+
+        // 控制台：copyEsimDiagnostics() 复制脱敏诊断信息到剪贴板（便于贴 Issue）
+        installDiagnosticsGlobal({
+            app: 'giffgaff',
+            getState: () => stateManager.getState()
+        });
 
         this.initialized = true;
         Logger.log(t('giffgaff.app.console.initDone'));
