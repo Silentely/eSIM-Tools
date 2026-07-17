@@ -49,11 +49,10 @@ export class AuthHandler {
                 throw new Error(data.message || t('simyo.auth.loginMissingToken'));
             }
 
-            // 仅保存会话令牌与手机号；密码不落内存状态，降低调试/快照泄露面
+            // 仅保存会话令牌与手机号；密码不进入状态
             stateManager.setState({
                 sessionToken: sessionToken,
-                phoneNumber: phoneNumber,
-                password: ''
+                phoneNumber: phoneNumber
             });
 
             return {

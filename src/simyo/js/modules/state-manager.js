@@ -10,10 +10,9 @@ import Logger from '../../../js/modules/logger.js';
 export class StateManager {
     constructor() {
         this.state = {
-            // 认证相关
+            // 认证相关（密码仅在登录请求时使用，不进入状态）
             sessionToken: "",
             phoneNumber: "",
-            password: "",
 
             // eSIM相关
             activationCode: "",
@@ -155,7 +154,6 @@ export class StateManager {
         this.state = {
             sessionToken: "",
             phoneNumber: "",
-            password: "",
             activationCode: "",
             validationCode: "",
             isDeviceChange: false,

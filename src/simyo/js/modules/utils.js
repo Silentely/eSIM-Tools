@@ -66,39 +66,76 @@ export function showToast(message) {
 
 /**
  * 打开帮助对话框
+ * 使用 DOM + textContent，避免 i18n 文案经 innerHTML 注入
  */
 export function openHelp() {
-    const helpContent = `
-        <div style="max-width: 600px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-            <h3 style="color: #ff6b00; margin-bottom: 20px;"><i class="fas fa-question-circle"></i> ${t('simyo.help.title')}</h3>
-
-            <h5>${t('simyo.help.setup.heading')}</h5>
-            <p>${t('simyo.help.setup.content')}</p>
-
-            <h5>${t('simyo.help.device.heading')}</h5>
-            <p>${t('simyo.help.device.content')}</p>
-
-            <h5>${t('simyo.help.keep.heading')}</h5>
-            <p>${t('simyo.help.keep.content')}</p>
-
-            <button type="button" data-action="close-help" style="margin-top: 20px; padding: 10px 20px; background: #ff6b00; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                ${t('simyo.help.close')}
-            </button>
-        </div>
-    `;
-
     const overlay = document.createElement('div');
     overlay.dataset.helpOverlay = 'simyo-help';
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.7); z-index: 1000; display: flex;
-        align-items: center; justify-content: center; padding: 20px;
-    `;
-    overlay.innerHTML = helpContent;
-    const closeBtn = overlay.querySelector('[data-action="close-help"]');
-    if (closeBtn) closeBtn.addEventListener('click', () => {
-        overlay.remove();
+    overlay.style.cssText = [
+        'position: fixed',
+        'top: 0',
+        'left: 0',
+        'width: 100%',
+        'height: 100%',
+        'background: rgba(0,0,0,0.7)',
+        'z-index: 1000',
+        'display: flex',
+        'align-items: center',
+        'justify-content: center',
+        'padding: 20px'
+    ].join('; ');
+
+    const card = document.createElement('div');
+    card.style.cssText = [
+        'max-width: 600px',
+        'margin: 20px auto',
+        'padding: 20px',
+        'background: white',
+        'border-radius: 12px',
+        'box-shadow: 0 4px 20px rgba(0,0,0,0.1)'
+    ].join('; ');
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'color: #ff6b00; margin-bottom: 20px;';
+    const titleIcon = document.createElement('i');
+    titleIcon.className = 'fas fa-question-circle';
+    titleIcon.setAttribute('aria-hidden', 'true');
+    title.appendChild(titleIcon);
+    title.appendChild(document.createTextNode(' ' + t('simyo.help.title')));
+
+    const sections = [
+        ['simyo.help.setup.heading', 'simyo.help.setup.content'],
+        ['simyo.help.device.heading', 'simyo.help.device.content'],
+        ['simyo.help.keep.heading', 'simyo.help.keep.content']
+    ];
+
+    card.appendChild(title);
+    sections.forEach(([headingKey, contentKey]) => {
+        const h5 = document.createElement('h5');
+        h5.textContent = t(headingKey);
+        const p = document.createElement('p');
+        p.textContent = t(contentKey);
+        card.appendChild(h5);
+        card.appendChild(p);
     });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.dataset.action = 'close-help';
+    closeBtn.style.cssText = [
+        'margin-top: 20px',
+        'padding: 10px 20px',
+        'background: #ff6b00',
+        'color: white',
+        'border: none',
+        'border-radius: 8px',
+        'cursor: pointer'
+    ].join('; ');
+    closeBtn.textContent = t('simyo.help.close');
+    closeBtn.addEventListener('click', () => overlay.remove());
+    card.appendChild(closeBtn);
+
+    overlay.appendChild(card);
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
     });
