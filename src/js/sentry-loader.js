@@ -34,6 +34,8 @@
 
   // 初始化状态
   var sentryInitialized = false;
+  // SDK 来源：local（同源 tracing）| cdn（完整 replay+feedback）| mock
+  var sentrySdkSource = '';
   var EXTENSION_NOISE_STORE_KEY = '__sentryExtensionNoiseStats';
   var EXTENSION_NOISE_SAMPLE_LIMIT = 20;
 
@@ -412,29 +414,40 @@
   // ===================================
   // 初始化函数
   // ===================================
-  function initSentry() {
+  /**
+   * @param {string} [sdkSource] - local | cdn
+   * 本地 vendor 为 bundle.tracing（无 replay/feedback 实现，仅有占位 API 会打警告）
+   * CDN 完整包才启用 replay + feedbackIntegration
+   */
+  function initSentry(sdkSource) {
     if (sentryInitialized) return;
 
     if (isDev) {
       console.log('[Sentry] 开发环境，使用 Mock 模式');
       window.Sentry = SentryMock;
+      sentrySdkSource = 'mock';
       return;
     }
 
     if (!window.Sentry) {
       console.warn('[Sentry] SDK 未加载，使用 Mock 模式');
       window.Sentry = SentryMock;
+      sentrySdkSource = 'mock';
       return;
     }
 
     if (!SENTRY_DSN) {
       console.warn('[Sentry] DSN 未配置，跳过初始化');
       window.Sentry = SentryMock;
+      sentrySdkSource = 'mock';
       return;
     }
 
+    var source = sdkSource || sentrySdkSource || 'local';
+    // 仅完整 CDN bundle 含真实 replay/feedback；local tracing 包的同名函数是警告桩
+    var hasFullBundle = source === 'cdn';
+
     try {
-      // 按 SDK 能力装配 integrations（本地 tracing bundle 可能无 replay/feedback）
       var integrations = [];
       if (typeof window.Sentry.browserTracingIntegration === 'function') {
         integrations.push(window.Sentry.browserTracingIntegration({
@@ -443,14 +456,14 @@
           enableLongTask: true
         }));
       }
-      if (typeof window.Sentry.replayIntegration === 'function') {
+      if (hasFullBundle && typeof window.Sentry.replayIntegration === 'function') {
         integrations.push(window.Sentry.replayIntegration({
           maxReplayDuration: 60000,
           maskAllText: true,
           maskAllInputs: true
         }));
       }
-      if (typeof window.Sentry.feedbackIntegration === 'function') {
+      if (hasFullBundle && typeof window.Sentry.feedbackIntegration === 'function') {
         integrations.push(window.Sentry.feedbackIntegration({
           colorScheme: 'system',
           enableScreenshot: false, // 禁用截图以避免泄露 eSIM 凭据（QR/LPA/激活码）
@@ -484,9 +497,9 @@
         ],
         tracesSampleRate: 0.1,  // 10% 采样率，节省免费配额
 
-        // Session Replay 采样率
-        replaysSessionSampleRate: 0.1,
-        replaysOnErrorSampleRate: 1.0,
+        // Session Replay 仅完整包启用
+        replaysSessionSampleRate: hasFullBundle ? 0.1 : 0,
+        replaysOnErrorSampleRate: hasFullBundle ? 1.0 : 0,
 
         // 错误采样率
         sampleRate: 1.0,
@@ -711,12 +724,15 @@
       });
 
       sentryInitialized = true;
+      sentrySdkSource = source;
       console.log('[Sentry] 前端初始化成功');
       console.log('[Sentry] Environment:', SENTRY_ENVIRONMENT);
       console.log('[Sentry] Release:', SENTRY_RELEASE);
+      console.log('[Sentry] SDK source:', source, hasFullBundle ? '(tracing+replay+feedback)' : '(tracing only)');
     } catch (error) {
       console.error('[Sentry] 初始化失败:', error);
       window.Sentry = SentryMock;
+      sentrySdkSource = 'mock';
     }
   }
 
@@ -750,6 +766,7 @@
     return {
       sdkLoaded: !!window.Sentry && window.Sentry !== SentryMock,
       initialized: sentryInitialized,
+      sdkSource: sentrySdkSource || (isDev ? 'mock' : ''),
       isDev: isDev,
       dsnConfigured: !!SENTRY_DSN,
       environment: SENTRY_ENVIRONMENT,
@@ -790,8 +807,9 @@
 
   function onSdkReady(source) {
     if (sentryLoadTimedOut) return;
+    sentrySdkSource = source;
     console.log('[Sentry Loader] SDK 加载成功 (' + source + ')');
-    initSentry();
+    initSentry(source);
     window.dispatchEvent(new Event('sentry-sdk-loaded'));
   }
 
@@ -799,6 +817,7 @@
     if (window.Sentry && window.Sentry !== SentryMock && sentryInitialized) return;
     console.warn('[Sentry Loader] ' + reason + '，使用 Mock 模式');
     window.Sentry = SentryMock;
+    sentrySdkSource = 'mock';
   }
 
   function loadSdkScript(url, source, onFail) {
@@ -834,10 +853,12 @@
       console.warn('[Sentry] SDK 加载超时，使用 Mock 模式');
       if (!window.Sentry || window.Sentry === SentryMock) {
         window.Sentry = SentryMock;
+        sentrySdkSource = 'mock';
       } else if (!sentryInitialized) {
         // SDK 已挂到 window 但尚未 init，再尝试一次
-        try { initSentry(); } catch (_) {
+        try { initSentry(sentrySdkSource || 'local'); } catch (_) {
           window.Sentry = SentryMock;
+          sentrySdkSource = 'mock';
         }
       }
     }
