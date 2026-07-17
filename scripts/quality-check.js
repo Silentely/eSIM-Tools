@@ -13,21 +13,30 @@ const projectRoot = path.join(__dirname, '..');
 
 // 检查项配置
 const checks = {
-  // 1. 语法检查
+  // 1. 语法检查（对齐当前生产路径：build-static + Netlify Functions）
   syntaxCheck: {
     name: '语法检查',
     files: [
       'server.js',
-      'webpack.config.js',
+      'scripts/build-static.js',
+      'scripts/transpile-dist-js.js',
+      'scripts/check-asset-links.js',
+      'src/js/middleware/validation.js',
       'netlify/functions/_shared/middleware.js',
+      'netlify/functions/_shared/cors.js',
+      'netlify/functions/_shared/rate-limiter.js',
       'netlify/functions/health.js',
+      'netlify/functions/public-config.js',
+      'netlify/functions/notifications.js',
       'netlify/functions/giffgaff-graphql.js',
       'netlify/functions/giffgaff-mfa-challenge.js',
       'netlify/functions/giffgaff-mfa-validation.js',
       'netlify/functions/giffgaff-sms-activate.js',
       'netlify/functions/auto-activate-esim.js',
       'netlify/functions/giffgaff-token-exchange.js',
-      'netlify/functions/verify-cookie.js'
+      'netlify/functions/verify-cookie.js',
+      'netlify/edge-functions/bff-proxy.js',
+      'netlify/edge-functions/markdown-negotiation.js'
     ]
   },
 
@@ -153,7 +162,7 @@ function runChecks() {
   BuildLogger.title('代码质量全面检查');
 
   // 1. 语法检查
-  BuildLogger.step(1, 4, checks.syntaxCheck.name);
+  BuildLogger.step(1, 5, checks.syntaxCheck.name);
   let syntaxPassed = 0;
   checks.syntaxCheck.files.forEach(file => {
     totalChecks++;
@@ -169,7 +178,7 @@ function runChecks() {
   BuildLogger.progress(`${syntaxPassed}/${checks.syntaxCheck.files.length} 文件通过语法检查\n`);
 
   // 2. 环境变量检查
-  BuildLogger.step(2, 4, checks.envVarCheck.name);
+  BuildLogger.step(2, 5, checks.envVarCheck.name);
   totalChecks++;
   const envIssues = checkEnvExample();
   if (envIssues.length === 0) {
@@ -182,7 +191,7 @@ function runChecks() {
   }
 
   // 3. 依赖检查
-  BuildLogger.step(3, 4, checks.dependencyCheck.name);
+  BuildLogger.step(3, 5, checks.dependencyCheck.name);
   totalChecks++;
   const depIssues = checkPackageJson();
   if (depIssues.length === 0) {
@@ -195,7 +204,7 @@ function runChecks() {
   }
 
   // 4. 安全配置检查
-  BuildLogger.step(4, 4, checks.securityCheck.name);
+  BuildLogger.step(4, 5, checks.securityCheck.name);
 
   // 检查弱密钥（排除安全检查代码中的引用）
   totalChecks++;
@@ -210,6 +219,24 @@ function runChecks() {
   } else {
     BuildLogger.check(false, '发现弱默认配置:');
     weakDefaults.forEach(r => BuildLogger.warn(`  - ${r.file}: ${r.matches}处`));
+    failedChecks++;
+  }
+
+  // 5. 生产资源脱链检查（禁止发布不存在的静态路径）
+  BuildLogger.step(5, 5, '生产资源脱链检查');
+  totalChecks++;
+  try {
+    execSync('node scripts/check-asset-links.js', {
+      cwd: projectRoot,
+      stdio: 'pipe',
+      encoding: 'utf8'
+    });
+    BuildLogger.check(true, 'HTML 本地资源引用完整');
+    passedChecks++;
+  } catch (error) {
+    BuildLogger.check(false, '发现脱链或无效路径');
+    const output = `${error.stdout || ''}${error.stderr || ''}${error.message || ''}`;
+    output.split('\n').filter(Boolean).forEach((line) => BuildLogger.error(`  ${line}`));
     failedChecks++;
   }
 

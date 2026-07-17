@@ -26,6 +26,7 @@
     "compress": "node scripts/compress.js",
     "security-check": "node scripts/security-check.js",
     "quality-check": "node scripts/quality-check.js",
+    "check:links": "node scripts/check-asset-links.js",
     "deploy-prepare": "node scripts/deploy-prepare.js",
     "deploy-analyze": "node scripts/deploy-analyze.js",
     "deploy-test": "node scripts/test-deploy-config.js"

@@ -103,6 +103,11 @@ function buildSteps(mode) {
     {
       name: 'pre-commit 检查',
       args: ['run', 'precommit:check']
+    },
+    {
+      // 生产 HTML 本地资源脱链门禁（不改运行时，仅静态校验）
+      name: '生产资源脱链检查',
+      args: ['run', 'check:links']
     }
   ];
 

@@ -13,14 +13,15 @@ class ResourceHintsManager {
         'https://appapi.simyo.nl'
       ],
       dnsPrefetch: [],
+      // 生产构建为原生 ES 模块静态托管，禁止 preload 已废弃的 Webpack 产物路径
       preload: {
         fonts: [],
         scripts: [
-          { href: '/dist/js/main.js', as: 'script' },
-          { href: '/dist/js/vendors.js', as: 'script' }
+          { href: '/src/js/home.js', as: 'script' },
+          { href: '/src/js/bootstrap-footer.js', as: 'script' }
         ],
         styles: [
-          { href: '/dist/css/design-system.css', as: 'style' }
+          { href: '/src/styles/design-system.css', as: 'style' }
         ],
         images: []
       },
