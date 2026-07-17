@@ -3,6 +3,7 @@
  */
 
 import { openHelp } from '../../src/simyo/js/modules/utils.js';
+import * as i18n from '../../src/js/modules/i18n.js';
 
 describe('Simyo openHelp()', () => {
   beforeEach(() => {
@@ -30,6 +31,26 @@ describe('Simyo openHelp()', () => {
 
     overlay.click();
     expect(document.querySelector('[data-help-overlay="simyo-help"]')).toBeNull();
+  });
+
+  it('帮助文案应作为文本渲染，不执行 HTML', () => {
+    jest.spyOn(i18n, 't').mockImplementation((key) => {
+      if (key === 'simyo.help.title') return '<img src=x onerror=alert(1)>XSS';
+      if (key.endsWith('.heading')) return 'Heading';
+      if (key.endsWith('.content')) return '<script>alert(1)</script>';
+      if (key === 'simyo.help.close') return 'Close';
+      return key;
+    });
+
+    openHelp();
+
+    const overlay = document.querySelector('[data-help-overlay="simyo-help"]');
+    expect(overlay.querySelector('img[src="x"]')).toBeNull();
+    expect(overlay.querySelector('script')).toBeNull();
+    expect(overlay.textContent).toContain('<img src=x onerror=alert(1)>XSS');
+    expect(overlay.textContent).toContain('<script>alert(1)</script>');
+
+    i18n.t.mockRestore();
   });
 });
 

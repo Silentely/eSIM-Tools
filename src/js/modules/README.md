@@ -58,6 +58,15 @@ giffgaffAPI.clearCache();
 #### `clipboard.js`
 Shared clipboard helper. Re-exported by Giffgaff/Simyo `utils.js` so existing import paths stay stable.
 
+#### `diagnostics.js`
+Issue 诊断导出。业务页初始化后可在控制台执行：
+
+```js
+copyEsimDiagnostics() // 复制脱敏 JSON 到剪贴板，便于粘贴到 GitHub Issue
+```
+
+不包含 token / 密码 / cookie / LPA 等敏感字段。
+
 #### `resource-hints.js`
 > **状态：未挂载生产页面**。路径已对齐原生 ES 模块静态托管，但 HTML 入口尚未 `import` 本模块。  
 > 生产页面当前依赖浏览器默认加载与各页已写死的 script/link。

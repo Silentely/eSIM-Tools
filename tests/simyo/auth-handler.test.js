@@ -39,7 +39,8 @@ describe('Simyo AuthHandler', () => {
     expect(result.sessionToken).toBe('sess-abc');
     expect(stateManager.get('sessionToken')).toBe('sess-abc');
     expect(stateManager.get('phoneNumber')).toBe('0612345678');
-    expect(stateManager.get('password')).toBe('');
+    expect(stateManager.get('password')).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(stateManager.getState(), 'password')).toBe(false);
     expect(authHandler.isLoggedIn()).toBe(true);
   });
 
