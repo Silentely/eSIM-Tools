@@ -12,16 +12,16 @@
 |------|------|------|
 | **Logger** | `logger.js` | 环境感知日志 (生产环境自动禁用 console.log) |
 | **CaptchaManager** | `captcha-manager.js` | 验证码集成 (reCAPTCHA)，自动刷新 |
-| **API Service** | `api-service.js` | 统一 HTTP 客户端 (重试/缓存/去重) |
+| **API Service** | `api-service.js` | 统一 HTTP 客户端 (重试/缓存/去重) — **未挂载生产业务** |
 | **HTML Sanitizer** | `html-sanitizer.js` | XSS 防护 (escapeHtml/escapeAttr) |
 | **Secure Storage** | `secure-storage.js` | 加密 localStorage (TTL 过期) |
-| **Performance Monitor** | `performance-monitor.js` | Core Web Vitals 监控 |
+| **Performance Monitor** | `performance-monitor.js` | Core Web Vitals 监控 — **未挂载生产**（页面用 `performance.js`） |
 | **i18n** | `i18n.js` + `i18n-data.js` | 国际化支持 |
 | **Notification Manager** | `notification-manager.js` | 通知管理 |
 | **App Config** | `app-config.js` | 环境配置管理 (特性开关) |
-| **Resource Hints** | `resource-hints.js` | 预连接/预加载/预取 |
+| **Resource Hints** | `resource-hints.js` | 预连接/预加载/预取 — **未挂载生产 HTML** |
 | **Footer** | `footer.js` | 统一版权页脚注入 |
-| **Sentry Init** | `sentry-init.js` | 前端 Sentry 初始化 |
+| **Sentry Init** | `sentry-init.js` | 前端 Sentry 初始化 — **遗留 Webpack 入口**；生产用 `sentry-loader.js` |
 | **Validation** | `middleware/validation.js` | Express 中间件 (请求体/头部/限流) |
 
 ## 入口与启动

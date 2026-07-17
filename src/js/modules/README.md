@@ -34,6 +34,9 @@ console.log(formatBytes(1024 * 1024)); // "1 MB"
 ### API & Network
 
 #### `api-service.js`
+> **状态：未挂载生产业务路径**（仅单测覆盖）。Giffgaff/Simyo 业务目前使用原生 `fetch`。  
+> 保留本模块作为统一 HTTP 客户端候选实现，**接入前需评审重试/缓存对 OAuth/MFA 的影响**。
+
 Centralized API service with built-in retry, caching, and request deduplication.
 
 **Features:**
@@ -43,71 +46,35 @@ Centralized API service with built-in retry, caching, and request deduplication.
 - Timeout handling
 - GET, POST, PUT, DELETE methods
 
-**Usage:**
+**Usage（测试或后续接入时）:**
 ```javascript
-import { giffgaffAPI, simyoAPI } from '@modules/api-service';
+import { giffgaffAPI, simyoAPI } from './api-service.js';
 
-// With automatic retry and caching
 const data = await giffgaffAPI.get('/giffgaff-graphql');
-
-// POST request
 await simyoAPI.post('/activate', { phone: '123456789' });
-
-// Clear cache
 giffgaffAPI.clearCache();
 ```
 
+#### `clipboard.js`
+Shared clipboard helper. Re-exported by Giffgaff/Simyo `utils.js` so existing import paths stay stable.
+
 #### `resource-hints.js`
+> **状态：未挂载生产页面**。路径已对齐原生 ES 模块静态托管，但 HTML 入口尚未 `import` 本模块。  
+> 生产页面当前依赖浏览器默认加载与各页已写死的 script/link。
+
 Manages preconnect, preload, prefetch for optimal resource loading.
-
-**Features:**
-- Automatic preconnect to critical origins
-- DNS prefetch for non-critical resources
-- Intersection observer-based prefetching
-- Idle-time prefetching
-- Dynamic resource hint management
-
-**Usage:**
-```javascript
-import resourceHints from '@modules/resource-hints';
-
-// Add dynamic preconnect
-resourceHints.addPreconnect('https://api.example.com');
-
-// Preload critical CSS
-resourceHints.preloadCSS('/critical.css');
-
-// Add prefetch
-resourceHints.addPrefetch('/next-page');
-```
 
 ### Performance
 
 #### `performance-monitor.js`
-Tracks and reports Core Web Vitals and custom performance metrics.
+> **状态：未挂载生产页面**。首页/业务页实际加载的是 `src/js/performance.js`（非本 CWV 模块）。  
+> 勿与生产监控能力混淆；接入前需确认上报目标与采样策略。
 
-**Features:**
-- Core Web Vitals: LCP, FID, CLS, FCP, TTFB
-- Navigation timing metrics
-- Custom timing marks and measures
-- Performance rating (good/needs-improvement/poor)
-- Analytics integration ready
+Tracks Core Web Vitals and custom performance metrics (LCP/FID/CLS/FCP/TTFB).
 
-**Usage:**
-```javascript
-import performanceMonitor from '@modules/performance-monitor';
-
-// Custom timing
-performanceMonitor.startMark('data-fetch');
-await fetchData();
-performanceMonitor.endMark('data-fetch');
-
-// Get all metrics
-const metrics = performanceMonitor.getMetrics();
-
-// Generate report
-const report = performanceMonitor.generateReport();
-```
+#### `sentry-init.js` / 页面加载说明
+> **生产主路径：** HTML `<head>` 中的 `sentry-config.js` + `sentry-loader.js`（CDN）。  
+> `sentry-init.js` 仅由遗留 `src/js/main.js`（Webpack 入口）引用，**当前 `npm run build` 不会打包该入口**。
 
 ### Configuration
 

@@ -179,7 +179,7 @@ eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simy
 |------|------|------|
 | **前端** | 原生 JavaScript (ES2021+) | 无框架设计，避免依赖和打包体积 |
 | **后端** | Netlify Functions (Node.js) + Edge Functions (Deno) | Serverless API 和 BFF 代理 |
-| **构建** | Webpack 5 + Babel + PostCSS | 模块打包、转译、压缩 |
+| **构建** | build-static + esbuild + PostCSS | 静态资源拷贝、browserslist 转译、压缩 |
 | **部署** | Netlify (JAMstack) | 静态托管 + Serverless + Edge |
 | **监控** | Sentry (前后端) | 错误追踪与性能监控 |
 | **测试** | Jest 30.3.0 (jsdom) | 单元测试 |
@@ -197,7 +197,8 @@ eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simy
 ```
 本地开发 -> 构建静态资源 -> 部署到 Netlify
   npm run dev          (本地开发服务器 + 热重载)
-  npm run build        (Webpack 打包优化)
+  npm run build        (静态拷贝 + esbuild 转译到 dist/，非 Webpack)
+  npm run check:links  (生产 HTML 本地资源脱链检查)
   npm run deploy       (部署到 Netlify 生产环境)
 ```
 
@@ -304,8 +305,9 @@ npm run netlify-dev      # Netlify Dev 完整模拟 (localhost:8888)
 ### 构建与部署
 
 ```bash
-npm run build            # Webpack 打包到 dist/
-npm run quality-check    # 代码质量检查 (14 项)
+npm run build            # 静态拷贝 + esbuild 转译到 dist/
+npm run check:links      # HTML 本地资源脱链检查（生产零脱链）
+npm run quality-check    # 代码质量检查（含脱链检查）
 npm run security-check   # 安全配置扫描
 npm run deploy           # 部署到 Netlify 生产环境
 ```
