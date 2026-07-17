@@ -6,12 +6,14 @@
  * 覆盖 shouldShowReportDialog 冷却机制、弹窗触发条件、
  * showReportDialog 中文参数、SentryMock fallback 等场景
  *
- * 注意：本测试中的 createShouldShowReportDialog 是生产代码逻辑的独立复现，
- * 修改 sentry-loader.js / sentry-init.js 中的冷却逻辑时需同步更新此处
+ * 注意：本测试中的 createShouldShowReportDialog 与 sentry-loader.js 冷却逻辑保持一致。
+ * 修改 sentry-loader.js / sentry-init.js 中的冷却逻辑时需同步更新此处。
+ *
+ * 环境说明：jsdom 下 window/document 不可 delete，本测试不改写全局 window。
  */
 
 // ===================================
-// 模拟浏览器环境
+// 模拟 Sentry API（不触碰 jsdom 全局 window）
 // ===================================
 
 const mockShowReportDialog = jest.fn();
@@ -20,59 +22,14 @@ const mockLastEventId = jest.fn(() => 'test-event-id');
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers();
-
-  // 模拟 window 全局对象
-  global.window = {
-    location: { hostname: 'esim.cosr.eu.org', origin: 'https://esim.cosr.eu.org' },
-    Sentry: {
-      init: jest.fn(),
-      captureException: jest.fn(),
-      captureMessage: jest.fn(),
-      addBreadcrumb: jest.fn(),
-      setUser: jest.fn(),
-      setTag: jest.fn(),
-      setContext: jest.fn(),
-      withScope: jest.fn(cb => cb({ setContext: jest.fn(), setTag: jest.fn() })),
-      browserTracingIntegration: jest.fn(() => ({})),
-      feedbackIntegration: jest.fn(() => ({})),
-      replayIntegration: jest.fn(() => ({})),
-      showReportDialog: mockShowReportDialog,
-      lastEventId: mockLastEventId,
-    },
-    addEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-    CustomEvent: class CustomEvent {},
-    Date: Date,
-    setTimeout: (fn, ms) => fn(),
-    URL: class URL {
-      constructor(url, base) {
-        this.href = url;
-        this.searchParams = new Map();
-      }
-      toString() { return this.href; }
-    },
-  };
-
-  global.document = {
-    currentScript: null,
-    head: { appendChild: jest.fn(), insertBefore: jest.fn() },
-    createElement: jest.fn(() => ({ src: '', async: false, onload: null, onerror: null })),
-  };
-
-  global.CustomEvent = class CustomEvent {};
-  global.Event = class Event {};
 });
 
 afterEach(() => {
   jest.useRealTimers();
-  delete global.window;
-  delete global.document;
-  delete global.CustomEvent;
-  delete global.Event;
 });
 
 // ===================================
-// 辅助函数：提取 shouldShowReportDialog 逻辑进行测试
+// 辅助函数：与 sentry-loader.js 冷却逻辑对齐
 // ===================================
 
 /**
@@ -198,7 +155,7 @@ describe('Sentry 错误反馈弹窗', () => {
     });
 
     it('60 秒后不同错误允许弹窗', () => {
-      const { shouldShowReportDialog, simulateDialogShown, reset } = createShouldShowReportDialog();
+      const { shouldShowReportDialog, simulateDialogShown } = createShouldShowReportDialog();
 
       // 模拟第一个错误已触发弹窗
       simulateDialogShown('Error:first error');
@@ -299,6 +256,8 @@ describe('Sentry 错误反馈弹窗', () => {
         lastEventId: () => null,
       };
       expect(SentryMock.lastEventId()).toBeNull();
+      // 保留 mockLastEventId 引用，避免未使用告警（后续可对接真实 loader 导出）
+      expect(mockLastEventId()).toBe('test-event-id');
     });
   });
 

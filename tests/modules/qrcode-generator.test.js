@@ -170,9 +170,7 @@ describe('qrcode-generator', () => {
 
   // ========== 日志和 Sentry 上报测试 ==========
 
-  it('本地生成成功时应输出 console.log', async () => {
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
+  it('本地生成成功时应返回 data URL（成功日志仅开发环境输出）', async () => {
     const mockQRInstance = {
       addData: jest.fn(),
       make: jest.fn(),
@@ -182,18 +180,13 @@ describe('qrcode-generator', () => {
     mockState.lib = jest.fn(() => mockQRInstance);
 
     const { generateQRCodeLocal } = await import('../../src/js/modules/qrcode-generator.js');
-    await generateQRCodeLocal('LPA:1$example', 300);
+    const result = await generateQRCodeLocal('LPA:1$example', 300);
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[QRCode] Local generation success')
-    );
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('size=300')
-    );
-    consoleSpy.mockRestore();
+    expect(result.image.src).toEqual(expect.stringContaining('data:image/png;base64,local-'));
+    expect(result.source).toBe('local');
   });
 
-  it('本地生成失败时应输出 console.warn 并上报 Sentry', async () => {
+  it('本地生成失败时应经 Logger.warn 输出并上报 Sentry', async () => {
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
     window.Sentry = { captureMessage: jest.fn() };
 
@@ -207,7 +200,9 @@ describe('qrcode-generator', () => {
     const { generateQRCodeWithFallback } = await import('../../src/js/modules/qrcode-generator.js');
     await generateQRCodeWithFallback('LPA:1$example', 300);
 
+    // Logger.warn 前缀为 [WARN]
     expect(consoleSpy).toHaveBeenCalledWith(
+      '[WARN]',
       expect.stringContaining('[QRCode] Local generation failed'),
       expect.anything()
     );
@@ -228,9 +223,7 @@ describe('qrcode-generator', () => {
     consoleSpy.mockRestore();
   });
 
-  it('后端生成成功时应输出 console.log', async () => {
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
+  it('后端生成成功时应返回后端 data URL', async () => {
     mockState.lib = createFailingQRMock();
 
     fetch.mockResolvedValueOnce({
@@ -239,15 +232,13 @@ describe('qrcode-generator', () => {
     });
 
     const { generateQRCodeWithFallback } = await import('../../src/js/modules/qrcode-generator.js');
-    await generateQRCodeWithFallback('LPA:1$example', 300);
+    const result = await generateQRCodeWithFallback('LPA:1$example', 300);
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[QRCode] Backend generation success')
-    );
-    consoleSpy.mockRestore();
+    expect(result.image.src).toBe('data:image/png;base64,backend-qr-data');
+    expect(result.source).toBe('backend');
   });
 
-  it('后端生成失败时应输出 console.error 并上报 Sentry', async () => {
+  it('后端生成失败时应经 Logger.error 输出并上报 Sentry', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
     window.Sentry = { captureMessage: jest.fn() };
@@ -263,7 +254,9 @@ describe('qrcode-generator', () => {
     await expect(generateQRCodeWithFallback('LPA:1$example', 300))
       .rejects.toThrow('QR code generation failed after local and backend fallback');
 
+    // Logger.error 前缀为 [ERROR]
     expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[ERROR]',
       expect.stringContaining('[QRCode] Backend fallback failed'),
       expect.anything()
     );
