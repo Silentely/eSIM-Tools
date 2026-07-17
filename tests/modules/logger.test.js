@@ -80,4 +80,32 @@ describe('Logger', () => {
       expect(consoleSpy.log).not.toHaveBeenCalled();
     });
   });
+
+  describe('getRelease() / env()', () => {
+    afterEach(() => {
+      delete window.SENTRY_RELEASE;
+    });
+
+    it('getRelease 应读取 window.SENTRY_RELEASE', () => {
+      window.SENTRY_RELEASE = 'esim-tools@53e56a2';
+      expect(Logger.getRelease()).toBe('esim-tools@53e56a2');
+    });
+
+    it('getRelease 未注入时回退 unknown', () => {
+      delete window.SENTRY_RELEASE;
+      expect(Logger.getRelease()).toBe('esim-tools@unknown');
+    });
+
+    it('env 生产路径应打印 Release', () => {
+      window.SENTRY_RELEASE = 'esim-tools@53e56a2';
+      const groupSpy = jest.spyOn(console, 'groupCollapsed').mockImplementation();
+      const groupEndSpy = jest.spyOn(console, 'groupEnd').mockImplementation();
+
+      Logger.env();
+
+      expect(consoleSpy.log).toHaveBeenCalledWith('Release:', 'esim-tools@53e56a2');
+      groupSpy.mockRestore();
+      groupEndSpy.mockRestore();
+    });
+  });
 });
