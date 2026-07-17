@@ -6,9 +6,8 @@
  * 2. 自动完成初始化配置
  * 3. 暴露 testSentry() 到 window 供测试
  *
- * 架构说明：本文件使用 CDN 版本（8.40.0）作为生产主实现路径，
- * 确保在 npm 构建不可用时仍能正常加载 Sentry SDK。
- * npm bundle 版本（10.x）由 sentry-entry.js 提供，作为 Webpack 构建的备选方案。
+ * 架构说明：生产优先加载同源 vendor（8.40.0 tracing），避免广告拦截 CDN；
+ * CDN（tracing+replay+feedback）仅作回退；仍失败则使用 Mock。
  *
  * 使用方法：
  * <script>
@@ -435,40 +434,43 @@
     }
 
     try {
+      // 按 SDK 能力装配 integrations（本地 tracing bundle 可能无 replay/feedback）
+      var integrations = [];
+      if (typeof window.Sentry.browserTracingIntegration === 'function') {
+        integrations.push(window.Sentry.browserTracingIntegration({
+          traceFetch: true,
+          traceXHR: true,
+          enableLongTask: true
+        }));
+      }
+      if (typeof window.Sentry.replayIntegration === 'function') {
+        integrations.push(window.Sentry.replayIntegration({
+          maxReplayDuration: 60000,
+          maskAllText: true,
+          maskAllInputs: true
+        }));
+      }
+      if (typeof window.Sentry.feedbackIntegration === 'function') {
+        integrations.push(window.Sentry.feedbackIntegration({
+          colorScheme: 'system',
+          enableScreenshot: false, // 禁用截图以避免泄露 eSIM 凭据（QR/LPA/激活码）
+          triggerLabel: '反馈',
+          formTitle: '发送反馈',
+          submitButtonLabel: '提交',
+          cancelButtonLabel: '取消',
+          nameLabel: '名称',
+          emailLabel: '邮箱',
+          messageLabel: '描述',
+          successMessageText: '感谢您的反馈！'
+        }));
+      }
+
       window.Sentry.init({
         dsn: SENTRY_DSN,
         environment: SENTRY_ENVIRONMENT,
         release: SENTRY_RELEASE,
 
-        // 性能监控 - 启用完整的请求追踪
-        integrations: [
-          window.Sentry.browserTracingIntegration({
-            // 启用 fetch 和 XHR 请求追踪
-            traceFetch: true,
-            traceXHR: true,
-            // 启用页面加载和导航追踪
-            enableLongTask: true
-          }),
-          // Session Replay - 记录用户操作以重现错误场景
-          window.Sentry.replayIntegration({
-            maxReplayDuration: 60000,
-            maskAllText: true,
-            maskAllInputs: true,
-          }),
-          // User Feedback Widget - 用户随时可提交反馈
-          window.Sentry.feedbackIntegration({
-            colorScheme: 'system',
-            enableScreenshot: false, // 禁用截图以避免泄露 eSIM 凭据（QR/LPA/激活码）
-            triggerLabel: '反馈',
-            formTitle: '发送反馈',
-            submitButtonLabel: '提交',
-            cancelButtonLabel: '取消',
-            nameLabel: '名称',
-            emailLabel: '邮箱',
-            messageLabel: '描述',
-            successMessageText: '感谢您的反馈！',
-          }),
-        ],
+        integrations: integrations,
         // 追踪传播目标 - 指定哪些请求应该添加追踪头
         // 注意：第三方域名（qrcode.show, api.qrserver.com）可能触发 CORS preflight，
         // 但 Sentry SDK 内部已做兼容处理，保留以确保追踪完整性
@@ -771,43 +773,72 @@
   // ===================================
   // 生产环境：加载 SDK
   // ===================================
+  // 优先同源 vendor（避免广告拦截 ERR_BLOCKED_BY_CLIENT）
+  // 失败再回退官方 CDN（含 replay + feedback）；都失败则 Mock
+  var SENTRY_LOCAL_URL = '/src/assets/vendor/sentry-8.40.0.bundle.tracing.min.js';
+  var SENTRY_CDN_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.replay.feedback.min.js';
+  var sentryLoadTimedOut = false;
 
-  // Sentry SDK URL - 使用官方 CDN（带 tracing 和 replay）
-  var SENTRY_SDK_URL = 'https://browser.sentry-cdn.com/8.40.0/bundle.tracing.replay.feedback.min.js';
-
-  // 创建 script 标签
-  var script = document.createElement('script');
-  script.src = SENTRY_SDK_URL;
-  // 本地资源不需要 crossOrigin
-  script.async = true;
-
-  script.onload = function() {
-    console.log('[Sentry Loader] SDK 加载成功');
-    // 加载成功后立即初始化
-    initSentry();
-    // 触发自定义事件，通知其他模块 SDK 已加载
-    window.dispatchEvent(new Event('sentry-sdk-loaded'));
-  };
-
-  script.onerror = function() {
-    console.warn('[Sentry Loader] SDK 加载失败，使用 Mock 模式');
-    window.Sentry = SentryMock;
-  };
-
-  // 插入到当前脚本之后（确保配置已读取）
-  var currentScript = document.currentScript;
-  if (currentScript && currentScript.parentNode) {
-    currentScript.parentNode.insertBefore(script, currentScript.nextSibling);
-  } else {
-    document.head.appendChild(script);
+  function insertScriptAfterCurrent(scriptEl) {
+    var currentScript = document.currentScript;
+    if (currentScript && currentScript.parentNode) {
+      currentScript.parentNode.insertBefore(scriptEl, currentScript.nextSibling);
+    } else {
+      document.head.appendChild(scriptEl);
+    }
   }
+
+  function onSdkReady(source) {
+    if (sentryLoadTimedOut) return;
+    console.log('[Sentry Loader] SDK 加载成功 (' + source + ')');
+    initSentry();
+    window.dispatchEvent(new Event('sentry-sdk-loaded'));
+  }
+
+  function useMock(reason) {
+    if (window.Sentry && window.Sentry !== SentryMock && sentryInitialized) return;
+    console.warn('[Sentry Loader] ' + reason + '，使用 Mock 模式');
+    window.Sentry = SentryMock;
+  }
+
+  function loadSdkScript(url, source, onFail) {
+    var script = document.createElement('script');
+    script.src = url;
+    script.async = true;
+    script.onload = function() {
+      onSdkReady(source);
+    };
+    script.onerror = function() {
+      if (typeof onFail === 'function') {
+        onFail();
+      } else {
+        useMock('SDK 加载失败');
+      }
+    };
+    insertScriptAfterCurrent(script);
+  }
+
+  // 1) 同源 bundle → 2) CDN → 3) Mock
+  loadSdkScript(SENTRY_LOCAL_URL, 'local', function() {
+    console.warn('[Sentry Loader] 本地 SDK 不可用，尝试 CDN');
+    loadSdkScript(SENTRY_CDN_URL, 'cdn', function() {
+      // 常见于广告拦截：ERR_BLOCKED_BY_CLIENT
+      useMock('CDN SDK 加载失败（可能被广告拦截）');
+    });
+  });
 
   // 设置超时回退
   setTimeout(function() {
     if (!sentryInitialized && !isDev) {
+      sentryLoadTimedOut = true;
       console.warn('[Sentry] SDK 加载超时，使用 Mock 模式');
-      if (!window.Sentry) {
+      if (!window.Sentry || window.Sentry === SentryMock) {
         window.Sentry = SentryMock;
+      } else if (!sentryInitialized) {
+        // SDK 已挂到 window 但尚未 init，再尝试一次
+        try { initSentry(); } catch (_) {
+          window.Sentry = SentryMock;
+        }
       }
     }
   }, 10000);
