@@ -14,7 +14,11 @@ const projectRoot = path.join(__dirname, '..');
 const htmlRoots = [
   path.join(projectRoot, 'index.html'),
   path.join(projectRoot, 'src', 'giffgaff', 'giffgaff_modular.html'),
-  path.join(projectRoot, 'src', 'simyo', 'simyo_modular.html')
+  path.join(projectRoot, 'src', 'simyo', 'simyo_modular.html'),
+  // 若已构建，同步校验发布产物（与源入口路径对应）
+  path.join(projectRoot, 'dist', 'index.html'),
+  path.join(projectRoot, 'dist', 'src', 'giffgaff', 'giffgaff_modular.html'),
+  path.join(projectRoot, 'dist', 'src', 'simyo', 'simyo_modular.html')
 ];
 
 const ATTR_RE = /\b(?:src|href)=["']([^"']+)["']/gi;
@@ -74,14 +78,19 @@ function main() {
   let checked = 0;
 
   for (const htmlPath of htmlRoots) {
+    const relHtml = path.relative(projectRoot, htmlPath);
+    const isDistEntry = relHtml.startsWith(`dist${path.sep}`) || relHtml.startsWith('dist/');
+
+    // dist 入口仅在已构建时检查，避免未 build 时误报
     if (!fs.existsSync(htmlPath)) {
-      missing.push({ file: htmlPath, url: '(file missing)', reason: 'HTML 入口不存在' });
+      if (!isDistEntry) {
+        missing.push({ file: relHtml, url: '(file missing)', reason: 'HTML 入口不存在' });
+      }
       continue;
     }
 
     const html = fs.readFileSync(htmlPath, 'utf8');
     const urls = collectUrls(html);
-    const relHtml = path.relative(projectRoot, htmlPath);
 
     for (const url of urls) {
       if (shouldSkip(url)) continue;
@@ -89,12 +98,21 @@ function main() {
       if (!resolved) continue;
 
       checked++;
-      const exists = resolved.candidates.some((p) => fs.existsSync(p));
+      // dist HTML 优先解析到 dist 下；源 HTML 源码与 dist 任一存在即可
+      const candidates = isDistEntry
+        ? [
+            path.join(projectRoot, 'dist', resolved.clean.slice(1)),
+            path.join(projectRoot, resolved.clean.slice(1))
+          ]
+        : resolved.candidates;
+      const exists = candidates.some((p) => fs.existsSync(p));
       if (!exists) {
         missing.push({
           file: relHtml,
           url: resolved.clean,
-          reason: '本地文件不存在（源码与 dist 均未找到）'
+          reason: isDistEntry
+            ? '构建产物中资源不存在'
+            : '本地文件不存在（源码与 dist 均未找到）'
         });
       }
     }
