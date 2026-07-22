@@ -31,7 +31,17 @@ const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
 const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
 const DEFAULT_SIMYO_CLIENT_VERSION = '4.28.0';
-const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.28.0 (iOS 26.3; iPhone16,1)';
+// 与官方 iOS 4.28.0 抓包一致（版本号后两个空格）
+const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)';
+const crypto = require('crypto');
+function getDefaultSimyoDeviceId() {
+    if (process.env.SIMYO_DEVICE_ID) return process.env.SIMYO_DEVICE_ID;
+    // 进程内稳定 ID，避免每次请求换设备身份
+    if (!global.__simyoDeviceId) {
+        global.__simyoDeviceId = crypto.randomUUID().toUpperCase();
+    }
+    return global.__simyoDeviceId;
+}
 
 // 启动时环境检查
 if (!INTERNAL_FUNCTION_KEY) {
@@ -176,13 +186,14 @@ app.use('/api/simyo/*', (req, res) => {
     const [pathPart, queryPart] = req.originalUrl.replace(/^\/api\/simyo/, '').split('?');
     const proxyPath = pathPart || '/';
     const queryString = queryPart ? `?${queryPart}` : '';
-    const targetUrl = `https://appapi.simyo.nl/simyoapi/api/v1${proxyPath}${queryString}`;
+    // 与官方 App / Netlify 代理一致，走 webapi（simyoapi 为旧路径）
+    const targetUrl = `https://appapi.simyo.nl/webapi/api/v1${proxyPath}${queryString}`;
     Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
 
     // 设置CORS头（仅允许指定域）
     res.header('Access-Control-Allow-Origin', getCorsOrigin(req.headers.origin));
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-Token, X-Client-Platform, X-Client-Version, X-Session-Token');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Client-Token, X-Client-Platform, X-Client-Version, X-Device-ID, X-Session-Token');
     res.header('Vary', 'Origin');
 
     if (req.method === 'OPTIONS') {
@@ -197,17 +208,19 @@ app.use('/api/simyo/*', (req, res) => {
         });
     }
 
-    // 代理请求
+    // 代理请求（X-Device-ID 为 Simyo 4.28+ 必填）
     const axios = require('axios');
     const config = {
         method: req.method.toLowerCase(),
         url: targetUrl,
         headers: {
             'Content-Type': 'application/json',
+            Accept: 'application/json',
             'User-Agent': req.headers['user-agent'] || process.env.SIMYO_USER_AGENT || DEFAULT_SIMYO_USER_AGENT,
             'X-Client-Token': simyoClientToken,
             'X-Client-Platform': process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
             'X-Client-Version': process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
+            'X-Device-ID': req.headers['x-device-id'] || process.env.SIMYO_DEVICE_ID || getDefaultSimyoDeviceId(),
             ...(req.headers['x-session-token'] ? { 'X-Session-Token': req.headers['x-session-token'] } : {})
         },
         timeout: 30000

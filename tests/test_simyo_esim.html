@@ -539,8 +539,10 @@
                 'X-Client-Token': 'e77b7e2f43db41bb95b17a2a11581a38',
                 'X-Client-Platform': 'ios',
                 'X-Client-Version': '4.28.0',
-                'User-Agent': 'MijnSimyoFT/4.28.0 (iOS 26.3; iPhone16,1)',
+                'X-Device-ID': 'E766D17B-BDF5-43B8-8807-35E43BA129E2',
+                'User-Agent': 'MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)',
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Connection': 'keep-alive',
                 'Accept-Encoding': 'gzip, deflate, br'
             };
@@ -581,6 +583,7 @@
                 testFramework.assertTrue('X-Client-Token' in headers1, 'Should include client token');
                 testFramework.assertTrue('X-Client-Platform' in headers1, 'Should include platform');
                 testFramework.assertTrue('X-Client-Version' in headers1, 'Should include version');
+                testFramework.assertTrue('X-Device-ID' in headers1, 'Should include device id');
                 testFramework.assertFalse('X-Session-Token' in headers1, 'Should not include session token');
 
                 // 测试包含会话令牌的请求头

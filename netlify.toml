@@ -63,7 +63,7 @@
   for = "/api/simyo/*"
   [headers.values]
     Access-Control-Allow-Origin = "https://esim.cosr.eu.org"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, X-Client-Token, X-Client-Platform, X-Client-Version, X-Device-ID, X-Session-Token"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
     Vary = "Origin"
 
