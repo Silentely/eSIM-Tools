@@ -335,6 +335,33 @@
     opacity: 0.8;
 }
 
+/* 工具使用提示 */
+.new-user-notice {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 1px solid rgba(255, 107, 0, 0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #7c2d12;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.new-user-notice .notice-line1 {
+    display: block;
+    font-weight: 600;
+}
+
+.new-user-notice .notice-line1 i {
+    color: #ea580c;
+    margin-right: 4px;
+}
+
+.new-user-notice .notice-line2 {
+    display: block;
+}
+
 /* 推广横幅 */
 .promo-banner {
     background: linear-gradient(135deg, #ff6b00, #ff8c42);
