@@ -21,7 +21,7 @@ import {
 } from '../../src/simyo/js/modules/client-identity.js';
 
 const UUID_RE = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
-/** 官方抓包 UA：版本号后恰好两个空格 */
+/** 默认 UA：版本号后恰好两个空格 */
 const EXPECTED_UA = 'MijnSimyoFT/4.28.0  (iOS 18.2; iPhone12,8)';
 
 describe('Simyo client-identity', () => {
