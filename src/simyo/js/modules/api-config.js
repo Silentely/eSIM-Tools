@@ -147,6 +147,87 @@ export function createHeaders(includeSession = false, sessionToken = '') {
 }
 
 /**
+ * 将 Simyo / 代理返回的原始错误映射为用户可读文案
+ * 优先匹配已知业务短语，其次按 HTTP 状态码，最后保留原文或通用失败
+ *
+ * @param {number} status - HTTP 状态码（业务体错误可传 0）
+ * @param {object|string|null} data - 响应体或原始字符串
+ * @returns {string}
+ */
+export function mapSimyoErrorMessage(status, data) {
+    const rawParts = [];
+    if (data && typeof data === 'object') {
+        rawParts.push(data.message, data.error, data.reason, data.detail, data.title);
+        if (data.result && typeof data.result === 'object') {
+            rawParts.push(data.result.message, data.result.error, data.result.reason);
+        }
+    } else if (typeof data === 'string') {
+        rawParts.push(data);
+    }
+    const raw = rawParts.filter((p) => p != null && String(p).trim() !== '').map(String).join(' ');
+    const normalized = raw.toLowerCase();
+
+    // 已知业务错误（Simyo 原文 / 代理透传）
+    if (normalized.includes('missing x-device-id') || normalized.includes('x-device-id')) {
+        return t('simyo.api.error.missingDeviceId');
+    }
+    if (
+        normalized.includes('invalid credentials') ||
+        normalized.includes('invalid password') ||
+        normalized.includes('authentication failed') ||
+        normalized.includes('unauthorized') ||
+        normalized.includes('wrong password')
+    ) {
+        return t('simyo.api.error.invalidCredentials');
+    }
+    if (normalized.includes('session') && (normalized.includes('expired') || normalized.includes('invalid'))) {
+        return t('simyo.api.error.sessionExpired');
+    }
+    if (normalized.includes('too many') || normalized.includes('rate limit') || normalized.includes('throttl')) {
+        return t('simyo.api.error.rateLimited');
+    }
+
+    // HTTP 状态码语义（含历史上 426 客户端版本过旧）
+    const statusMap = {
+        400: 'simyo.api.error.badRequest',
+        401: 'simyo.api.error.unauthorized',
+        403: 'simyo.api.error.forbidden',
+        404: 'simyo.api.error.notFound',
+        408: 'simyo.api.error.timeout',
+        426: 'simyo.api.error.upgradeRequired',
+        429: 'simyo.api.error.rateLimited',
+        500: 'simyo.api.error.server',
+        502: 'simyo.api.error.badGateway',
+        503: 'simyo.api.error.unavailable',
+        504: 'simyo.api.error.timeout'
+    };
+    if (status && statusMap[status]) {
+        // 有状态码映射时，优先友好文案；附带简短原文便于排查（过长则截断）
+        const friendly = t(statusMap[status]);
+        if (raw && raw.length > 0 && raw.length <= 80 && !/^HTTP\s+\d+/i.test(raw)) {
+            // 避免重复拼接已是友好文案的情况
+            if (!friendly.includes(raw) && normalized !== friendly.toLowerCase()) {
+                return `${friendly}（${raw}）`;
+            }
+        }
+        return friendly;
+    }
+
+    if (raw) {
+        // 纯 HTTP NNN 形态的原文也换成通用失败
+        if (/^HTTP\s+\d+$/i.test(raw.trim())) {
+            return t('simyo.api.error.genericWithStatus', { status: raw.replace(/\D/g, '') || status || '?' });
+        }
+        return raw;
+    }
+
+    if (status) {
+        return t('simyo.api.error.genericWithStatus', { status });
+    }
+    return t('simyo.api.error.generic');
+}
+
+/**
  * 处理API响应
  * @param {Response} response - Fetch API响应对象
  */
@@ -161,17 +242,13 @@ export async function handleApiResponse(response) {
             data = {};
         }
     } else {
-        data = { message: await response.text() };
+        const text = await response.text();
+        data = text ? { message: text } : {};
     }
 
-    // 先处理 HTTP 错误，尽量透传服务端信息
+    // HTTP 错误：映射为用户可读中文/英文，避免只显示「HTTP 426」
     if (!response.ok) {
-        throw new Error(
-            data.message ||
-            data.error ||
-            data.reason ||
-            `HTTP ${response.status}`
-        );
+        throw new Error(mapSimyoErrorMessage(response.status, data));
     }
 
     // 非 JSON 响应直接返回文本内容
@@ -189,6 +266,10 @@ export async function handleApiResponse(response) {
 
     if (data.result) {
         const nestedSuccess = data.result.success;
+        // 业务失败（HTTP 200 但 success=false / 无 success 字段）也走友好文案
+        if (nestedSuccess === false) {
+            throw new Error(mapSimyoErrorMessage(0, data));
+        }
         return {
             success: nestedSuccess === true,
             result: data.result,
@@ -204,5 +285,9 @@ export async function handleApiResponse(response) {
         };
     }
 
-    throw new Error(data.message || data.error || data.reason || t('simyo.api.error.generic'));
+    if (data.success === false) {
+        throw new Error(mapSimyoErrorMessage(0, data));
+    }
+
+    throw new Error(mapSimyoErrorMessage(0, data) || t('simyo.api.error.generic'));
 }

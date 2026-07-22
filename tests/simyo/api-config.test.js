@@ -7,6 +7,8 @@
 import {
   createHeaders,
   getOrCreateDeviceId,
+  handleApiResponse,
+  mapSimyoErrorMessage,
   simyoConfig
 } from '../../src/simyo/js/modules/api-config.js';
 import {
@@ -67,5 +69,46 @@ describe('Simyo api-config headers', () => {
     expect(headers['X-Session-Token']).toBe('sess-token-1');
     expect(headers['X-Device-ID']).toMatch(UUID_RE);
     expect(headers['User-Agent']).toBe(OFFICIAL_UA);
+  });
+});
+
+describe('Simyo mapSimyoErrorMessage / handleApiResponse', () => {
+  it('426 应映射为升级客户端友好文案，而不是 HTTP 426', () => {
+    const msg = mapSimyoErrorMessage(426, {});
+    expect(msg).not.toMatch(/HTTP\s*426/i);
+    expect(msg.toLowerCase()).toMatch(/upgrade|升级|客户端|client version|refresh|刷新/);
+  });
+
+  it('missing X-Device-ID 应映射为设备标识提示', () => {
+    const msg = mapSimyoErrorMessage(400, { message: 'missing X-Device-ID' });
+    expect(msg.toLowerCase()).toMatch(/device|设备|x-device-id/);
+    expect(msg).not.toBe('missing X-Device-ID');
+  });
+
+  it('401 凭据错误原文应优先识别为账号密码错误', () => {
+    const msg = mapSimyoErrorMessage(401, { message: 'Invalid credentials' });
+    expect(msg.toLowerCase()).toMatch(/password|密码|phone|手机号|incorrect|不正确/);
+  });
+
+  it('handleApiResponse 在 426 时应抛出友好错误', async () => {
+    const response = {
+      ok: false,
+      status: 426,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ message: 'Upgrade Required' })
+    };
+    await expect(handleApiResponse(response)).rejects.toThrow(/升级|upgrade|客户端|client version|refresh|刷新/i);
+  });
+
+  it('handleApiResponse 成功路径仍返回 result', async () => {
+    const response = {
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ success: true, result: { sessionToken: 'abc' } })
+    };
+    const data = await handleApiResponse(response);
+    expect(data.success).toBe(true);
+    expect(data.result.sessionToken).toBe('abc');
   });
 });
