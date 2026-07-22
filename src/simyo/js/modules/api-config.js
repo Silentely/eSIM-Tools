@@ -5,8 +5,13 @@
  * 请求头：X-Client-Token / Platform / Version / X-Device-ID / User-Agent
  * 版本与 UA 见 client-identity.js
  *
+ * 登录：
+ * POST /sessions
+ *   - 未开 MFA（老用户常见 DISABLED_BY_CUSTOMER）→ sessionToken 可直接用
+ *   - 已开 MFA（新用户默认 / 老用户开启后不可关）→ PENDING_VERIFICATION 后再
+ *     POST /v2/security.verifyOTP 换正式 token
  * eSIM 更换主路径（仅 EMAIL）：
- * POST /sessions → GET /settings/simcard → POST /settings/simcard
+ * GET /settings/simcard → POST /settings/simcard
  * → POST /esim/verify-code → GET /esim/get-by-customer
  */
 
@@ -97,6 +102,11 @@ export function getApiEndpoints() {
         login: isNetlify
             ? '/api/simyo/sessions'
             : `${localBase}/api/simyo/sessions`,
+
+        // 登录 MFA：v2 security.verifyOTP（短信/邮箱共用同一接口）
+        verifyOtp: isNetlify
+            ? '/api/simyo/v2/security.verifyOTP'
+            : `${localBase}/api/simyo/v2/security.verifyOTP`,
 
         // GET 查询 / POST 申请 共用 settings/simcard
         simcard: isNetlify
@@ -241,6 +251,10 @@ export function isSimyoResultSuccessful(result) {
         return true;
     }
     if (result.sessionToken) {
+        return true;
+    }
+    // 登录 MFA：verifyOTP 返回正式会话 token
+    if (result.token && typeof result.token === 'string' && result.token.length > 8) {
         return true;
     }
     if (result.activationCode) {

@@ -6,6 +6,7 @@
 
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
+import { requireSessionToken } from './session-guard.js';
 import { validateVerificationCode } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
 import Logger from '../../../js/modules/logger.js';
@@ -23,23 +24,11 @@ export class DeviceChangeHandler {
     }
 
     /**
-     * 读取当前 session token，未登录则抛错
-     * @returns {string}
-     */
-    requireSessionToken() {
-        const sessionToken = stateManager.get('sessionToken');
-        if (!sessionToken) {
-            throw new Error(t('simyo.errors.requireLogin'));
-        }
-        return sessionToken;
-    }
-
-    /**
      * GET /settings/simcard — 查询 eSIM 订单状态
      * @returns {Promise<Object>}
      */
     async getSimcardStatus() {
-        const sessionToken = this.requireSessionToken();
+        const sessionToken = requireSessionToken();
         const response = await fetch(this.apiEndpoints.simcard, {
             method: 'GET',
             headers: createHeaders(true, sessionToken)
@@ -57,7 +46,7 @@ export class DeviceChangeHandler {
      * @returns {Promise<Object>}
      */
     async applyNewEsim() {
-        const sessionToken = this.requireSessionToken();
+        const sessionToken = requireSessionToken();
 
         try {
             // 1) 查询当前状态
@@ -136,7 +125,7 @@ export class DeviceChangeHandler {
      * @returns {Promise<Object>}
      */
     async verifyCode(validationCode) {
-        const sessionToken = this.requireSessionToken();
+        const sessionToken = requireSessionToken();
 
         if (!validateVerificationCode(validationCode)) {
             throw new Error(t('simyo.errors.invalidCodeFormat'));

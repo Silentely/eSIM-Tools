@@ -86,22 +86,25 @@ class SimyoApp {
         // ===== Step 1: 登录 =====
         if (elements.loginBtn) elements.loginBtn.addEventListener('click', () => this.handleLogin());
 
+        // ===== Step 2: 登录 MFA =====
+        this.bindMfaFlow();
+
         // ===== 设备更换流程 =====
         this.bindDeviceChangeFlow();
 
-        // ===== Step 2: 获取eSIM =====
+        // ===== Step 3: 获取eSIM =====
         if (elements.getEsimBtn) elements.getEsimBtn.addEventListener('click', () => this.handleGetEsim());
 
-        // ===== Step 3: 生成二维码 =====
+        // ===== Step 4: 生成二维码 =====
         if (elements.generateQrBtn) elements.generateQrBtn.addEventListener('click', () => this.handleGenerateQR());
 
-        // 下一步：确认安装
+        // 下一步：确认安装（步骤 5）
         const nextToConfirmBtn = document.getElementById('nextToConfirmBtn');
         if (nextToConfirmBtn) nextToConfirmBtn.addEventListener('click', () => {
-            uiController.showSection(4);
+            uiController.showSection(5);
         });
 
-        // ===== Step 4: 确认安装 =====
+        // ===== Step 5: 确认安装 =====
         if (elements.confirmInstallBtn) elements.confirmInstallBtn.addEventListener('click', () => this.handleConfirmInstall());
 
         // ===== 通用操作 =====
@@ -119,6 +122,37 @@ class SimyoApp {
 
         // 请求进行中或关键步骤时拦截刷新/后退
         this.bindBeforeUnloadGuard();
+    }
+
+    /**
+     * 绑定登录 MFA 流程
+     */
+    bindMfaFlow() {
+        const verifyMfaBtn = document.getElementById('verifyMfaBtn');
+        if (verifyMfaBtn && !verifyMfaBtn.__bound) {
+            verifyMfaBtn.__bound = true;
+            verifyMfaBtn.addEventListener('click', () => this.handleVerifyMfa());
+        }
+
+        const mfaInput = document.getElementById('mfaOtpInput');
+        if (mfaInput && !mfaInput.__bound) {
+            mfaInput.__bound = true;
+            mfaInput.addEventListener('input', function() {
+                const btn = document.getElementById('verifyMfaBtn');
+                if (btn) {
+                    btn.disabled = this.value.length !== 6 || !/^\d{6}$/.test(this.value);
+                }
+            });
+            mfaInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const btn = document.getElementById('verifyMfaBtn');
+                    if (btn && !btn.disabled) {
+                        this.handleVerifyMfa();
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -153,6 +187,44 @@ class SimyoApp {
     }
 
     /**
+     * 解析可回退的上一步（MFA 已完成后跳过步骤 2）
+     * @param {number} currentStep
+     * @returns {number}
+     */
+    resolvePreviousStep(currentStep) {
+        let prev = Math.max(1, currentStep - 1);
+        // 正式会话下步骤 2 仅为登录 MFA，不应再进入
+        if (prev === 2 && !stateManager.get('mfaPending')) {
+            prev = 1;
+        }
+        return prev;
+    }
+
+    /**
+     * 按步骤号切换主流程（设备更换区在步骤 3 且 isDeviceChange 时单独处理）
+     * @param {number} target
+     */
+    navigateToStep(target) {
+        // 禁止在 MFA 已完成后进入空 MFA 页
+        if (target === 2 && !stateManager.get('mfaPending')) {
+            if (stateManager.get('sessionToken')) {
+                uiController.showDeviceChangeSteps();
+            } else {
+                uiController.showSection(1);
+            }
+            return;
+        }
+
+        // 从后续步骤回到「获取 eSIM」前：若仍在设备更换模式，恢复设备更换区
+        if (target === 3 && stateManager.get('isDeviceChange') && stateManager.get('sessionToken')) {
+            uiController.showDeviceChangeSteps();
+            return;
+        }
+
+        uiController.showSection(target);
+    }
+
+    /**
      * 绑定步骤导航（含请求进行中守卫）
      */
     bindStepNavigation() {
@@ -174,7 +246,7 @@ class SimyoApp {
 
                 if (!isNaN(target) && target <= currentStep) {
                     e.preventDefault();
-                    uiController.showSection(target);
+                    this.navigateToStep(target);
                 }
             }
         });
@@ -190,8 +262,8 @@ class SimyoApp {
             if (this._beforeunloadExempt) return;
 
             const currentStep = stateManager.get('currentStep');
-            // 请求进行中或处于 Step 3/4 关键阶段时拦截
-            if (this.activeRequests.size > 0 || currentStep === 3 || currentStep === 4) {
+            // 请求进行中，或处于获取 eSIM / 二维码 / 确认安装（步骤 3–5）时拦截
+            if (this.activeRequests.size > 0 || currentStep >= 3) {
                 event.preventDefault();
                 event.returnValue = ''; // Chrome 需要设置 returnValue
             }
@@ -208,9 +280,9 @@ class SimyoApp {
             if (backBtn) {
                 e.preventDefault();
                 const currentStep = stateManager.get('currentStep');
-                const prev = Math.max(1, currentStep - 1);
+                const prev = this.resolvePreviousStep(currentStep);
                 if (prev < currentStep) {
-                    uiController.showSection(prev);
+                    this.navigateToStep(prev);
                 }
             }
         });
@@ -257,12 +329,29 @@ class SimyoApp {
 
             Logger.log('[Simyo] 调用 authHandler.login()...');
             const result = await authHandler.login(phoneNumber, password);
-            Logger.log('[Simyo] 登录成功:', result.message);
 
-            uiController.showStatus(loginStatus, result.message || t('simyo.app.status.loginSuccess'), "success");
+            // 已开 MFA（新用户默认 / 老用户开启后不可关）→ 步骤 2
+            if (result.needsMfa) {
+                Logger.log('[Simyo] 需要登录 MFA:', result.mfaStatus || '', result.mfaMethod || '', result.methodHint || '');
+                uiController.showStatus(
+                    loginStatus,
+                    result.message || t('simyo.auth.mfaCodeSent', { hint: result.methodHint || result.mfaMethod || '—' }),
+                    'success'
+                );
+                await delay(400);
+                uiController.showMfaStep({
+                    methodHint: result.methodHint,
+                    mfaMethod: result.mfaMethod
+                });
+                this.bindMfaFlow();
+                return;
+            }
 
-            // 直接进入设备更换流程
-            await delay(1000);
+            // 未开 MFA 的老用户：登录即正式会话，跳过步骤 2 进入设备更换
+            Logger.log('[Simyo] 登录成功（无需 MFA，mfaStatus=', result.mfaStatus || 'n/a', '）:', result.message);
+            uiController.showStatus(loginStatus, result.message || t('simyo.app.status.loginSuccess'), 'success');
+
+            await delay(800);
             uiController.showDeviceChangeSteps();
             this.bindDeviceChangeFlow();
         } catch (error) {
@@ -271,6 +360,57 @@ class SimyoApp {
         } finally {
             loginBtn.innerHTML = `<i class="fas fa-sign-in-alt me-2"></i> ${tl('登录账户')}`;
             loginBtn.disabled = false;
+        }
+    }
+
+    /**
+     * 处理登录 MFA 验证码
+     */
+    async handleVerifyMfa() {
+        const otpInput = document.getElementById('mfaOtpInput');
+        const verifyBtn = document.getElementById('verifyMfaBtn');
+        const mfaStatus = document.getElementById('mfaStatus');
+        Logger.log('[Simyo] === 登录 MFA 验证 ===');
+
+        if (!otpInput || !verifyBtn) {
+            Logger.error('[Simyo] MFA 表单元素未找到');
+            return;
+        }
+
+        const code = otpInput.value.trim();
+        if (!/^\d{6}$/.test(code)) {
+            uiController.showStatus(mfaStatus, t('simyo.errors.invalidCodeFormat'), 'error');
+            return;
+        }
+
+        try {
+            verifyBtn.innerHTML = `<span class="loading"></span> ${tl('验证中...')}`;
+            verifyBtn.disabled = true;
+            uiController.showStatus(mfaStatus, t('simyo.app.status.mfaVerifying'), 'success');
+
+            const result = await authHandler.verifyLoginOtp(code);
+            Logger.log('[Simyo] MFA 验证成功');
+            uiController.showStatus(mfaStatus, result.message || t('simyo.auth.mfaVerified'), 'success');
+
+            await delay(600);
+            uiController.showDeviceChangeSteps();
+            this.bindDeviceChangeFlow();
+        } catch (error) {
+            Logger.error('[Simyo] MFA 验证失败:', error.message, error);
+            uiController.showStatus(
+                mfaStatus,
+                t('simyo.app.error.mfaFailed', { message: error.message }),
+                'error'
+            );
+            verifyBtn.disabled = code.length !== 6;
+        } finally {
+            verifyBtn.innerHTML = `<i class="fas fa-check me-2"></i> ${tl('确认验证')}`;
+            const stillPending = stateManager.get('mfaPending');
+            if (stillPending) {
+                const v = document.getElementById('mfaOtpInput');
+                const ok = v && /^\d{6}$/.test(v.value.trim());
+                verifyBtn.disabled = !ok;
+            }
         }
     }
 
@@ -389,9 +529,9 @@ class SimyoApp {
             uiController.showStatus(elements.esimStatus, result.message || t('simyo.app.status.getEsimSuccess'), "success");
             uiController.showEsimInfo(result.data);
 
-            // 进入下一步
+            // 进入生成二维码（步骤 4）
             await delay(2000);
-            uiController.showSection(3);
+            uiController.showSection(4);
         } catch (error) {
             Logger.error('[Simyo] eSIM 获取失败:', error.message, error);
             uiController.showStatus(elements.esimStatus, t('simyo.app.error.getEsimFailed', { message: error.message }), "error");
@@ -593,18 +733,24 @@ class SimyoApp {
                     }
                 }, 500);
 
-                uiController.showSection(Math.max(3, state.currentStep));
+                // 已有激活码：落在二维码步骤（4）或更后
+                uiController.showSection(Math.max(4, state.currentStep));
             } else if (state.isDeviceChange) {
                 // 设备更换模式
                 const deviceChangeSteps = document.getElementById('deviceChangeSteps');
                 const step1 = document.getElementById('step1');
+                const stepMfa = document.getElementById('stepMfa');
 
                 Logger.log('恢复设备更换模式...');
 
-                // 隐藏登录页面
+                // 隐藏登录 / MFA
                 if (step1) {
                     step1.classList.remove('active');
                     step1.style.display = 'none';
+                }
+                if (stepMfa) {
+                    stepMfa.classList.remove('active');
+                    stepMfa.style.display = 'none';
                 }
 
                 // 显示设备更换流程
@@ -615,8 +761,8 @@ class SimyoApp {
 
                 this.bindDeviceChangeFlow();
 
-                // 更新步骤指示器，但不调用 showSection（避免移除 deviceChangeSteps 的 active 类）
-                stateManager.set('currentStep', Math.max(2, state.currentStep));
+                // 进度落在「获取 eSIM」前（步骤 3），避免误显示 MFA 步
+                stateManager.set('currentStep', Math.max(3, state.currentStep));
                 uiController.updateSteps(stateManager.get('currentStep'));
             } else {
                 // 直接显示设备更换流程

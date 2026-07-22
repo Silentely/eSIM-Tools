@@ -134,4 +134,20 @@ describe('Simyo mapSimyoErrorMessage / handleApiResponse', () => {
     expect(data.success).toBe(true);
     expect(data.result.sessionToken).toBe('abc');
   });
+
+  it('handleApiResponse verifyOTP 体仅含 result.token 应视为成功', async () => {
+    const response = {
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        result: {
+          token: 'formal-token-from-verify-otp'
+        }
+      })
+    };
+    const data = await handleApiResponse(response);
+    expect(data.success).toBe(true);
+    expect(data.result.token).toBe('formal-token-from-verify-otp');
+  });
 });

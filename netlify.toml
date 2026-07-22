@@ -34,9 +34,17 @@
   status = 200
 
 # API代理重定向（用于解决CORS问题）
-# 通用 Simyo API 代理 (webapi - 新版API)
-# 代理层覆盖 User-Agent（浏览器无法可靠设置 UA）
+# Simyo API v2（须排在 v1 通配之前，例如登录 MFA：security.verifyOTP）
 # 与 src/simyo/js/modules/client-identity.js 保持同步
+[[redirects]]
+  from = "/api/simyo/v2/*"
+  to = "https://appapi.simyo.nl/webapi/api/v2/:splat"
+  status = 200
+  force = true
+  headers = {X-Forwarded-Host = "appapi.simyo.nl", User-Agent = "MijnSimyoFT/4.28.0  (iOS 18.2; iPhone12,8)"}
+
+# 通用 Simyo API 代理 (webapi v1)
+# 代理层覆盖 User-Agent（浏览器无法可靠设置 UA）
 [[redirects]]
   from = "/api/simyo/*"
   to = "https://appapi.simyo.nl/webapi/api/v1/:splat"

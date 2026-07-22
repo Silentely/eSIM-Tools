@@ -185,13 +185,16 @@ functionRoutes.forEach(([name, handler]) => {
   app.use(`/bff/${name}`, wrapped);
 });
 
-// Simyo API代理路由
+// Simyo API代理路由（支持 /api/simyo/v2/* → webapi/api/v2，其余 → webapi/api/v1）
 app.use('/api/simyo/*', (req, res) => {
     const [pathPart, queryPart] = req.originalUrl.replace(/^\/api\/simyo/, '').split('?');
     const proxyPath = pathPart || '/';
     const queryString = queryPart ? `?${queryPart}` : '';
-    // 本地代理走 webapi（simyoapi 为旧路径）
-    const targetUrl = `https://appapi.simyo.nl/webapi/api/v1${proxyPath}${queryString}`;
+    const isV2 = proxyPath === '/v2' || proxyPath.startsWith('/v2/');
+    const apiVersionPath = isV2 ? proxyPath.replace(/^\/v2/, '') || '/' : proxyPath;
+    const targetUrl = isV2
+        ? `https://appapi.simyo.nl/webapi/api/v2${apiVersionPath}${queryString}`
+        : `https://appapi.simyo.nl/webapi/api/v1${proxyPath}${queryString}`;
     Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
 
     // 设置CORS头（仅允许指定域）

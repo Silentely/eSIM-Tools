@@ -15,6 +15,9 @@ export class StateManager {
             phoneNumber: "",
             mfaStatus: "",
             mfaMethod: "",
+            methodHint: "",
+            /** 登录后待提交 OTP，业务接口不可用 */
+            mfaPending: false,
 
             // eSIM相关
             activationCode: "",
@@ -95,11 +98,18 @@ export class StateManager {
      */
     saveSession() {
         try {
+            // 不持久化未完成 MFA 的临时会话，并清掉旧正式会话，避免刷新后误用
+            if (this.state.mfaPending) {
+                secureStorage.removeItem(this.SESSION_KEY);
+                return;
+            }
             const sessionData = {
                 sessionToken: this.state.sessionToken,
                 phoneNumber: this.state.phoneNumber,
                 mfaStatus: this.state.mfaStatus,
                 mfaMethod: this.state.mfaMethod,
+                methodHint: this.state.methodHint,
+                mfaPending: false,
                 activationCode: this.state.activationCode,
                 validationCode: this.state.validationCode,
                 isDeviceChange: this.state.isDeviceChange,
@@ -136,6 +146,8 @@ export class StateManager {
                 phoneNumber: data.phoneNumber || "",
                 mfaStatus: data.mfaStatus || "",
                 mfaMethod: data.mfaMethod || "",
+                methodHint: data.methodHint || "",
+                mfaPending: false,
                 activationCode: data.activationCode || "",
                 validationCode: data.validationCode || "",
                 isDeviceChange: typeof data.isDeviceChange === 'boolean' ? data.isDeviceChange : false,
@@ -162,6 +174,8 @@ export class StateManager {
             phoneNumber: "",
             mfaStatus: "",
             mfaMethod: "",
+            methodHint: "",
+            mfaPending: false,
             activationCode: "",
             validationCode: "",
             isDeviceChange: false,

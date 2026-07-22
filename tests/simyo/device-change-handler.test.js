@@ -9,7 +9,14 @@ describe('Simyo DeviceChangeHandler 集成覆盖', () => {
   beforeEach(() => {
     stateManager.clearSession();
     stateManager.set('sessionToken', 'test-session-token');
+    stateManager.set('mfaPending', false);
     global.fetch.mockReset();
+  });
+
+  it('mfaPending 时应拒绝业务请求且不发起 fetch', async () => {
+    stateManager.set('mfaPending', true);
+    await expect(deviceChangeHandler.applyNewEsim()).rejects.toThrow(/MFA|二次验证|verification|验证码/i);
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('应完成设备更换主流程：GET simcard → POST simcard → verifyCode', async () => {

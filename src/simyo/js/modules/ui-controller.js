@@ -49,22 +49,29 @@ export class UIController {
             loginBtn: document.getElementById('loginBtn'),
             loginStatus: document.getElementById('loginStatus'),
 
+            // Step 2 - Login MFA
+            stepMfa: document.getElementById('stepMfa'),
+            mfaOtpInput: document.getElementById('mfaOtpInput'),
+            verifyMfaBtn: document.getElementById('verifyMfaBtn'),
+            mfaStatus: document.getElementById('mfaStatus'),
+            mfaHintText: document.getElementById('mfaHintText'),
+
             // 设备更换流程
             deviceChangeSteps: document.getElementById('deviceChangeSteps'),
 
-            // Step 2 - Get eSIM
+            // Step 3 - Get eSIM（DOM id 仍为 step2）
             getEsimBtn: document.getElementById('getEsimBtn'),
             esimStatus: document.getElementById('esimStatus'),
             esimInfo: document.getElementById('esimInfo'),
 
-            // Step 3 - Generate QR
+            // Step 4 - Generate QR（DOM id 仍为 step3）
             generateQrBtn: document.getElementById('generateQrBtn'),
             qrStatus: document.getElementById('qrStatus'),
             resultContainer: document.getElementById('resultContainer'),
             qrcode: document.getElementById('qrcode'),
             activationInfo: document.getElementById('activationInfo'),
 
-            // Step 4 - Confirm Install
+            // Step 5 - Confirm Install（DOM id 仍为 step4）
             confirmInstallBtn: document.getElementById('confirmInstallBtn'),
             confirmStatus: document.getElementById('confirmStatus')
         };
@@ -123,85 +130,107 @@ export class UIController {
     }
 
     /**
-     * 显示指定步骤
+     * 隐藏所有主流程 section（含 MFA、设备更换）
      */
-    showSection(stepNumber) {
-        // 直接通过 ID 获取主要步骤元素，避免 index 混淆
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const step3 = document.getElementById('step3');
-        const step4 = document.getElementById('step4');
-
-        const steps = [step1, step2, step3, step4];
-
-        // 隐藏所有主要步骤
-        steps.forEach((step, index) => {
-            if (step) {
-                if (index === stepNumber - 1) {
-                    step.classList.add('active');
-                    step.style.display = 'block';
-                } else {
-                    step.classList.remove('active');
-                    step.style.display = 'none';
-                }
+    hideAllWorkflowSections() {
+        const ids = ['step1', 'stepMfa', 'step2', 'step3', 'step4', 'deviceChangeSteps'];
+        ids.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('active');
+                el.style.display = 'none';
             }
         });
+    }
+
+    /**
+     * 显示指定主步骤
+     * 1=登录 2=登录MFA 3=获取eSIM 4=生成二维码 5=确认安装
+     * （DOM：step1 / stepMfa / step2 / step3 / step4）
+     */
+    showSection(stepNumber) {
+        this.hideAllWorkflowSections();
+
+        const map = {
+            1: 'step1',
+            2: 'stepMfa',
+            3: 'step2',
+            4: 'step3',
+            5: 'step4'
+        };
+        const targetId = map[stepNumber] || 'step1';
+        const target = document.getElementById(targetId);
+        if (target) {
+            target.classList.add('active');
+            target.style.display = 'block';
+        }
 
         stateManager.set('currentStep', stepNumber);
         this.updateSteps(stepNumber);
     }
 
     /**
-     * 显示设备更换步骤
+     * 显示登录 MFA 步骤，并填充发送渠道提示
+     * @param {{methodHint?:string, mfaMethod?:string}} [info]
      */
-    showDeviceChangeSteps() {
-        const step1 = document.getElementById('step1');
-        const deviceChangeSteps = document.getElementById('deviceChangeSteps');
-
-        console.log('showDeviceChangeSteps - step1:', step1);
-        console.log('showDeviceChangeSteps - deviceChangeSteps:', deviceChangeSteps);
-
-        // 隐藏第一步登录卡片
-        if (step1) {
-            step1.classList.remove('active');
-            step1.style.display = 'none';
+    showMfaStep(info = {}) {
+        this.hideAllWorkflowSections();
+        const stepMfa = document.getElementById('stepMfa');
+        if (stepMfa) {
+            stepMfa.classList.add('active');
+            stepMfa.style.display = 'block';
         }
 
-        // 显示设备更换流程
+        const hintEl = document.getElementById('mfaHintText');
+        if (hintEl) {
+            const hint = info.methodHint || info.mfaMethod || '';
+            hintEl.textContent = hint
+                ? t('simyo.auth.mfaHintLine', { hint })
+                : t('simyo.auth.mfaHintFallback');
+        }
+
+        const otpInput = document.getElementById('mfaOtpInput');
+        if (otpInput) {
+            otpInput.value = '';
+            otpInput.focus();
+        }
+        const verifyBtn = document.getElementById('verifyMfaBtn');
+        if (verifyBtn) {
+            verifyBtn.disabled = true;
+        }
+
+        stateManager.set('currentStep', 2);
+        this.updateSteps(2);
+    }
+
+    /**
+     * 显示设备更换步骤
+     * - 未开 MFA 的老用户：登录成功后直接进入
+     * - 已开 MFA：verifyOTP 成功后再进入（跳过空的步骤 2 展示）
+     */
+    showDeviceChangeSteps() {
+        this.hideAllWorkflowSections();
+
+        const deviceChangeSteps = document.getElementById('deviceChangeSteps');
         if (deviceChangeSteps) {
             deviceChangeSteps.classList.add('active');
-            deviceChangeSteps.style.display = 'block';  // 明确设置为 block
+            deviceChangeSteps.style.display = 'block';
         } else {
             console.error('deviceChangeSteps 元素未找到！');
         }
 
-        stateManager.setState({ isDeviceChange: true });
+        // 进度条：步骤 2（登录验证）对未开 MFA 用户视为已跳过，落在步骤 3 业务区
+        stateManager.setState({ isDeviceChange: true, currentStep: 3 });
+        this.updateSteps(3);
     }
 
     /**
-     * 跳过设备更换
+     * 跳过设备更换，进入获取 eSIM（步骤 3）
      */
     skipDeviceChange() {
-        const step1 = document.getElementById('step1');
-        const deviceChangeSteps = document.getElementById('deviceChangeSteps');
-
-        console.log('skipDeviceChange - step1:', step1);
-        console.log('skipDeviceChange - deviceChangeSteps:', deviceChangeSteps);
-
-        // 隐藏第一步登录卡片
-        if (step1) {
-            step1.classList.remove('active');
-            step1.style.display = 'none';
-        }
-
-        // 隐藏设备更换流程
-        if (deviceChangeSteps) {
-            deviceChangeSteps.classList.remove('active');
-            deviceChangeSteps.style.display = 'none';
-        }
-
+        this.hideAllWorkflowSections();
         stateManager.setState({ isDeviceChange: false });
-        this.showSection(3); // 显示生成二维码步骤（第三步）
+        this.showSection(3);
     }
 
     /**
@@ -225,11 +254,15 @@ export class UIController {
             this.elements.modeBadge.style.display = state.isDeviceChange ? 'inline-flex' : 'none';
         }
 
-        // Session Token
-        if (state.sessionToken) {
+        // Session Token（MFA 待验证时仅临时会话，不显示为已登录）
+        if (state.sessionToken && !state.mfaPending) {
             this.elements.statusSessionToken.textContent = state.sessionToken;
             this.elements.statusSessionToken.className = 'status-value connected';
             this.addTooltip(this.elements.statusSessionToken, state.sessionToken);
+        } else if (state.mfaPending) {
+            this.elements.statusSessionToken.textContent = tl('待验证');
+            this.elements.statusSessionToken.className = 'status-value disconnected';
+            this.removeTooltip(this.elements.statusSessionToken);
         } else {
             this.elements.statusSessionToken.textContent = tl('未登录');
             this.elements.statusSessionToken.className = 'status-value disconnected';
@@ -406,7 +439,12 @@ export class UIController {
      * 显示eSIM信息
      */
     showEsimInfo(esimData) {
-        this.elements.esimInfo.innerHTML = `
+        // 优先当前缓存；重复 id 清理后唯一挂载在二维码步骤
+        const host = this.elements.esimInfo || document.getElementById('esimInfo');
+        if (!host || !esimData) {
+            return;
+        }
+        host.innerHTML = `
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">${tl('eSIM信息')}</h5>
@@ -488,14 +526,8 @@ export class UIController {
             }
         });
 
-        // 隐藏设备更换流程界面
-        const step1 = document.getElementById('step1');
-        if (step1) step1.style.display = 'block';
-
-        if (this.elements.deviceChangeSteps) {
-            this.elements.deviceChangeSteps.style.display = 'none';
-        }
-
+        // 隐藏 MFA / 设备更换 / 后续步骤，回到登录
+        this.hideAllWorkflowSections();
         this.showSection(1);
         this.updateSteps(1);
     }

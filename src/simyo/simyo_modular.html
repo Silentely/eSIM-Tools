@@ -222,7 +222,7 @@
             </p>
         </div>
 
-        <!-- 步骤指示器 -->
+        <!-- 步骤指示器：1登录 → 2登录验证(仅账号开启 MFA 时) → 3获取eSIM → 4二维码 → 5确认 -->
         <div class="step-indicator reveal" role="list" aria-label="进度步骤">
             <div class="step active" role="listitem" aria-current="step" data-step="1">
                 <div class="step-number" aria-hidden="true">1</div>
@@ -231,22 +231,29 @@
                     <span class="lang-en">Account login</span>
                 </div>
             </div>
-            <div class="step" data-step="2">
+            <div class="step" data-step="2" title="仅当账号开启登录二次验证时需要">
                 <div class="step-number">2</div>
                 <div class="step-text">
-                    <span class="lang-zh">获取eSIM</span>
-                    <span class="lang-en">Get eSIM</span>
+                    <span class="lang-zh">登录验证</span>
+                    <span class="lang-en">Login MFA</span>
                 </div>
             </div>
             <div class="step" data-step="3">
                 <div class="step-number">3</div>
                 <div class="step-text">
-                    <span class="lang-zh">生成二维码</span>
-                    <span class="lang-en">Generate QR</span>
+                    <span class="lang-zh">获取eSIM</span>
+                    <span class="lang-en">Get eSIM</span>
                 </div>
             </div>
             <div class="step" data-step="4">
                 <div class="step-number">4</div>
+                <div class="step-text">
+                    <span class="lang-zh">生成二维码</span>
+                    <span class="lang-en">Generate QR</span>
+                </div>
+            </div>
+            <div class="step" data-step="5">
+                <div class="step-number">5</div>
                 <div class="step-text">
                     <span class="lang-zh">确认安装</span>
                     <span class="lang-en">Confirm install</span>
@@ -305,6 +312,46 @@
             </div>
         </div>
 
+        <!-- 步骤2: 登录 MFA（仅账号已开启时出现；未开 MFA 的老用户登录后直接跳过） -->
+        <div id="stepMfa" class="section reveal" style="display: none;">
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                    <span class="lang-zh"> 第二步：登录验证（短信/邮箱）</span>
+                    <span class="lang-en"> Step 2: Login verification (SMS / email)</span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3" style="font-size: 17px; color: #212529;">
+                        <span class="lang-zh">您的账号已开启登录二次验证。验证码已发到绑定渠道；短信与邮箱均只需输入收到的 6 位数字。（未开启 MFA 的账号不会进入本步骤。）</span>
+                        <span class="lang-en">Login MFA is enabled on your account. Enter the 6-digit code from SMS or email. (Accounts without MFA skip this step.)</span>
+                    </p>
+                    <p id="mfaHintText" class="mb-4 text-muted" aria-live="polite"></p>
+
+                    <div class="form-floating mb-4">
+                        <input type="text" id="mfaOtpInput" class="form-control" placeholder="输入6位验证码" maxlength="6" inputmode="numeric" autocomplete="one-time-code" aria-describedby="mfaOtpHelp">
+                        <label for="mfaOtpInput">
+                            <span class="lang-zh">验证码</span>
+                            <span class="lang-en">Verification code</span>
+                        </label>
+                        <small id="mfaOtpHelp" class="text-muted">
+                            <span class="lang-zh">请使用登录时收到的验证码（不是设备更换邮箱码）</span>
+                            <span class="lang-en">Use the code from login (not the device-change email code)</span>
+                        </small>
+                    </div>
+
+                    <div class="btn-group">
+                        <button id="verifyMfaBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-check me-2"></i>
+                            <span class="lang-zh">确认验证</span>
+                            <span class="lang-en">Verify code</span>
+                        </button>
+                    </div>
+
+                    <div id="mfaStatus" class="status" role="status" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- 设备更换流程 -->
         <div id="deviceChangeSteps" class="section reveal" style="display: none;">
             <div class="card card-elevated">
@@ -339,11 +386,11 @@
                         </ol>
                     </div>
 
-                    <!-- Step 2.1: 请求设备更换 -->
+                    <!-- 设备更换子步骤：请求 -->
                     <div class="mb-4">
                         <h5>
-                            <span class="lang-zh">2.1 请求设备更换</span>
-                            <span class="lang-en">2.1 Request device change</span>
+                            <span class="lang-zh">请求设备更换</span>
+                            <span class="lang-en">Request device change</span>
                         </h5>
                         <p>
                             <span class="lang-zh">点击后，验证码将自动发送到您的注册邮箱</span>
@@ -359,11 +406,11 @@
                         <div id="applyNewEsimStatus" class="status" role="status" aria-live="polite"></div>
                     </div>
 
-                    <!-- Step 2.2: 验证邮箱验证码 -->
+                    <!-- 设备更换子步骤：邮箱验证码 -->
                     <div class="mb-4">
                         <h5>
-                            <span class="lang-zh">2.2 输入邮箱验证码</span>
-                            <span class="lang-en">2.2 Enter the email verification code</span>
+                            <span class="lang-zh">输入邮箱验证码</span>
+                            <span class="lang-en">Enter the email verification code</span>
                         </h5>
                         <p>
                             <span class="lang-zh">请检查您的注册邮箱，输入收到的6位数字验证码</span>
@@ -391,13 +438,13 @@
             </div>
         </div>
 
-        <!-- 步骤2: 获取eSIM -->
+        <!-- 步骤3: 获取eSIM（DOM id 仍为 step2） -->
         <div id="step2" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
                     <i class="fas fa-download"></i>
-                    <span class="lang-zh"> 第二步：获取eSIM信息</span>
-                    <span class="lang-en"> Step 2: Retrieve eSIM info</span>
+                    <span class="lang-zh"> 第三步：获取eSIM信息</span>
+                    <span class="lang-en"> Step 3: Retrieve eSIM info</span>
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
@@ -414,18 +461,18 @@
                     </div>
 
                     <div id="esimStatus" class="status" role="status" aria-live="polite"></div>
-                    <div id="esimInfo" class="mt-4"></div>
+                    <!-- eSIM 详情统一写在二维码步骤的 #esimInfo，避免重复 id -->
                 </div>
             </div>
         </div>
 
-        <!-- 步骤3: 生成二维码 -->
+        <!-- 步骤4: 生成二维码（DOM id 仍为 step3） -->
         <div id="step3" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
                     <i class="fas fa-qrcode" aria-hidden="true"></i>
-                    <span class="lang-zh"> 第三步：生成eSIM二维码</span>
-                    <span class="lang-en"> Step 3: Generate eSIM QR</span>
+                    <span class="lang-zh"> 第四步：生成eSIM二维码</span>
+                    <span class="lang-en"> Step 4: Generate eSIM QR</span>
                 </div>
                 <div class="card-body">
                     <p class="mb-4" style="font-size: 17px; color: #212529;">
@@ -471,13 +518,13 @@
             </div>
         </div>
 
-        <!-- 步骤4: 确认安装 -->
+        <!-- 步骤5: 确认安装（DOM id 仍为 step4） -->
         <div id="step4" class="section reveal">
             <div class="card card-elevated">
                 <div class="card-header">
                     <i class="fas fa-check-circle" aria-hidden="true"></i>
-                    <span class="lang-zh"> 第四步：确认安装</span>
-                    <span class="lang-en"> Step 4: Confirm installation</span>
+                    <span class="lang-zh"> 第五步：确认安装</span>
+                    <span class="lang-en"> Step 5: Confirm installation</span>
                 </div>
                 <div class="card-body">
                     <!-- 重要警告 -->

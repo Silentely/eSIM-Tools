@@ -5,6 +5,7 @@
 
 import { stateManager } from './state-manager.js';
 import { getApiEndpoints, createHeaders, handleApiResponse } from './api-config.js';
+import { requireSessionToken } from './session-guard.js';
 import { generateLPA } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
 import Logger from '../../../js/modules/logger.js';
@@ -19,11 +20,7 @@ export class EsimService {
      * @returns {Promise<Object>} eSIM信息
      */
     async getEsim() {
-        const sessionToken = stateManager.get('sessionToken');
-        
-        if (!sessionToken) {
-            throw new Error(t('simyo.errors.requireLogin'));
-        }
+        const sessionToken = requireSessionToken();
         
         try {
             const response = await fetch(this.apiEndpoints.getEsim, {
@@ -84,11 +81,7 @@ export class EsimService {
      * @returns {Promise<Object>} 确认结果
      */
     async confirmInstall() {
-        const sessionToken = stateManager.get('sessionToken');
-        
-        if (!sessionToken) {
-            throw new Error(t('simyo.errors.requireLogin'));
-        }
+        const sessionToken = requireSessionToken();
         
         try {
             const response = await fetch(this.apiEndpoints.confirmInstall, {
