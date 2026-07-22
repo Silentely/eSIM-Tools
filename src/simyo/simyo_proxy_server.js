@@ -33,21 +33,27 @@ function isAllowedTarget(urlStr) {
   }
 }
 
-// Simyo API配置（对齐官方 iOS 4.28.0 抓包）
+// Simyo API配置（与 client-identity.js 同步：iOS 4.28.0 / iOS 27.0 / iPhone16,1）
 const crypto = require('crypto');
+const SIMYO_CLIENT_VERSION = process.env.SIMYO_CLIENT_VERSION || '4.28.0';
+const SIMYO_IOS_VERSION = process.env.SIMYO_IOS_VERSION || '27.0';
+const SIMYO_DEVICE_MODEL = process.env.SIMYO_DEVICE_MODEL || 'iPhone16,1';
+const SIMYO_USER_AGENT =
+  process.env.SIMYO_USER_AGENT ||
+  `MijnSimyoFT/${SIMYO_CLIENT_VERSION}  (iOS ${SIMYO_IOS_VERSION}; ${SIMYO_DEVICE_MODEL})`;
 const SIMYO_DEVICE_ID = process.env.SIMYO_DEVICE_ID || crypto.randomUUID().toUpperCase();
 const SIMYO_CONFIG = {
     baseUrl: 'https://appapi.simyo.nl/webapi/api/v1',
     headers: {
-        'X-Client-Token': 'e77b7e2f43db41bb95b17a2a11581a38',
-        'X-Client-Platform': 'ios',
-        'X-Client-Version': '4.28.0',
+        'X-Client-Token': process.env.SIMYO_CLIENT_TOKEN || 'e77b7e2f43db41bb95b17a2a11581a38',
+        'X-Client-Platform': process.env.SIMYO_CLIENT_PLATFORM || 'ios',
+        'X-Client-Version': SIMYO_CLIENT_VERSION,
         'X-Device-ID': SIMYO_DEVICE_ID,
-        'User-Agent': 'MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)',
+        'User-Agent': SIMYO_USER_AGENT,
         'Content-Type': 'application/json',
         Accept: 'application/json',
         Connection: 'keep-alive',
-        'Accept-Encoding': 'gzip, deflate, br'
+        'Accept-Encoding': 'gzip'
     }
 };
 

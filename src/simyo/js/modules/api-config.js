@@ -2,25 +2,28 @@
  * Simyo API配置模块
  * 定义所有API端点和请求配置
  *
- * 请求头字段对齐官方 Mijn Simyo iOS 4.28.0 抓包：
+ * 请求头字段对齐官方 Mijn Simyo iOS 抓包：
  * X-Client-Token / X-Client-Platform / X-Client-Version / X-Device-ID / User-Agent
+ * 版本与 UA 见 client-identity.js（单一事实来源）
  */
 
 import { isNetlifyEnvironment } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
+import { simyoClientIdentity } from './client-identity.js';
 
 /** localStorage 键：持久化设备 ID，模拟 iOS identifierForVendor */
 const DEVICE_ID_STORAGE_KEY = 'simyo_device_id';
 
 /**
- * Simyo客户端配置（与官方 App 抓包一致）
+ * Simyo客户端配置（与官方 App 抓包一致，源自 client-identity）
  */
 export const simyoConfig = {
-    clientToken: 'e77b7e2f43db41bb95b17a2a11581a38',
-    clientPlatform: 'ios',
-    clientVersion: '4.28.0',
-    // 官方 UA 在版本号后有两个空格
-    userAgent: 'MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)'
+    clientToken: simyoClientIdentity.clientToken,
+    clientPlatform: simyoClientIdentity.clientPlatform,
+    clientVersion: simyoClientIdentity.clientVersion,
+    iosVersion: simyoClientIdentity.iosVersion,
+    deviceModel: simyoClientIdentity.deviceModel,
+    userAgent: simyoClientIdentity.userAgent
 };
 
 /**

@@ -35,12 +35,14 @@
 
 # API代理重定向（用于解决CORS问题）
 # 通用 Simyo API 代理 (webapi - 新版API)
+# User-Agent 覆盖为官方 iOS 4.28.0 抓包值（浏览器无法可靠设置 UA）
+# 与 src/simyo/js/modules/client-identity.js 保持同步
 [[redirects]]
   from = "/api/simyo/*"
   to = "https://appapi.simyo.nl/webapi/api/v1/:splat"
   status = 200
   force = true
-  headers = {X-Forwarded-Host = "appapi.simyo.nl"}
+  headers = {X-Forwarded-Host = "appapi.simyo.nl", User-Agent = "MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)"}
 
 # v2 API 代理（用于特定端点如可用验证方式查询）
 [[redirects]]
@@ -48,7 +50,7 @@
   to = "https://appapi.simyo.nl/webapi/api/v2/esim.availableValidationMethods"
   status = 200
   force = true
-  headers = {X-Forwarded-Host = "appapi.simyo.nl"}
+  headers = {X-Forwarded-Host = "appapi.simyo.nl", User-Agent = "MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)"}
 
 # 保留旧版 simyoapi 路径的兼容性（如果需要）
 [[redirects]]
@@ -56,7 +58,7 @@
   to = "https://appapi.simyo.nl/simyoapi/api/v1/:splat"
   status = 200
   force = true
-  headers = {X-Forwarded-Host = "appapi.simyo.nl"}
+  headers = {X-Forwarded-Host = "appapi.simyo.nl", User-Agent = "MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)"}
 
 [[headers]]
   # 限制 Simyo 代理仅允许指定站点跨域访问
