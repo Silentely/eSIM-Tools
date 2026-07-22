@@ -30,8 +30,8 @@ const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
 const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
 const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
-const DEFAULT_SIMYO_CLIENT_VERSION = '4.23.5';
-const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.23.5 (iOS 26.3; iPhone16,1)';
+const DEFAULT_SIMYO_CLIENT_VERSION = '4.28.0';
+const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.28.0 (iOS 26.3; iPhone16,1)';
 
 // 启动时环境检查
 if (!INTERNAL_FUNCTION_KEY) {
