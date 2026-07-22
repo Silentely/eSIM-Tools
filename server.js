@@ -29,10 +29,14 @@ const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _res
 const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
 const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
 const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
+// 与 src/simyo/js/modules/client-identity.js 保持同步（官方 iOS 4.28.0 抓包）
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
 const DEFAULT_SIMYO_CLIENT_VERSION = '4.28.0';
-// 与官方 iOS 4.28.0 抓包一致（版本号后两个空格）
-const DEFAULT_SIMYO_USER_AGENT = 'MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)';
+const DEFAULT_SIMYO_IOS_VERSION = '27.0';
+const DEFAULT_SIMYO_DEVICE_MODEL = 'iPhone16,1';
+// 版本号与括号之间为两个空格
+const DEFAULT_SIMYO_USER_AGENT =
+  `MijnSimyoFT/${DEFAULT_SIMYO_CLIENT_VERSION}  (iOS ${DEFAULT_SIMYO_IOS_VERSION}; ${DEFAULT_SIMYO_DEVICE_MODEL})`;
 const crypto = require('crypto');
 function getDefaultSimyoDeviceId() {
     if (process.env.SIMYO_DEVICE_ID) return process.env.SIMYO_DEVICE_ID;
@@ -208,7 +212,8 @@ app.use('/api/simyo/*', (req, res) => {
         });
     }
 
-    // 代理请求（X-Device-ID 为 Simyo 4.28+ 必填）
+    // 代理请求：强制官方 App 身份头（浏览器 UA 不可靠，禁止透传）
+    // X-Device-ID 为 Simyo 4.28+ 必填，优先使用前端持久化 ID
     const axios = require('axios');
     const config = {
         method: req.method.toLowerCase(),
@@ -216,7 +221,8 @@ app.use('/api/simyo/*', (req, res) => {
         headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
-            'User-Agent': req.headers['user-agent'] || process.env.SIMYO_USER_AGENT || DEFAULT_SIMYO_USER_AGENT,
+            'Accept-Encoding': 'gzip',
+            'User-Agent': process.env.SIMYO_USER_AGENT || DEFAULT_SIMYO_USER_AGENT,
             'X-Client-Token': simyoClientToken,
             'X-Client-Platform': process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
             'X-Client-Version': process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
