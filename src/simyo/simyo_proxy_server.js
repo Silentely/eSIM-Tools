@@ -33,11 +33,11 @@ function isAllowedTarget(urlStr) {
   }
 }
 
-// Simyo API配置（与 client-identity.js 同步：iOS 4.28.0 / iOS 27.0 / iPhone16,1）
+// Simyo API配置（与 client-identity.js 同步：iOS 4.28.0 / iOS 18.2 / iPhone12,8）
 const crypto = require('crypto');
 const SIMYO_CLIENT_VERSION = process.env.SIMYO_CLIENT_VERSION || '4.28.0';
-const SIMYO_IOS_VERSION = process.env.SIMYO_IOS_VERSION || '27.0';
-const SIMYO_DEVICE_MODEL = process.env.SIMYO_DEVICE_MODEL || 'iPhone16,1';
+const SIMYO_IOS_VERSION = process.env.SIMYO_IOS_VERSION || '18.2';
+const SIMYO_DEVICE_MODEL = process.env.SIMYO_DEVICE_MODEL || 'iPhone12,8';
 const SIMYO_USER_AGENT =
   process.env.SIMYO_USER_AGENT ||
   `MijnSimyoFT/${SIMYO_CLIENT_VERSION}  (iOS ${SIMYO_IOS_VERSION}; ${SIMYO_DEVICE_MODEL})`;

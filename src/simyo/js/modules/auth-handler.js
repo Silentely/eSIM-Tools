@@ -1,6 +1,6 @@
 /**
  * Simyo认证处理模块
- * 负责账户登录认证
+ * 负责账户登录认证；识别 mfaStatus，未关闭 MFA 时阻断后续业务
  */
 
 import { stateManager } from './state-manager.js';
@@ -9,6 +9,29 @@ import { validatePhoneNumber } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
 import Logger from '../../../js/modules/logger.js';
 
+/**
+ * 判断登录返回的 mfaStatus 是否允许继续业务
+ * 官方 HAR：DISABLED_BY_CUSTOMER 表示客户关闭 MFA
+ * @param {string} mfaStatus
+ * @returns {boolean}
+ */
+export function isMfaDisabledOrComplete(mfaStatus) {
+    if (mfaStatus == null || mfaStatus === '') {
+        return true;
+    }
+    const s = String(mfaStatus).toUpperCase();
+    return (
+        s === 'DISABLED_BY_CUSTOMER' ||
+        s === 'DISABLED' ||
+        s === 'NONE' ||
+        s === 'OFF' ||
+        s === 'OK' ||
+        s === 'VERIFIED' ||
+        s === 'COMPLETED' ||
+        s === 'NOT_REQUIRED'
+    );
+}
+
 export class AuthHandler {
     constructor() {
         this.apiEndpoints = getApiEndpoints();
@@ -16,12 +39,11 @@ export class AuthHandler {
 
     /**
      * 登录Simyo账户
-     * @param {string} phoneNumber - 手机号
-     * @param {string} password - 密码
-     * @returns {Promise<Object>} 登录结果
+     * @param {string} phoneNumber
+     * @param {string} password
+     * @returns {Promise<Object>}
      */
     async login(phoneNumber, password) {
-        // 验证手机号格式
         if (!validatePhoneNumber(phoneNumber)) {
             throw new Error(t('simyo.errors.invalidPhone'));
         }
@@ -41,24 +63,42 @@ export class AuthHandler {
             });
 
             const data = await handleApiResponse(response);
-
-            // 提取session token
-            const sessionToken = data.result && data.result.sessionToken;
+            const result = data.result || {};
+            const sessionToken = result.sessionToken;
 
             if (!sessionToken) {
                 throw new Error(data.message || t('simyo.auth.loginMissingToken'));
             }
 
-            // 仅保存会话令牌与手机号；密码不进入状态
+            const mfaStatus = result.mfaStatus || '';
+            const mfaMethod = result.mfaMethod || '';
+            const methodHint = result.methodHint || '';
+
+            // 先落会话，便于诊断；MFA 未关闭则禁止进入设备更换
             stateManager.setState({
                 sessionToken: sessionToken,
-                phoneNumber: phoneNumber
+                phoneNumber: phoneNumber,
+                mfaStatus: mfaStatus,
+                mfaMethod: mfaMethod
             });
+
+            if (!isMfaDisabledOrComplete(mfaStatus)) {
+                const err = new Error(
+                    t('simyo.auth.mfaRequired', {
+                        status: mfaStatus,
+                        method: mfaMethod || methodHint || '—'
+                    })
+                );
+                err.code = 'MFA_REQUIRED';
+                err.mfaStatus = mfaStatus;
+                throw err;
+            }
 
             return {
                 success: true,
                 message: t('simyo.auth.loginSuccess'),
-                sessionToken: sessionToken
+                sessionToken: sessionToken,
+                mfaStatus: mfaStatus
             };
         } catch (error) {
             Logger.error(t('simyo.auth.log.loginFailed'), error);
@@ -66,22 +106,13 @@ export class AuthHandler {
         }
     }
 
-    /**
-     * 检查登录状态
-     * @returns {boolean} 是否已登录
-     */
     isLoggedIn() {
         return !!stateManager.get('sessionToken');
     }
 
-    /**
-     * 获取当前session token
-     * @returns {string} session token
-     */
     getSessionToken() {
         return stateManager.get('sessionToken');
     }
 }
 
-// 创建单例实例
 export const authHandler = new AuthHandler();

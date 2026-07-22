@@ -32,8 +32,9 @@ export class EsimService {
             });
             
             const data = await handleApiResponse(response);
-            
-            if (!data.success || !data.result || !data.result.activationCode) {
+
+            // 官方 HAR：{ result: { activationCode, success: true, errorCode: 0 } }
+            if (!data.result || !data.result.activationCode) {
                 throw new Error(data.message || t('simyo.esim.errors.notFound'));
             }
             

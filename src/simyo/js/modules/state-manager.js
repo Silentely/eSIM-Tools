@@ -13,6 +13,8 @@ export class StateManager {
             // 认证相关（密码仅在登录请求时使用，不进入状态）
             sessionToken: "",
             phoneNumber: "",
+            mfaStatus: "",
+            mfaMethod: "",
 
             // eSIM相关
             activationCode: "",
@@ -96,6 +98,8 @@ export class StateManager {
             const sessionData = {
                 sessionToken: this.state.sessionToken,
                 phoneNumber: this.state.phoneNumber,
+                mfaStatus: this.state.mfaStatus,
+                mfaMethod: this.state.mfaMethod,
                 activationCode: this.state.activationCode,
                 validationCode: this.state.validationCode,
                 isDeviceChange: this.state.isDeviceChange,
@@ -130,6 +134,8 @@ export class StateManager {
                 ...this.state,
                 sessionToken: data.sessionToken || "",
                 phoneNumber: data.phoneNumber || "",
+                mfaStatus: data.mfaStatus || "",
+                mfaMethod: data.mfaMethod || "",
                 activationCode: data.activationCode || "",
                 validationCode: data.validationCode || "",
                 isDeviceChange: typeof data.isDeviceChange === 'boolean' ? data.isDeviceChange : false,
@@ -154,6 +160,8 @@ export class StateManager {
         this.state = {
             sessionToken: "",
             phoneNumber: "",
+            mfaStatus: "",
+            mfaMethod: "",
             activationCode: "",
             validationCode: "",
             isDeviceChange: false,

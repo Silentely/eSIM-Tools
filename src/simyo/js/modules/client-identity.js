@@ -1,13 +1,13 @@
 /**
  * Simyo 官方 App 客户端身份（单一事实来源）
  *
- * 对齐 Mijn Simyo iOS 抓包（2026-07-22 HAR）：
+ * 对齐 Mijn Simyo iOS 抓包（2026-07-22 eSIM 更换 HAR）：
  * - App 版本: 4.28.0
- * - API User-Agent: MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)
+ * - API User-Agent: MijnSimyoFT/4.28.0  (iOS 18.2; iPhone12,8)
  *   （版本号与括号之间为两个空格）
  * - 平台: ios
- * - 设备型号: iPhone16,1
- * - 系统版本: 27.0
+ * - 设备型号: iPhone12,8
+ * - 系统版本: 18.2
  *
  * 修改此处后请同步：
  * - server.js 中的 DEFAULT_SIMYO_* 常量
@@ -26,10 +26,10 @@ export const SIMYO_CLIENT_PLATFORM = 'ios';
 export const SIMYO_CLIENT_TOKEN = 'e77b7e2f43db41bb95b17a2a11581a38';
 
 /** 抓包中的 iOS 系统版本 */
-export const SIMYO_IOS_VERSION = '27.0';
+export const SIMYO_IOS_VERSION = '18.2';
 
 /** 抓包中的设备型号（identifier） */
-export const SIMYO_DEVICE_MODEL = 'iPhone16,1';
+export const SIMYO_DEVICE_MODEL = 'iPhone12,8';
 
 /**
  * appapi 请求使用的 User-Agent

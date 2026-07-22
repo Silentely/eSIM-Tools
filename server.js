@@ -29,11 +29,11 @@ const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _res
 const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
 const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
 const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
-// 与 src/simyo/js/modules/client-identity.js 保持同步（官方 iOS 4.28.0 抓包）
+// 与 src/simyo/js/modules/client-identity.js 保持同步（官方 iOS 4.28.0 eSIM 更换 HAR）
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
 const DEFAULT_SIMYO_CLIENT_VERSION = '4.28.0';
-const DEFAULT_SIMYO_IOS_VERSION = '27.0';
-const DEFAULT_SIMYO_DEVICE_MODEL = 'iPhone16,1';
+const DEFAULT_SIMYO_IOS_VERSION = '18.2';
+const DEFAULT_SIMYO_DEVICE_MODEL = 'iPhone12,8';
 // 版本号与括号之间为两个空格
 const DEFAULT_SIMYO_USER_AGENT =
   `MijnSimyoFT/${DEFAULT_SIMYO_CLIENT_VERSION}  (iOS ${DEFAULT_SIMYO_IOS_VERSION}; ${DEFAULT_SIMYO_DEVICE_MODEL})`;

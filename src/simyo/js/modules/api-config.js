@@ -5,6 +5,10 @@
  * 请求头字段对齐官方 Mijn Simyo iOS 抓包：
  * X-Client-Token / X-Client-Platform / X-Client-Version / X-Device-ID / User-Agent
  * 版本与 UA 见 client-identity.js（单一事实来源）
+ *
+ * eSIM 更换主路径（HAR 2026-07-22，仅 EMAIL）：
+ * POST /sessions → GET /settings/simcard → POST /settings/simcard
+ * → POST /esim/verify-code → GET /esim/get-by-customer
  */
 
 import { isNetlifyEnvironment } from './utils.js';
@@ -34,7 +38,6 @@ function generateUuidV4() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID().toUpperCase();
     }
-    // 无 crypto.randomUUID 时的回退（仍保证 RFC4122 形态）
     const bytes = new Uint8Array(16);
     if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
         crypto.getRandomValues(bytes);
@@ -61,7 +64,6 @@ function generateUuidV4() {
 
 /**
  * 获取或创建稳定的 X-Device-ID
- * 官方 App 每个请求都携带 UUID 形态的设备 ID；缺失会返回 400 missing X-Device-ID
  * @returns {string}
  */
 export function getOrCreateDeviceId() {
@@ -85,7 +87,7 @@ export function getOrCreateDeviceId() {
 }
 
 /**
- * API端点配置
+ * API端点配置（对齐官方 webapi 路径）
  */
 export function getApiEndpoints() {
     const isNetlify = isNetlifyEnvironment();
@@ -93,30 +95,27 @@ export function getApiEndpoints() {
     const localBase = isBrowserServed ? '' : 'http://localhost:3000';
 
     return {
-        // 认证相关
         login: isNetlify
             ? '/api/simyo/sessions'
             : `${localBase}/api/simyo/sessions`,
 
-        // eSIM相关
-        getEsim: isNetlify
-            ? '/api/simyo/esim/get-by-customer'
-            : `${localBase}/api/simyo/esim/get-by-customer`,
-
-        // 设备更换相关
+        // GET 查询 / POST 申请 共用 settings/simcard
+        simcard: isNetlify
+            ? '/api/simyo/settings/simcard'
+            : `${localBase}/api/simyo/settings/simcard`,
+        // 兼容旧命名
         applyNewEsim: isNetlify
             ? '/api/simyo/settings/simcard'
             : `${localBase}/api/simyo/settings/simcard`,
+
         verifyCode: isNetlify
             ? '/api/simyo/esim/verify-code'
             : `${localBase}/api/simyo/esim/verify-code`,
 
-        // 新增：查询可用的验证方式 (v2 API)
-        availableValidationMethods: isNetlify
-            ? '/api/simyo/esim.availableValidationMethods'
-            : `${localBase}/api/simyo/esim.availableValidationMethods`,
+        getEsim: isNetlify
+            ? '/api/simyo/esim/get-by-customer'
+            : `${localBase}/api/simyo/esim/get-by-customer`,
 
-        // 安装确认
         confirmInstall: isNetlify
             ? '/api/simyo/esim/reorder-profile-installed'
             : `${localBase}/api/simyo/esim/reorder-profile-installed`
@@ -148,10 +147,8 @@ export function createHeaders(includeSession = false, sessionToken = '') {
 
 /**
  * 将 Simyo / 代理返回的原始错误映射为用户可读文案
- * 优先匹配已知业务短语，其次按 HTTP 状态码，最后保留原文或通用失败
- *
- * @param {number} status - HTTP 状态码（业务体错误可传 0）
- * @param {object|string|null} data - 响应体或原始字符串
+ * @param {number} status
+ * @param {object|string|null} data
  * @returns {string}
  */
 export function mapSimyoErrorMessage(status, data) {
@@ -167,7 +164,16 @@ export function mapSimyoErrorMessage(status, data) {
     const raw = rawParts.filter((p) => p != null && String(p).trim() !== '').map(String).join(' ');
     const normalized = raw.toLowerCase();
 
-    // 已知业务错误（Simyo 原文 / 代理透传）
+    // 会话类（须先于笼统 unauthorized / credentials）
+    if (
+        normalized.includes('bad session') ||
+        (normalized.includes('unauthoris') && normalized.includes('session')) ||
+        (normalized.includes('unauthorized') && normalized.includes('session')) ||
+        (normalized.includes('session') && (normalized.includes('expired') || normalized.includes('invalid')))
+    ) {
+        return t('simyo.api.error.badSession');
+    }
+
     if (normalized.includes('missing x-device-id') || normalized.includes('x-device-id')) {
         return t('simyo.api.error.missingDeviceId');
     }
@@ -175,19 +181,14 @@ export function mapSimyoErrorMessage(status, data) {
         normalized.includes('invalid credentials') ||
         normalized.includes('invalid password') ||
         normalized.includes('authentication failed') ||
-        normalized.includes('unauthorized') ||
         normalized.includes('wrong password')
     ) {
         return t('simyo.api.error.invalidCredentials');
-    }
-    if (normalized.includes('session') && (normalized.includes('expired') || normalized.includes('invalid'))) {
-        return t('simyo.api.error.sessionExpired');
     }
     if (normalized.includes('too many') || normalized.includes('rate limit') || normalized.includes('throttl')) {
         return t('simyo.api.error.rateLimited');
     }
 
-    // HTTP 状态码语义（含历史上 426 客户端版本过旧）
     const statusMap = {
         400: 'simyo.api.error.badRequest',
         401: 'simyo.api.error.unauthorized',
@@ -202,10 +203,8 @@ export function mapSimyoErrorMessage(status, data) {
         504: 'simyo.api.error.timeout'
     };
     if (status && statusMap[status]) {
-        // 有状态码映射时，优先友好文案；附带简短原文便于排查（过长则截断）
         const friendly = t(statusMap[status]);
         if (raw && raw.length > 0 && raw.length <= 80 && !/^HTTP\s+\d+/i.test(raw)) {
-            // 避免重复拼接已是友好文案的情况
             if (!friendly.includes(raw) && normalized !== friendly.toLowerCase()) {
                 return `${friendly}（${raw}）`;
             }
@@ -214,7 +213,6 @@ export function mapSimyoErrorMessage(status, data) {
     }
 
     if (raw) {
-        // 纯 HTTP NNN 形态的原文也换成通用失败
         if (/^HTTP\s+\d+$/i.test(raw.trim())) {
             return t('simyo.api.error.genericWithStatus', { status: raw.replace(/\D/g, '') || status || '?' });
         }
@@ -228,8 +226,43 @@ export function mapSimyoErrorMessage(status, data) {
 }
 
 /**
+ * 判断 Simyo result 体是否表示业务成功
+ * 官方登录/查询常无 result.success，仅有 sessionToken / eSimStatus 等字段
+ * @param {object} result
+ * @returns {boolean}
+ */
+export function isSimyoResultSuccessful(result) {
+    if (!result || typeof result !== 'object') {
+        return false;
+    }
+    if (result.success === false) {
+        return false;
+    }
+    if (result.success === true) {
+        return true;
+    }
+    // 登录
+    if (result.sessionToken) {
+        return true;
+    }
+    // 取 eSIM
+    if (result.activationCode) {
+        return true;
+    }
+    // simcard 状态查询
+    if (result.eSimStatus || result.canCreateESim || result.canCreateSimcard) {
+        return true;
+    }
+    // 申请更换：reason + remainingNumberOfTries
+    if (result.reason != null || result.remainingNumberOfTries != null) {
+        return true;
+    }
+    return false;
+}
+
+/**
  * 处理API响应
- * @param {Response} response - Fetch API响应对象
+ * @param {Response} response
  */
 export async function handleApiResponse(response) {
     const contentType = response.headers.get('content-type') || '';
@@ -238,7 +271,6 @@ export async function handleApiResponse(response) {
         try {
             data = await response.json();
         } catch (e) {
-            // JSON 解析失败（空体/坏体），回退为空对象
             data = {};
         }
     } else {
@@ -246,32 +278,27 @@ export async function handleApiResponse(response) {
         data = text ? { message: text } : {};
     }
 
-    // HTTP 错误：映射为用户可读中文/英文，避免只显示「HTTP 426」
     if (!response.ok) {
         throw new Error(mapSimyoErrorMessage(response.status, data));
     }
 
-    // 非 JSON 响应直接返回文本内容
     if (!contentType.includes('application/json')) {
         return { success: true, result: data };
     }
 
-    // 统一兼容三种返回格式：
-    // 1. 本地旧代理包装: { success, result, message }
-    // 2. 直通 Simyo: { result: {...} }
-    // 3. Simyo 展平成功结构: { success: true, ... }
+    // 本地代理包装: { success, result, message }
     if (data.success === true && data.result) {
         return data;
     }
 
+    // 直通 Simyo: { result: {...} }
     if (data.result) {
-        const nestedSuccess = data.result.success;
-        // 业务失败（HTTP 200 但 success=false / 无 success 字段）也走友好文案
-        if (nestedSuccess === false) {
+        if (data.result.success === false) {
             throw new Error(mapSimyoErrorMessage(0, data));
         }
+        const ok = isSimyoResultSuccessful(data.result);
         return {
-            success: nestedSuccess === true,
+            success: ok,
             result: data.result,
             message: data.message || data.result.message || data.result.reason
         };

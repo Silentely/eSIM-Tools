@@ -295,11 +295,18 @@ class SimyoApp {
 
             Logger.log('[Simyo] 调用 deviceChangeHandler.applyNewEsim()...');
             const result = await deviceChangeHandler.applyNewEsim();
-            Logger.log('[Simyo] 设备更换请求成功:', result.message);
+            Logger.log('[Simyo] 设备更换请求成功:', result.message, result.eSimStatus || '');
 
             uiController.showStatus(statusEl, result.message || t('simyo.app.status.applySuccess'), "success");
 
-            // 新版流程使用邮箱验证码：引导用户直接输入验证码
+            // 已验证完成：可直接跳过验证码进入获取 eSIM
+            if (result.readyForDownload) {
+                await delay(1500);
+                uiController.skipDeviceChange();
+                return;
+            }
+
+            // 邮箱验证码：引导用户输入（含已下单仅等待验证码）
             const codeInput = document.getElementById('validationCodeInput');
             const verifyBtn = document.getElementById('verifyCodeBtn');
             if (codeInput) {
@@ -308,7 +315,6 @@ class SimyoApp {
                 if (verifyBtn) verifyBtn.disabled = !hasValidCode;
             }
 
-            // 显示下一步提示
             if (result.nextStep) {
                 await delay(3000);
                 uiController.showStatus(statusEl, result.nextStep, "info");

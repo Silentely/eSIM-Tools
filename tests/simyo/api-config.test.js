@@ -22,17 +22,17 @@ import {
 
 const UUID_RE = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
 /** 官方抓包 UA：版本号后恰好两个空格 */
-const OFFICIAL_UA = 'MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)';
+const OFFICIAL_UA = 'MijnSimyoFT/4.28.0  (iOS 18.2; iPhone12,8)';
 
 describe('Simyo client-identity', () => {
-  it('版本 / 设备 / UA 应与 4.28.0 抓包完全一致', () => {
+  it('版本 / 设备 / UA 应与 4.28.0 eSIM 更换抓包一致', () => {
     expect(SIMYO_CLIENT_VERSION).toBe('4.28.0');
     expect(SIMYO_CLIENT_PLATFORM).toBe('ios');
-    expect(SIMYO_IOS_VERSION).toBe('27.0');
-    expect(SIMYO_DEVICE_MODEL).toBe('iPhone16,1');
+    expect(SIMYO_IOS_VERSION).toBe('18.2');
+    expect(SIMYO_DEVICE_MODEL).toBe('iPhone12,8');
     expect(SIMYO_USER_AGENT).toBe(OFFICIAL_UA);
     // 版本号与括号之间必须是两个空格（不是一个）
-    expect(SIMYO_USER_AGENT).toMatch(/^MijnSimyoFT\/4\.28\.0 {2}\(iOS 27\.0; iPhone16,1\)$/);
+    expect(SIMYO_USER_AGENT).toMatch(/^MijnSimyoFT\/4\.28\.0 {2}\(iOS 18\.2; iPhone12,8\)$/);
     expect(simyoClientIdentity.userAgent).toBe(OFFICIAL_UA);
   });
 });
@@ -85,6 +85,12 @@ describe('Simyo mapSimyoErrorMessage / handleApiResponse', () => {
     expect(msg).not.toBe('missing X-Device-ID');
   });
 
+  it('bad session 应映射为会话无效，而非账号密码错误', () => {
+    const msg = mapSimyoErrorMessage(401, { message: 'Unauthorised - bad session' });
+    expect(msg.toLowerCase()).toMatch(/session|会话|mfa|bad session/);
+    expect(msg).not.toMatch(/密码不正确|incorrect phone number or password/i);
+  });
+
   it('401 凭据错误原文应优先识别为账号密码错误', () => {
     const msg = mapSimyoErrorMessage(401, { message: 'Invalid credentials' });
     expect(msg.toLowerCase()).toMatch(/password|密码|phone|手机号|incorrect|不正确/);
@@ -98,6 +104,23 @@ describe('Simyo mapSimyoErrorMessage / handleApiResponse', () => {
       json: async () => ({ message: 'Upgrade Required' })
     };
     await expect(handleApiResponse(response)).rejects.toThrow(/升级|upgrade|客户端|client version|refresh|刷新/i);
+  });
+
+  it('handleApiResponse 官方登录体（无 result.success）应视为成功', async () => {
+    const response = {
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({
+        result: {
+          sessionToken: 'abc',
+          mfaStatus: 'DISABLED_BY_CUSTOMER'
+        }
+      })
+    };
+    const data = await handleApiResponse(response);
+    expect(data.success).toBe(true);
+    expect(data.result.sessionToken).toBe('abc');
   });
 
   it('handleApiResponse 成功路径仍返回 result', async () => {
