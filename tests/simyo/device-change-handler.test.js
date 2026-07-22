@@ -1,5 +1,5 @@
 /**
- * Simyo 设备更换处理模块集成测试（对齐 HAR 状态机，仅 EMAIL）
+ * Simyo 设备更换处理模块集成测试（EMAIL 状态机）
  */
 
 import { deviceChangeHandler, ESIM_STATUS } from '../../src/simyo/js/modules/device-change-handler.js';

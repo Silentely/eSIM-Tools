@@ -1,12 +1,11 @@
 /**
- * Simyo API配置模块
- * 定义所有API端点和请求配置
+ * Simyo API 配置模块
+ * 定义端点、请求头与响应解析
  *
- * 请求头字段对齐官方 Mijn Simyo iOS 抓包：
- * X-Client-Token / X-Client-Platform / X-Client-Version / X-Device-ID / User-Agent
- * 版本与 UA 见 client-identity.js（单一事实来源）
+ * 请求头：X-Client-Token / Platform / Version / X-Device-ID / User-Agent
+ * 版本与 UA 见 client-identity.js
  *
- * eSIM 更换主路径（HAR 2026-07-22，仅 EMAIL）：
+ * eSIM 更换主路径（仅 EMAIL）：
  * POST /sessions → GET /settings/simcard → POST /settings/simcard
  * → POST /esim/verify-code → GET /esim/get-by-customer
  */
@@ -19,7 +18,7 @@ import { simyoClientIdentity } from './client-identity.js';
 const DEVICE_ID_STORAGE_KEY = 'simyo_device_id';
 
 /**
- * Simyo客户端配置（与官方 App 抓包一致，源自 client-identity）
+ * Simyo 客户端配置（源自 client-identity）
  */
 export const simyoConfig = {
     clientToken: simyoClientIdentity.clientToken,
@@ -87,7 +86,7 @@ export function getOrCreateDeviceId() {
 }
 
 /**
- * API端点配置（对齐官方 webapi 路径）
+ * API 端点配置（webapi 路径）
  */
 export function getApiEndpoints() {
     const isNetlify = isNetlifyEnvironment();
@@ -227,7 +226,7 @@ export function mapSimyoErrorMessage(status, data) {
 
 /**
  * 判断 Simyo result 体是否表示业务成功
- * 官方登录/查询常无 result.success，仅有 sessionToken / eSimStatus 等字段
+ * 登录/状态查询响应可能不含 result.success，而以 sessionToken、eSimStatus 等字段为准
  * @param {object} result
  * @returns {boolean}
  */
@@ -241,19 +240,15 @@ export function isSimyoResultSuccessful(result) {
     if (result.success === true) {
         return true;
     }
-    // 登录
     if (result.sessionToken) {
         return true;
     }
-    // 取 eSIM
     if (result.activationCode) {
         return true;
     }
-    // simcard 状态查询
     if (result.eSimStatus || result.canCreateESim || result.canCreateSimcard) {
         return true;
     }
-    // 申请更换：reason + remainingNumberOfTries
     if (result.reason != null || result.remainingNumberOfTries != null) {
         return true;
     }

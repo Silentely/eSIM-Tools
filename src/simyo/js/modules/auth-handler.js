@@ -11,7 +11,7 @@ import Logger from '../../../js/modules/logger.js';
 
 /**
  * 判断登录返回的 mfaStatus 是否允许继续业务
- * 官方 HAR：DISABLED_BY_CUSTOMER 表示客户关闭 MFA
+ * DISABLED_BY_CUSTOMER 等表示无需再完成 MFA
  * @param {string} mfaStatus
  * @returns {boolean}
  */

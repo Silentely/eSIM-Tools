@@ -29,7 +29,7 @@ const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _res
 const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
 const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
 const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
-// 与 src/simyo/js/modules/client-identity.js 保持同步（官方 iOS 4.28.0 eSIM 更换 HAR）
+// 与 src/simyo/js/modules/client-identity.js 保持同步
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
 const DEFAULT_SIMYO_CLIENT_VERSION = '4.28.0';
 const DEFAULT_SIMYO_IOS_VERSION = '18.2';
@@ -190,7 +190,7 @@ app.use('/api/simyo/*', (req, res) => {
     const [pathPart, queryPart] = req.originalUrl.replace(/^\/api\/simyo/, '').split('?');
     const proxyPath = pathPart || '/';
     const queryString = queryPart ? `?${queryPart}` : '';
-    // 与官方 App / Netlify 代理一致，走 webapi（simyoapi 为旧路径）
+    // 本地代理走 webapi（simyoapi 为旧路径）
     const targetUrl = `https://appapi.simyo.nl/webapi/api/v1${proxyPath}${queryString}`;
     Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
 
@@ -212,8 +212,8 @@ app.use('/api/simyo/*', (req, res) => {
         });
     }
 
-    // 代理请求：强制官方 App 身份头（浏览器 UA 不可靠，禁止透传）
-    // X-Device-ID 为 Simyo 4.28+ 必填，优先使用前端持久化 ID
+    // 代理请求：强制使用客户端身份头（浏览器 UA 不可靠，禁止透传）
+    // X-Device-ID 必填，优先使用前端持久化 ID
     const axios = require('axios');
     const config = {
         method: req.method.toLowerCase(),

@@ -33,7 +33,7 @@ export class EsimService {
             
             const data = await handleApiResponse(response);
 
-            // 官方 HAR：{ result: { activationCode, success: true, errorCode: 0 } }
+            // 成功响应含 activationCode
             if (!data.result || !data.result.activationCode) {
                 throw new Error(data.message || t('simyo.esim.errors.notFound'));
             }

@@ -1,6 +1,6 @@
 /**
- * Simyo设备更换处理模块
- * 对齐官方 App HAR（仅 EMAIL 验证）：
+ * Simyo 设备更换处理模块
+ * 固定 EMAIL 验证流程：
  * GET settings/simcard → POST settings/simcard(EMAIL) → POST esim/verify-code
  */
 
@@ -10,7 +10,7 @@ import { validateVerificationCode } from './utils.js';
 import { t } from '../../../js/modules/i18n.js';
 import Logger from '../../../js/modules/logger.js';
 
-/** 官方 eSimStatus 状态 */
+/** eSimStatus 业务状态 */
 export const ESIM_STATUS = {
     START_REQUEST: 'ESIM_START_REQUEST',
     WAITING_FOR_VALIDATION_CODE: 'ESIM_REQUEST_WAITING_FOR_VALIDATION_CODE',
@@ -52,7 +52,7 @@ export class DeviceChangeHandler {
     }
 
     /**
-     * 请求设备更换（固定 EMAIL，对齐官方 body）
+     * 请求设备更换（固定 EMAIL）
      * 会先 GET 状态：已在等待验证码 / 可下载时避免重复下单
      * @returns {Promise<Object>}
      */
@@ -107,7 +107,7 @@ export class DeviceChangeHandler {
                 throw new Error(data.message || t('simyo.device.applyFailed'));
             }
 
-            // 官方：success:true + reason Available | AlreadyOrderedSimcardEsim
+            // success:true + reason Available | AlreadyOrderedSimcardEsim
             if (data.result.success === false) {
                 throw new Error(data.message || data.result.reason || t('simyo.device.applyFailed'));
             }

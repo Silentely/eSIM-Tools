@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Simyo api-config / client-identity：请求头与设备身份（对齐官方 App 抓包）
+ * Simyo api-config / client-identity：请求头与设备身份
  */
 
 import {
@@ -22,18 +22,18 @@ import {
 
 const UUID_RE = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
 /** 官方抓包 UA：版本号后恰好两个空格 */
-const OFFICIAL_UA = 'MijnSimyoFT/4.28.0  (iOS 18.2; iPhone12,8)';
+const EXPECTED_UA = 'MijnSimyoFT/4.28.0  (iOS 18.2; iPhone12,8)';
 
 describe('Simyo client-identity', () => {
-  it('版本 / 设备 / UA 应与 4.28.0 eSIM 更换抓包一致', () => {
+  it('版本 / 设备 / UA 应与 client-identity 常量一致', () => {
     expect(SIMYO_CLIENT_VERSION).toBe('4.28.0');
     expect(SIMYO_CLIENT_PLATFORM).toBe('ios');
     expect(SIMYO_IOS_VERSION).toBe('18.2');
     expect(SIMYO_DEVICE_MODEL).toBe('iPhone12,8');
-    expect(SIMYO_USER_AGENT).toBe(OFFICIAL_UA);
-    // 版本号与括号之间必须是两个空格（不是一个）
+    expect(SIMYO_USER_AGENT).toBe(EXPECTED_UA);
+    // 版本号与括号之间必须是两个空格
     expect(SIMYO_USER_AGENT).toMatch(/^MijnSimyoFT\/4\.28\.0 {2}\(iOS 18\.2; iPhone12,8\)$/);
-    expect(simyoClientIdentity.userAgent).toBe(OFFICIAL_UA);
+    expect(simyoClientIdentity.userAgent).toBe(EXPECTED_UA);
   });
 });
 
@@ -51,13 +51,13 @@ describe('Simyo api-config headers', () => {
     expect(localStorage.getItem('simyo_device_id')).toBe(id1);
   });
 
-  it('createHeaders 必须包含官方抓包中的核心头', () => {
+  it('createHeaders 必须包含核心身份头', () => {
     const headers = createHeaders(false);
     expect(headers['X-Client-Token']).toBe(simyoConfig.clientToken);
     expect(headers['X-Client-Platform']).toBe(SIMYO_CLIENT_PLATFORM);
     expect(headers['X-Client-Version']).toBe(SIMYO_CLIENT_VERSION);
     expect(headers['X-Device-ID']).toMatch(UUID_RE);
-    expect(headers['User-Agent']).toBe(OFFICIAL_UA);
+    expect(headers['User-Agent']).toBe(EXPECTED_UA);
     expect(headers['User-Agent']).toBe(simyoConfig.userAgent);
     expect(headers['Content-Type']).toBe('application/json');
     expect(headers.Accept).toBe('application/json');
@@ -68,7 +68,7 @@ describe('Simyo api-config headers', () => {
     const headers = createHeaders(true, 'sess-token-1');
     expect(headers['X-Session-Token']).toBe('sess-token-1');
     expect(headers['X-Device-ID']).toMatch(UUID_RE);
-    expect(headers['User-Agent']).toBe(OFFICIAL_UA);
+    expect(headers['User-Agent']).toBe(EXPECTED_UA);
   });
 });
 
@@ -106,7 +106,7 @@ describe('Simyo mapSimyoErrorMessage / handleApiResponse', () => {
     await expect(handleApiResponse(response)).rejects.toThrow(/升级|upgrade|客户端|client version|refresh|刷新/i);
   });
 
-  it('handleApiResponse 官方登录体（无 result.success）应视为成功', async () => {
+  it('handleApiResponse 登录体无 result.success 但有 sessionToken 应视为成功', async () => {
     const response = {
       ok: true,
       status: 200,

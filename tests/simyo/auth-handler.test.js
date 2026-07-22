@@ -24,7 +24,7 @@ describe('Simyo AuthHandler', () => {
   });
 
   it('登录成功应写入 token/手机号，且不保留 password', async () => {
-    // 官方 HAR 形态：无顶层 success，result 内无 success 字段
+    // 登录响应：无顶层 success，result 内无 success 字段
     global.fetch.mockResolvedValueOnce({
       ok: true,
       headers: { get: () => 'application/json' },
@@ -83,7 +83,7 @@ describe('Simyo AuthHandler', () => {
     expect(stateManager.get('sessionToken')).toBe('');
   });
 
-  it('isMfaDisabledOrComplete 识别官方 DISABLED_BY_CUSTOMER', () => {
+  it('isMfaDisabledOrComplete 识别 DISABLED_BY_CUSTOMER', () => {
     expect(isMfaDisabledOrComplete('DISABLED_BY_CUSTOMER')).toBe(true);
     expect(isMfaDisabledOrComplete('REQUIRED')).toBe(false);
     expect(isMfaDisabledOrComplete('')).toBe(true);
