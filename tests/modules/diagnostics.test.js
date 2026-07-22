@@ -44,24 +44,47 @@ describe('diagnostics', () => {
     expect(text).not.toContain('"accessToken": "tok"');
   });
 
-  it('copyDiagnostics 应调用剪贴板', async () => {
+  it('copyDiagnostics 成功时应标记 copied', async () => {
     navigator.clipboard.writeText.mockResolvedValueOnce(undefined);
     Object.defineProperty(window, 'isSecureContext', {
       configurable: true,
       value: true
     });
 
-    const text = await copyDiagnostics({ app: 'home' });
+    const result = await copyDiagnostics({ app: 'home' });
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
-    expect(text).toContain('```json');
+    expect(result.copied).toBe(true);
+    expect(result.text).toContain('```json');
+    expect(result.error).toBeNull();
   });
 
-  it('installDiagnosticsGlobal 应挂载 copyEsimDiagnostics', async () => {
-    navigator.clipboard.writeText.mockResolvedValueOnce(undefined);
+  it('copyDiagnostics 剪贴板失败时应返回 text 且不抛错', async () => {
     Object.defineProperty(window, 'isSecureContext', {
       configurable: true,
       value: true
     });
+    navigator.clipboard.writeText.mockRejectedValueOnce(
+      new DOMException('Document is not focused.', 'NotAllowedError')
+    );
+    document.execCommand = jest.fn(() => false);
+
+    const result = await copyDiagnostics({ app: 'home' });
+    expect(result.copied).toBe(false);
+    expect(result.text).toContain('```json');
+    expect(result.error).toMatch(/Clipboard|focused|denied/i);
+  });
+
+  it('installDiagnosticsGlobal 在复制失败时不应 reject', async () => {
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      value: true
+    });
+    navigator.clipboard.writeText.mockRejectedValueOnce(
+      new DOMException('Document is not focused.', 'NotAllowedError')
+    );
+    document.execCommand = jest.fn(() => false);
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     installDiagnosticsGlobal({
       app: 'simyo',
@@ -69,8 +92,33 @@ describe('diagnostics', () => {
     });
 
     expect(typeof window.copyEsimDiagnostics).toBe('function');
-    const text = await window.copyEsimDiagnostics();
-    expect(text).toContain('[redacted]');
-    expect(text).toContain('0611111111');
+    const result = await window.copyEsimDiagnostics();
+    expect(result.copied).toBe(false);
+    expect(result.text).toContain('[redacted]');
+    expect(result.text).toContain('0611111111');
+    expect(warnSpy).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+    logSpy.mockRestore();
+  });
+
+  it('installDiagnosticsGlobal 成功路径应返回 copied=true', async () => {
+    navigator.clipboard.writeText.mockResolvedValueOnce(undefined);
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      value: true
+    });
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    installDiagnosticsGlobal({
+      app: 'simyo',
+      getState: () => ({ sessionToken: 'abc', phoneNumber: '0611111111' })
+    });
+
+    const result = await window.copyEsimDiagnostics();
+    expect(result.copied).toBe(true);
+    expect(result.text).toContain('[redacted]');
+    logSpy.mockRestore();
   });
 });

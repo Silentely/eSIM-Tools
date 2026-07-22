@@ -4,6 +4,10 @@
  * 诊断信息导出
  * 供用户在控制台执行 copyEsimDiagnostics()，将非敏感环境信息复制到 Issue。
  * 不包含 token / 密码 / cookie / LPA 等敏感字段。
+ *
+ * 控制台用法：
+ *   await copyEsimDiagnostics()
+ * 若剪贴板因页面失焦失败，仍会在控制台打印全文，可手动复制；不会抛未处理 rejection。
  */
 
 import { copyToClipboard } from './clipboard.js';
@@ -95,12 +99,26 @@ export function formatDiagnostics(options = {}) {
 /**
  * 复制诊断信息到剪贴板
  * @param {Object} [options]
- * @returns {Promise<string>} 复制的文本
+ * @returns {Promise<{ text: string, copied: boolean, method: string|null, error: string|null }>}
  */
 export async function copyDiagnostics(options = {}) {
   const text = formatDiagnostics(options);
-  await copyToClipboard(text);
-  return text;
+  try {
+    const result = await copyToClipboard(text);
+    return {
+      text,
+      copied: true,
+      method: result && result.method ? result.method : 'clipboard',
+      error: null
+    };
+  } catch (error) {
+    return {
+      text,
+      copied: false,
+      method: null,
+      error: error && error.message ? error.message : String(error)
+    };
+  }
 }
 
 /**
@@ -113,12 +131,30 @@ export function installDiagnosticsGlobal(options = {}) {
   const getter = typeof options.getState === 'function' ? options.getState : null;
   const app = options.app || 'unknown';
 
+  /**
+   * 控制台入口：尽量复制；失败时仍打印全文，永不抛出（避免 Sentry unhandledrejection）
+   * @returns {Promise<{ text: string, copied: boolean, method: string|null, error: string|null }>}
+   */
   window.copyEsimDiagnostics = async function copyEsimDiagnostics() {
     const state = getter ? getter() : null;
-    const text = await copyDiagnostics({ app, state });
-    // 保留 console：方便用户确认已复制，并在剪贴板失败时仍能手工拷贝
-    console.log('[eSIM Diagnostics] 已复制到剪贴板（敏感字段已脱敏）\n', text);
-    return text;
+    const result = await copyDiagnostics({ app, state });
+
+    if (result.copied) {
+      console.log(
+        `[eSIM Diagnostics] 已复制到剪贴板（method=${result.method}，敏感字段已脱敏）\n`,
+        result.text
+      );
+    } else {
+      // 控制台调用时页面常失焦：写剪贴板会失败，改为打印全文供手动复制
+      console.warn(
+        '[eSIM Diagnostics] 自动复制失败（常见原因：焦点在 DevTools，Document is not focused）。\n' +
+          '请先点击页面任意处再执行 copyEsimDiagnostics()，或直接从下方输出手动复制：\n',
+        result.error || ''
+      );
+      console.log(result.text);
+    }
+
+    return result;
   };
 
   window.__esimDiagnostics = {
