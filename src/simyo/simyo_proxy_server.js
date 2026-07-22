@@ -33,16 +33,20 @@ function isAllowedTarget(urlStr) {
   }
 }
 
-// Simyo API配置
+// Simyo API配置（对齐官方 iOS 4.28.0 抓包）
+const crypto = require('crypto');
+const SIMYO_DEVICE_ID = process.env.SIMYO_DEVICE_ID || crypto.randomUUID().toUpperCase();
 const SIMYO_CONFIG = {
-    baseUrl: 'https://appapi.simyo.nl/simyoapi/api/v1',
+    baseUrl: 'https://appapi.simyo.nl/webapi/api/v1',
     headers: {
         'X-Client-Token': 'e77b7e2f43db41bb95b17a2a11581a38',
         'X-Client-Platform': 'ios',
         'X-Client-Version': '4.28.0',
-        'User-Agent': 'MijnSimyoFT/4.28.0 (iOS 26.3; iPhone16,1)',
+        'X-Device-ID': SIMYO_DEVICE_ID,
+        'User-Agent': 'MijnSimyoFT/4.28.0  (iOS 27.0; iPhone16,1)',
         'Content-Type': 'application/json',
-        'Connection': 'keep-alive',
+        Accept: 'application/json',
+        Connection: 'keep-alive',
         'Accept-Encoding': 'gzip, deflate, br'
     }
 };
