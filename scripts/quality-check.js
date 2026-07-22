@@ -7,9 +7,12 @@
 const BuildLogger = require('./logger.js');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 
-const projectRoot = path.join(__dirname, '..');
+const projectRoot = path.resolve(__dirname, '..');
+const projectRootPrefix = projectRoot.endsWith(path.sep)
+  ? projectRoot
+  : `${projectRoot}${path.sep}`;
 
 // 检查项配置
 const checks = {
@@ -68,22 +71,61 @@ let totalChecks = 0;
 let passedChecks = 0;
 let failedChecks = 0;
 
+/**
+ * 将仓库相对路径解析为绝对路径，并确保结果仍在 projectRoot 内。
+ * 拒绝空路径、绝对路径与目录穿越，避免 child_process / fs 误用仓库外文件。
+ * @param {string} relativePath
+ * @returns {string|null}
+ */
+function resolveSafePath(relativePath) {
+  if (typeof relativePath !== 'string' || relativePath.length === 0) {
+    return null;
+  }
+  if (path.isAbsolute(relativePath)) {
+    return null;
+  }
+
+  const fullPath = path.resolve(projectRoot, relativePath);
+  if (fullPath !== projectRoot && !fullPath.startsWith(projectRootPrefix)) {
+    return null;
+  }
+  return fullPath;
+}
+
 // 辅助函数
 function checkFile(filePath) {
-  const fullPath = path.join(projectRoot, filePath);
+  const fullPath = resolveSafePath(filePath);
+  if (!fullPath) {
+    BuildLogger.error(`非法路径: ${filePath}`);
+    return false;
+  }
   if (!fs.existsSync(fullPath)) {
     BuildLogger.error(`文件不存在: ${filePath}`);
     return false;
   }
 
-  try {
-    execSync(`node -c "${fullPath}"`, { stdio: 'pipe' });
-    return true;
-  } catch (error) {
-    BuildLogger.error(`语法错误: ${filePath}`);
-    BuildLogger.error(error.message);
+  // 使用参数数组调用，避免 shell 拼接带来的命令注入面
+  const result = spawnSync('node', ['-c', fullPath], {
+    stdio: 'pipe',
+    encoding: 'utf8'
+  });
+
+  if (result.error) {
+    BuildLogger.error(`语法检查失败: ${filePath}`);
+    BuildLogger.error(result.error.message);
     return false;
   }
+
+  if (result.status !== 0) {
+    BuildLogger.error(`语法错误: ${filePath}`);
+    const detail = (result.stderr && result.stderr.trim())
+      || (result.stdout && result.stdout.trim())
+      || `node -c 退出码 ${result.status}${result.signal ? ` (signal ${result.signal})` : ''}`;
+    BuildLogger.error(detail);
+    return false;
+  }
+
+  return true;
 }
 
 function checkEnvExample() {
@@ -108,36 +150,50 @@ function checkEnvExample() {
   return issues;
 }
 
+/**
+ * 在给定相对路径列表中搜索正则匹配。
+ * 非法路径不会静默跳过，而是记入 invalidFiles，由调用方判定失败。
+ * @returns {{ results: Array<{file: string, matches: number}>, invalidFiles: string[] }}
+ */
 function searchInFiles(pattern, files, excludeContext = []) {
   const results = [];
+  const invalidFiles = [];
+
   files.forEach(file => {
-    const fullPath = path.join(projectRoot, file);
-    if (fs.existsSync(fullPath)) {
-      const content = fs.readFileSync(fullPath, 'utf8');
-      const lines = content.split('\n');
-      let matchCount = 0;
+    const fullPath = resolveSafePath(file);
+    if (!fullPath) {
+      invalidFiles.push(file || '(empty)');
+      return;
+    }
+    if (!fs.existsSync(fullPath)) {
+      return;
+    }
 
-      lines.forEach((line, index) => {
-        if (pattern.test(line)) {
-          // 检查是否在排除的上下文中（如安全检查代码）
-          const isExcluded = excludeContext.some(ctx => {
-            const contextLine = lines[index];
-            const prevLine = lines[index - 1] || '';
-            return contextLine.includes(ctx) || prevLine.includes(ctx);
-          });
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const lines = content.split('\n');
+    let matchCount = 0;
 
-          if (!isExcluded) {
-            matchCount++;
-          }
+    lines.forEach((line, index) => {
+      if (pattern.test(line)) {
+        // 检查是否在排除的上下文中（如安全检查代码）
+        const isExcluded = excludeContext.some(ctx => {
+          const contextLine = lines[index];
+          const prevLine = lines[index - 1] || '';
+          return contextLine.includes(ctx) || prevLine.includes(ctx);
+        });
+
+        if (!isExcluded) {
+          matchCount++;
         }
-      });
-
-      if (matchCount > 0) {
-        results.push({ file, matches: matchCount });
       }
+    });
+
+    if (matchCount > 0) {
+      results.push({ file, matches: matchCount });
     }
   });
-  return results;
+
+  return { results, invalidFiles };
 }
 
 function checkPackageJson() {
@@ -208,12 +264,19 @@ function runChecks() {
 
   // 检查弱密钥（排除安全检查代码中的引用）
   totalChecks++;
-  const weakDefaults = searchInFiles(
+  const {
+    results: weakDefaults,
+    invalidFiles: weakDefaultInvalidFiles
+  } = searchInFiles(
     checks.securityCheck.patterns.weakDefaults,
     ['env.example', 'netlify/functions/_shared/middleware.js'],
     ['if (ACCESS_KEY ===', '安全警告', '警告', '检查']
   );
-  if (weakDefaults.length === 0) {
+  if (weakDefaultInvalidFiles.length > 0) {
+    BuildLogger.check(false, '弱默认配置扫描路径非法:');
+    weakDefaultInvalidFiles.forEach((file) => BuildLogger.error(`  - ${file}`));
+    failedChecks++;
+  } else if (weakDefaults.length === 0) {
     BuildLogger.check(true, '无弱默认配置');
     passedChecks++;
   } else {
