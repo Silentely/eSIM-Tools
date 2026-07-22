@@ -7,7 +7,7 @@
 const BuildLogger = require('./logger.js');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 
 const projectRoot = path.join(__dirname, '..');
 
@@ -70,14 +70,16 @@ let failedChecks = 0;
 
 // 辅助函数
 function checkFile(filePath) {
-  const fullPath = path.join(projectRoot, filePath);
+  if (!filePath || /\.\./.test(filePath)) { return false; }
+  const fullPath = projectRoot + path.sep + filePath.replace(/\//g, path.sep);
   if (!fs.existsSync(fullPath)) {
     BuildLogger.error(`文件不存在: ${filePath}`);
     return false;
   }
 
   try {
-    execSync(`node -c "${fullPath}"`, { stdio: 'pipe' });
+    const result = spawnSync('node', ['-c', fullPath], { stdio: 'pipe' });
+    if (result.status !== 0) throw new Error(result.stderr ? result.stderr.toString() : '');
     return true;
   } catch (error) {
     BuildLogger.error(`语法错误: ${filePath}`);
@@ -111,7 +113,8 @@ function checkEnvExample() {
 function searchInFiles(pattern, files, excludeContext = []) {
   const results = [];
   files.forEach(file => {
-    const fullPath = path.join(projectRoot, file);
+    if (!file || /\.\./.test(file)) { return; }
+    const fullPath = projectRoot + path.sep + file.replace(/\//g, path.sep);
     if (fs.existsSync(fullPath)) {
       const content = fs.readFileSync(fullPath, 'utf8');
       const lines = content.split('\n');
