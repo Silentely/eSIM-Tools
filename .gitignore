@@ -122,3 +122,16 @@ postman/
 #context
 .context/
 
+
+# EvoMap / Evolver
+.evolver/
+.evolver.lock
+evolver.pid
+memory/
+assets/gep/
+.evomap_device_id
+.evomap_node_id
+*.gepx
+coding-trajectories.jsonl
+.env.evolver
+.env.evolver.local
