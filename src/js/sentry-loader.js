@@ -73,6 +73,19 @@
     return String(value).toLowerCase();
   }
 
+  /**
+   * 安全截断字符串（按 Unicode 码点截断）
+   * 避免 substring 截断代理对产生孤立代理项，导致 appendChild 等 DOM 操作抛
+   * "Failed to execute 'appendChild' on 'Node': Invalid or unexpected token"
+   * @param {*} str - 输入值（null/undefined 返回空串）
+   * @param {number} maxLen - 最大码点长度
+   * @returns {string}
+   */
+  function safeTruncate(str, maxLen) {
+    if (str === null || str === undefined) return '';
+    return [...String(str)].slice(0, maxLen).join('');
+  }
+
   function includesExtensionKeyword(value) {
     var normalized = toLowerSafe(value);
     if (!normalized) return false;
@@ -195,8 +208,8 @@
 
       var sample = {
         source: source,
-        message: toLowerSafe(payload && payload.message).substring(0, 160),
-        filename: payload && payload.filename ? String(payload.filename).substring(0, 240) : '',
+        message: safeTruncate(payload && payload.message, 160),
+        filename: payload && payload.filename ? safeTruncate(String(payload.filename), 240) : '',
         mechanismType: toLowerSafe(payload && payload.mechanismType),
         timestamp: store.lastSeenAt
       };
@@ -375,7 +388,7 @@
         mechanismType: 'onunhandledrejection'
       });
       console.debug('[Sentry Filter] 已在 loader 阶段拦截扩展冲突:', {
-        message: toLowerSafe(message).substring(0, 100),
+        message: safeTruncate(message, 100),
         hasStack: !!stack
       });
     }
@@ -405,7 +418,7 @@
         filename: filename
       });
       console.debug('[Sentry Filter] 已在 loader 阶段拦截扩展错误:', {
-        message: toLowerSafe(message).substring(0, 100),
+        message: safeTruncate(message, 100),
         filename: filename
       });
     }
@@ -618,7 +631,7 @@
               : JSON.stringify(event.extra.__serialized__);
             if (includesExtensionKeyword(serialized)) {
               recordExtensionNoise('loader-beforeSend-serialized', {
-                message: serialized.substring(0, 160),
+                message: safeTruncate(serialized, 160),
                 mechanismType: 'onunhandledrejection'
               });
               return null;

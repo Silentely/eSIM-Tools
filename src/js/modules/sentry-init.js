@@ -49,6 +49,19 @@ function toLowerSafe(value) {
   return String(value).toLowerCase();
 }
 
+/**
+ * 安全截断字符串（按 Unicode 码点截断）
+ * 避免 substring 截断代理对产生孤立代理项，导致 appendChild 等 DOM 操作抛
+ * "Failed to execute 'appendChild' on 'Node': Invalid or unexpected token"
+ * @param {*} str - 输入值（null/undefined 返回空串）
+ * @param {number} maxLen - 最大码点长度
+ * @returns {string}
+ */
+function safeTruncate(str, maxLen) {
+  if (str === null || str === undefined) return '';
+  return [...String(str)].slice(0, maxLen).join('');
+}
+
 function includesExtensionKeyword(value) {
   const normalized = toLowerSafe(value);
   if (!normalized) return false;
@@ -154,8 +167,8 @@ function recordExtensionNoise(source, payload = {}) {
 
     const sample = {
       source,
-      message: toLowerSafe(payload.message).substring(0, 160),
-      filename: toLowerSafe(payload.filename).substring(0, 240),
+      message: safeTruncate(toLowerSafe(payload.message), 160),
+      filename: safeTruncate(toLowerSafe(payload.filename), 240),
       mechanismType: toLowerSafe(payload.mechanismType),
       timestamp: store.lastSeenAt,
     };
@@ -269,7 +282,7 @@ if (typeof window !== 'undefined') {
         mechanismType: 'onunhandledrejection',
       });
       console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', {
-        message: toLowerSafe(message).substring(0, 100),
+        message: safeTruncate(toLowerSafe(message), 100),
         type: typeof reason,
         hasStack: !!stack,
       });
@@ -296,7 +309,7 @@ if (typeof window !== 'undefined') {
       event.preventDefault();
       recordExtensionNoise('init-error', { message, filename });
       console.debug('[Sentry Filter] 已拦截浏览器扩展错误:', {
-        message: toLowerSafe(message).substring(0, 100),
+        message: safeTruncate(toLowerSafe(message), 100),
         filename,
         hasStack: !!stack,
       });
@@ -544,7 +557,7 @@ function initSentry() {
             : JSON.stringify(event.extra.__serialized__);
           if (includesExtensionKeyword(serialized)) {
             recordExtensionNoise('init-beforeSend-serialized', {
-              message: serialized.substring(0, 160),
+              message: safeTruncate(serialized, 160),
               mechanismType: 'onunhandledrejection',
             });
             return null;
