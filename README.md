@@ -106,6 +106,8 @@
 
 ## ❓ 常见问题
 
+> 📌 更多用户反馈与排查方案，详见 [GitHub FAQ Issue #88](https://github.com/Silentely/eSIM-Tools/issues/88)（使用前建议先查阅）
+
 ### Giffgaff 相关
 
 <details>

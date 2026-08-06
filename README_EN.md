@@ -106,6 +106,8 @@ If you don't have a number yet, register through these links to get bonus credit
 
 ## ❓ FAQ
 
+> 📌 For more user-reported issues and troubleshooting, see [GitHub FAQ Issue #88](https://github.com/Silentely/eSIM-Tools/issues/88) (recommended reading before use)
+
 ### Giffgaff
 
 <details>
