@@ -46,8 +46,15 @@ function generateUuidV4() {
     if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
         crypto.getRandomValues(bytes);
     } else {
+        // 无 Web Crypto API 的极端环境：以时间戳与自增序号填充，保证调用间唯一
+        let value = Date.now();
+        let seq = (generateUuidV4._seq = (generateUuidV4._seq || 0) + 1);
         for (let i = 0; i < 16; i += 1) {
-            bytes[i] = Math.floor(Math.random() * 256);
+            if (i === 8) {
+                value = seq;
+            }
+            bytes[i] = value & 0xff;
+            value = Math.floor(value / 256);
         }
     }
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
