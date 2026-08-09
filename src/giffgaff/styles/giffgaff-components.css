@@ -555,39 +555,6 @@
     animation: spin 1s ease-in-out infinite;
 }
 
-/* ===== Toast通知 ===== */
-.toast-notification {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 15px 25px;
-    border-radius: 50px;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 1000;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.toast-notification.show {
-    opacity: 1;
-}
-
-.toast-content {
-    display: flex;
-    align-items: center;
-}
-
-.toast-content i {
-    color: #4cc9f0;
-    font-size: 18px;
-}
-
 /* ===== 网络状态指示器 ===== */
 .network-status {
     position: fixed;

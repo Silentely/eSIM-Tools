@@ -51,7 +51,7 @@
             <div class="logo-container">
                 <i class="fas fa-sim-card app-icon" aria-hidden="true"></i>
                 <div class="app-title">
-                    <span class="lang-zh">Giffgaff eSIM工具</span>
+                    <span class="lang-zh">Giffgaff eSIM 工具</span>
                     <span class="lang-en">Giffgaff eSIM Tool</span>
                 </div>
             </div>
@@ -544,7 +544,7 @@
                         </p>
 
                         <div class="form-floating mb-4">
-                            <input type="text" id="emailCode" class="form-control" placeholder="输入6位验证码" maxlength="6">
+                            <input type="text" id="emailCode" class="form-control" placeholder="输入6位验证码" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
                             <label for="emailCode">验证码</label>
                         </div>
 
@@ -696,7 +696,7 @@
                         <div id="smsCodeInputSection" class="mt-3" style="display:none;">
                             <div style="max-width:420px;">
                                 <div class="form-floating">
-                                    <input id="smsInlineCode" type="text" class="form-control" placeholder="输入6位验证码" maxlength="6" />
+                                    <input id="smsInlineCode" type="text" class="form-control" placeholder="输入6位验证码" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
                                     <label for="smsInlineCode">短信验证码</label>
                                 </div>
                             </div>

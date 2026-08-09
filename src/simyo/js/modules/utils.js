@@ -27,11 +27,12 @@ export function validateVerificationCode(code) {
 }
 
 /**
- * 显示Toast通知
+ * 显示Toast通知（轻量剪贴板反馈，与共享 NotificationManager 并存）
  * 使用 textContent 渲染消息，避免接口错误文案经 innerHTML 注入
  * @param {string} message - 通知消息
+ * @param {string} [type=success] - 类型 success|error（决定图标）
  */
-export function showToast(message) {
+export function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
 
@@ -39,7 +40,7 @@ export function showToast(message) {
     content.className = 'toast-content';
 
     const icon = document.createElement('i');
-    icon.className = 'fas fa-check-circle me-2';
+    icon.className = type === 'error' ? 'fas fa-times-circle me-2' : 'fas fa-check-circle me-2';
     icon.setAttribute('aria-hidden', 'true');
 
     const text = document.createElement('span');

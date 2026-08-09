@@ -59,29 +59,6 @@ function sanitizeParams(req, res, next) {
 }
 
 /**
- * Request logging with timing
- */
-function requestLogger(req, res, next) {
-  const start = Date.now();
-  const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-  req.requestId = requestId;
-
-  // Log request
-  console.log(`[${requestId}] ${req.method} ${req.path} - Started`);
-
-  // Capture response
-  const originalSend = res.send;
-  res.send = function(data) {
-    const duration = Date.now() - start;
-    console.log(`[${requestId}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
-    originalSend.call(this, data);
-  };
-
-  next();
-}
-
-/**
  * Simple in-memory rate limiter
  */
 function createRateLimiter(options = {}) {
@@ -169,7 +146,6 @@ module.exports = {
   validateBodySize,
   validateHeaders,
   sanitizeParams,
-  requestLogger,
   createRateLimiter,
   asyncHandler,
   validateJsonBody

@@ -7,6 +7,9 @@ gtag('js', new Date());
 gtag('config', 'G-HGX38HMNL1');
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 标记 JS 已运行：CSS 仅在 html.js 下隐藏 .reveal（渐进增强）
+  document.documentElement.classList.add('js');
+
   // 页面隐藏时暂停装饰循环动画
   const syncPageHidden = () => {
     document.documentElement.dataset.pageHidden = document.hidden ? 'true' : 'false';

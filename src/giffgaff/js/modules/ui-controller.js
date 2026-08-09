@@ -478,6 +478,7 @@ export class UIController {
             this.elements.qrcode.appendChild(result.container);
         } catch (error) {
             if (gen !== this._qrGeneration) return;
+            // 有意使用原生 console（勿改为 Logger）：前端日志供用户复制到 issue 排查
             console.error('[Giffgaff] QR code generation failed:', error);
 
             // 使用 DOM API 创建元素，避免 innerHTML XSS 风险
@@ -508,6 +509,7 @@ export class UIController {
 
             if (!state.lpaString) {
                 // LPA 字符串缺失，显示错误提示和调试信息
+                // 有意使用原生 console（勿改为 Logger）：供用户复制到 issue 排查
                 console.error('[Giffgaff] showESimResult called but lpaString is empty');
                 this.elements.qrcode.innerHTML = `
                     <div class="alert alert-danger">
@@ -541,10 +543,13 @@ export class UIController {
 
             // 验证 DOM 元素存在
             if (!this.elements.qrcode || !this.elements.esimInfo) {
+                // 有意使用原生 console（勿改为 Logger）：供用户复制到 issue 排查
                 console.error('[Giffgaff] DOM elements not found: qrcode or esimInfo');
                 return;
             }
 
+            // 有意使用原生 console.log（勿改为 Logger.log）：Logger.log 在生产环境会被抑制，
+            // 而这里输出的 LPA 长度等信息是用户出问题时复制到 issue 供作者排查的关键线索
             console.log('[Giffgaff] Displaying eSIM result, LPA length:', state.lpaString.length);
 
             // 正常流程：先显示 LPA 信息（确保用户至少能看到文本），再生成二维码
@@ -594,6 +599,7 @@ export class UIController {
             // 生成二维码（放在最后，即使失败也不影响 LPA 文本显示）
             // async 函数需要 await 或 .catch() 处理，避免 unhandled promise rejection
             this.generateQRCode(state.lpaString).catch((error) => {
+                // 有意使用原生 console（勿改为 Logger）：供用户复制到 issue 排查
                 console.error('[Giffgaff] generateQRCode failed:', error);
 
                 // 使用 DOM API 创建错误提示，避免 innerHTML XSS 风险
@@ -616,6 +622,7 @@ export class UIController {
             }, 500);
         } catch (error) {
             // 最外层错误捕获：确保即使出现未预期异常，用户也能看到错误提示
+            // 有意使用原生 console（勿改为 Logger）：供用户复制到 issue 排查
             console.error('[Giffgaff] showESimResult failed:', error);
             this.elements.qrcode.innerHTML = `
                 <div class="alert alert-danger">

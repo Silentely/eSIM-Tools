@@ -11,7 +11,7 @@ const { withAuth } = require('./_shared/middleware');
 const NOTIFICATIONS = [
   {
     id: 'fix-giffgaff-oauth',
-    message: 'giffgaff的oauth登录方式已变更,请阅读新方法使用',
+    message: 'giffgaff 的 OAuth 登录方式已变更，请阅读新方法后再使用',
     type: 'info',
     timestamp: '2026-01-22T13:50:00Z',
     active: true,
@@ -19,7 +19,7 @@ const NOTIFICATIONS = [
   },
   {
     id: 'fix-simyo-api',
-    message: '已更新Simyo端点,完善更换流程',
+    message: '已更新 Simyo 端点，完善更换流程',
     type: 'success',
     timestamp: '2026-01-13T00:30:00Z',
     active: true,
@@ -27,7 +27,7 @@ const NOTIFICATIONS = [
   },
   {
     id: 'fix-400-error',
-    message: '已修复Oauth交换时报错400问题,优化了MFA验证流程',
+    message: '已修复 OAuth 交换时报错 400 问题，优化了 MFA 验证流程',
     type: 'success',
     timestamp: '2025-11-30T10:00:00Z',
     active: false,

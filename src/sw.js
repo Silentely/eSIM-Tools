@@ -4,15 +4,15 @@ const STATIC_CACHE = 'static-v2.1.0';
 const DYNAMIC_CACHE = 'dynamic-v2.1.0';
 
 // 需要缓存的静态资源
+// 注意：只应包含可公开访问的静态资源。
+// - Netlify Functions 源码（/netlify/functions/*.js）属服务端代码，不应被 SW 缓存；
+//   且该路径在静态托管下未必可访问，会导致 cache.addAll 失败、整个 SW 安装失败。
+// - 当前构建流程不会把本文件输出到站点根目录，也没有 navigator.serviceWorker.register()
+//   调用——PWA 离线能力尚未真正接入。本文件作为未来接入的基线，改动时请同步接入注册逻辑。
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/src/styles/design-system.css',
-  '/netlify/functions/auto-activate-esim.js',
-  '/netlify/functions/giffgaff-graphql.js',
-  '/netlify/functions/giffgaff-mfa-challenge.js',
-  '/netlify/functions/giffgaff-mfa-validation.js',
-  '/netlify/functions/verify-cookie.js'
+  '/src/styles/design-system.css'
 ];
 
 // 安装事件 - 缓存静态资源

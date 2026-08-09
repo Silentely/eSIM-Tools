@@ -279,13 +279,14 @@ html[data-locale="en"] .lang-en { display: inline !important; }
   margin-right: auto;
 }
 
-/* Reveal-on-scroll animation */
-.reveal {
+/* Reveal-on-scroll animation
+   仅在 JS 正常运行（html.js）时隐藏，避免脚本加载失败导致内容永久不可见 */
+html.js .reveal {
   opacity: 0;
   transform: translateY(12px);
   transition: opacity var(--transition-base), transform var(--transition-base);
 }
-.reveal.show {
+html.js .reveal.show {
   opacity: 1;
   transform: translateY(0);
 }
@@ -638,4 +639,40 @@ a.btn-base:focus-visible, a.btn-primary-gradient:focus-visible {
 
 @media (max-width: 480px) {
   .status-value { max-width: 120px; }
+}
+
+/* ===== Toast 通知（品牌页共享）=====
+   由 giffgaff/simyo 品牌页共用；图标强调色通过 --toast-accent 定制，
+   默认取 giffgaff 的青色。原 giffgaff-components.css / simyo-base.css
+   中的同名规则已合并至此，避免样式重复维护。 */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.toast-notification.show {
+    opacity: 1;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+}
+
+.toast-content i {
+    color: var(--toast-accent, #4cc9f0);
+    font-size: 18px;
 }

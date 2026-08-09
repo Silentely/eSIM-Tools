@@ -5,6 +5,10 @@
  */
 
 (function(){
+  // 标记 JS 已运行：CSS 仅在 html.js 下隐藏 .reveal，
+  // 脚本加载失败时内容保持可见（渐进增强）
+  document.documentElement.classList.add('js');
+
   const syncPageHidden = () => {
     document.documentElement.dataset.pageHidden = document.hidden ? 'true' : 'false';
   };

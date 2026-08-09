@@ -154,7 +154,7 @@ async function callGiffgaffActivationAPI(activationCode, cookieString, bearerTok
 
     return {
       success: true,
-      message: '已提交SIM替换确认,请等待新eSIM生效（通常几分钟）',
+      message: '已提交 SIM 替换确认，请等待新 eSIM 生效（通常几分钟）',
       data: {
         confirmPostStatus: confirmPost.status
       }

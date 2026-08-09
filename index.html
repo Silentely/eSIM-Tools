@@ -330,13 +330,14 @@
             text-align: center;
         }
 
-        /* 入场动画：IntersectionObserver 触发，避免 setTimeout 抖动 */
-        .reveal{ opacity: 0; transform: translateY(12px); transition: opacity var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard); }
-        .reveal.show{ opacity: 1; transform: translateY(0); }
+        /* 入场动画：IntersectionObserver 触发，避免 setTimeout 抖动
+           仅在 JS 正常运行（html.js）时隐藏，避免脚本加载失败导致内容永久不可见 */
+        html.js .reveal{ opacity: 0; transform: translateY(12px); transition: opacity var(--duration-normal) var(--ease-standard), transform var(--duration-normal) var(--ease-standard); }
+        html.js .reveal.show{ opacity: 1; transform: translateY(0); }
 
         /* 降低动效：尊重用户的减少动态偏好 */
         @media (prefers-reduced-motion: reduce){
-            .reveal{ transition: none; transform: none; opacity: 1; }
+            html.js .reveal{ transition: none; transform: none; opacity: 1; }
             .tool-card, .github-btn, .kofi-btn, .tool-btn, .lang-switch{ transition: none!important; }
         }
 
@@ -738,7 +739,7 @@
                 <div class="tool-icon" aria-hidden="true">
                     <i class="fas fa-sim-card"></i>
                 </div>
-                <h2 id="simyo-title" class="tool-title"><span class="tool-title-text">Simyo 工具</span></h2>
+                <h2 id="simyo-title" class="tool-title"><span class="tool-title-text">Simyo eSIM 工具</span></h2>
                 <p id="simyo-desc" class="tool-description">
                     <span class="tool-description-text">专为 Simyo NL 用户的 eSIM 管理，支持设备更换与短信验证码处理</span>
                 </p>
@@ -976,7 +977,7 @@
     <script type="module" src="/src/js/init-notification.js"></script>
 
     <!-- 性能优化脚本 -->
-    <script src="/src/js/performance.js"></script>
+    <script defer src="/src/js/performance.js"></script>
     <!-- WebMCP: 向 AI Agent 暴露站点工具 -->
     <script src="/src/js/webmcp.js" defer></script>
 </body>

@@ -34,7 +34,7 @@ class NotificationManager {
    * @param {boolean} options.closable - 是否可手动关闭
    */
   show({ message, type = 'info', duration = 5000, closable = true }) {
-    const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `notification-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     const notification = this.createNotification(id, message, type, closable);
 
     this.container.appendChild(notification);
@@ -56,6 +56,7 @@ class NotificationManager {
 
   /**
    * 创建通知元素
+   * 使用 DOM API 构建（textContent 渲染消息），从结构上杜绝 HTML 注入
    */
   createNotification(id, message, type, closable) {
     const notification = document.createElement('div');
@@ -63,25 +64,35 @@ class NotificationManager {
     notification.setAttribute('role', 'alert');
     notification.setAttribute('data-id', id);
 
-    const icon = this.getIcon(type);
-    const closeBtn = closable ? `
-      <button class="notification-close" aria-label="关闭通知" data-id="${id}">
-        <i class="fas fa-times"></i>
-      </button>
-    ` : '';
+    const content = document.createElement('div');
+    content.className = 'notification-content';
 
-    notification.innerHTML = `
-      <div class="notification-content">
-        <i class="notification-icon ${icon}"></i>
-        <span class="notification-message">${this.escapeHtml(message)}</span>
-      </div>
-      ${closeBtn}
-    `;
+    const icon = document.createElement('i');
+    icon.className = `notification-icon ${this.getIcon(type)}`;
+    icon.setAttribute('aria-hidden', 'true');
+
+    const messageEl = document.createElement('span');
+    messageEl.className = 'notification-message';
+    messageEl.textContent = message == null ? '' : String(message);
+
+    content.appendChild(icon);
+    content.appendChild(messageEl);
+    notification.appendChild(content);
 
     if (closable) {
-      notification.querySelector('.notification-close').addEventListener('click', () => {
-        this.hide(id);
-      });
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'notification-close';
+      closeBtn.type = 'button';
+      closeBtn.setAttribute('aria-label', '关闭通知');
+      closeBtn.dataset.id = id;
+
+      const closeIcon = document.createElement('i');
+      closeIcon.className = 'fas fa-times';
+      closeIcon.setAttribute('aria-hidden', 'true');
+      closeBtn.appendChild(closeIcon);
+
+      closeBtn.addEventListener('click', () => this.hide(id));
+      notification.appendChild(closeBtn);
     }
 
     return notification;
@@ -121,15 +132,6 @@ class NotificationManager {
       info: 'fas fa-info-circle'
     };
     return icons[type] || icons.info;
-  }
-
-  /**
-   * HTML转义
-   */
-  escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
   }
 
   /**

@@ -49,8 +49,9 @@
     }
 }
 
-/* 入场动效 */
-.reveal {
+/* 入场动效
+   仅在 JS 正常运行（html.js）时隐藏，避免脚本加载失败导致内容永久不可见 */
+html.js .reveal {
     opacity: 0;
     transform: translateY(12px);
     transition:
@@ -58,7 +59,7 @@
         transform var(--transition-base, 240ms ease);
 }
 
-.reveal.show {
+html.js .reveal.show {
     opacity: 1;
     transform: translateY(0);
 }
@@ -77,7 +78,7 @@
 
 /* 降低动效：尊重用户的减少动态偏好 */
 @media (prefers-reduced-motion: reduce) {
-    .reveal {
+    html.js .reveal {
         transition: none;
         transform: none;
         opacity: 1;

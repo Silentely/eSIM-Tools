@@ -262,7 +262,7 @@ exports.handler = withAuth(async (event, ctx, { auth, body }) => {
     statusCode: 202,
     body: JSON.stringify({
       success: false,
-      message: '激活已提交,但暂未获取到LPA,请稍后在"获取eSIM Token"重试。'
+      message: '激活已提交，但暂未获取到 LPA，请稍后在“获取 eSIM Token”重试。'
     })
   };
 }, { validateSchema: smsActivateSchema });

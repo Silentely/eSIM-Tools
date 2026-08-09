@@ -1,6 +1,21 @@
 /* PWA install prompt handler */
+/* 注意：当前页面未引用本文件（grep HTML 无 pwa.js 引入），亦无 SW 注册调用；
+   本文件作为未来接入 PWA 安装提示的基线保留，接入时请同步完成
+   navigator.serviceWorker.register() 与构建产物输出。 */
 (function () {
   let deferredInstallEvent = null;
+
+  // 按当前界面语言渲染文案（i18n 初始化后 documentElement 带 data-locale）
+  function getLocale() {
+    const el = document.documentElement;
+    if (el && el.getAttribute('data-locale')) return el.getAttribute('data-locale');
+    if (el && el.lang) return el.lang;
+    return 'zh';
+  }
+
+  function isZhLocale() {
+    return /^zh/i.test(getLocale());
+  }
 
   function createInstallUI() {
     if (document.getElementById('pwa-install-prompt')) return null;
@@ -22,13 +37,14 @@
     container.style.alignItems = 'center';
     container.style.gap = '10px';
 
+    const zh = isZhLocale();
     const text = document.createElement('span');
-    text.textContent = '安装 eSIM 工具为应用';
+    text.textContent = zh ? '安装 eSIM 工具为应用' : 'Install eSIM Tools as an app';
     text.style.fontWeight = '600';
 
     const installBtn = document.createElement('button');
     installBtn.type = 'button';
-    installBtn.textContent = '安装';
+    installBtn.textContent = zh ? '安装' : 'Install';
     installBtn.style.background = '#10b981';
     installBtn.style.color = '#fff';
     installBtn.style.border = 'none';
@@ -39,7 +55,7 @@
 
     const dismissBtn = document.createElement('button');
     dismissBtn.type = 'button';
-    dismissBtn.textContent = '稍后';
+    dismissBtn.textContent = zh ? '稍后' : 'Later';
     dismissBtn.style.background = 'transparent';
     dismissBtn.style.color = '#fff';
     dismissBtn.style.border = '1px solid rgba(255,255,255,.5)';

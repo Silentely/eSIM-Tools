@@ -9,11 +9,40 @@ class PerformanceMonitor {
   constructor() {
     this.metrics = new Map();
     this.observers = [];
+    // 分析数据批量写入缓冲：避免每条指标都读写一次 sessionStorage
+    this.pendingMetrics = {};
+    this.flushTimer = null;
+    this.flushInterval = 1000; // 批量落盘间隔(ms)
+    this.maxPendingEntries = 20; // 缓冲上限，达到立即落盘
+    this.onPageHide = () => this.flushMetrics();
+    this.initStorage();
     this.initialize();
+  }
+
+  /**
+   * 初始化存储引用：浏览器使用 sessionStorage，其余环境用内存存储兜底
+   * （避免 Node 等无浏览器环境下的裸引用报错，也便于测试注入）
+   */
+  initStorage() {
+    if (typeof sessionStorage !== 'undefined') {
+      this.storage = sessionStorage;
+      return;
+    }
+    const mem = new Map();
+    this.storage = {
+      getItem: (key) => (mem.has(key) ? mem.get(key) : null),
+      setItem: (key, value) => mem.set(key, String(value)),
+      removeItem: (key) => mem.delete(key),
+      clear: () => mem.clear()
+    };
   }
 
   initialize() {
     if (typeof window === 'undefined') return;
+
+    // 页面卸载/切后台前确保缓冲数据落盘
+    window.addEventListener('pagehide', this.onPageHide);
+    document.addEventListener('visibilitychange', this.onPageHide);
 
     // Core Web Vitals
     this.observeLCP(); // Largest Contentful Paint
@@ -51,6 +80,7 @@ class PerformanceMonitor {
       observer.observe({ entryTypes: ['largest-contentful-paint'] });
       this.observers.push(observer);
     } catch (error) {
+      // 有意使用原生 console.warn（勿改为 Logger）：供用户复制到 issue 排查
       console.warn('LCP observer failed:', error);
     }
   }
@@ -76,6 +106,7 @@ class PerformanceMonitor {
       observer.observe({ entryTypes: ['first-input'] });
       this.observers.push(observer);
     } catch (error) {
+      // 有意使用原生 console.warn（勿改为 Logger）：供用户复制到 issue 排查
       console.warn('FID observer failed:', error);
     }
   }
@@ -124,6 +155,7 @@ class PerformanceMonitor {
       observer.observe({ entryTypes: ['layout-shift'] });
       this.observers.push(observer);
     } catch (error) {
+      // 有意使用原生 console.warn（勿改为 Logger）：供用户复制到 issue 排查
       console.warn('CLS observer failed:', error);
     }
   }
@@ -150,6 +182,7 @@ class PerformanceMonitor {
       observer.observe({ entryTypes: ['paint'] });
       this.observers.push(observer);
     } catch (error) {
+      // 有意使用原生 console.warn（勿改为 Logger）：供用户复制到 issue 排查
       console.warn('FCP observer failed:', error);
     }
   }
@@ -177,6 +210,7 @@ class PerformanceMonitor {
       observer.observe({ entryTypes: ['navigation'] });
       this.observers.push(observer);
     } catch (error) {
+      // 有意使用原生 console.warn（勿改为 Logger）：供用户复制到 issue 排查
       console.warn('TTFB observer failed:', error);
     }
   }
@@ -214,7 +248,7 @@ class PerformanceMonitor {
     }
 
     // Send to analytics service
-    this.sendToAnalytics(name, data);
+    this.queueAnalytics(name, data);
   }
 
   /**
@@ -259,6 +293,7 @@ class PerformanceMonitor {
           type: 'custom'
         });
       } catch (error) {
+        // 有意使用原生 console.warn（勿改为 Logger）：供用户复制到 issue 排查
         console.warn(`Failed to measure ${name}:`, error);
       }
     }
@@ -276,17 +311,39 @@ class PerformanceMonitor {
   }
 
   /**
-   * Send metrics to analytics service
+   * 入队分析指标（节流批量写入 sessionStorage）
    */
-  sendToAnalytics(name, data) {
-    // Implement actual analytics integration here
-    // Example: Google Analytics, Sentry, DataDog, etc.
+  queueAnalytics(name, data) {
+    this.pendingMetrics[name] = { ...data, timestamp: Date.now() };
 
-    // For now, just store in sessionStorage for debugging
+    // 达到缓冲上限立即落盘；否则定时批量写入
+    if (Object.keys(this.pendingMetrics).length >= this.maxPendingEntries) {
+      this.flushMetrics();
+    } else if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => this.flushMetrics(), this.flushInterval);
+    }
+  }
+
+  /**
+   * 将缓冲中的指标一次性写入 sessionStorage
+   */
+  flushMetrics() {
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+
+    const pending = this.pendingMetrics;
+    this.pendingMetrics = {};
+    if (Object.keys(pending).length === 0) return;
+
+    const storage = this.storage;
+    if (!storage) return;
+
     try {
-      const stored = JSON.parse(sessionStorage.getItem('performance-metrics') || '{}');
-      stored[name] = data;
-      sessionStorage.setItem('performance-metrics', JSON.stringify(stored));
+      const stored = JSON.parse(storage.getItem('performance-metrics') || '{}');
+      Object.assign(stored, pending);
+      storage.setItem('performance-metrics', JSON.stringify(stored));
     } catch (error) {
       // Ignore storage errors
     }
@@ -315,6 +372,12 @@ class PerformanceMonitor {
     this.observers.forEach(observer => observer.disconnect());
     this.observers = [];
     this.metrics.clear();
+    // 落盘剩余缓冲并移除生命周期监听
+    this.flushMetrics();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pagehide', this.onPageHide);
+      document.removeEventListener('visibilitychange', this.onPageHide);
+    }
   }
 }
 

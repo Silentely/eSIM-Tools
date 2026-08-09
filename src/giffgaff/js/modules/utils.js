@@ -21,7 +21,7 @@ export function generateCodeVerifier() {
         .replace(/\//g, '_')
         .replace(/=+$/, '');
 
-    return verifier.length >= 43 ? verifier.substr(0, 128) : verifier + 'a'.repeat(43 - verifier.length);
+    return verifier.length >= 43 ? verifier.substring(0, 128) : verifier + 'a'.repeat(43 - verifier.length);
 }
 
 /**

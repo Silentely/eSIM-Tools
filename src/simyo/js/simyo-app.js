@@ -619,7 +619,7 @@ class SimyoApp {
                     showToast(t('simyo.app.toast.lpaCopied'));
                 } catch (error) {
                     Logger.warn('[Simyo] Failed to copy LPA string:', error);
-                    showToast(tl('复制失败，请手动选择文本复制'));
+                    showToast(tl('复制失败，请手动选择文本复制'), 'error');
                 }
             });
         }

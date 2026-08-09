@@ -68,7 +68,7 @@ exports.handler = withAuth(async (event, ctx, { auth, body }) => {
           accessToken: null,
           memberId: result.memberId || null,
           emailSignature: null,
-          message: 'Cookie验证通过但未获取可用于API的访问令牌，请使用OAuth或确保包含 id.giffgaff.com 域的完整会话后重试'
+          message: 'Cookie 验证通过，但未获取到可用于 API 的访问令牌。请使用 OAuth 登录，或确保会话包含 id.giffgaff.com 域后再重试'
         })
       };
     }

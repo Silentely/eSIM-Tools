@@ -288,7 +288,7 @@
                     </p>
 
                     <div class="form-floating mb-4">
-                        <input type="text" id="phoneNumber" class="form-control" placeholder="例如: 0613123712" maxlength="15" aria-describedby="phoneHelp">
+                        <input type="text" id="phoneNumber" class="form-control" placeholder="例如: 0613123712" maxlength="15" inputmode="tel" autocomplete="tel" aria-describedby="phoneHelp">
                         <label for="phoneNumber">
                             <span class="lang-zh">手机号码</span>
                             <span class="lang-en">Phone number</span>
@@ -430,7 +430,7 @@
                         </p>
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control" id="validationCodeInput"
-                                   placeholder="输入6位数字验证码" maxlength="6" pattern="^\d{6}$">
+                                   placeholder="输入6位数字验证码" maxlength="6" pattern="^\d{6}$" inputmode="numeric" autocomplete="one-time-code">
                             <label for="validationCodeInput">
                                 <span class="lang-zh">验证码</span>
                                 <span class="lang-en">Verification code</span>

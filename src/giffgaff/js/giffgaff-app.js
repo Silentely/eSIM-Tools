@@ -463,6 +463,7 @@ class GiffgaffApp {
 
         try {
             pullBtn.disabled = true;
+            pullBtn.setAttribute('aria-busy', 'true');
             pullBtn.replaceChildren();
             const spinner = document.createElement('span');
             spinner.className = 'loading';
@@ -489,6 +490,7 @@ class GiffgaffApp {
             }
         } finally {
             pullBtn.disabled = false;
+            pullBtn.removeAttribute('aria-busy');
             pullBtn.replaceChildren();
             const icon = document.createElement('i');
             icon.className = 'fas fa-bolt me-2';
