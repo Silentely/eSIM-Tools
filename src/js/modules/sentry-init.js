@@ -484,6 +484,9 @@ function initSentry() {
         /autofillFieldData\.autoCompleteType\.includes/i,
         /Can't find variable: currentInset/i,
         /Can't find variable: CONFIG/i,
+        /__firefox__/i,
+        /reader\.checkReadability/i,
+        /window\.__firefox__/i,
         // Android WebView / 浏览器注入脚本噪音
         /Error invoking post/i,
         /Method not found/i,
