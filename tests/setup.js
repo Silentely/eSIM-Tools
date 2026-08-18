@@ -1,6 +1,7 @@
 /**
  * Jest 测试设置文件
  */
+import { randomBytes } from 'crypto';
 
 // 导入 Jest DOM 扩展
 import '@testing-library/jest-dom';
@@ -30,11 +31,10 @@ global.sessionStorage = sessionStorageMock;
 global.fetch = jest.fn();
 
 // 模拟 crypto API（提供 webcrypto.subtle 接口）
+// getRandomValues 使用 Node CSPRNG 填充，避免测试环境引入不安全的随机源
 const webcryptoMock = {
   getRandomValues: (arr) => {
-    for (let i = 0; i < arr.length; i++) {
-      arr[i] = Math.floor(Math.random() * 256);
-    }
+    arr.set(randomBytes(arr.length));
     return arr;
   },
   subtle: {
