@@ -74,10 +74,14 @@ global.navigator.serviceWorker = {
   }))
 };
 
-// Polyfill: TextEncoder（Node 环境下用于 PKCE 生成）
+// Polyfill: TextEncoder / TextDecoder（Node 环境下用于 PKCE 生成与 Express 5 依赖加载）
 if (typeof global.TextEncoder === 'undefined') {
   const { TextEncoder } = require('util');
   global.TextEncoder = TextEncoder;
+}
+if (typeof global.TextDecoder === 'undefined') {
+  const { TextDecoder } = require('util');
+  global.TextDecoder = TextDecoder;
 }
 
 // Polyfill: document.execCommand（降级复制方案）

@@ -186,7 +186,8 @@ functionRoutes.forEach(([name, handler]) => {
 });
 
 // Simyo API代理路由（支持 /api/simyo/v2/* → webapi/api/v2，其余 → webapi/api/v1）
-app.use('/api/simyo/*', (req, res) => {
+// 注：Express 5 的 path-to-regexp v8 不再支持裸 `*` 通配符，改用命名通配符 *splat
+app.use('/api/simyo/*splat', (req, res) => {
     const [pathPart, queryPart] = req.originalUrl.replace(/^\/api\/simyo/, '').split('?');
     const proxyPath = pathPart || '/';
     const queryString = queryPart ? `?${queryPart}` : '';
