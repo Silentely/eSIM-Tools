@@ -105,7 +105,7 @@
     "minimatch": "^10.2.3",
     "glob": "^11.1.0",
     "serialize-javascript": "^7.0.5",
-    "path-to-regexp": "^0.1.13",
+    "path-to-regexp": "^8.0.0",
     "rollup": "^2.80.0",
     "uuid": "^14.0.0",
     "ws": "^8.21.0",
