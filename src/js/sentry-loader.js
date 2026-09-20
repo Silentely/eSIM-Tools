@@ -67,7 +67,13 @@
     'method not found',
     'swal',
     '__firefox__',
-    'reader.checkReadability'
+    // 注意：关键词统一小写，includesExtensionKeyword 只对错误文本做小写化
+    'reader.checkreadability',
+    // Safari Web 扩展注入的 messaging API 噪音（ESIM-TOOLS-1I）
+    // 签名：Invalid call to runtime.sendMessage(). Tab not found.
+    // 扩展 content script 在标签页恢复可见后向已失效 Tab 投递消息，与本页代码无关
+    'runtime.sendmessage',
+    'tab not found'
   ];
 
   function toLowerSafe(value) {
@@ -566,6 +572,10 @@
           /Load failed/,
           // 浏览器扩展注入代码 .split() 调用失败噪音（ESIM-TOOLS-1H）
           /Cannot read properties of undefined \(reading 'split'\)/,
+          // Safari Web 扩展 messaging API 噪音（ESIM-TOOLS-1I）
+          // 签名：Invalid call to runtime.sendMessage(). Tab not found.
+          /runtime\.sendMessage/i,
+          /Tab not found/i,
         ],
 
         denyUrls: [

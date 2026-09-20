@@ -156,7 +156,11 @@ class GiffgaffApp {
             'metamask',
             'tronlink',
             'backpack',
-            'method not found'
+            'method not found',
+            // Safari Web 扩展注入的 runtime.sendMessage 噪音（Sentry Issue 7742657909）
+            // 签名：Invalid call to runtime.sendMessage(). Tab not found.
+            'runtime.sendmessage',
+            'tab not found'
         ];
 
         return ignoredKeywords.some((keyword) => payload.includes(keyword));
