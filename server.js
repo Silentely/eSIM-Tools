@@ -307,7 +307,15 @@ function handleQRCodeGenerate(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { data, size = 300 } = req.body || {};
+    const qrBody = req.body;
+    if (qrBody === null || typeof qrBody !== 'object' || Array.isArray(qrBody)) {
+        return res.status(400).json({ error: 'Invalid JSON body' });
+    }
+    if (['__proto__', 'constructor', 'prototype'].some(key => Object.prototype.hasOwnProperty.call(qrBody, key))) {
+        return res.status(400).json({ error: 'Invalid JSON body' });
+    }
+
+    const { data, size = 300 } = qrBody;
     if (typeof data !== 'string' || data.length < 1 || data.length > QR_MAX_DATA_LENGTH) {
         return res.status(400).json({
             error: `data must be a string between 1 and ${QR_MAX_DATA_LENGTH} characters`

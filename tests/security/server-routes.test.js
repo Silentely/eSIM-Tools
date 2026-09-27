@@ -143,6 +143,59 @@ describe('Local server route coverage', () => {
     });
   });
 
+  it('rejects array or forbidden keys on /bff/qrcode-generate with 400 Bad Request', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, async () => {
+      const port = server.address().port;
+      const testCases = [
+        JSON.stringify([{ data: 'test', size: 300 }]),
+        JSON.stringify({ data: 'test', size: 300, constructor: 'polluted' }),
+        JSON.stringify({ data: 'test', size: 300, prototype: 'polluted' }),
+        '{"data":"test","size":300,"__proto__":"polluted"}'
+      ];
+
+      try {
+        for (const postData of testCases) {
+          await new Promise((resolve, reject) => {
+            const req = http.request({
+              hostname: 'localhost',
+              port,
+              path: '/bff/qrcode-generate',
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData),
+                'Origin': 'http://localhost:3000'
+              }
+            }, (res) => {
+              let raw = '';
+              res.on('data', chunk => { raw += chunk; });
+              res.on('end', () => {
+                try {
+                  expect(res.statusCode).toBe(400);
+                  const json = JSON.parse(raw);
+                  expect(json.error).toBe('Invalid JSON body');
+                  resolve();
+                } catch (e) {
+                  reject(e);
+                }
+              });
+            });
+            req.on('error', reject);
+            req.write(postData);
+            req.end();
+          });
+        }
+        server.close(done);
+      } catch (err) {
+        server.close();
+        done(err);
+      }
+    });
+  });
+
   it('rejects invalid parameters on /bff/qrcode-generate with 400 Bad Request', (done) => {
     const app = require('../../server.js');
     const server = http.createServer(app);

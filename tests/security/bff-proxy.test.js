@@ -206,6 +206,40 @@ describe('BFF proxy guardrails', () => {
     expect(body.error).toBe('Invalid JSON body');
   });
 
+  it('qrcode-generate: 数组 JSON body 应返回 400', async () => {
+    const mod = await import('../../netlify/edge-functions/bff-proxy.js');
+    const request = new Request('https://example.com/bff/qrcode-generate', {
+      method: 'POST',
+      headers: {
+        origin: 'https://esim.cosr.eu.org',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify([{ data: 'LPA:1$example', size: 300 }])
+    });
+
+    const response = await mod.default(request);
+    expect(response.status).toBe(400);
+    const body = JSON.parse(response.body);
+    expect(body.error).toBe('Invalid JSON body');
+  });
+
+  it.each(['__proto__', 'constructor', 'prototype'])('qrcode-generate: 包含危险键 %s 应返回 400', async (key) => {
+    const mod = await import('../../netlify/edge-functions/bff-proxy.js');
+    const request = new Request('https://example.com/bff/qrcode-generate', {
+      method: 'POST',
+      headers: {
+        origin: 'https://esim.cosr.eu.org',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ data: 'LPA:1$example', size: 300, [key]: 'polluted' })
+    });
+
+    const response = await mod.default(request);
+    expect(response.status).toBe(400);
+    const body = JSON.parse(response.body);
+    expect(body.error).toBe('Invalid JSON body');
+  });
+
   it('qrcode-generate: 空 data 应返回 400', async () => {
     const mod = await import('../../netlify/edge-functions/bff-proxy.js');
     const request = new Request('https://example.com/bff/qrcode-generate', {
