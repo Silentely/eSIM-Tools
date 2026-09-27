@@ -152,8 +152,11 @@ export default async (request, context) => {
     let qrBody;
     try {
       qrBody = await request.json();
-      if (qrBody === null || typeof qrBody !== 'object') {
+      if (qrBody === null || typeof qrBody !== 'object' || Array.isArray(qrBody)) {
         throw new Error('body must be a JSON object');
+      }
+      if (['__proto__', 'constructor', 'prototype'].some(key => Object.prototype.hasOwnProperty.call(qrBody, key))) {
+        throw new Error('body contains forbidden keys');
       }
     } catch {
       logger.warn('qr_invalid_body');
