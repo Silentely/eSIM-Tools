@@ -25,7 +25,8 @@ const Logger = {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const STATIC_ROOT = path.join(__dirname, process.env.STATIC_ROOT || 'dist');
+const defaultStaticDir = fs.existsSync(path.join(__dirname, 'dist')) ? 'dist' : '.';
+const STATIC_ROOT = path.join(__dirname, process.env.STATIC_ROOT || defaultStaticDir);
 const INTERNAL_FUNCTION_KEY = process.env.ACCESS_KEY || '';
 const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _resolveCorsOrigin } = require('./netlify/functions/_shared/cors');
 const configuredOrigins = parseOrigins(process.env.ALLOWED_ORIGIN);
@@ -73,7 +74,7 @@ if (!process.env.SIMYO_CLIENT_TOKEN) {
     console.warn('💡 请在 .env 文件中设置 SIMYO_CLIENT_TOKEN');
 }
 
-if (!fs.existsSync(STATIC_ROOT)) {
+if (STATIC_ROOT.endsWith('dist') && !fs.existsSync(STATIC_ROOT)) {
     console.warn(`⚠️  静态目录 ${STATIC_ROOT} 不存在，请先运行 npm run build`);
     console.warn('💡 运行: npm run build');
 }
@@ -597,22 +598,30 @@ function forwardRequest(req, res, targetUrl, forwardHost) {
         });
 }
 
+function resolvePageFile(subpath) {
+    const targetPath = path.join(STATIC_ROOT, subpath);
+    if (fs.existsSync(targetPath)) return targetPath;
+    const fallbackPath = path.join(__dirname, subpath);
+    if (fs.existsSync(fallbackPath)) return fallbackPath;
+    return targetPath;
+}
+
 // 兜底静态页面路由（应用静态限流保护，避免未受限文件系统读取与 DoS）
 app.get('/giffgaff', staticPageLimiter, (req, res) => {
-    res.sendFile(path.join(STATIC_ROOT, 'src/giffgaff/giffgaff_modular.html'));
+    res.sendFile(resolvePageFile('src/giffgaff/giffgaff_modular.html'));
 });
 
 app.get('/simyo', staticPageLimiter, (req, res) => {
-    res.sendFile(path.join(STATIC_ROOT, 'src/simyo/simyo_modular.html'));
+    res.sendFile(resolvePageFile('src/simyo/simyo_modular.html'));
 });
 
 app.get('/', staticPageLimiter, (req, res) => {
-    res.sendFile(path.join(STATIC_ROOT, 'index.html'));
+    res.sendFile(resolvePageFile('index.html'));
 });
 
 // 404 处理
 app.use(staticPageLimiter, (req, res) => {
-    res.status(404).sendFile(path.join(STATIC_ROOT, 'index.html'));
+    res.status(404).sendFile(resolvePageFile('index.html'));
 });
 
 // 错误处理中间件

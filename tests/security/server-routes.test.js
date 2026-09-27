@@ -368,6 +368,7 @@ describe('Local server route coverage', () => {
         path: '/api/simyo/%2e%2e/secret',
         method: 'GET'
       }, (res) => {
+        res.resume();
         try {
           expect(res.statusCode).toBe(400);
           server.close(done);
@@ -399,6 +400,7 @@ describe('Local server route coverage', () => {
         path: '/api/giffgaff/%2e%2e/secret',
         method: 'GET'
       }, (res) => {
+        res.resume();
         try {
           expect(res.statusCode).toBe(400);
           server.close(done);
@@ -425,6 +427,7 @@ describe('Local server route coverage', () => {
       const port = server.address().port;
 
       http.get(`http://localhost:${port}/`, (res) => {
+        res.resume();
         try {
           expect(res.statusCode).toBe(200);
           expect(res.headers['ratelimit-limit']).toBeDefined();
@@ -434,6 +437,7 @@ describe('Local server route coverage', () => {
         }
 
         http.get(`http://localhost:${port}/non-existent-page-fallback`, (fallbackRes) => {
+          fallbackRes.resume();
           try {
             expect(fallbackRes.statusCode).toBe(404);
             expect(fallbackRes.headers['ratelimit-limit']).toBeDefined();
