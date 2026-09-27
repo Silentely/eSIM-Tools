@@ -53,7 +53,11 @@ describe('Simyo api-config headers', () => {
 
   it('createHeaders 必须包含核心身份头', () => {
     const headers = createHeaders(false);
-    expect(headers['X-Client-Token']).toBe(simyoConfig.clientToken);
+    if (simyoConfig.clientToken) {
+      expect(headers['X-Client-Token']).toBe(simyoConfig.clientToken);
+    } else {
+      expect(headers['X-Client-Token']).toBeUndefined();
+    }
     expect(headers['X-Client-Platform']).toBe(SIMYO_CLIENT_PLATFORM);
     expect(headers['X-Client-Version']).toBe(SIMYO_CLIENT_VERSION);
     expect(headers['X-Device-ID']).toMatch(UUID_RE);

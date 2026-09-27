@@ -6,6 +6,7 @@
  * - userAgent: MijnSimyoFT/{version}  (iOS {ios}; {model})
  *   （版本号与括号之间为两个空格）
  * - platform: X-Client-Platform（ios）
+ * - clientToken: 由后端/代理层（Netlify redirects 或 server.js）统一注入，前端静态代码不硬编码凭据
  *
  * 修改此处后请同步：
  * - server.js 中的 DEFAULT_SIMYO_* 常量
@@ -20,8 +21,8 @@ export const SIMYO_CLIENT_VERSION = '4.28.0';
 /** X-Client-Platform */
 export const SIMYO_CLIENT_PLATFORM = 'ios';
 
-/** X-Client-Token */
-export const SIMYO_CLIENT_TOKEN = 'e77b7e2f43db41bb95b17a2a11581a38';
+/** X-Client-Token (由代理层/环境变量注入，前端不分发硬编码静态凭据) */
+export const SIMYO_CLIENT_TOKEN = '';
 
 /** User-Agent 中的 iOS 系统版本 */
 export const SIMYO_IOS_VERSION = '18.2';

@@ -147,12 +147,15 @@ export function createHeaders(includeSession = false, sessionToken = '') {
     const headers = {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        'X-Client-Token': simyoConfig.clientToken,
         'X-Client-Platform': simyoConfig.clientPlatform,
         'X-Client-Version': simyoConfig.clientVersion,
         'X-Device-ID': getOrCreateDeviceId(),
         'User-Agent': simyoConfig.userAgent
     };
+
+    if (simyoConfig.clientToken) {
+        headers['X-Client-Token'] = simyoConfig.clientToken;
+    }
 
     if (includeSession && sessionToken) {
         headers['X-Session-Token'] = sessionToken;
