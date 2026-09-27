@@ -3,6 +3,11 @@ class PerformanceOptimizer {
   constructor() {
     this.isOnline = navigator.onLine;
     this.observers = new Map(); // Track observers for cleanup
+    this.cleanupFns = []; // Track event listener and timer cleanup callbacks
+    this.timers = new Set(); // Track setTimeout/setInterval IDs
+    this.rafIds = new Set(); // Track pending requestAnimationFrame ids
+    this.activeTouchTarget = null; // Track current active touch target
+    this._isPaused = false; // Track visibility paused state
     this._webpSupported = null; // 缓存 WebP 检测结果
     this._parallaxElements = null; // 缓存视差元素查询
     this.init();
@@ -17,10 +22,76 @@ class PerformanceOptimizer {
     this.setupVisibilityHandler();
   }
 
+  requestFrame(callback) {
+    if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+      return null;
+    }
+    const id = window.requestAnimationFrame((time) => {
+      this.rafIds.delete(id);
+      callback(time);
+    });
+    this.rafIds.add(id);
+    return id;
+  }
+
+  cancelFrame(id) {
+    if (!id) return;
+    this.rafIds.delete(id);
+    if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+      window.cancelAnimationFrame(id);
+    }
+  }
+
+  setTimer(fn, delay) {
+    const id = setTimeout(() => {
+      this.timers.delete(id);
+      fn();
+    }, delay);
+    this.timers.add(id);
+    return id;
+  }
+
+  clearTimer(id) {
+    if (!id) return;
+    this.timers.delete(id);
+    clearTimeout(id);
+  }
+
   // Cleanup method to prevent memory leaks
   destroy() {
+    // Cancel all tracked requestAnimationFrame ids
+    if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+      this.rafIds.forEach(id => {
+        window.cancelAnimationFrame(id);
+      });
+    }
+    this.rafIds.clear();
+
+    // Cancel all tracked timers
+    this.timers.forEach(id => {
+      clearTimeout(id);
+    });
+    this.timers.clear();
+
+    // Clean up active touch state
+    if (this.activeTouchTarget) {
+      this.activeTouchTarget.style.removeProperty('--touch-active');
+      this.activeTouchTarget.classList.remove('touch-active');
+      this.activeTouchTarget = null;
+    }
+
+    // Run registered cleanup functions
+    while (this.cleanupFns.length > 0) {
+      const cleanup = this.cleanupFns.pop();
+      try {
+        cleanup();
+      } catch (err) {
+        console.warn('Error during PerformanceOptimizer cleanup:', err);
+      }
+    }
+
     // Clean up all observers
-    this.observers.forEach((observer, key) => {
+    this.observers.forEach((observer) => {
       observer.disconnect();
     });
     this.observers.clear();
@@ -30,14 +101,22 @@ class PerformanceOptimizer {
 
   // 设置网络监听器
   setupNetworkListeners() {
-    window.addEventListener('online', () => {
+    const handleOnline = () => {
       this.isOnline = true;
       this.showNetworkStatus('网络已连接', 'success');
-    });
+    };
 
-    window.addEventListener('offline', () => {
+    const handleOffline = () => {
       this.isOnline = false;
       this.showNetworkStatus('网络已断开，使用离线模式', 'warning');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    this.cleanupFns.push(() => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     });
   }
 
@@ -49,16 +128,22 @@ class PerformanceOptimizer {
 
     document.body.appendChild(toast);
 
-    setTimeout(() => {
+    // 自动移除
+    this.setTimer(() => {
+      toast.classList.remove('fade-in');
       toast.classList.add('fade-out');
-      setTimeout(() => toast.remove(), 300);
+      this.setTimer(() => {
+        if (toast.parentNode) {
+          document.body.removeChild(toast);
+        }
+      }, 300);
     }, 3000);
   }
 
   // 图片优化
   optimizeImages() {
     const images = document.querySelectorAll('img[data-src]');
-
+    
     if ('IntersectionObserver' in window) {
       const imageObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -69,31 +154,29 @@ class PerformanceOptimizer {
           }
         });
       }, {
-        // Load images slightly before they enter viewport
-        rootMargin: '50px'
+        rootMargin: '50px 0px',
+        threshold: 0.01
       });
 
       images.forEach(img => imageObserver.observe(img));
-
-      // Store observer for cleanup
       this.observers.set('images', imageObserver);
     } else {
-      // 降级处理
+      // 降级处理：直接加载所有图片
       images.forEach(img => this.loadImage(img));
     }
   }
 
-  // 加载图片 (with error handling)
+  // 加载图片
   loadImage(img) {
     const src = img.dataset.src;
     if (!src) return;
 
-    // Create a new image to preload
+    // 创建临时图片预加载
     const tempImg = new Image();
-
+    
     tempImg.onload = () => {
-      // Check WebP support
-      if (this.supportsWebP()) {
+      // 优先使用 WebP 格式
+      if (this.supportsWebP() && !src.endsWith('.webp')) {
         img.src = src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
       } else {
         img.src = src;
@@ -126,22 +209,40 @@ class PerformanceOptimizer {
   // 滚动优化
   setupScrollOptimization() {
     let ticking = false;
+    let pendingRafId = null;
 
     const handleScroll = () => {
+      if (this._isPaused) return;
       if (!ticking) {
-        requestAnimationFrame(() => {
+        pendingRafId = this.requestFrame(() => {
+          pendingRafId = null;
           this.updateScrollEffects();
           ticking = false;
         });
-        ticking = true;
+        if (pendingRafId !== null) {
+          ticking = true;
+        } else {
+          // 无 requestAnimationFrame 降级
+          this.updateScrollEffects();
+          ticking = false;
+        }
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+
+    this.cleanupFns.push(() => {
+      window.removeEventListener('scroll', handleScroll);
+      if (pendingRafId) {
+        this.cancelFrame(pendingRafId);
+        pendingRafId = null;
+      }
+    });
   }
 
   // 更新滚动效果（缓存DOM查询）
   updateScrollEffects() {
+    if (this._isPaused) return;
     const scrolled = window.pageYOffset;
     // 首次调用时缓存视差元素
     if (this._parallaxElements === null) {
@@ -180,55 +281,106 @@ class PerformanceOptimizer {
     this.observers.set('animations', observer);
   }
 
-  // 触摸优化
+  // 触摸体验优化（跟踪 activeTarget，解决移出元素抬起按压态残留）
   setupTouchOptimization() {
+    if (typeof document === 'undefined') return;
+
     // 防止双击缩放
     let lastTouchEnd = 0;
-    document.addEventListener('touchend', (event) => {
+    const handleDoubleTap = (event) => {
       const now = (new Date()).getTime();
       if (now - lastTouchEnd <= 300) {
         event.preventDefault();
       }
       lastTouchEnd = now;
-    }, false);
+    };
+    document.addEventListener('touchend', handleDoubleTap, false);
 
-    // 优化触摸反馈（使用CSS变量避免高频classList操作）
-    document.addEventListener('touchstart', (e) => {
-      const target = e.target.closest('.btn, .card, .form-control');
+    const handleTouchStart = (e) => {
+      const target = e.target && typeof e.target.closest === 'function'
+        ? e.target.closest('.btn, .card, .form-control')
+        : null;
       if (target) {
+        this.activeTouchTarget = target;
         target.style.setProperty('--touch-active', '1');
         target.classList.add('touch-active');
       }
-    }, { passive: true });
+    };
 
-    document.addEventListener('touchend', (e) => {
-      const target = e.target.closest('.btn, .card, .form-control');
+    const handleTouchEnd = (e) => {
+      const target = this.activeTouchTarget || (e.target && typeof e.target.closest === 'function'
+        ? e.target.closest('.btn, .card, .form-control')
+        : null);
+      this.activeTouchTarget = null;
       if (target) {
-        // 使用requestAnimationFrame替代setTimeout，更高效
-        requestAnimationFrame(() => {
+        this.requestFrame(() => {
           target.style.removeProperty('--touch-active');
           target.classList.remove('touch-active');
         });
       }
-    }, { passive: true });
+    };
+
+    const handleTouchCancel = (e) => {
+      const target = this.activeTouchTarget || (e.target && typeof e.target.closest === 'function'
+        ? e.target.closest('.btn, .card, .form-control')
+        : null);
+      this.activeTouchTarget = null;
+      if (target) {
+        target.style.removeProperty('--touch-active');
+        target.classList.remove('touch-active');
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+
+    this.cleanupFns.push(() => {
+      document.removeEventListener('touchend', handleDoubleTap);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchCancel);
+    });
   }
 
-  // 页面可见性处理（暂停/恢复滚动效果）
+  // 页面可见性处理（暂停/恢复滚动观察器与效果）
   setupVisibilityHandler() {
-    document.addEventListener('visibilitychange', () => {
+    const handleVisibility = () => {
       if (document.hidden) {
-        // 页面不可见时，断开滚动观察器
+        this._isPaused = true;
         const scrollObserver = this.observers.get('scroll');
         if (scrollObserver) {
           scrollObserver.disconnect();
         }
       } else {
-        // 页面可见时，重新连接滚动观察器
+        this._isPaused = false;
         const scrollObserver = this.observers.get('scroll');
         if (scrollObserver) {
           scrollObserver.observe(document.documentElement);
         }
       }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    this.cleanupFns.push(() => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    });
+  }
+
+  // 预加载关键资源
+  preloadCriticalResources() {
+    const criticalResources = [
+      '/src/styles/design-system.css',
+      '/src/styles/animations.css'
+    ];
+
+    criticalResources.forEach(resource => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.href = resource;
+      link.as = 'style';
+      document.head.appendChild(link);
     });
   }
 
@@ -256,78 +408,24 @@ class PerformanceOptimizer {
   hideLoading(overlay) {
     if (overlay) {
       overlay.classList.remove('show');
-      setTimeout(() => {
+      this.setTimer(() => {
         if (overlay.parentNode) {
           overlay.parentNode.removeChild(overlay);
         }
       }, 300);
     }
   }
+}
 
-  // 防抖函数
-  debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-
-  // 节流函数
-  throttle(func, limit) {
-    let inThrottle;
-    return function() {
-      const args = arguments;
-      const context = this;
-      if (!inThrottle) {
-        func.apply(context, args);
-        inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
-      }
-    };
-  }
-
-  // 预加载关键资源
-  preloadCriticalResources() {
-    const criticalResources = [
-      '/src/styles/design-system.css',
-      '/src/styles/animations.css'
-    ];
-
-    criticalResources.forEach(resource => {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.href = resource;
-      link.as = 'style';
-      document.head.appendChild(link);
-    });
-  }
-
-  // 性能监控
-  setupPerformanceMonitoring() {
-    if ('performance' in window) {
-      window.addEventListener('load', () => {
-        setTimeout(() => {
-          const perfData = performance.getEntriesByType('navigation')[0];
-          console.log('页面加载性能:', {
-            DNS查询: perfData.domainLookupEnd - perfData.domainLookupStart,
-            TCP连接: perfData.connectEnd - perfData.connectStart,
-            请求响应: perfData.responseEnd - perfData.requestStart,
-            DOM解析: perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart,
-            页面完全加载: perfData.loadEventEnd - perfData.loadEventStart
-          });
-        }, 0);
-      });
-    }
-  }
+// 导出供测试与外部使用
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PerformanceOptimizer };
 }
 
 // 初始化性能优化
-const performanceOptimizer = new PerformanceOptimizer();
-
-// 导出供其他模块使用
-window.PerformanceOptimizer = PerformanceOptimizer;
+if (typeof window !== 'undefined') {
+  window.PerformanceOptimizer = PerformanceOptimizer;
+  document.addEventListener('DOMContentLoaded', () => {
+    window.performanceOptimizer = new PerformanceOptimizer();
+  });
+}

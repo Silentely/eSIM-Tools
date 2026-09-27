@@ -71,7 +71,7 @@ function createRateLimiter(options = {}) {
   const clients = new Map();
 
   // Clean up old entries periodically
-  setInterval(() => {
+  const timer = setInterval(() => {
     const now = Date.now();
     for (const [key, value] of clients.entries()) {
       if (now - value.resetTime > windowMs) {
@@ -80,8 +80,12 @@ function createRateLimiter(options = {}) {
     }
   }, windowMs);
 
-  return (req, res, next) => {
-    const key = req.ip || req.connection.remoteAddress;
+  if (typeof timer.unref === 'function') {
+    timer.unref();
+  }
+
+  const limiterMiddleware = (req, res, next) => {
+    const key = req.ip || req.connection?.remoteAddress || 'unknown';
     const now = Date.now();
 
     if (!clients.has(key)) {
@@ -111,6 +115,13 @@ function createRateLimiter(options = {}) {
     client.count++;
     next();
   };
+
+  limiterMiddleware.dispose = () => {
+    clearInterval(timer);
+    clients.clear();
+  };
+
+  return limiterMiddleware;
 }
 
 /**
@@ -122,31 +133,10 @@ function asyncHandler(fn) {
   };
 }
 
-/**
- * Validate JSON body
- */
-function validateJsonBody(req, res, next) {
-  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
-    const contentType = req.headers['content-type'];
-
-    if (contentType && contentType.includes('application/json')) {
-      if (!req.body || Object.keys(req.body).length === 0) {
-        return res.status(400).json({
-          error: 'Invalid Request',
-          message: 'Request body cannot be empty for JSON requests'
-        });
-      }
-    }
-  }
-
-  next();
-}
-
 module.exports = {
   validateBodySize,
   validateHeaders,
   sanitizeParams,
   createRateLimiter,
-  asyncHandler,
-  validateJsonBody
+  asyncHandler
 };
