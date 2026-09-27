@@ -7,32 +7,7 @@
     <meta name="description" content="Simyo eSIM 工具，支持设备更换、短信验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。">
 
     <!-- 运行时兜底：避免 iOS WebView 注入脚本访问未定义全局变量导致崩溃 -->
-    <script>
-        (function initSimyoRuntimeFallbacks() {
-            if (typeof window === 'undefined') return;
-            const globalObject = window;
-
-            // 兜底 currentInset，避免 "Can't find variable: currentInset"
-            const insetValue = Number(globalObject.currentInset);
-            globalObject.currentInset = Number.isFinite(insetValue) ? insetValue : 0;
-
-            // 兜底 CONFIG，避免 "Can't find variable: CONFIG"
-            if (!globalObject.CONFIG || typeof globalObject.CONFIG !== 'object') {
-                globalObject.CONFIG = {};
-            }
-
-            // 保持兼容：把 currentInset 同步到常见配置字段
-            if (typeof globalObject.CONFIG.currentInset === 'undefined') {
-                globalObject.CONFIG.currentInset = globalObject.currentInset;
-            }
-            if (!globalObject.CONFIG.safeArea || typeof globalObject.CONFIG.safeArea !== 'object') {
-                globalObject.CONFIG.safeArea = {};
-            }
-            if (typeof globalObject.CONFIG.safeArea.top === 'undefined') {
-                globalObject.CONFIG.safeArea.top = globalObject.currentInset;
-            }
-        })();
-    </script>
+    <script src="/src/simyo/js/runtime-fallback.js"></script>
 
     <!-- Sentry 错误监控配置（必须在其他脚本之前） -->
     <!-- 使用外链脚本以符合 CSP 策略 -->
@@ -46,7 +21,7 @@
     <link rel="preconnect" href="https://appapi.simyo.nl" crossorigin>
 
     <!-- CSP策略 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-Y7EzdXtZqusaDvI6M/a7FBfvLyIlKLRzZbRaQP+0w7g=' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://sentry.io https://*.sentry.io; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.google-analytics.com https://www.googletagmanager.com https://appapi.simyo.nl https://sentry.io https://*.sentry.io; img-src 'self' data: https:; frame-src 'self' https://*.sentry.io; worker-src 'self' blob:; child-src 'self' blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://sentry.io https://*.sentry.io https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://www.google.com https://www.gstatic.com https://challenges.cloudflare.com https://sentry.io https://*.sentry.io; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://*.sentry.io; worker-src 'self' blob:; child-src 'self' blob:;">
 
     <title>Simyo NL eSIM 工具</title>
     <link rel="manifest" href="/manifest.webmanifest">
@@ -623,5 +598,8 @@
 
     <!-- 统一版权页脚 -->
     <script type="module" src="/src/js/bootstrap-footer.js"></script>
+
+    <!-- 性能优化脚本 -->
+    <script defer src="/src/js/performance.js"></script>
 </body>
 </html>
