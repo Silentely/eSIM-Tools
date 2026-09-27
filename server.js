@@ -10,6 +10,7 @@ const fs = require('fs');
 const vm = require('vm');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 if (typeof global.File === 'undefined') {
@@ -154,9 +155,23 @@ app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 const staticMiddleware = express.static(STATIC_ROOT, { fallthrough: true, index: false });
 
-// 仅对 API / BFF 动态路由进行限流，免除对静态资源的限流干扰
-const { createRateLimiter } = require('./src/js/middleware/validation.js');
-const apiRateLimiter = createRateLimiter({ windowMs: 60000, maxRequests: 200 });
+// 限流器配置（符合 CodeQL js/missing-rate-limiting 防御标准）
+const apiRateLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 分钟
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too Many Requests', message: 'Too many requests, please try again later.' }
+});
+
+const staticPageLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 分钟
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too Many Requests', message: 'Too many requests, please try again later.' }
+});
+
 app.use('/bff', apiRateLimiter);
 app.use('/.netlify/functions', apiRateLimiter);
 app.use('/api', apiRateLimiter);
@@ -353,17 +368,60 @@ const bffTargetNames = [
 ];
 app.locals.bffRoutes = bffTargetNames.map(name => `/bff/${name}`);
 
+// 校验与清洗代理子路径（防止路径遍历与 SSRF，符合 CodeQL js/request-forgery 规范）
+const SIMYO_ALLOWED_HOST = 'appapi.simyo.nl';
+const GIFFGAFF_ALLOWED_HOSTS = new Set([
+    'api.giffgaff.com',
+    'id.giffgaff.com',
+    'publicapi.giffgaff.com'
+]);
+
+function sanitizeProxySubpath(rawPath) {
+    if (!rawPath || typeof rawPath !== 'string') return { normalizedPath: '/', queryString: '' };
+    const [pathPart, queryPart] = rawPath.split('?');
+    let decodedPath = pathPart;
+    try {
+        decodedPath = decodeURIComponent(pathPart);
+    } catch {
+        return null;
+    }
+    if (decodedPath.includes('..') || decodedPath.includes('\\')) {
+        return null;
+    }
+    const normalized = path.posix.normalize('/' + decodedPath.replace(/^\/+/, ''));
+    if (normalized.includes('..') || !/^\/[a-zA-Z0-9_\-./]*$/.test(normalized)) {
+        return null;
+    }
+    return {
+        normalizedPath: normalized,
+        queryString: queryPart ? `?${queryPart}` : ''
+    };
+}
+
 // Simyo API代理路由（支持 /api/simyo/v2/* → webapi/api/v2，其余 → webapi/api/v1）
 // 注：Express 5 的 path-to-regexp v8 不再支持裸 `*` 通配符，改用命名通配符 *splat
 app.use('/api/simyo/*splat', (req, res) => {
-    const [pathPart, queryPart] = req.originalUrl.replace(/^\/api\/simyo/, '').split('?');
-    const proxyPath = pathPart || '/';
-    const queryString = queryPart ? `?${queryPart}` : '';
-    const isV2 = proxyPath === '/v2' || proxyPath.startsWith('/v2/');
-    const apiVersionPath = isV2 ? proxyPath.replace(/^\/v2/, '') || '/' : proxyPath;
-    const targetUrl = isV2
-        ? `https://appapi.simyo.nl/webapi/api/v2${apiVersionPath}${queryString}`
-        : `https://appapi.simyo.nl/webapi/api/v1${proxyPath}${queryString}`;
+    const rawSubpath = req.originalUrl.replace(/^\/api\/simyo/, '');
+    const subpathInfo = sanitizeProxySubpath(rawSubpath);
+    if (!subpathInfo) {
+        return res.status(400).json({ error: 'Bad Request', message: 'Invalid API path' });
+    }
+    const { normalizedPath, queryString } = subpathInfo;
+    const isV2 = normalizedPath === '/v2' || normalizedPath.startsWith('/v2/');
+    const apiVersionPath = isV2 ? normalizedPath.replace(/^\/v2/, '') || '/' : normalizedPath;
+    const basePrefix = isV2 ? '/webapi/api/v2' : '/webapi/api/v1';
+
+    const targetUrlObj = new URL(`https://${SIMYO_ALLOWED_HOST}`);
+    targetUrlObj.pathname = path.posix.join(basePrefix, apiVersionPath);
+    if (queryString) {
+        targetUrlObj.search = queryString.replace(/^\?/, '');
+    }
+
+    if (targetUrlObj.hostname !== SIMYO_ALLOWED_HOST || targetUrlObj.protocol !== 'https:' || !targetUrlObj.pathname.startsWith(basePrefix)) {
+        return res.status(400).json({ error: 'Bad Request', message: 'Invalid target destination' });
+    }
+
+    const targetUrl = targetUrlObj.toString();
 
     const headers = {
         'User-Agent': req.headers['user-agent'] || DEFAULT_SIMYO_USER_AGENT,
@@ -390,7 +448,7 @@ app.use('/api/simyo/*splat', (req, res) => {
     const protocol = isSecure ? 'https' : 'http';
     const host = req.headers.host || `localhost:${PORT}`;
     const clientOrigin = `${protocol}://${host}`;
-    headers['X-Forwarded-Host'] = 'appapi.simyo.nl';
+    headers['X-Forwarded-Host'] = SIMYO_ALLOWED_HOST;
     headers['Origin'] = clientOrigin;
     headers['Referer'] = `${clientOrigin}/`;
 
@@ -437,23 +495,53 @@ app.use('/api/simyo/*splat', (req, res) => {
 });
 
 // Giffgaff API代理路由
+function handleGiffgaffProxy(req, res, routePrefix, targetHost) {
+    if (!GIFFGAFF_ALLOWED_HOSTS.has(targetHost)) {
+        return res.status(403).json({ error: 'Forbidden', message: 'Target host not allowed' });
+    }
+
+    const rawSubpath = req.originalUrl.slice(routePrefix.length);
+    const subpathInfo = sanitizeProxySubpath(rawSubpath);
+    if (!subpathInfo) {
+        return res.status(400).json({ error: 'Bad Request', message: 'Invalid proxy path' });
+    }
+
+    const targetUrlObj = new URL(`https://${targetHost}`);
+    targetUrlObj.pathname = subpathInfo.normalizedPath;
+    if (subpathInfo.queryString) {
+        targetUrlObj.search = subpathInfo.queryString.replace(/^\?/, '');
+    }
+
+    if (!GIFFGAFF_ALLOWED_HOSTS.has(targetUrlObj.hostname) || targetUrlObj.protocol !== 'https:') {
+        return res.status(400).json({ error: 'Bad Request', message: 'Invalid target destination' });
+    }
+
+    forwardRequest(req, res, targetUrlObj.toString(), targetHost);
+}
+
 app.use('/api/giffgaff/*splat', (req, res) => {
-    const targetUrl = `https://api.giffgaff.com${req.originalUrl.replace(/^\/api\/giffgaff/, '')}`;
-    forwardRequest(req, res, targetUrl, 'api.giffgaff.com');
+    handleGiffgaffProxy(req, res, '/api/giffgaff', 'api.giffgaff.com');
 });
 
 app.use('/api/giffgaff-id/*splat', (req, res) => {
-    const targetUrl = `https://id.giffgaff.com${req.originalUrl.replace(/^\/api\/giffgaff-id/, '')}`;
-    forwardRequest(req, res, targetUrl, 'id.giffgaff.com');
+    handleGiffgaffProxy(req, res, '/api/giffgaff-id', 'id.giffgaff.com');
 });
 
 app.use('/api/giffgaff-public/*splat', (req, res) => {
-    const targetUrl = `https://publicapi.giffgaff.com${req.originalUrl.replace(/^\/api\/giffgaff-public/, '')}`;
-    forwardRequest(req, res, targetUrl, 'publicapi.giffgaff.com');
+    handleGiffgaffProxy(req, res, '/api/giffgaff-public', 'publicapi.giffgaff.com');
 });
 
-// 通用请求转发函数
+// 通用请求转发函数（严格限制目标主机与协议）
 function forwardRequest(req, res, targetUrl, forwardHost) {
+    if (!GIFFGAFF_ALLOWED_HOSTS.has(forwardHost)) {
+        return res.status(403).json({ error: 'Forbidden', message: 'Forward host not allowed' });
+    }
+
+    const parsedTarget = new URL(targetUrl);
+    if (parsedTarget.hostname !== forwardHost || parsedTarget.protocol !== 'https:') {
+        return res.status(400).json({ error: 'Bad Request', message: 'Invalid forward target' });
+    }
+
     const headers = Object.assign({}, req.headers);
     delete headers.host;
     delete headers['content-length'];
@@ -477,7 +565,7 @@ function forwardRequest(req, res, targetUrl, forwardHost) {
         fetchOptions.body = JSON.stringify(req.body);
     }
 
-    fetch(targetUrl, fetchOptions)
+    fetch(parsedTarget.toString(), fetchOptions)
         .then(response => {
             res.status(response.status);
 
@@ -509,21 +597,21 @@ function forwardRequest(req, res, targetUrl, forwardHost) {
         });
 }
 
-// 兜底静态页面路由
-app.get('/giffgaff', (req, res) => {
+// 兜底静态页面路由（应用静态限流保护，避免未受限文件系统读取与 DoS）
+app.get('/giffgaff', staticPageLimiter, (req, res) => {
     res.sendFile(path.join(STATIC_ROOT, 'src/giffgaff/giffgaff_modular.html'));
 });
 
-app.get('/simyo', (req, res) => {
+app.get('/simyo', staticPageLimiter, (req, res) => {
     res.sendFile(path.join(STATIC_ROOT, 'src/simyo/simyo_modular.html'));
 });
 
-app.get('/', (req, res) => {
+app.get('/', staticPageLimiter, (req, res) => {
     res.sendFile(path.join(STATIC_ROOT, 'index.html'));
 });
 
 // 404 处理
-app.use((req, res) => {
+app.use(staticPageLimiter, (req, res) => {
     res.status(404).sendFile(path.join(STATIC_ROOT, 'index.html'));
 });
 

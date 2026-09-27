@@ -355,4 +355,102 @@ describe('Local server route coverage', () => {
     });
   });
 
+  it('rejects path traversal attempts on /api/simyo with 400 Bad Request', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/api/simyo/%2e%2e/secret',
+        method: 'GET'
+      }, (res) => {
+        try {
+          expect(res.statusCode).toBe(400);
+          server.close(done);
+        } catch (e) {
+          server.close();
+          done(e);
+        }
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.end();
+    });
+  });
+
+  it('rejects path traversal attempts on /api/giffgaff with 400 Bad Request', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/api/giffgaff/%2e%2e/secret',
+        method: 'GET'
+      }, (res) => {
+        try {
+          expect(res.statusCode).toBe(400);
+          server.close(done);
+        } catch (e) {
+          server.close();
+          done(e);
+        }
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.end();
+    });
+  });
+
+  it('applies rate limit headers to static page routes and 404 fallback', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+
+      http.get(`http://localhost:${port}/`, (res) => {
+        try {
+          expect(res.statusCode).toBe(200);
+          expect(res.headers['ratelimit-limit']).toBeDefined();
+        } catch (e) {
+          server.close();
+          return done(e);
+        }
+
+        http.get(`http://localhost:${port}/non-existent-page-fallback`, (fallbackRes) => {
+          try {
+            expect(fallbackRes.statusCode).toBe(404);
+            expect(fallbackRes.headers['ratelimit-limit']).toBeDefined();
+            server.close(done);
+          } catch (e) {
+            server.close();
+            done(e);
+          }
+        }).on('error', (err) => {
+          server.close();
+          done(err);
+        });
+      }).on('error', (err) => {
+        server.close();
+        done(err);
+      });
+    });
+  });
+
 });
