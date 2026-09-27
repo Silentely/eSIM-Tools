@@ -25,10 +25,17 @@ function parseOrigins(allowedOrigin) {
  * @param {{ list: string[], allowAll: boolean }} origins - 解析后的来源配置
  * @returns {boolean}
  */
+function isLoopbackOrigin(origin) {
+  if (!origin) return false;
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
 function isAllowedOrigin(origin, origins) {
   if (!origin) return true;
   if (origins.allowAll) return true;
-  return origins.list.includes(origin);
+  if (origins.list.includes(origin)) return true;
+  if (process.env.NODE_ENV !== 'production' && isLoopbackOrigin(origin)) return true;
+  return false;
 }
 
 /**
@@ -39,7 +46,7 @@ function isAllowedOrigin(origin, origins) {
  */
 function resolveCorsOrigin(origin, origins) {
   if (origins.allowAll) return '*';
-  if (origin && origins.list.includes(origin)) return origin;
+  if (origin && isAllowedOrigin(origin, origins)) return origin;
   return origins.list[0] || DEFAULT_ALLOWED_ORIGIN;
 }
 

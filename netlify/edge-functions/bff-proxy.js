@@ -42,7 +42,8 @@ const BFF_ROUTES = new Map([
   ['qrcode-generate', ['POST', 'OPTIONS']],
   ['verify-cookie', ['POST', 'OPTIONS']],
   ['public-config', ['GET', 'OPTIONS']],
-  ['health', ['GET', 'OPTIONS']]
+  ['health', ['GET', 'OPTIONS']],
+  ['notifications', ['GET', 'OPTIONS']]
 ]);
 
 // QR 码生成参数校验常量
@@ -116,7 +117,7 @@ export default async (request, context) => {
   const sameOrigin = requestOrigin === url.origin;
   const configuredOrigin = allowedOrigins.includes(requestOrigin);
   const corsOrigin = sameOrigin || configuredOrigin ? requestOrigin : '';
-  const allowMissingOriginForPublicGet = (targetName === 'public-config' || targetName === 'health') && request.method === 'GET';
+  const allowMissingOriginForPublicGet = (targetName === 'public-config' || targetName === 'health' || targetName === 'notifications') && request.method === 'GET';
   const fallbackCorsOrigin = allowedOrigins[0] || DEFAULT_ALLOWED_ORIGIN;
   const errorCorsHeaders = buildCorsHeaders(corsOrigin || fallbackCorsOrigin);
 
@@ -200,7 +201,7 @@ export default async (request, context) => {
   }
 
   // 目标 Netlify Function URL（同域）
-  const functionUrl = new URL(`/.netlify/functions/${targetName}` , request.url);
+  const functionUrl = new URL(`/.netlify/functions/${targetName}`, request.url);
 
   // 从 Edge 运行时环境读取密钥
   // Netlify Edge 使用 Deno 运行时

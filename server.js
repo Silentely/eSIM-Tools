@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const vm = require('vm');
 const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
@@ -26,9 +27,21 @@ const PORT = process.env.PORT || 3000;
 const STATIC_ROOT = path.join(__dirname, process.env.STATIC_ROOT || 'dist');
 const INTERNAL_FUNCTION_KEY = process.env.ACCESS_KEY || '';
 const { parseOrigins, isAllowedOrigin: _isAllowedOrigin, resolveCorsOrigin: _resolveCorsOrigin } = require('./netlify/functions/_shared/cors');
-const origins = parseOrigins(process.env.ALLOWED_ORIGIN);
-const isAllowedOrigin = (origin) => _isAllowedOrigin(origin, origins);
-const getCorsOrigin = (origin) => _resolveCorsOrigin(origin, origins);
+const configuredOrigins = parseOrigins(process.env.ALLOWED_ORIGIN);
+const isLoopbackOrigin = (origin) => {
+    if (!origin) return false;
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+};
+const isAllowedOrigin = (origin) => {
+    if (!origin) return false;
+    if (_isAllowedOrigin(origin, configuredOrigins)) return true;
+    if (process.env.NODE_ENV !== 'production' && isLoopbackOrigin(origin)) return true;
+    return false;
+};
+const getCorsOrigin = (origin) => {
+    if (origin && isAllowedOrigin(origin)) return origin;
+    return _resolveCorsOrigin(origin, configuredOrigins);
+};
 // 与 src/simyo/js/modules/client-identity.js 保持同步
 const DEFAULT_SIMYO_CLIENT_PLATFORM = 'ios';
 const DEFAULT_SIMYO_CLIENT_VERSION = '4.28.0';
@@ -64,6 +77,7 @@ if (!fs.existsSync(STATIC_ROOT)) {
     console.warn('💡 运行: npm run build');
 }
 
+const origins = configuredOrigins;
 if (origins.allowAll) {
     Logger.warn('⚠️  ALLOWED_ORIGIN 包含通配符(*)，所有来源均可访问。请勿在生产环境使用');
 }
@@ -73,13 +87,51 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://browser.sentry-cdn.com", "https://sentry.io", "https://*.sentry.io"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-            imgSrc: ["'self'", "data:", "https:", "http:"],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdn.jsdelivr.net",
+                "https://cdnjs.cloudflare.com",
+                "https://browser.sentry-cdn.com",
+                "https://sentry.io",
+                "https://*.sentry.io",
+                "https://challenges.cloudflare.com",
+                "https://www.google.com",
+                "https://www.gstatic.com",
+                "https://www.googletagmanager.com"
+            ],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdn.jsdelivr.net",
+                "https://cdnjs.cloudflare.com",
+                "https://fonts.googleapis.com"
+            ],
+            imgSrc: ["'self'", "data:", "https:"],
             // jsdelivr：Bootstrap source map；sentry-cdn：SDK 回退加载
-            connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://appapi.simyo.nl", "https://api.giffgaff.com", "https://id.giffgaff.com", "https://publicapi.giffgaff.com", "https://browser.sentry-cdn.com", "https://sentry.io", "https://*.sentry.io"],
-            fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
-            frameSrc: ["'self'", "https://*.sentry.io"],
+            connectSrc: [
+                "'self'",
+                "https://cdn.jsdelivr.net",
+                "https://cdnjs.cloudflare.com",
+                "https://browser.sentry-cdn.com",
+                "https://www.google-analytics.com",
+                "https://analytics.google.com",
+                "https://stats.g.doubleclick.net",
+                "https://www.googletagmanager.com",
+                "https://qrcode.show",
+                "https://api.qrserver.com",
+                "https://appapi.simyo.nl",
+                "https://api.giffgaff.com",
+                "https://id.giffgaff.com",
+                "https://publicapi.giffgaff.com",
+                "https://challenges.cloudflare.com",
+                "https://www.google.com",
+                "https://www.gstatic.com",
+                "https://sentry.io",
+                "https://*.sentry.io"
+            ],
+            fontSrc: ["'self'", "data:", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
+            frameSrc: ["'self'", "https://challenges.cloudflare.com", "https://www.google.com", "https://*.sentry.io"],
             workerSrc: ["'self'", "blob:"],
             childSrc: ["'self'", "blob:"]
         }
@@ -89,20 +141,26 @@ app.use(helmet({
 // 仅允许特定来源访问本地API（前端文件本地打开时可能 Origin 为 undefined）
 app.use(cors({
     origin: function(origin, callback) {
-        if (isAllowedOrigin(origin)) return callback(null, true); // 非浏览器/本地文件放行
-        return callback(new Error('Not allowed by CORS'));
+        if (isAllowedOrigin(origin)) return callback(null, true);
+        return callback(null, false);
     },
     credentials: false
 }));
 app.use(morgan('combined'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// 请求体解析中间件（限制 payload 尺寸防止 DoS）
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 const staticMiddleware = express.static(STATIC_ROOT, { fallthrough: true, index: false });
 
-// 全局限流：每 IP 每分钟最多 200 次请求
+// 仅对 API / BFF 动态路由进行限流，免除对静态资源的限流干扰
 const { createRateLimiter } = require('./src/js/middleware/validation.js');
-app.use(createRateLimiter({ windowMs: 60000, maxRequests: 200 }));
+const apiRateLimiter = createRateLimiter({ windowMs: 60000, maxRequests: 200 });
+app.use('/bff', apiRateLimiter);
+app.use('/.netlify/functions', apiRateLimiter);
+app.use('/api', apiRateLimiter);
+
 app.use((req, res, next) => {
     if (!['GET', 'HEAD'].includes(req.method)) {
         return next();
@@ -122,24 +180,61 @@ const verifyCookie = require('./netlify/functions/verify-cookie');
 const giffgaffSmsActivate = require('./netlify/functions/giffgaff-sms-activate');
 const autoActivateEsim = require('./netlify/functions/auto-activate-esim');
 const publicConfig = require('./netlify/functions/public-config');
+const health = require('./netlify/functions/health');
+const notifications = require('./netlify/functions/notifications');
 
 // 包装Netlify Functions为Express路由
+function getRouteTargetName(req) {
+    const fullPath = (req.baseUrl || '') + (req.path || '');
+    return fullPath.split('/').filter(Boolean).pop() || '';
+}
+
+function checkBffOriginGate(req, res, targetName) {
+    const origin = req.headers.origin;
+    const isPublicGet = !origin && req.method === 'GET' && ['public-config', 'health', 'notifications'].includes(targetName);
+    if (isPublicGet) return true;
+    if (!origin) {
+        res.status(403).json({ error: 'Forbidden', message: 'Origin not allowed' });
+        return false;
+    }
+    if (!isAllowedOrigin(origin)) {
+        res.status(403).json({ error: 'Forbidden', message: 'Origin not allowed' });
+        return false;
+    }
+    return true;
+}
+
 function wrapNetlifyFunction(handler) {
     return async (req, res) => {
         try {
+            const targetName = getRouteTargetName(req);
+            if (!checkBffOriginGate(req, res, targetName)) {
+                return;
+            }
             const headers = Object.assign({}, req.headers);
-            // 仅在客户端未提供密钥时注入内部密钥（避免覆盖）
-            if (INTERNAL_FUNCTION_KEY && !headers['x-esim-key'] && !headers['x-app-key']) {
+            // 与 Netlify Edge BFF 行为完全同构：剥离客户端传入的 internal keys，强制注入服务端 INTERNAL_FUNCTION_KEY
+            delete headers['x-app-key'];
+            delete headers['x-esim-key'];
+            if (INTERNAL_FUNCTION_KEY) {
                 headers['x-esim-key'] = INTERNAL_FUNCTION_KEY;
             }
+
+            let body = null;
+            if (req.method !== 'GET' && req.method !== 'HEAD' && req.body !== undefined && req.body !== null) {
+                body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+            }
+
             const event = {
                 httpMethod: req.method,
                 headers,
-                body: JSON.stringify(req.body),
+                body,
                 queryStringParameters: req.query
             };
+            const context = {
+                clientContext: {},
+                functionName: req.path.split('/').pop()
+            };
 
-            const context = {};
             const result = await handler.handler(event, context);
 
             res.status(result.statusCode);
@@ -151,8 +246,8 @@ function wrapNetlifyFunction(handler) {
             }
 
             if (result.body) {
-                const body = typeof result.body === 'string' ? result.body : JSON.stringify(result.body);
-                res.send(body);
+                const responseBody = typeof result.body === 'string' ? result.body : JSON.stringify(result.body);
+                res.send(responseBody);
             } else {
                 res.end();
             }
@@ -166,6 +261,65 @@ function wrapNetlifyFunction(handler) {
     };
 }
 
+// 本地模拟 Edge BFF 内联处理 qrcode-generate
+let cachedQrCodeLib = null;
+function getQrCodeLib() {
+    if (!cachedQrCodeLib) {
+        const qrcodeFile = path.join(__dirname, 'netlify/edge-functions/qrcode-lib.js');
+        const content = fs.readFileSync(qrcodeFile, 'utf8');
+        const code = content.replace(/export\s+default\s+qrcode;?/, '; globalThis.__qrcode = qrcode;');
+        const ctx = { globalThis: {} };
+        vm.runInNewContext(code, ctx);
+        cachedQrCodeLib = ctx.globalThis.__qrcode;
+    }
+    return cachedQrCodeLib;
+}
+
+const QR_MIN_SIZE = 200;
+const QR_MAX_SIZE = 600;
+const QR_MAX_DATA_LENGTH = 2048;
+const QR_MARGIN_MODULES = 8;
+
+function handleQRCodeGenerate(req, res) {
+    if (!checkBffOriginGate(req, res, 'qrcode-generate')) {
+        return;
+    }
+    if (req.method === 'OPTIONS') {
+        return res.status(204).end();
+    }
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    const { data, size = 300 } = req.body || {};
+    if (typeof data !== 'string' || data.length < 1 || data.length > QR_MAX_DATA_LENGTH) {
+        return res.status(400).json({
+            error: `data must be a string between 1 and ${QR_MAX_DATA_LENGTH} characters`
+        });
+    }
+
+    const numSize = Number(size);
+    if (!Number.isInteger(numSize) || numSize < QR_MIN_SIZE || numSize > QR_MAX_SIZE) {
+        return res.status(400).json({
+            error: `size must be an integer between ${QR_MIN_SIZE} and ${QR_MAX_SIZE}`
+        });
+    }
+
+    try {
+        const qrLib = getQrCodeLib();
+        const qr = qrLib(0, 'M');
+        qr.addData(data);
+        qr.make();
+        const moduleCount = qr.getModuleCount();
+        const cellSize = Math.max(1, Math.floor(numSize / (moduleCount + QR_MARGIN_MODULES)));
+        const qrcode = qr.createDataURL(cellSize, cellSize * 4);
+        return res.status(200).json({ success: true, qrcode });
+    } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        return res.status(500).json({ error: err.message });
+    }
+}
+
 // API端点（同时挂 /.netlify/functions/* 与 /bff/*，本地模拟 Edge BFF 代理）
 const functionRoutes = [
   ['giffgaff-mfa-challenge', giffgaffMfaChallenge],
@@ -175,15 +329,29 @@ const functionRoutes = [
   ['verify-cookie', verifyCookie],
   ['giffgaff-sms-activate', giffgaffSmsActivate],
   ['auto-activate-esim', autoActivateEsim],
-  ['public-config', publicConfig]
+  ['public-config', publicConfig],
+  ['health', health],
+  ['notifications', notifications]
 ];
-app.locals.bffRoutes = functionRoutes.map(([name]) => `/bff/${name}`);
+
+// 注册所有 Netlify Functions 路由
 app.locals.functionRoutes = functionRoutes.map(([name]) => `/.netlify/functions/${name}`);
 functionRoutes.forEach(([name, handler]) => {
   const wrapped = wrapNetlifyFunction(handler);
   app.use(`/.netlify/functions/${name}`, wrapped);
   app.use(`/bff/${name}`, wrapped);
 });
+
+// 注册本地 Edge 内联路由（qrcode-generate）
+app.all('/bff/qrcode-generate', handleQRCodeGenerate);
+app.all('/.netlify/functions/qrcode-generate', handleQRCodeGenerate);
+
+// 注册完整的 BFF 路由列表供测试和端点清单检验
+const bffTargetNames = [
+  ...functionRoutes.map(([name]) => name),
+  'qrcode-generate'
+];
+app.locals.bffRoutes = bffTargetNames.map(name => `/bff/${name}`);
 
 // Simyo API代理路由（支持 /api/simyo/v2/* → webapi/api/v2，其余 → webapi/api/v1）
 // 注：Express 5 的 path-to-regexp v8 不再支持裸 `*` 通配符，改用命名通配符 *splat
@@ -196,113 +364,197 @@ app.use('/api/simyo/*splat', (req, res) => {
     const targetUrl = isV2
         ? `https://appapi.simyo.nl/webapi/api/v2${apiVersionPath}${queryString}`
         : `https://appapi.simyo.nl/webapi/api/v1${proxyPath}${queryString}`;
-    Logger.log(`[Simyo Proxy] ${req.method} ${req.path} -> ${targetUrl}`);
 
-    // 设置CORS头（仅允许指定域）
-    res.header('Access-Control-Allow-Origin', getCorsOrigin(req.headers.origin));
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Client-Token, X-Client-Platform, X-Client-Version, X-Device-ID, X-Session-Token');
-    res.header('Vary', 'Origin');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    const simyoClientToken = process.env.SIMYO_CLIENT_TOKEN;
-    if (!simyoClientToken) {
-        return res.status(500).json({
-            error: 'Server Misconfigured',
-            message: 'SIMYO_CLIENT_TOKEN 未配置'
-        });
-    }
-
-    // 代理请求：强制使用客户端身份头（浏览器 UA 不可靠，禁止透传）
-    // X-Device-ID 必填，优先使用前端持久化 ID
-    const axios = require('axios');
-    const config = {
-        method: req.method.toLowerCase(),
-        url: targetUrl,
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'Accept-Encoding': 'gzip',
-            'User-Agent': process.env.SIMYO_USER_AGENT || DEFAULT_SIMYO_USER_AGENT,
-            'X-Client-Token': simyoClientToken,
-            'X-Client-Platform': process.env.SIMYO_CLIENT_PLATFORM || DEFAULT_SIMYO_CLIENT_PLATFORM,
-            'X-Client-Version': process.env.SIMYO_CLIENT_VERSION || DEFAULT_SIMYO_CLIENT_VERSION,
-            'X-Device-ID': req.headers['x-device-id'] || process.env.SIMYO_DEVICE_ID || getDefaultSimyoDeviceId(),
-            ...(req.headers['x-session-token'] ? { 'X-Session-Token': req.headers['x-session-token'] } : {})
-        },
-        timeout: 30000
+    const headers = {
+        'User-Agent': req.headers['user-agent'] || DEFAULT_SIMYO_USER_AGENT,
+        'Accept': req.headers['accept'] || 'application/json',
+        'X-Simyo-Platform': req.headers['x-simyo-platform'] || DEFAULT_SIMYO_CLIENT_PLATFORM,
+        'X-Simyo-Client-Version': req.headers['x-simyo-client-version'] || DEFAULT_SIMYO_CLIENT_VERSION,
+        'X-Simyo-Device-Id': req.headers['x-simyo-device-id'] || getDefaultSimyoDeviceId()
     };
 
-    if (req.body && Object.keys(req.body).length > 0) {
-        config.data = req.body;
+    const simyoToken = process.env.SIMYO_CLIENT_TOKEN || 'e77b7e2f43db41bb95b17a2a11581a38';
+    headers['X-Client-Token'] = simyoToken;
+    if (process.env.SIMYO_CLIENT_TOKEN) {
+        headers['Authorization'] = `Bearer ${process.env.SIMYO_CLIENT_TOKEN}`;
     }
 
-    axios(config)
+    // 复制特定请求头
+    ['content-type', 'authorization'].forEach(header => {
+        if (req.headers[header]) {
+            headers[header] = req.headers[header];
+        }
+    });
+
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const protocol = isSecure ? 'https' : 'http';
+    const host = req.headers.host || `localhost:${PORT}`;
+    const clientOrigin = `${protocol}://${host}`;
+    headers['X-Forwarded-Host'] = 'appapi.simyo.nl';
+    headers['Origin'] = clientOrigin;
+    headers['Referer'] = `${clientOrigin}/`;
+
+    const fetchOptions = {
+        method: req.method,
+        headers: headers
+    };
+
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+        fetchOptions.body = JSON.stringify(req.body);
+    }
+
+    fetch(targetUrl, fetchOptions)
         .then(response => {
-            res.status(response.status).json(response.data);
+            res.status(response.status);
+
+            // 转发响应头
+            response.headers.forEach((value, key) => {
+                if (!['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
+                    res.set(key, value);
+                }
+            });
+
+            // 允许跨域
+            const origin = req.headers.origin;
+            const allowedOrigin = getCorsOrigin(origin);
+            if (allowedOrigin) {
+                res.set('Access-Control-Allow-Origin', allowedOrigin);
+                res.set('Vary', 'Origin');
+            }
+
+            return response.text();
+        })
+        .then(data => {
+            res.send(data);
         })
         .catch(error => {
-            console.error('[Simyo Proxy Error]:', error.message);
-            const status = error.response?.status || 500;
-            const data = error.response?.data || { error: 'Proxy Error', message: error.message };
-            res.status(status).json(data);
+            console.error('Simyo Proxy Error:', error);
+            res.status(500).json({
+                error: 'Proxy Error',
+                message: error.message
+            });
         });
 });
 
-// 路由配置
-const htmlRoutes = [
-    { url: '/giffgaff', file: 'src/giffgaff/giffgaff_modular.html' },
-    { url: '/simyo', file: 'src/simyo/simyo_modular.html' },
-    // 兼容静态路径访问（与 Netlify 重写保持一致）
-    { url: '/src/giffgaff/giffgaff_modular.html', file: 'src/giffgaff/giffgaff_modular.html' },
-    { url: '/src/simyo/simyo_modular.html', file: 'src/simyo/simyo_modular.html' },
-    { url: '/', file: 'index.html' }
-];
-
-htmlRoutes.forEach(({ url, file }) => {
-    app.get(url, (req, res) => {
-        res.sendFile(path.join(STATIC_ROOT, file));
-    });
+// Giffgaff API代理路由
+app.use('/api/giffgaff/*splat', (req, res) => {
+    const targetUrl = `https://api.giffgaff.com${req.originalUrl.replace(/^\/api\/giffgaff/, '')}`;
+    forwardRequest(req, res, targetUrl, 'api.giffgaff.com');
 });
 
-// 错误处理
-app.use((err, req, res, next) => {
-    console.error('Server Error:', err);
-    const safeMessage = process.env.NODE_ENV === 'development'
-        ? String(err.message || '').replace(/[<>"'&]/g, '')
-        : '服务器内部错误';
-    res.status(500).json({
-        error: 'Internal Server Error',
-        message: safeMessage
-    });
+app.use('/api/giffgaff-id/*splat', (req, res) => {
+    const targetUrl = `https://id.giffgaff.com${req.originalUrl.replace(/^\/api\/giffgaff-id/, '')}`;
+    forwardRequest(req, res, targetUrl, 'id.giffgaff.com');
 });
 
-// 404处理
-app.use((req, res) => {
-    // 优先返回 HTML 404 页面（如果存在）
-    const html404Path = path.join(STATIC_ROOT, '404.html');
-    if (fs.existsSync(html404Path) && req.accepts('html')) {
-        return res.status(404).sendFile(html404Path);
+app.use('/api/giffgaff-public/*splat', (req, res) => {
+    const targetUrl = `https://publicapi.giffgaff.com${req.originalUrl.replace(/^\/api\/giffgaff-public/, '')}`;
+    forwardRequest(req, res, targetUrl, 'publicapi.giffgaff.com');
+});
+
+// 通用请求转发函数
+function forwardRequest(req, res, targetUrl, forwardHost) {
+    const headers = Object.assign({}, req.headers);
+    delete headers.host;
+    delete headers['content-length'];
+    delete headers['content-encoding'];
+    delete headers['transfer-encoding'];
+    headers['X-Forwarded-Host'] = forwardHost;
+
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const protocol = isSecure ? 'https' : 'http';
+    const host = req.headers.host || `localhost:${PORT}`;
+    const clientOrigin = `${protocol}://${host}`;
+    headers['Origin'] = clientOrigin;
+    headers['Referer'] = `${clientOrigin}/`;
+
+    const fetchOptions = {
+        method: req.method,
+        headers: headers
+    };
+
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+        fetchOptions.body = JSON.stringify(req.body);
     }
 
-    // API 请求或无 404 页面时返回 JSON
-    res.status(404).json({
-        error: 'Not Found',
-        message: '请求的资源不存在'
+    fetch(targetUrl, fetchOptions)
+        .then(response => {
+            res.status(response.status);
+
+            response.headers.forEach((value, key) => {
+                if (!['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
+                    res.set(key, value);
+                }
+            });
+
+            // 允许跨域
+            const origin = req.headers.origin;
+            const allowedOrigin = getCorsOrigin(origin);
+            if (allowedOrigin) {
+                res.set('Access-Control-Allow-Origin', allowedOrigin);
+                res.set('Vary', 'Origin');
+            }
+
+            return response.text();
+        })
+        .then(data => {
+            res.send(data);
+        })
+        .catch(error => {
+            console.error('Proxy Error:', error);
+            res.status(500).json({
+                error: 'Proxy Error',
+                message: error.message
+            });
+        });
+}
+
+// 兜底静态页面路由
+app.get('/giffgaff', (req, res) => {
+    res.sendFile(path.join(STATIC_ROOT, 'src/giffgaff/giffgaff_modular.html'));
+});
+
+app.get('/simyo', (req, res) => {
+    res.sendFile(path.join(STATIC_ROOT, 'src/simyo/simyo_modular.html'));
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(STATIC_ROOT, 'index.html'));
+});
+
+// 404 处理
+app.use((req, res) => {
+    res.status(404).sendFile(path.join(STATIC_ROOT, 'index.html'));
+});
+
+// 错误处理中间件
+app.use((err, req, res, next) => {
+    if (err.type === 'entity.too.large' || err.status === 413) {
+        return res.status(413).json({
+            error: 'Payload Too Large',
+            message: 'Request entity too large'
+        });
+    }
+    if (err.type === 'entity.parse.failed' || err.status === 400 || (err instanceof SyntaxError && err.status === 400)) {
+        return res.status(400).json({
+            error: 'Bad Request',
+            message: 'Invalid JSON payload format'
+        });
+    }
+    console.error('Server Error:', err);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
     });
 });
 
-// 启动服务器。被测试或其他模块 require 时不自动占用端口。
+// 仅在直接运行时启动服务器，被测试引用时导出 app
 if (require.main === module) {
     app.listen(PORT, () => {
-        Logger.log(`🚀 eSIM工具服务器已启动`);
-        Logger.log(`📍 本地地址: http://localhost:${PORT}`);
-        Logger.log(`🔧 Giffgaff工具: http://localhost:${PORT}/giffgaff`);
-        Logger.log(`📱 Simyo工具: http://localhost:${PORT}/simyo`);
-        Logger.log(`🌐 环境: ${process.env.NODE_ENV || 'development'}`);
+        Logger.log(`🚀 本地开发服务器运行在 http://localhost:${PORT}`);
+        Logger.log(`📁 静态文件根目录: ${STATIC_ROOT}`);
+        Logger.log(`🔑 ACCESS_KEY: ${INTERNAL_FUNCTION_KEY ? '已配置' : '未配置'}`);
+        Logger.log(`📱 Simyo Client Token: ${process.env.SIMYO_CLIENT_TOKEN ? '已配置' : '未配置'}`);
     });
 }
 

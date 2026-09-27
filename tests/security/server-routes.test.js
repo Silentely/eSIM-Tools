@@ -1,3 +1,5 @@
+const http = require('http');
+
 jest.mock('cheerio', () => ({
   load: () => ({})
 }));
@@ -11,7 +13,9 @@ describe('Local server route coverage', () => {
       ...originalEnv,
       ACCESS_KEY: 'test-access-key',
       ALLOWED_ORIGIN: 'https://esim.cosr.eu.org',
-      SIMYO_CLIENT_TOKEN: 'test-simyo-token'
+      SIMYO_CLIENT_TOKEN: 'test-simyo-token',
+      GIFFGAFF_CLIENT_ID: 'test-client-id',
+      GIFFGAFF_CLIENT_SECRET: 'test-client-secret'
     };
   });
 
@@ -31,10 +35,324 @@ describe('Local server route coverage', () => {
       '/bff/giffgaff-mfa-validation',
       '/bff/giffgaff-sms-activate',
       '/bff/auto-activate-esim',
+      '/bff/qrcode-generate',
       '/bff/verify-cookie',
-      '/bff/public-config'
+      '/bff/public-config',
+      '/bff/health',
+      '/bff/notifications'
     ];
 
     expect([...routes].sort()).toEqual([...expectedRoutes].sort());
   });
+
+  it('exposes Netlify function routes for health and notifications', () => {
+    const app = require('../../server.js');
+    const routes = app.locals.functionRoutes;
+
+    expect(routes).toContain('/.netlify/functions/health');
+    expect(routes).toContain('/.netlify/functions/notifications');
+  });
+
+  it('serves health and notifications endpoints with 200 OK', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+
+      http.get(`http://localhost:${port}/.netlify/functions/notifications`, (res) => {
+        expect(res.statusCode).toBe(200);
+        let data = '';
+        res.on('data', chunk => { data += chunk; });
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            expect(json.success).toBe(true);
+            expect(Array.isArray(json.data)).toBe(true);
+          } catch (e) {
+            server.close();
+            return done(e);
+          }
+
+          http.get(`http://localhost:${port}/.netlify/functions/health`, (healthRes) => {
+            try {
+              expect(healthRes.statusCode).toBe(200);
+              server.close(done);
+            } catch (e) {
+              server.close();
+              done(e);
+            }
+          }).on('error', (err) => {
+            server.close();
+            done(err);
+          });
+        });
+      }).on('error', (err) => {
+        server.close();
+        done(err);
+      });
+    });
+  });
+
+  it('serves local /bff/qrcode-generate with 200 OK and valid image data URL', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+      const postData = JSON.stringify({
+        data: 'LPA:1$smdp.example.com$TEST123456',
+        size: 300
+      });
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/bff/qrcode-generate',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData),
+          'Origin': 'http://localhost:3000'
+        }
+      }, (res) => {
+        expect(res.statusCode).toBe(200);
+        let raw = '';
+        res.on('data', chunk => { raw += chunk; });
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(raw);
+            expect(json.success).toBe(true);
+            expect(typeof json.qrcode).toBe('string');
+            expect(json.qrcode.startsWith('data:image/gif;base64,')).toBe(true);
+            server.close(done);
+          } catch (e) {
+            server.close();
+            done(e);
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  });
+
+  it('rejects invalid parameters on /bff/qrcode-generate with 400 Bad Request', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+      const postData = JSON.stringify({
+        data: '',
+        size: 100 // below minimum 200
+      });
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/bff/qrcode-generate',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData),
+          'Origin': 'http://localhost:3000'
+        }
+      }, (res) => {
+        expect(res.statusCode).toBe(400);
+        server.close(done);
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  });
+
+
+  it('blocks protected BFF requests with missing origin (symmetrical to Edge BFF)', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+      const postData = JSON.stringify({ cookie: 'test=123' });
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/bff/verify-cookie',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+          // Intentionally omitting Origin header
+        }
+      }, (res) => {
+        expect(res.statusCode).toBe(403);
+        let raw = '';
+        res.on('data', chunk => { raw += chunk; });
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(raw);
+            expect(json.error).toBe('Forbidden');
+            expect(json.message).toBe('Origin not allowed');
+            server.close(done);
+          } catch (e) {
+            server.close();
+            done(e);
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  });
+
+  it('parses POST JSON body and strips client keys while injecting internal key in wrapNetlifyFunction', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+      const postData = JSON.stringify({
+        cookie: 'memberId=12345; sessionToken=test'
+      });
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/bff/verify-cookie',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData),
+          'Origin': 'http://localhost:3000',
+          'x-app-key': 'attacker-client-key',
+          'x-esim-key': 'attacker-internal-key'
+        }
+      }, (res) => {
+        // verify-cookie requires valid cookie format, but it will process the request
+        // because authentication passed (internal ACCESS_KEY injected, attacker key stripped)
+        expect([200, 400]).toContain(res.statusCode);
+        let raw = '';
+        res.on('data', chunk => { raw += chunk; });
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(raw);
+            // Neither 401 nor 403 (Unauthorized / Forbidden) which would happen if key was missing
+            expect(res.statusCode).not.toBe(401);
+            expect(res.statusCode).not.toBe(403);
+            server.close(done);
+          } catch (e) {
+            server.close();
+            done(e);
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  });
+
+  it('returns 400 Bad Request on malformed JSON payload instead of 500', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+      const invalidJson = '{"broken": ';
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/bff/verify-cookie',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(invalidJson),
+          'Origin': 'http://localhost:3000'
+        }
+      }, (res) => {
+        expect(res.statusCode).toBe(400);
+        let raw = '';
+        res.on('data', chunk => { raw += chunk; });
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(raw);
+            expect(json.error).toBe('Bad Request');
+            server.close(done);
+          } catch (e) {
+            server.close();
+            done(e);
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.write(invalidJson);
+      req.end();
+    });
+  });
+
+  it('omits Access-Control-Allow-Origin or returns 403 on untrusted external CORS origin', (done) => {
+    const app = require('../../server.js');
+    const server = http.createServer(app);
+
+    server.listen(0, () => {
+      const port = server.address().port;
+      const postData = JSON.stringify({ cookie: 'test' });
+
+      const req = http.request({
+        hostname: 'localhost',
+        port,
+        path: '/bff/verify-cookie',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData),
+          'Origin': 'https://evil-unauthorized-site.com'
+        }
+      }, (res) => {
+        expect(res.statusCode).toBe(403);
+        expect(res.headers['access-control-allow-origin']).not.toBe('https://evil-unauthorized-site.com');
+        server.close(done);
+      });
+
+      req.on('error', (err) => {
+        server.close();
+        done(err);
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  });
+
 });
