@@ -23,6 +23,7 @@ export class StateManager {
             memberId: "",
             memberName: "",
             phoneNumber: "",
+            simStatus: "",
 
             // eSIM相关
             esimSSN: "",
@@ -148,6 +149,7 @@ export class StateManager {
                 memberId: this.state.memberId,
                 memberName: this.state.memberName,
                 phoneNumber: this.state.phoneNumber,
+                simStatus: this.state.simStatus,
                 esimSSN: this.state.esimSSN,
                 esimActivationCode: this.state.esimActivationCode,
                 esimDeliveryStatus: this.state.esimDeliveryStatus,
@@ -204,6 +206,7 @@ export class StateManager {
                 memberId: data.memberId || "",
                 memberName: data.memberName || "",
                 phoneNumber: data.phoneNumber || "",
+                simStatus: data.simStatus || "",
                 esimSSN: data.esimSSN || "",
                 esimActivationCode: data.esimActivationCode || "",
                 esimDeliveryStatus: data.esimDeliveryStatus || "",
@@ -270,6 +273,7 @@ export class StateManager {
             memberId: "",
             memberName: "",
             phoneNumber: "",
+            simStatus: "",
             esimSSN: "",
             esimActivationCode: "",
             esimDeliveryStatus: "",

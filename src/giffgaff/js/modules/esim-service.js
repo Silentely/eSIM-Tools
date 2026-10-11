@@ -43,10 +43,8 @@ export class ESimService {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(t('giffgaff.esim.errors.requestFailed', {
-                    status: response.status,
-                    message: errorText
-                }));
+                const parsed = this._tryParseError(errorText);
+                throw new Error(this._friendlyGraphqlError(response.status, parsed));
             }
 
             const data = await response.json();
@@ -61,7 +59,8 @@ export class ESimService {
             stateManager.setState({
                 memberId: data.data.memberProfile.id,
                 memberName: data.data.memberProfile.memberName,
-                phoneNumber: data.data.sim.phoneNumber
+                phoneNumber: data.data.sim.phoneNumber,
+                simStatus: data.data.sim?.status || ""
             });
 
             return {
@@ -176,10 +175,8 @@ export class ESimService {
 
             if (!response.ok) {
                 const errText = await response.text();
-                throw new Error(t('giffgaff.esim.errors.swapFailed', {
-                    status: response.status,
-                    message: errText
-                }));
+                const parsed = this._tryParseError(errText);
+                throw new Error(this._friendlyGraphqlError(response.status, parsed));
             }
 
             const swapData = await response.json();
@@ -515,10 +512,14 @@ export class ESimService {
             return t('giffgaff.esim.errors.authFailed');
         }
 
-        // 422: 业务校验错误（SSN 不存在等）
+        // 422: 业务校验错误（SSN 不存在、卡状态异常等）
         if (status === 422) {
             if (/SSN.*ICCID.*not exist|SSN.*不存在/i.test(msg)) {
                 return t('giffgaff.esim.errors.ssnNotFound');
+            }
+            const isSwapBadRequest = parsed?.details?.code === 'SIM_SWAP_BAD_REQUEST' || /sim.*状态|bad request/i.test(msg);
+            if (isSwapBadRequest) {
+                return t('giffgaff.app.error.smsSendFailedDetailed', { message: msg });
             }
             return t('giffgaff.esim.errors.upstreamBusinessError', { message: msg });
         }

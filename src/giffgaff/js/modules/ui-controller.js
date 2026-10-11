@@ -416,14 +416,40 @@ export class UIController {
      */
     showMemberInfo(memberData) {
         const state = stateManager.getState();
+        const simStatus = String(memberData?.sim?.status || state.simStatus || '').trim().toUpperCase();
+        const isSimActive = simStatus === 'ACTIVE';
+
+        let warningHtml = '';
+        if (!isSimActive) {
+            const statusLabel = simStatus || tl('未知');
+            warningHtml = `
+                <div class="alert alert-warning mt-3 mb-0" role="alert">
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="fas fa-exclamation-triangle text-warning me-2 fs-5"></i>
+                        <strong class="text-danger">${tl('SIM 卡状态异常警告')}</strong>
+                    </div>
+                    <p class="mb-1 small">${tl('当前 SIM 状态为')} <span class="badge bg-danger">${statusLabel}</span>${tl('，正常应为 ACTIVE。非活跃卡无法进行 eSIM 交换。')}</p>
+                    <hr class="my-2">
+                    <p class="mb-1 small fw-bold">${tl('请排查以下可能的原因：')}</p>
+                    <ul class="mb-0 small ps-3">
+                        <li>${tl('长期未消费停机：Giffgaff 连续 6 个月未产生保号消费已被官方休眠或回收号码。')}</li>
+                        <li>${tl('新卡未满 24 小时：新激活的实体 SIM 卡需等待后台系统入网同步 24 小时后方可换卡。')}</li>
+                        <li>${tl('未激活实体卡：新账号名下若无激活的实体卡，无法直接办理 eSIM 换卡业务。')}</li>
+                        <li>${tl('SIM 卡被挂失或风控锁定：处于风控或挂失状态的卡已被运营商锁定换卡功能。')}</li>
+                    </ul>
+                </div>
+            `;
+        }
+
         this.elements.memberInfo.innerHTML = `
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">${tl('会员信息')}</h5>
                     <p><strong>${tl('会员ID:')}</strong> ${state.memberId}</p>
                     <p><strong>${tl('会员姓名:')}</strong> ${state.memberName}</p>
-                    <p><strong>${tl('手机号码:')}</strong> ${state.phoneNumber}</p>
-                    <p><strong>${tl('SIM状态:')}</strong> ${memberData.sim.status}</p>
+                    <p><strong>${tl('手机号码:')}</strong> ${state.phoneNumber || tl('未绑定')}</p>
+                    <p><strong>${tl('SIM状态:')}</strong> <span class="badge ${isSimActive ? 'bg-success' : 'bg-warning text-dark'}">${simStatus || tl('未知')}</span></p>
+                    ${warningHtml}
                 </div>
             </div>
         `;

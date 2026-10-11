@@ -169,7 +169,16 @@ exports.handler = withAuth(async (event, ctx, { auth, body }) => {
       if (response.data?.errors?.length > 0) {
         const gqlErr = response.data.errors[0];
         const gqlMsg = gqlErr?.message || gqlErr?.error || JSON.stringify(gqlErr);
-        logger.error('upstream_graphql_errors', { errorMessage: gqlMsg });
+        const extensions = gqlErr?.extensions || null;
+        const errPath = gqlErr?.path || null;
+
+        logger.error('upstream_graphql_errors', {
+          errorMessage: gqlMsg,
+          operationName: opName,
+          path: errPath,
+          extensions,
+          allErrors: response.data.errors,
+        });
 
         // 区分上游服务器错误（500）和业务校验错误
         const isUpstream500 = /500|internal.?server.?error/i.test(gqlMsg);
@@ -178,8 +187,17 @@ exports.handler = withAuth(async (event, ctx, { auth, body }) => {
           continue; // 重试
         }
 
-        const errorType = isUpstream500 ? '上游服务器错误' : '业务校验错误';
-        throw new AuthError(`Upstream GraphQL ${errorType}: ${gqlMsg}`, isUpstream500 ? 502 : 422);
+        const errorType = isUpstream500 ? 'upstream_server_error' : 'business_validation_error';
+        const isSwapOrMfaBadRequest = (isMfaChallenge || isSwap) && /bad request/i.test(gqlMsg);
+        const errCode = isSwapOrMfaBadRequest ? 'SIM_SWAP_BAD_REQUEST' : (extensions?.code || 'GRAPHQL_ERROR');
+        const errorMsg = `Upstream GraphQL ${errorType}: ${gqlMsg}`;
+
+        throw new AuthError(errorMsg, isUpstream500 ? 502 : 422, {
+          code: errCode,
+          operationName: opName,
+          path: errPath,
+          message: gqlMsg,
+        });
       }
 
       // 成功，跳出重试循环

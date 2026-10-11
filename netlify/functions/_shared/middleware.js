@@ -29,10 +29,13 @@ if (origins.allowAll) {
  * 自定义错误类
  */
 class AuthError extends Error {
-  constructor(message, statusCode = 401) {
+  constructor(message, statusCode = 401, details = null) {
     super(message);
     this.name = 'AuthError';
     this.statusCode = statusCode;
+    if (details !== null && details !== undefined) {
+      this.details = details;
+    }
   }
 }
 
@@ -169,6 +172,8 @@ function handleError(error, context = 'unknown', logger) {
     body: JSON.stringify({
       error: error.name || 'ServerError',
       message: error.message,
+      ...(error.details !== undefined ? { details: error.details } : {}),
+      ...(error.code ? { code: error.code } : {}),
       ...(isDev && { stack: error.stack, context })
     })
   };

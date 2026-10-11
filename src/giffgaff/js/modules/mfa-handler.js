@@ -153,9 +153,16 @@ export class MFAHandler {
 
             if (!response.ok) {
                 const errorText = await response.text();
+                let errMsg = errorText;
+                try {
+                    const parsed = JSON.parse(errorText);
+                    if (parsed && parsed.message) {
+                        errMsg = parsed.message;
+                    }
+                } catch (_) {}
                 throw new Error(t('giffgaff.mfa.errors.swapSendFailed', {
                     status: response.status,
-                    message: errorText
+                    message: errMsg
                 }));
             }
 

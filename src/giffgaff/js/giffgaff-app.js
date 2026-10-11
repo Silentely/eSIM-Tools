@@ -954,8 +954,15 @@ class GiffgaffApp {
             const result = await esimService.getMemberInfo();
             Logger.log('[Giffgaff] 会员信息获取成功, memberId:', result.data && result.data.memberProfile && result.data.memberProfile.id);
 
-            uiController.showStatus(elements.memberStatus, t('giffgaff.app.status.memberFetched'), "success");
             uiController.showMemberInfo(result.data);
+
+            const simStatus = String(result.data?.sim?.status || '').trim().toUpperCase();
+            if (simStatus && simStatus !== 'ACTIVE') {
+                uiController.showStatus(elements.memberStatus, t('giffgaff.app.error.simStatusAbnormal', { status: simStatus }), "warning");
+                return;
+            }
+
+            uiController.showStatus(elements.memberStatus, t('giffgaff.app.status.memberFetched'), "success");
 
             setTimeout(() => {
                 uiController.showSection(4);
@@ -1005,6 +1012,14 @@ class GiffgaffApp {
         const { elements } = uiController;
         Logger.log('[Giffgaff] === 预订 eSIM ===');
 
+        const state = stateManager.getState();
+        const simStatus = String(state.simStatus || '').trim().toUpperCase();
+        if (simStatus && simStatus !== 'ACTIVE') {
+            const warningMsg = t('giffgaff.app.error.simStatusAbnormalWithCheck', { status: simStatus });
+            uiController.showStatus(elements.esimReserveStatus, warningMsg, 'error');
+            return;
+        }
+
         // 检查服务时间
         if (!isServiceTimeAvailable()) {
             Logger.log('[Giffgaff] 服务时间外，显示警告');
@@ -1047,6 +1062,14 @@ class GiffgaffApp {
         const statusEl = document.getElementById('smsInlineStatus');
         Logger.log('[Giffgaff] === SMS 验证码发送 ===');
 
+        const state = stateManager.getState();
+        const simStatus = String(state.simStatus || '').trim().toUpperCase();
+        if (simStatus && simStatus !== 'ACTIVE') {
+            const warningMsg = t('giffgaff.app.error.simStatusAbnormalWithCheck', { status: simStatus });
+            uiController.showStatus(statusEl, warningMsg, 'error');
+            return;
+        }
+
         try {
             sendBtn.innerHTML = `<span class="loading"></span> ${tl('发送中...')}`;
             sendBtn.disabled = true;
@@ -1063,7 +1086,11 @@ class GiffgaffApp {
             if (codeSection) codeSection.style.display = 'block';
         } catch (error) {
             Logger.error('[Giffgaff] SMS 验证码发送失败:', error.message, error);
-            uiController.showStatus(statusEl, t('giffgaff.app.error.smsSendFailed', { message: error.message }), 'error');
+            const isSwapMfaError = /bad request|sim.*状态|业务校验错误|422/i.test(error.message);
+            const displayError = isSwapMfaError
+                ? t('giffgaff.app.error.smsSendFailedDetailed', { message: error.message })
+                : t('giffgaff.app.error.smsSendFailed', { message: error.message });
+            uiController.showStatus(statusEl, displayError, 'error');
         } finally {
             sendBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i> ${tl('发送验证码')}`;
             sendBtn.disabled = false;
