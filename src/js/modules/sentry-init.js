@@ -384,6 +384,7 @@ function shouldShowReportDialog(event) {
 const SENTRY_DSN = window.SENTRY_DSN || '';
 const SENTRY_ENVIRONMENT = window.SENTRY_ENVIRONMENT || 'production';
 const SENTRY_RELEASE = window.SENTRY_RELEASE || 'esim-tools@unknown';
+const SENTRY_TUNNEL = window.SENTRY_TUNNEL || '/api/sentry-tunnel';
 
 // ===================================
 // Sentry 初始化
@@ -418,6 +419,7 @@ function initSentry() {
       dsn: SENTRY_DSN,
       environment: SENTRY_ENVIRONMENT,
       release: SENTRY_RELEASE,
+      tunnel: SENTRY_TUNNEL,
 
       // 性能监控
       integrations: [
@@ -827,6 +829,7 @@ export function getSentryHealth() {
     dsnConfigured: !!SENTRY_DSN,
     environment: SENTRY_ENVIRONMENT,
     release: SENTRY_RELEASE,
+    tunnel: SENTRY_TUNNEL,
     extensionNoiseStats: typeof window !== 'undefined' && window.getSentryExtensionNoiseStats
       ? window.getSentryExtensionNoiseStats()
       : { count: 0, samples: [] },

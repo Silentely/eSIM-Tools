@@ -13,6 +13,7 @@ const SENTRY_DSN = process.env.SENTRY_DSN || '';
 const SENTRY_ENVIRONMENT = process.env.SENTRY_ENVIRONMENT || 'production';
 const SENTRY_RELEASE = process.env.SENTRY_RELEASE ||
   (process.env.COMMIT_REF ? `esim-tools@${process.env.COMMIT_REF.slice(0, 7)}` : 'esim-tools@unknown');
+const SENTRY_TUNNEL = process.env.SENTRY_TUNNEL || '/api/sentry-tunnel';
 
 // 要处理的配置文件（改为处理独立的 JS 配置文件，而非 HTML 内联脚本）
 const configFile = 'dist/src/js/sentry-config.js';
@@ -21,6 +22,7 @@ console.log('[Sentry Config] 开始注入配置...');
 console.log(`  DSN: ${SENTRY_DSN ? '已配置' : '未配置'}`);
 console.log(`  Environment: ${SENTRY_ENVIRONMENT}`);
 console.log(`  Release: ${SENTRY_RELEASE}`);
+console.log(`  Tunnel: ${SENTRY_TUNNEL}`);
 
 const fullPath = path.join(process.cwd(), configFile);
 
@@ -45,6 +47,14 @@ content = content.replace(
   /window\.SENTRY_RELEASE\s*=\s*['"][^'"]*['"]/,
   `window.SENTRY_RELEASE = '${SENTRY_RELEASE}'`
 );
+if (/window\.SENTRY_TUNNEL\s*=\s*['"][^'"]*['"]/.test(content)) {
+  content = content.replace(
+    /window\.SENTRY_TUNNEL\s*=\s*['"][^'"]*['"]/,
+    `window.SENTRY_TUNNEL = '${SENTRY_TUNNEL}'`
+  );
+} else {
+  content += `\nwindow.SENTRY_TUNNEL = '${SENTRY_TUNNEL}';\n`;
+}
 
 fs.writeFileSync(fullPath, content, 'utf8');
 console.log(`  ✓ 已处理: ${configFile}`);

@@ -31,6 +31,7 @@
   var SENTRY_DSN = window.SENTRY_DSN || '';
   var SENTRY_ENVIRONMENT = window.SENTRY_ENVIRONMENT || 'production';
   var SENTRY_RELEASE = window.SENTRY_RELEASE || 'esim-tools@unknown';
+  var SENTRY_TUNNEL = window.SENTRY_TUNNEL || '/api/sentry-tunnel';
 
   // 初始化状态
   var sentryInitialized = false;
@@ -503,6 +504,7 @@
         dsn: SENTRY_DSN,
         environment: SENTRY_ENVIRONMENT,
         release: SENTRY_RELEASE,
+        tunnel: SENTRY_TUNNEL,
 
         integrations: integrations,
         // 追踪传播目标 - 指定哪些请求应该添加追踪头
@@ -798,6 +800,7 @@
       isDev: isDev,
       dsnConfigured: !!SENTRY_DSN,
       environment: SENTRY_ENVIRONMENT,
+      tunnel: SENTRY_TUNNEL,
       release: SENTRY_RELEASE,
     };
   }

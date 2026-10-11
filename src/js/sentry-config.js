@@ -9,3 +9,4 @@
 window.SENTRY_DSN = '';
 window.SENTRY_ENVIRONMENT = 'production';
 window.SENTRY_RELEASE = 'esim-tools@unknown';
+window.SENTRY_TUNNEL = '/api/sentry-tunnel';
