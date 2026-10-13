@@ -17,6 +17,7 @@ import { esimService } from '../../src/giffgaff/js/modules/esim-service.js';
 import { uiController } from '../../src/giffgaff/js/modules/ui-controller.js';
 import { TRANSLATIONS } from '../../src/js/modules/i18n-data.js';
 import { AuthError, handleError } from '../../netlify/functions/_shared/middleware.js';
+import { isActiveSim, normalizeSimStatus } from '../../src/giffgaff/js/modules/utils.js';
 
 describe('SIM 状态与 GraphQL 错误处理增强测试', () => {
   beforeEach(() => {
@@ -109,6 +110,59 @@ describe('SIM 状态与 GraphQL 错误处理增强测试', () => {
       expect(container.innerHTML).not.toContain('SIM 卡状态异常警告');
       expect(container.innerHTML).not.toContain('SIM status abnormal warning');
       expect(container.innerHTML).toContain('bg-success');
+    });
+    test('sim.status 为 STATUS_ACTIVE 时正常展示不显示异常警告', () => {
+      stateManager.setState({ memberId: '123', memberName: 'Charlie', phoneNumber: '07111222333', simStatus: 'STATUS_ACTIVE' });
+      uiController.showMemberInfo({
+        sim: { status: 'STATUS_ACTIVE' }
+      });
+
+      const container = document.getElementById('memberInfo');
+      expect(container.innerHTML).not.toContain('SIM 卡状态异常警告');
+      expect(container.innerHTML).not.toContain('SIM status abnormal warning');
+      expect(container.innerHTML).toContain('bg-success');
+    });
+
+    test('sim.status 为 STATUS_INACTIVE 时显示醒目的警告卡片', () => {
+      stateManager.setState({ memberId: '123', memberName: 'Dave', phoneNumber: '07111222333', simStatus: 'STATUS_INACTIVE' });
+      uiController.showMemberInfo({
+        sim: { status: 'STATUS_INACTIVE' }
+      });
+
+      const container = document.getElementById('memberInfo');
+      expect(container.innerHTML.includes('SIM 卡状态异常警告') || container.innerHTML.includes('SIM status abnormal warning')).toBe(true);
+      expect(container.innerHTML).toContain('STATUS_INACTIVE');
+    });
+  });
+
+
+  describe('isActiveSim 与 normalizeSimStatus 状态判定健壮性', () => {
+    test('正确识别 ACTIVE 与 STATUS_ACTIVE 为活跃卡', () => {
+      expect(isActiveSim('ACTIVE')).toBe(true);
+      expect(isActiveSim('STATUS_ACTIVE')).toBe(true);
+      expect(isActiveSim(' active ')).toBe(true);
+      expect(isActiveSim('status_active')).toBe(true);
+      expect(isActiveSim('ACTIVE_SIM')).toBe(true);
+    });
+
+    test('正确拦截非活跃状态', () => {
+      expect(isActiveSim('INACTIVE')).toBe(false);
+      expect(isActiveSim('STATUS_INACTIVE')).toBe(false);
+      expect(isActiveSim('SUSPENDED')).toBe(false);
+      expect(isActiveSim('STATUS_SUSPENDED')).toBe(false);
+      expect(isActiveSim('PENDING')).toBe(false);
+      expect(isActiveSim('BARRED')).toBe(false);
+      expect(isActiveSim('')).toBe(false);
+      expect(isActiveSim(null)).toBe(false);
+      expect(isActiveSim(undefined)).toBe(false);
+    });
+
+    test('normalizeSimStatus 统一去除 STATUS_ 前缀并规范化', () => {
+      expect(normalizeSimStatus('STATUS_ACTIVE')).toBe('ACTIVE');
+      expect(normalizeSimStatus('STATUS_INACTIVE')).toBe('INACTIVE');
+      expect(normalizeSimStatus('  active  ')).toBe('ACTIVE');
+      expect(normalizeSimStatus('')).toBe('');
+      expect(normalizeSimStatus(null)).toBe('');
     });
   });
 

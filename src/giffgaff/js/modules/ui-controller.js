@@ -6,6 +6,7 @@
 import { stateManager } from './state-manager.js';
 import { t, tl } from '../../../js/modules/i18n.js';
 import { generateQRCodeWithFallback } from '../../../js/modules/qrcode-generator.js';
+import { isActiveSim } from './utils.js';
 
 export class UIController {
     constructor() {
@@ -417,7 +418,7 @@ export class UIController {
     showMemberInfo(memberData) {
         const state = stateManager.getState();
         const simStatus = String(memberData?.sim?.status || state.simStatus || '').trim().toUpperCase();
-        const isSimActive = simStatus === 'ACTIVE';
+        const isSimActive = isActiveSim(simStatus);
 
         let warningHtml = '';
         if (!isSimActive) {

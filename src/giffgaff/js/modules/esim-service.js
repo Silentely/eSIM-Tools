@@ -57,9 +57,9 @@ export class ESimService {
 
             // 保存会员信息
             stateManager.setState({
-                memberId: data.data.memberProfile.id,
-                memberName: data.data.memberProfile.memberName,
-                phoneNumber: data.data.sim.phoneNumber,
+                memberId: data.data.memberProfile?.id || "",
+                memberName: data.data.memberProfile?.memberName || "",
+                phoneNumber: data.data.sim?.phoneNumber || "",
                 simStatus: data.data.sim?.status || ""
             });
 

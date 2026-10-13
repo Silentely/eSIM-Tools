@@ -17,7 +17,8 @@ import {
     openTutorial,
     getTimeUntilServiceOpen,
     copyLPAString,
-    downloadQRCode
+    downloadQRCode,
+    isActiveSim
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
 import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
@@ -957,7 +958,7 @@ class GiffgaffApp {
             uiController.showMemberInfo(result.data);
 
             const simStatus = String(result.data?.sim?.status || '').trim().toUpperCase();
-            if (simStatus && simStatus !== 'ACTIVE') {
+            if (simStatus && !isActiveSim(simStatus)) {
                 uiController.showStatus(elements.memberStatus, t('giffgaff.app.error.simStatusAbnormal', { status: simStatus }), "warning");
                 return;
             }
@@ -1014,7 +1015,7 @@ class GiffgaffApp {
 
         const state = stateManager.getState();
         const simStatus = String(state.simStatus || '').trim().toUpperCase();
-        if (simStatus && simStatus !== 'ACTIVE') {
+        if (simStatus && !isActiveSim(simStatus)) {
             const warningMsg = t('giffgaff.app.error.simStatusAbnormalWithCheck', { status: simStatus });
             uiController.showStatus(elements.esimReserveStatus, warningMsg, 'error');
             return;
@@ -1064,7 +1065,7 @@ class GiffgaffApp {
 
         const state = stateManager.getState();
         const simStatus = String(state.simStatus || '').trim().toUpperCase();
-        if (simStatus && simStatus !== 'ACTIVE') {
+        if (simStatus && !isActiveSim(simStatus)) {
             const warningMsg = t('giffgaff.app.error.simStatusAbnormalWithCheck', { status: simStatus });
             uiController.showStatus(statusEl, warningMsg, 'error');
             return;

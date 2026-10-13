@@ -343,3 +343,27 @@ export async function downloadQRCode(qrUrl, filename = 'esim-qrcode.png') {
         }
     }
 }
+
+/**
+ * 规范化 SIM 卡状态字符串
+ * 去除首尾空格，转换为大写，并统一去除 STATUS_ 前缀
+ * 例如：'STATUS_ACTIVE' -> 'ACTIVE', 'active' -> 'ACTIVE'
+ * @param {string} status - SIM 状态原始值
+ * @returns {string} 规范化后的状态值
+ */
+export function normalizeSimStatus(status) {
+    if (!status || typeof status !== "string") return "";
+    const trimmed = status.trim().toUpperCase();
+    return trimmed.replace(/^STATUS_/, "");
+}
+
+/**
+ * 校验 SIM 状态是否为活跃在网状态
+ * 兼容 Giffgaff GraphQL 接口返回的 ACTIVE、STATUS_ACTIVE 以及 ACTIVE_SIM 等变体
+ * @param {string} status - SIM 状态原始值
+ * @returns {boolean} 是否为活跃在网状态
+ */
+export function isActiveSim(status) {
+    const normalized = normalizeSimStatus(status);
+    return normalized === "ACTIVE" || normalized === "ACTIVE_SIM";
+}
