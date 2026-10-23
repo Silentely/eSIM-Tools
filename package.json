@@ -73,7 +73,7 @@
     "on-headers": "^1.1.0",
     "postcss": "^8.5.25",
     "postcss-cli": "^11.0.1",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.5"
   },
   "browserslist": [
     "defaults",
