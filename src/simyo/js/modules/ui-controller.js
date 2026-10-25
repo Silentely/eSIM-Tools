@@ -17,14 +17,11 @@ export class UIController {
     }
 
     /**
-     * 获取元素引用（延迟初始化）
-     */
-
-    /**
      * 初始化工具统计数据
      */
     initStats() {
         fetchStats().then((stats) => {
+            if (!stats.ok || !stats.configured) return;
             const elZh = document.getElementById('toolStatsCount');
             const elEn = document.getElementById('toolStatsCountEn');
             if (elZh) animateCount(elZh, stats.simyo);
@@ -34,6 +31,9 @@ export class UIController {
         });
     }
 
+    /**
+     * 获取元素引用（延迟初始化）
+     */
     get elements() {
         if (!this._elementsCache) {
             this._elementsCache = this.initElements();
@@ -483,7 +483,6 @@ export class UIController {
         if (lpaString) {
             recordEsimSuccess('simyo', lpaString).catch(() => {});
         }
-
 
         // 清空旧二维码容器，防止异步生成期间显示过期内容
         this.elements.qrcode.replaceChildren();

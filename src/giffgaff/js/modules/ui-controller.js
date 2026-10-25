@@ -18,14 +18,11 @@ export class UIController {
     }
 
     /**
-     * 初始化DOM元素引用
-     */
-
-    /**
      * 初始化工具统计数据
      */
     initStats() {
         fetchStats().then((stats) => {
+            if (!stats.ok || !stats.configured) return;
             const elZh = document.getElementById('toolStatsCount');
             const elEn = document.getElementById('toolStatsCountEn');
             if (elZh) animateCount(elZh, stats.giffgaff);
@@ -35,6 +32,9 @@ export class UIController {
         });
     }
 
+    /**
+     * 初始化DOM元素引用
+     */
     initElements() {
         return {
             // 仅选择进度条内的步骤，避免与其它 .step 类名冲突
@@ -598,7 +598,6 @@ export class UIController {
             if (state?.lpaString) {
                 recordEsimSuccess('giffgaff', state.lpaString).catch(() => {});
             }
-
 
             // 正常流程：先显示 LPA 信息（确保用户至少能看到文本），再生成二维码
             // 调整顺序：LPA 文本优先，二维码可以慢慢加载

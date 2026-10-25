@@ -4,7 +4,6 @@ describe('Stats Function (Netlify Serverless)', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    jest.resetModules();
     process.env = { ...originalEnv };
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -24,6 +23,7 @@ describe('Stats Function (Netlify Serverless)', () => {
 
       expect(response.statusCode).toBe(204);
       expect(response.headers['Access-Control-Allow-Methods']).toContain('GET, POST, OPTIONS');
+      expect(response.headers['Access-Control-Max-Age']).toBe('86400');
     });
 
     test('rejects requests from disallowed origins with 403', async () => {
@@ -45,6 +45,7 @@ describe('Stats Function (Netlify Serverless)', () => {
       });
 
       expect(response.statusCode).toBe(405);
+      expect(response.headers['Allow']).toBe('GET, POST, OPTIONS');
       const data = JSON.parse(response.body);
       expect(data.error).toBe('Method Not Allowed');
     });
@@ -234,8 +235,8 @@ describe('Stats Function (Netlify Serverless)', () => {
     });
 
     test('triggers rate limiter on rapid consecutive POST requests', async () => {
-      const ipHeaders = { 'client-ip': '192.168.10.99' };
-      for (let i = 0; i < 5; i++) {
+      const ipHeaders = { 'x-nf-client-connection-ip': '192.168.10.99' };
+      for (let i = 0; i < 30; i++) {
         await handler({
           httpMethod: 'POST',
           body: JSON.stringify({ type: 'giffgaff' }),
@@ -243,7 +244,7 @@ describe('Stats Function (Netlify Serverless)', () => {
         });
       }
 
-      // 第 6 次应触发限流
+      // 第 31 次应触发限流
       const rateLimitedResponse = await handler({
         httpMethod: 'POST',
         body: JSON.stringify({ type: 'giffgaff' }),

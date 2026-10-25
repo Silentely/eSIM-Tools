@@ -52,14 +52,24 @@ async function executeUpstashCommand(url, token, command) {
 }
 
 /**
- * 提取客户端标识（用于限流）
+ * 提取客户端标识（优先使用安全代理头）
  */
 function getClientIp(event) {
   const headers = event.headers || {};
-  return headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+  return headers['x-nf-client-connection-ip'] ||
+    headers['cf-connecting-ip'] ||
     headers['client-ip'] ||
     headers['x-real-ip'] ||
+    headers['x-forwarded-for']?.split(',')[0]?.trim() ||
     'unknown';
+}
+
+/**
+ * 安全解析整数
+ */
+function parseCount(val) {
+  const n = parseInt(val, 10);
+  return Number.isSafeInteger(n) && n >= 0 ? n : 0;
 }
 
 /**
@@ -81,11 +91,12 @@ const handler = async (event) => {
     };
   }
 
-  const allowOrigin = resolveCorsOrigin(requestOrigin, origins) || '*';
+  const allowOrigin = resolveCorsOrigin(requestOrigin, origins);
   const defaultHeaders = {
     'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-esim-key',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
     'Vary': 'Origin'
   };
 
@@ -129,8 +140,12 @@ const handler = async (event) => {
         KEY_SIMYO
       ]);
 
-      const giffgaffCount = parseInt(result?.[0], 10) || 0;
-      const simyoCount = parseInt(result?.[1], 10) || 0;
+      if (!Array.isArray(result)) {
+        throw new Error('Unexpected MGET response format');
+      }
+
+      const giffgaffCount = parseCount(result[0]);
+      const simyoCount = parseCount(result[1]);
       const totalCount = giffgaffCount + simyoCount;
 
       return {
@@ -171,22 +186,7 @@ const handler = async (event) => {
 
   // 4. 处理 POST：成功获取后递增计数
   if (event.httpMethod === 'POST') {
-    // 4.1 服务端限流检查（防止脚本刷量）
-    const clientIp = getClientIp(event);
-    const rateLimited = await isRateLimited(`stats:${clientIp}`, 60000, 5);
-    if (rateLimited) {
-      return {
-        statusCode: 429,
-        headers: {
-          ...defaultHeaders,
-          'Content-Type': 'application/json',
-          'Retry-After': '60'
-        },
-        body: JSON.stringify({ error: 'Too Many Requests', message: 'Rate limit exceeded' })
-      };
-    }
-
-    // 4.2 严格校验 JSON 格式及类型
+    // 4.1 严格校验 JSON 格式及类型（先校验 Payload，防止无效请求耗尽限流配额）
     let body;
     try {
       body = event.body ? JSON.parse(event.body) : {};
@@ -224,6 +224,21 @@ const handler = async (event) => {
       };
     }
 
+    // 4.2 服务端限流检查（每分钟单 IP 上限 30 次，支持代理与移动网络出口）
+    const clientIp = getClientIp(event);
+    const rateLimited = await isRateLimited(`stats:${clientIp}`, 60000, 30);
+    if (rateLimited) {
+      return {
+        statusCode: 429,
+        headers: {
+          ...defaultHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': '60'
+        },
+        body: JSON.stringify({ error: 'Too Many Requests', message: 'Rate limit exceeded' })
+      };
+    }
+
     if (!isConfigured) {
       return {
         statusCode: 200,
@@ -244,6 +259,11 @@ const handler = async (event) => {
 
     try {
       const newCount = await executeUpstashCommand(redisUrl, redisToken, ['INCR', targetKey]);
+      const validCount = parseCount(newCount);
+
+      if (validCount <= 0 && newCount !== 0) {
+        throw new Error(`Invalid INCR return value: ${newCount}`);
+      }
 
       return {
         statusCode: 200,
@@ -255,7 +275,7 @@ const handler = async (event) => {
           success: true,
           configured: true,
           type,
-          count: typeof newCount === 'number' ? newCount : parseInt(newCount, 10) || 0
+          count: validCount
         })
       };
     } catch (error) {
@@ -277,7 +297,11 @@ const handler = async (event) => {
 
   return {
     statusCode: 405,
-    headers: defaultHeaders,
+    headers: {
+      ...defaultHeaders,
+      'Allow': 'GET, POST, OPTIONS',
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({ error: 'Method Not Allowed' })
   };
 };
@@ -287,5 +311,6 @@ module.exports = {
   KEY_GIFFGAFF,
   KEY_SIMYO,
   UPSTASH_TIMEOUT_MS,
-  executeUpstashCommand
+  executeUpstashCommand,
+  parseCount
 };
