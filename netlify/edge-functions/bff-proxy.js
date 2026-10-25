@@ -43,7 +43,8 @@ const BFF_ROUTES = new Map([
   ['verify-cookie', ['POST', 'OPTIONS']],
   ['public-config', ['GET', 'OPTIONS']],
   ['health', ['GET', 'OPTIONS']],
-  ['notifications', ['GET', 'OPTIONS']]
+  ['notifications', ['GET', 'OPTIONS']],
+  ['stats', ['GET', 'POST', 'OPTIONS']]
 ]);
 
 // QR 码生成参数校验常量
@@ -117,7 +118,7 @@ export default async (request, context) => {
   const sameOrigin = requestOrigin === url.origin;
   const configuredOrigin = allowedOrigins.includes(requestOrigin);
   const corsOrigin = sameOrigin || configuredOrigin ? requestOrigin : '';
-  const allowMissingOriginForPublicGet = (targetName === 'public-config' || targetName === 'health' || targetName === 'notifications') && request.method === 'GET';
+  const allowMissingOriginForPublicGet = (targetName === 'public-config' || targetName === 'health' || targetName === 'notifications' || targetName === 'stats') && request.method === 'GET';
   const fallbackCorsOrigin = allowedOrigins[0] || DEFAULT_ALLOWED_ORIGIN;
   const errorCorsHeaders = buildCorsHeaders(corsOrigin || fallbackCorsOrigin);
 

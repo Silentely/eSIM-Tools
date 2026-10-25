@@ -198,6 +198,7 @@ const autoActivateEsim = require('./netlify/functions/auto-activate-esim');
 const publicConfig = require('./netlify/functions/public-config');
 const health = require('./netlify/functions/health');
 const notifications = require('./netlify/functions/notifications');
+const stats = require('./netlify/functions/stats');
 
 // 包装Netlify Functions为Express路由
 function getRouteTargetName(req) {
@@ -207,7 +208,7 @@ function getRouteTargetName(req) {
 
 function checkBffOriginGate(req, res, targetName) {
     const origin = req.headers.origin;
-    const isPublicGet = !origin && req.method === 'GET' && ['public-config', 'health', 'notifications'].includes(targetName);
+    const isPublicGet = !origin && req.method === 'GET' && ['public-config', 'health', 'notifications', 'stats'].includes(targetName);
     if (isPublicGet) return true;
     if (!origin) {
         res.status(403).json({ error: 'Forbidden', message: 'Origin not allowed' });
@@ -355,7 +356,8 @@ const functionRoutes = [
   ['auto-activate-esim', autoActivateEsim],
   ['public-config', publicConfig],
   ['health', health],
-  ['notifications', notifications]
+  ['notifications', notifications],
+  ['stats', stats]
 ];
 
 // 注册所有 Netlify Functions 路由

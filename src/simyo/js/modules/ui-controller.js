@@ -1,3 +1,4 @@
+import { recordEsimSuccess, fetchStats, animateCount } from '../../../js/modules/stats-manager.js';
 /**
  * Simyo UI控制器模块
  * 负责UI状态更新、步骤切换、状态显示等
@@ -12,11 +13,27 @@ export class UIController {
         this.tooltips = new Map();
         this._elementsCache = null;
         this._qrGeneration = 0; // 生成计数器，防止并发干扰
+        this.initStats();
     }
 
     /**
      * 获取元素引用（延迟初始化）
      */
+
+    /**
+     * 初始化工具统计数据
+     */
+    initStats() {
+        fetchStats().then((stats) => {
+            const elZh = document.getElementById('toolStatsCount');
+            const elEn = document.getElementById('toolStatsCountEn');
+            if (elZh) animateCount(elZh, stats.simyo);
+            if (elEn) animateCount(elEn, stats.simyo);
+        }).catch((err) => {
+            console.warn('[Simyo] Failed to load tool stats:', err);
+        });
+    }
+
     get elements() {
         if (!this._elementsCache) {
             this._elementsCache = this.initElements();
@@ -463,6 +480,10 @@ export class UIController {
     showQRResult(lpaString) {
         this.elements.resultContainer.style.display = 'block';
         this.elements.resultContainer.classList.add('active');
+        if (lpaString) {
+            recordEsimSuccess('simyo', lpaString).catch(() => {});
+        }
+
 
         // 清空旧二维码容器，防止异步生成期间显示过期内容
         this.elements.qrcode.replaceChildren();

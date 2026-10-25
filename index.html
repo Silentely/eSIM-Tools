@@ -227,6 +227,57 @@
 
         .github-btn:focus-visible, .kofi-btn:focus-visible{ outline: none; box-shadow: var(--ring); }
 
+
+        /* 统计横幅与卡片徽章 */
+        .stats-overview{
+            display: flex;
+            justify-content: center;
+            margin-top: var(--s4);
+            margin-bottom: var(--s2);
+        }
+        .stat-badge{
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 20px;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--brand-start) 10%, transparent);
+            border: 1px solid color-mix(in oklab, var(--brand-start) 24%, transparent);
+            color: var(--text-primary);
+            font-size: .95rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--duration-fast) var(--ease-standard);
+        }
+        .stat-badge i{
+            color: var(--brand-start);
+            font-size: 1.1rem;
+        }
+        .stat-number{
+            color: var(--brand-start);
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+        .tool-stat-badge{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: color-mix(in oklab, var(--primary) 10%, transparent);
+            border: 1px solid color-mix(in oklab, var(--primary) 22%, transparent);
+            color: var(--text-secondary);
+            font-size: .85rem;
+            margin-bottom: var(--s3);
+        }
+        .tool-stat-badge i{
+            color: var(--primary);
+        }
+        .tool-stat-badge .stat-number{
+            color: var(--primary);
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
         .tools-grid{
             display:grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -710,6 +761,12 @@
                     <i class="fas fa-coffee" aria-hidden="true"></i> <span>Buy Me a Coffee</span>
                 </a>
             </div>
+            <div class="stats-overview reveal" id="statsOverview" aria-label="服务统计">
+                <div class="stat-badge">
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                    <span id="totalStatsLabel">已累计成功交付 <strong id="totalCount" class="stat-number">--</strong> 次 eSIM</span>
+                </div>
+            </div>
         </div>
 
         <div class="tools-grid" aria-live="polite">
@@ -717,6 +774,10 @@
             <section class="tool-card giffgaff-card reveal" tabindex="-1" aria-labelledby="giffgaff-title" aria-describedby="giffgaff-desc">
                 <div class="tool-icon" aria-hidden="true">
                     <i class="fas fa-mobile-alt"></i>
+                </div>
+                                <div class="tool-stat-badge">
+                    <i class="fas fa-bolt" aria-hidden="true"></i>
+                    <span id="giffgaffStatsLabel">已成功获取 <strong id="giffgaffCount" class="stat-number">--</strong> 次</span>
                 </div>
                 <h2 id="giffgaff-title" class="tool-title"><span class="tool-title-text">Giffgaff eSIM 工具</span></h2>
                 <p id="giffgaff-desc" class="tool-description">
@@ -738,6 +799,10 @@
             <section class="tool-card simyo-card reveal" tabindex="-1" aria-labelledby="simyo-title" aria-describedby="simyo-desc">
                 <div class="tool-icon" aria-hidden="true">
                     <i class="fas fa-sim-card"></i>
+                </div>
+                                <div class="tool-stat-badge">
+                    <i class="fas fa-bolt" aria-hidden="true"></i>
+                    <span id="simyoStatsLabel">已成功获取 <strong id="simyoCount" class="stat-number">--</strong> 次</span>
                 </div>
                 <h2 id="simyo-title" class="tool-title"><span class="tool-title-text">Simyo eSIM 工具</span></h2>
                 <p id="simyo-desc" class="tool-description">
@@ -972,6 +1037,7 @@
 
     <!-- 国际化初始化 -->
     <script type="module" src="/src/js/init-home-i18n.js"></script>
+    <script type="module" src="/src/js/init-home-stats.js"></script>
 
     <!-- 通知系统初始化 -->
     <script type="module" src="/src/js/init-notification.js"></script>

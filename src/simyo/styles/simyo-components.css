@@ -485,3 +485,38 @@
         animation: none !important;
     }
 }
+/* ===== 统计徽章 ===== */
+.stats-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e40af;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 1px solid #bfdbfe;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    margin-top: 8px;
+}
+.stats-badge i {
+    color: #2563eb;
+}
+.stats-badge .stat-number {
+    font-weight: 800;
+    color: #1d4ed8;
+}
+@media (prefers-color-scheme: dark) {
+    .stats-badge {
+        color: #93c5fd;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border-color: rgba(59, 130, 246, 0.4);
+    }
+    .stats-badge i {
+        color: #60a5fa;
+    }
+    .stats-badge .stat-number {
+        color: #93c5fd;
+    }
+}

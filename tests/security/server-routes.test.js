@@ -39,7 +39,8 @@ describe('Local server route coverage', () => {
       '/bff/verify-cookie',
       '/bff/public-config',
       '/bff/health',
-      '/bff/notifications'
+      '/bff/notifications',
+      '/bff/stats'
     ];
 
     expect([...routes].sort()).toEqual([...expectedRoutes].sort());
@@ -51,6 +52,7 @@ describe('Local server route coverage', () => {
 
     expect(routes).toContain('/.netlify/functions/health');
     expect(routes).toContain('/.netlify/functions/notifications');
+    expect(routes).toContain('/.netlify/functions/stats');
   });
 
   it('serves health and notifications endpoints with 200 OK', (done) => {
