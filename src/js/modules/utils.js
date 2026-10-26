@@ -14,19 +14,19 @@ import Logger from './logger.js';
  */
 export function debounce(func, wait, immediate = false) {
   let timeout;
-  
+
   return function executedFunction(...args) {
     const context = this;
-    
+
     const later = () => {
       timeout = null;
       if (!immediate) func.apply(context, args);
     };
-    
+
     const callNow = immediate && !timeout;
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
-    
+
     if (callNow) func.apply(context, args);
   };
 }
@@ -41,10 +41,10 @@ export function throttle(func, limit) {
   let inThrottle;
   let lastFunc;
   let lastRan;
-  
+
   return function(...args) {
     const context = this;
-    
+
     if (!inThrottle) {
       func.apply(context, args);
       lastRan = Date.now();
@@ -68,10 +68,10 @@ export function throttle(func, limit) {
  */
 export function rafThrottle(func) {
   let rafId = null;
-  
+
   return function(...args) {
     const context = this;
-    
+
     if (rafId === null) {
       rafId = requestAnimationFrame(() => {
         func.apply(context, args);
@@ -89,18 +89,32 @@ export function rafThrottle(func) {
  */
 export function memoize(func, resolver) {
   const cache = new Map();
-  
+
   return function(...args) {
     const key = resolver ? resolver.apply(this, args) : args[0];
-    
+
     if (cache.has(key)) {
       return cache.get(key);
     }
-    
+
     const result = func.apply(this, args);
     cache.set(key, result);
     return result;
   };
+}
+
+/**
+ * Safely find the closest matching element for delegated DOM events.
+ * Document-level events can expose non-Element targets in browser and
+ * automation environments, so callers must not assume closest() exists.
+ * @param {EventTarget|null|undefined} target
+ * @param {string} selector
+ * @returns {Element|null}
+ */
+export function getClosestElement(target, selector) {
+  return typeof Element !== 'undefined' && target instanceof Element && typeof target.closest === 'function'
+    ? target.closest(selector)
+    : null;
 }
 
 /**
@@ -112,7 +126,7 @@ export function memoize(func, resolver) {
  */
 export async function retry(fn, maxRetries = 3, delay = 1000) {
   let lastError;
-  
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await fn();
@@ -123,7 +137,7 @@ export async function retry(fn, maxRetries = 3, delay = 1000) {
       }
     }
   }
-  
+
   throw lastError;
 }
 
@@ -135,13 +149,13 @@ export async function retry(fn, maxRetries = 3, delay = 1000) {
  */
 export function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
-  
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  
+
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 

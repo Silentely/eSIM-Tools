@@ -12,7 +12,8 @@ import {
     copyToClipboard,
     showToast,
     openHelp,
-    delay
+    delay,
+    getClosestElement
 } from './modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
 import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
@@ -229,7 +230,7 @@ class SimyoApp {
      */
     bindStepNavigation() {
         document.addEventListener('click', (e) => {
-            const stepEl = e.target.closest('.step-indicator .step');
+            const stepEl = getClosestElement(e.target, '.step-indicator .step');
             if (stepEl && stepEl.dataset && stepEl.dataset.step) {
                 const target = parseInt(stepEl.dataset.step, 10);
                 const currentStep = stateManager.get('currentStep');
@@ -276,7 +277,7 @@ class SimyoApp {
     bindBackButtons() {
         document.addEventListener('click', (e) => {
             // 通用返回按钮
-            const backBtn = e.target.closest('.back-step-btn');
+            const backBtn = getClosestElement(e.target, '.back-step-btn');
             if (backBtn) {
                 e.preventDefault();
                 const currentStep = stateManager.get('currentStep');

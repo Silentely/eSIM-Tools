@@ -20,6 +20,7 @@ import {
     downloadQRCode,
     isActiveSim
 } from './modules/utils.js';
+import { getClosestElement } from '../../js/modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
 import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
 import captchaManager from '../../js/modules/captcha-manager.js';
@@ -370,7 +371,7 @@ class GiffgaffApp {
 
         // 确认激活按钮（委托绑定）
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('#confirmActivationBtn');
+            const btn = getClosestElement(e.target, '#confirmActivationBtn');
             if (btn) {
                 e.preventDefault();
                 uiController.showSection(5);
@@ -555,7 +556,7 @@ class GiffgaffApp {
      */
     bindStepNavigation() {
         document.addEventListener('click', (e) => {
-            const stepEl = e.target.closest('.step-indicator .step');
+            const stepEl = getClosestElement(e.target, '.step-indicator .step');
             if (stepEl && stepEl.dataset && stepEl.dataset.step) {
                 const target = parseInt(stepEl.dataset.step, 10);
                 const currentStep = stateManager.get('currentStep');

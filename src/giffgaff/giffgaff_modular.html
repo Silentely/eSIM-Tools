@@ -19,6 +19,10 @@
     <link rel="preconnect" href="https://id.giffgaff.com" crossorigin>
     <link rel="preconnect" href="https://publicapi.giffgaff.com" crossorigin>
 
+    <!-- 首屏图标字体：在样式表解析前开始加载，避免关键字体请求延迟首屏渲染 -->
+    <link rel="preload" href="/src/assets/fontawesome/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/src/assets/fontawesome/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+
     <!-- CSP策略 -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://sentry.io https://*.sentry.io https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://browser.sentry-cdn.com https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com https://qrcode.show https://api.qrserver.com https://appapi.simyo.nl https://api.giffgaff.com https://id.giffgaff.com https://publicapi.giffgaff.com https://challenges.cloudflare.com https://www.google.com https://www.gstatic.com https://sentry.io https://*.sentry.io; img-src 'self' data: https:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://*.sentry.io; worker-src 'self' blob:; child-src 'self' blob:;">
 
