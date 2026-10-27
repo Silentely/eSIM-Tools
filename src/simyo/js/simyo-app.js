@@ -12,9 +12,9 @@ import {
     copyToClipboard,
     showToast,
     openHelp,
-    delay,
-    getClosestElement
+    delay
 } from './modules/utils.js';
+import { getClosestElement } from '../../js/modules/utils.js';
 import { t, tl } from '../../js/modules/i18n.js';
 import { isMobileBrowser, showMobileWarning } from '../../js/modules/browser-utils.js';
 import Logger from '../../js/modules/logger.js';
