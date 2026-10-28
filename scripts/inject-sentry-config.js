@@ -8,11 +8,27 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const SENTRY_DSN = process.env.SENTRY_DSN || '';
 const SENTRY_ENVIRONMENT = process.env.SENTRY_ENVIRONMENT || 'production';
+function getBuildRef() {
+  if (process.env.COMMIT_REF) return process.env.COMMIT_REF;
+  if (process.env.GIT_COMMIT) return process.env.GIT_COMMIT;
+
+  try {
+    return execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], {
+      cwd: process.cwd(),
+      encoding: 'utf8'
+    }).trim();
+  } catch (_) {
+    return 'unknown';
+  }
+}
+
+const buildRef = getBuildRef();
 const SENTRY_RELEASE = process.env.SENTRY_RELEASE ||
-  (process.env.COMMIT_REF ? `esim-tools@${process.env.COMMIT_REF.slice(0, 7)}` : 'esim-tools@unknown');
+  (buildRef !== 'unknown' ? `esim-tools@${buildRef.slice(0, 12)}` : 'esim-tools@unknown');
 const SENTRY_TUNNEL = process.env.SENTRY_TUNNEL || '/api/sentry-tunnel';
 
 // 要处理的配置文件（改为处理独立的 JS 配置文件，而非 HTML 内联脚本）

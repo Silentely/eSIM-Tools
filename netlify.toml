@@ -144,16 +144,26 @@
   to = "/index.html"
   status = 404
 
-# 静态资源长期缓存（CSS/JS/字体/图片）
+# 未进行内容 hash 的 JS/CSS 必须重新验证，避免旧模块长期留在浏览器缓存中
 [[headers]]
   for = "/src/styles/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/src/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/src/giffgaff/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/src/simyo/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/src/assets/*"
@@ -165,11 +175,36 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# HTML 页面：短缓存 + stale-while-revalidate
+# HTML 和版本探针：始终重新验证，确保用户能发现新部署
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=300, stale-while-revalidate=86400"
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/giffgaff"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/simyo"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/version.json"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
 
 # 安全头部
 [[headers]]

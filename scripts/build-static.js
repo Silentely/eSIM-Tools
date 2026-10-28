@@ -3,11 +3,26 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const babel = require('@babel/core');
 const BuildLogger = require('./logger');
 
 const projectRoot = path.resolve(__dirname, '..');
 const distDir = path.join(projectRoot, 'dist');
+
+function getBuildVersion() {
+  const configuredVersion = process.env.COMMIT_REF || process.env.GIT_COMMIT;
+  if (configuredVersion) return configuredVersion.slice(0, 12);
+
+  try {
+    return execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], {
+      cwd: projectRoot,
+      encoding: 'utf8'
+    }).trim();
+  } catch (_) {
+    return 'local';
+  }
+}
 
 // 需要复制的静态目录/文件入口
 const entries = [
@@ -204,6 +219,41 @@ async function transpileDistJs() {
   await walkAndTranspile(jsDir);
 }
 
+async function writeBuildMetadata() {
+  const version = getBuildVersion();
+  const metadata = {
+    version,
+    release: `esim-tools@${version}`,
+    builtAt: new Date().toISOString()
+  };
+
+  await fs.promises.writeFile(
+    path.join(distDir, 'version.json'),
+    `${JSON.stringify(metadata, null, 2)}\n`,
+    'utf8'
+  );
+
+  async function injectIntoHtml(dir) {
+    const dirEntries = await fs.promises.readdir(dir, { withFileTypes: true });
+    for (const entry of dirEntries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await injectIntoHtml(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith('.html')) {
+        const content = await fs.promises.readFile(fullPath, 'utf8');
+        await fs.promises.writeFile(
+          fullPath,
+          content.replaceAll('__BUILD_VERSION__', version),
+          'utf8'
+        );
+      }
+    }
+  }
+
+  await injectIntoHtml(distDir);
+  BuildLogger.log(`🏷️  写入构建版本: ${version}`);
+}
+
 async function runBuild() {
   BuildLogger.log('🧹 清理 dist 目录...');
   await removeDist();
@@ -225,6 +275,8 @@ async function runBuild() {
       console.warn(`⚠️  根资源不存在: ${from}`);
     }
   }
+
+  await writeBuildMetadata();
 
   BuildLogger.log('🧩 转译 dist/src 下的 JS（browserslist 目标）...');
   await transpileDistJs();
@@ -254,6 +306,8 @@ if (require.main === module) {
 module.exports = {
   EXCLUDE_FILE_PATTERNS,
   shouldExclude,
+  getBuildVersion,
+  writeBuildMetadata,
   verifyDistSecurity,
   runBuild
 };

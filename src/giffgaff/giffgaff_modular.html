@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Giffgaff eSIM 工具，支持 OAuth 登录、MFA 验证、二维码生成与设备更换。">
+    <meta name="build-rev" content="__BUILD_VERSION__">
 
     <!-- Sentry 错误监控配置（必须在其他脚本之前） -->
     <!-- 使用外链脚本以符合 CSP 策略 -->
@@ -889,6 +890,7 @@
     <script type="module" src="/src/giffgaff/js/init-notification.js"></script>
 
     <!-- 主应用脚本（模块化） -->
+    <script type="module" src="/src/js/version-check.js"></script>
     <script type="module" src="/src/giffgaff/js/giffgaff-app.js"></script>
 
     <!-- 统一版权页脚 -->

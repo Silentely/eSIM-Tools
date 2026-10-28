@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Simyo eSIM 工具，支持设备更换、短信验证码、二维码生成与安装确认，帮助您快速管理荷兰 Simyo eSIM。">
+    <meta name="build-rev" content="__BUILD_VERSION__">
 
     <!-- 运行时兜底：避免 iOS WebView 注入脚本访问未定义全局变量导致崩溃 -->
     <script src="/src/simyo/js/runtime-fallback.js"></script>
@@ -599,6 +600,7 @@
     <script type="module" src="/src/simyo/js/init-notification.js"></script>
 
     <!-- 主应用脚本（模块化） -->
+    <script type="module" src="/src/js/version-check.js"></script>
     <script type="module" src="/src/simyo/js/simyo-app.js"></script>
 
     <!-- 统一版权页脚 -->
