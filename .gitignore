@@ -115,6 +115,7 @@ postman/
 
 # Claude Code 本地配置
 .claude/
+skills/
 
 # Gemini 剪贴板临时文件
 .gemini-clipboard/
