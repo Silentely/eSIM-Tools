@@ -3,7 +3,7 @@
  */
 
 import { fetchStats, animateCount } from './modules/stats-manager.js';
-import { t, onLocaleChange } from './modules/i18n.js';
+import { t, hasTranslation, onLocaleChange } from './modules/i18n.js';
 
 let currentStats = {
   total: null,
@@ -27,9 +27,21 @@ function clearAnimators() {
 }
 
 /**
+ * 渲染单个统计文案。
+ * 浏览器可能缓存旧版 i18n-data 而缺少新键，此时保持页面现有文案（数字节点仍在 DOM 中），
+ * 避免把 home.stats.* 键名直接展示给用户。
+ */
+function renderStatsLabel(labelEl, key, numberId, value) {
+  if (!labelEl || !hasTranslation(key)) return;
+  labelEl.innerHTML = t(key, {
+    count: `<strong id="${numberId}" class="stat-number">${value}</strong>`
+  });
+}
+
+/**
  * 渲染指定数字与文案（保留数字 span 节点，避免 innerHTML 摧毁活跃 DOM 引用）
  */
-function renderStatsTexts() {
+export function renderStatsTexts() {
   const totalLabelEl = document.getElementById('totalStatsLabel');
   const giffgaffLabelEl = document.getElementById('giffgaffStatsLabel');
   const simyoLabelEl = document.getElementById('simyoStatsLabel');
@@ -42,23 +54,9 @@ function renderStatsTexts() {
   const giffgaffValue = giffgaffNumberEl?.textContent || (currentStats.giffgaff !== null ? String(currentStats.giffgaff) : '--');
   const simyoValue = simyoNumberEl?.textContent || (currentStats.simyo !== null ? String(currentStats.simyo) : '--');
 
-  if (totalLabelEl) {
-    totalLabelEl.innerHTML = t('home.stats.total', {
-      count: `<strong id="totalCount" class="stat-number">${totalValue}</strong>`
-    });
-  }
-
-  if (giffgaffLabelEl) {
-    giffgaffLabelEl.innerHTML = t('home.stats.giffgaff', {
-      count: `<strong id="giffgaffCount" class="stat-number">${giffgaffValue}</strong>`
-    });
-  }
-
-  if (simyoLabelEl) {
-    simyoLabelEl.innerHTML = t('home.stats.simyo', {
-      count: `<strong id="simyoCount" class="stat-number">${simyoValue}</strong>`
-    });
-  }
+  renderStatsLabel(totalLabelEl, 'home.stats.total', 'totalCount', totalValue);
+  renderStatsLabel(giffgaffLabelEl, 'home.stats.giffgaff', 'giffgaffCount', giffgaffValue);
+  renderStatsLabel(simyoLabelEl, 'home.stats.simyo', 'simyoCount', simyoValue);
 }
 
 export async function initHomeStats() {

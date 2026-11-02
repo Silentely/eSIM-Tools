@@ -183,6 +183,8 @@ async function transpileDistJs() {
     return;
   }
 
+  const version = getBuildVersion();
+
   async function walkAndTranspile(dir) {
     const dirEntries = await fs.promises.readdir(dir, { withFileTypes: true });
     for (const entry of dirEntries) {
@@ -207,7 +209,7 @@ async function transpileDistJs() {
             babelrc: false
           });
           if (transformed && transformed.code) {
-            await fs.promises.writeFile(fullPath, transformed.code, 'utf8');
+            await fs.promises.writeFile(fullPath, versionJsImports(transformed.code, version), 'utf8');
           }
         } catch (transpileErr) {
           console.warn(`⚠️  Babel 转译跳过 ${entry.name}:`, transpileErr.message);
@@ -241,9 +243,10 @@ async function writeBuildMetadata() {
         await injectIntoHtml(fullPath);
       } else if (entry.isFile() && entry.name.endsWith('.html')) {
         const content = await fs.promises.readFile(fullPath, 'utf8');
+        const replaced = content.replaceAll('__BUILD_VERSION__', version);
         await fs.promises.writeFile(
           fullPath,
-          content.replaceAll('__BUILD_VERSION__', version),
+          versionHtmlScriptSources(replaced, version),
           'utf8'
         );
       }
@@ -252,6 +255,32 @@ async function writeBuildMetadata() {
 
   await injectIntoHtml(distDir);
   BuildLogger.log(`🏷️  写入构建版本: ${version}`);
+}
+
+/**
+ * 为本地脚本入口追加 ?v=<构建版本>，让每次部署的模块图使用全新 URL，
+ * 避免浏览器把新代码和旧模块（如 i18n-data.js）混用。
+ */
+function versionHtmlScriptSources(html, version) {
+  return html.replace(
+    /(<script\b[^>]*?\bsrc=)(["'])(\/[^"']+?\.js)(\2)/gi,
+    (match, prefix, quote, src, closingQuote) => {
+      if (/[?&]v=/.test(src)) return match;
+      return `${prefix}${quote}${src}?v=${version}${closingQuote}`;
+    }
+  );
+}
+
+/**
+ * 为 JS 模块中的相对/站内绝对导入追加 ?v=<构建版本>，与 HTML 入口保持同一版本。
+ */
+function versionJsImports(code, version) {
+  const addQuery = (spec) => (spec.includes('?') ? spec : `${spec}?v=${version}`);
+  return code.replace(
+    /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)(["'])((?:\.{1,2}\/|\/)[^"']+?\.js)(\2)/g,
+    (match, prefix, quote, spec, closingQuote) =>
+      `${prefix}${quote}${addQuery(spec)}${closingQuote}`
+  );
 }
 
 async function runBuild() {
@@ -308,6 +337,8 @@ module.exports = {
   shouldExclude,
   getBuildVersion,
   writeBuildMetadata,
+  versionHtmlScriptSources,
+  versionJsImports,
   verifyDistSecurity,
   runBuild
 };

@@ -217,6 +217,16 @@ export function t(key, params) {
   return replaceParams(template, params);
 }
 
+/**
+ * 判断当前语言（含中文兜底）是否存在该文案键。
+ * 用于浏览器缓存了旧版 i18n-data 时避免把键名直接渲染到页面。
+ */
+export function hasTranslation(key) {
+  const localeTable = TRANSLATIONS[currentLocale] || {};
+  if (localeTable[key]) return true;
+  return currentLocale !== 'zh' && Boolean(TRANSLATIONS.zh && TRANSLATIONS.zh[key]);
+}
+
 export function tl(source, params) {
   if (currentLocale === 'zh') {
     return replaceParams(source, params);
