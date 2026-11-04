@@ -9,14 +9,14 @@ const VERSION_ENDPOINT = '/version.json';
 const NOTICE_ID = 'esim-tools-update-notice';
 
 export function getCurrentBuildVersion(documentRef = document) {
-  return documentRef
-    .querySelector('meta[name="build-rev"]')
-    ?.getAttribute('content')
-    ?.trim() || '';
+  const meta = documentRef.querySelector('meta[name="build-rev"]');
+  return meta ? (meta.getAttribute('content') || '').trim() : '';
 }
 
 function getLocale(documentRef) {
-  return documentRef.documentElement?.getAttribute('lang')?.toLowerCase().startsWith('zh')
+  const root = documentRef.documentElement;
+  const language = root ? root.getAttribute('lang') || '' : '';
+  return language.toLowerCase().startsWith('zh')
     ? 'zh'
     : 'en';
 }
@@ -88,7 +88,7 @@ export async function checkForUpdates({
     if (!response.ok) return false;
 
     const payload = await response.json();
-    if (payload?.version && payload.version !== currentVersion) {
+    if (payload && payload.version && payload.version !== currentVersion) {
       showUpdateNotice(documentRef, windowRef);
       return true;
     }

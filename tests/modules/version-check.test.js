@@ -2,6 +2,8 @@ import {
   checkForUpdates,
   getCurrentBuildVersion
 } from '../../src/js/version-check.js';
+import fs from 'fs';
+import path from 'path';
 
 describe('version check', () => {
   let windowRef;
@@ -46,5 +48,14 @@ describe('version check', () => {
     });
 
     expect(document.getElementById('esim-tools-update-notice')).toBeNull();
+  });
+
+  test('avoids optional chaining syntax for legacy browser compatibility', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/js/version-check.js'),
+      'utf8'
+    );
+
+    expect(source).not.toContain('?.');
   });
 });
