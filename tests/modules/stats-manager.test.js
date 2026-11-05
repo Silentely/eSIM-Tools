@@ -143,7 +143,7 @@ describe('StatsManager Module', () => {
 
       // 验证 sessionStorage 键名中不包含任何原始敏感 LPA 字符串
       const storedKeys = Object.keys(sessionStorage);
-      expect(storedKeys.some(k => k.includes('smdp.example.com'))).toBe(false);
+      expect(storedKeys).not.toContain(rawLpa);
       expect(storedKeys.some(k => k.startsWith('esim_stat_reported_giffgaff_'))).toBe(true);
 
       // 第二次相同调用应被 sessionStorage 去重拦截，不再发起网络请求

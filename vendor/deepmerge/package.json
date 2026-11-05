@@ -1,0 +1,10 @@
+{
+  "name": "deepmerge",
+  "version": "4.3.2",
+  "description": "A patched deep merge implementation with prototype poisoning protection",
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "license": "MIT"
+}
