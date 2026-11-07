@@ -15,6 +15,9 @@ jest.mock('../../src/js/modules/stats-manager.js', () => ({
   animateCount: jest.fn(() => () => {})
 }));
 
+const fs = require('fs');
+const path = require('path');
+
 describe('home stats rendering', () => {
   let renderStatsTexts;
   let t;
@@ -62,5 +65,14 @@ describe('home stats rendering', () => {
     expect(document.getElementById('totalStatsLabel').textContent).toBe('home.stats.total|12');
     expect(document.getElementById('totalCount').textContent).toBe('12');
     expect(document.getElementById('giffgaffStatsLabel').textContent).toBe('home.stats.giffgaff|8');
+  });
+
+  test('avoids optional chaining syntax for legacy browser compatibility', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/js/init-home-stats.js'),
+      'utf8'
+    );
+
+    expect(source).not.toContain('?.');
   });
 });

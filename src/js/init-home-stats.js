@@ -50,9 +50,9 @@ export function renderStatsTexts() {
   const giffgaffNumberEl = document.getElementById('giffgaffCount');
   const simyoNumberEl = document.getElementById('simyoCount');
 
-  const totalValue = totalNumberEl?.textContent || (currentStats.total !== null ? String(currentStats.total) : '--');
-  const giffgaffValue = giffgaffNumberEl?.textContent || (currentStats.giffgaff !== null ? String(currentStats.giffgaff) : '--');
-  const simyoValue = simyoNumberEl?.textContent || (currentStats.simyo !== null ? String(currentStats.simyo) : '--');
+  const totalValue = totalNumberEl ? totalNumberEl.textContent : (currentStats.total !== null ? String(currentStats.total) : '--');
+  const giffgaffValue = giffgaffNumberEl ? giffgaffNumberEl.textContent : (currentStats.giffgaff !== null ? String(currentStats.giffgaff) : '--');
+  const simyoValue = simyoNumberEl ? simyoNumberEl.textContent : (currentStats.simyo !== null ? String(currentStats.simyo) : '--');
 
   renderStatsLabel(totalLabelEl, 'home.stats.total', 'totalCount', totalValue);
   renderStatsLabel(giffgaffLabelEl, 'home.stats.giffgaff', 'giffgaffCount', giffgaffValue);
