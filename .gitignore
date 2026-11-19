@@ -91,6 +91,17 @@ Thumbs.db
 build/
 dist/
 
+# Python / coverage artifacts
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Playwright
+playwright-report/
+test-results/
+
 # Netlify
 .netlify/
 
@@ -136,3 +147,14 @@ assets/gep/
 coding-trajectories.jsonl
 .env.evolver
 .env.evolver.local
+
+# Python / coverage artifacts
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Playwright
+playwright-report/
+test-results/

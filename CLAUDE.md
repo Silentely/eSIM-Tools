@@ -196,10 +196,10 @@ eSIM-Tools 是一个 JAMstack 架构的 Web 应用，为已有 Giffgaff 和 Simy
 
 ```
 本地开发 -> 构建静态资源 -> 部署到 Netlify
-  npm run dev          (本地开发服务器 + 热重载)
-  npm run build        (静态拷贝 + esbuild 转译到 dist/，非 Webpack)
-  npm run check:links  (生产 HTML 本地资源脱链检查)
-  npm run deploy       (部署到 Netlify 生产环境)
+  pnpm run dev          (本地开发服务器 + 热重载)
+  pnpm run build        (静态拷贝 + esbuild 转译到 dist/，非 Webpack)
+  pnpm run check:links  (生产 HTML 本地资源脱链检查)
+  pnpm run deploy       (部署到 Netlify 生产环境)
 ```
 
 ---
@@ -291,33 +291,33 @@ graph TD
 
 ```bash
 # 1. 安装依赖
-npm install
+pnpm install
 
 # 2. 配置环境变量
 cp env.example .env
 # 编辑 .env 填写 ACCESS_KEY 等
 
 # 3. 启动开发服务器
-npm run dev              # Express 服务器 (localhost:3000)
-npm run netlify-dev      # Netlify Dev 完整模拟 (localhost:8888)
+pnpm run dev              # Express 服务器 (localhost:3000)
+pnpm run netlify-dev      # Netlify Dev 完整模拟 (localhost:8888)
 ```
 
 ### 构建与部署
 
 ```bash
-npm run build            # 静态拷贝 + esbuild 转译到 dist/
-npm run check:links      # HTML 本地资源脱链检查（生产零脱链）
-npm run quality-check    # 代码质量检查（含脱链检查）
-npm run security-check   # 安全配置扫描
-npm run deploy           # 部署到 Netlify 生产环境
+pnpm run build            # 静态拷贝 + esbuild 转译到 dist/
+pnpm run check:links      # HTML 本地资源脱链检查（生产零脱链）
+pnpm run quality-check    # 代码质量检查（含脱链检查）
+pnpm run security-check   # 安全配置扫描
+pnpm run deploy           # 部署到 Netlify 生产环境
 ```
 
 ### 测试
 
 ```bash
 npm test                 # 运行所有测试
-npm run test:watch       # 监听模式
-npm run test:coverage    # 生成覆盖率报告
+pnpm run test:watch       # 监听模式
+pnpm run test:coverage    # 生成覆盖率报告
 ```
 
 ### 环境变量
@@ -342,7 +342,7 @@ npm run test:coverage    # 生成覆盖率报告
 - **覆盖率阈值**: 60% (branches/functions/lines/statements)
 - **测试文件**: `tests/modules/`、`tests/giffgaff/`、`tests/simyo/` 和 `tests/security/`
 - **Mock**: `tests/__mocks__/` (styleMock, fileMock)
-- **运行**: `npm test` / `npm run test:coverage`
+- **运行**: `npm test` / `pnpm run test:coverage`
 
 ---
 
@@ -370,7 +370,7 @@ npm run test:coverage    # 生成覆盖率报告
 5. **修改前端模块时**: 使用相对路径导入模块
 6. **添加新 Function 时**: 在 `server.js` 中注册 Express 路由 (本地开发)
 7. **测试变更时**: 运行 `npm test` 确保通过
-8. **部署前**: 运行 `npm run quality-check && npm run security-check`
+8. **部署前**: 运行 `pnpm run quality-check && pnpm run security-check`
 
 ---
 

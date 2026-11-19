@@ -4,24 +4,25 @@
   "description": "专为Giffgaff和Simyo用户设计的eSIM管理工具集",
   "main": "index.js",
   "scripts": {
+    "clean": "rm -rf node_modules .mypy_cache htmlcov .coverage coverage.xml coverage dist playwright-report",
     "hooks:install": "git config core.hooksPath .githooks",
     "hooks:list": "ls -1 .githooks",
     "precommit:check": "node scripts/pre-commit-check.js",
     "prepush:check": "node scripts/pre-push-check.js --mode=full",
     "prepush:check:fast": "node scripts/pre-push-check.js --mode=fast",
     "commitmsg:lint": "node scripts/commit-msg-lint.js",
-    "prestart": "npm run build",
-    "predev": "npm run build",
-    "prenetlify-dev": "npm run build",
+    "prestart": "pnpm run build",
+    "predev": "pnpm run build",
+    "prenetlify-dev": "pnpm run build",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "npm run build:static",
+    "build": "pnpm run build:static",
     "build:static": "node scripts/build-static.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "netlify-dev": "npx --yes netlify-cli@latest dev",
-    "deploy": "npm run build && npx --yes netlify-cli@latest deploy --prod",
+    "netlify-dev": "pnpm dlx netlify-cli@latest dev",
+    "deploy": "pnpm run build && pnpm dlx netlify-cli@latest deploy --prod",
     "optimize-images": "node scripts/optimize-images.js",
     "compress": "node scripts/compress.js",
     "security-check": "node scripts/security-check.js",
@@ -42,6 +43,7 @@
   ],
   "author": "eSIM Tools Team",
   "license": "MIT",
+  "packageManager": "pnpm@10.34.9",
   "dependencies": {
     "@netlify/blobs": "^8.0.0",
     "@sentry/browser": "^10.30.0",
@@ -74,6 +76,7 @@
     "on-headers": "^1.1.0",
     "postcss": "^8.5.25",
     "postcss-cli": "^11.0.1",
+    "semver": "^7.8.6",
     "sharp": "^0.35.5"
   },
   "browserslist": [
@@ -82,8 +85,7 @@
     "not dead"
   ],
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
@@ -93,16 +95,24 @@
     "url": "https://github.com/Silentely/eSIM-Tools/issues"
   },
   "homepage": "https://esim.cosr.eu.org",
-  "overrides": {
-    "brace-expansion": "^5.0.12",
-    "minimatch": "^10.2.3",
-    "glob": "^11.1.0",
-    "serialize-javascript": "^7.0.5",
-    "path-to-regexp": "^8.0.0",
-    "rollup": "^2.80.0",
-    "uuid": "^14.0.0",
-    "ws": "^8.21.0",
-    "js-yaml@3": "3.15.2",
-    "js-yaml@4": "4.3.2"
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "core-js",
+      "esbuild",
+      "sharp"
+    ],
+    "overrides": {
+      "brace-expansion": "^5.0.12",
+      "minimatch": "^10.2.3",
+      "glob": "^11.1.0",
+      "serialize-javascript": "^7.0.5",
+      "path-to-regexp": "^8.0.0",
+      "rollup": "^2.80.0",
+      "uuid": "^14.0.0",
+      "ws": "^8.21.0",
+      "js-yaml@3": "3.15.2",
+      "js-yaml@4": "4.3.2"
+    }
   }
 }

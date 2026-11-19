@@ -73,6 +73,10 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        if: steps.guard.outputs.need_improvement == 'yes'
+
       - name: 安装 Node.js 环境
         if: steps.guard.outputs.need_improvement == 'yes'
         uses: actions/setup-node@v4
@@ -81,33 +85,29 @@ jobs:
 
       - name: 安装依赖
         if: steps.guard.outputs.need_improvement == 'yes'
-        run: |
-          if ! npm ci; then
-            echo 'CI 安装失败，改用 npm install'
-            npm install
-          fi
+        run: pnpm install --frozen-lockfile
 
       - name: 自动格式化代码
         if: steps.guard.outputs.need_improvement == 'yes'
         run: |
-          npx --yes prettier@3.3.3 --write "src/**/*.{js,css,html}" "netlify/**/*.js" "scripts/**/*.js" || true
+          pnpm dlx prettier@3.3.3 --write "src/**/*.{js,css,html}" "netlify/**/*.js" "scripts/**/*.js" || true
 
       - name: ESLint 自动修复
         if: steps.guard.outputs.need_improvement == 'yes'
         run: |
-          npx --yes eslint@9.12.0 . --fix || true
+          pnpm dlx eslint@9.12.0 . --fix || true
 
       - name: 重新执行质量检查
         if: steps.guard.outputs.need_improvement == 'yes'
-        run: npm run quality-check
+        run: pnpm run quality-check
 
       - name: 重新执行安全检查
         if: steps.guard.outputs.need_improvement == 'yes'
-        run: npm run security-check
+        run: pnpm run security-check
 
       - name: 重新运行测试
         if: steps.guard.outputs.need_improvement == 'yes'
-        run: npm test
+        run: pnpm test
 
       - name: 生成改进补丁
         if: steps.guard.outputs.need_improvement == 'yes'

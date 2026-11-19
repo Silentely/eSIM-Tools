@@ -194,14 +194,14 @@ git clone https://github.com/Silentely/eSIM-Tools.git
 cd eSIM-Tools
 
 # 2. Install dependencies
-npm install
+pnpm install
 
 # 3. Configure environment variables
 cp env.example .env
 # Edit .env to fill in required configuration
 
 # 4. Start development server
-npm run dev
+pnpm run dev
 
 # 5. Visit http://localhost:3000
 ```
@@ -217,7 +217,7 @@ npm run dev
 1. Fork this repository to your GitHub account
 2. Connect the GitHub repository in [Netlify](https://app.netlify.com)
 3. Build settings:
-   - Build command: `npm run build`
+   - Build command: `pnpm run build`
    - Publish directory: `dist`
 4. Configure environment variables (refer to `env.example`)
 5. Deploy complete
@@ -272,10 +272,10 @@ Contributions and suggestions are welcome!
 
 **Available Commands**:
 
-- `npm run hooks:install` - Install Git hooks
+- `pnpm run hooks:install` - Install Git hooks
 - `npm test` - Run tests
-- `npm run quality-check` - Code quality checks
-- `npm run security-check` - Security scan
+- `pnpm run quality-check` - Code quality checks
+- `pnpm run security-check` - Security scan
 
 ---
 

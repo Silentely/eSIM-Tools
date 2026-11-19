@@ -90,6 +90,10 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        if: steps.failure_info.outputs.need_heal == 'true'
+
       - name: 安装 Node.js 环境
         if: steps.failure_info.outputs.need_heal == 'true'
         uses: actions/setup-node@v4
@@ -98,31 +102,27 @@ jobs:
 
       - name: 重新安装依赖
         if: steps.failure_info.outputs.need_heal == 'true'
-        run: |
-          if ! npm ci; then
-            echo '首次安装失败，改用 npm install'
-            npm install
-          fi
+        run: pnpm install --frozen-lockfile
 
       - name: 重跑质量检查
         id: retry_quality
         if: steps.failure_info.outputs.need_heal == 'true' && steps.failure_info.outputs.quality_failed == 'true'
-        run: npm run quality-check
+        run: pnpm run quality-check
 
       - name: 重跑安全检查
         id: retry_security
         if: steps.failure_info.outputs.need_heal == 'true' && steps.failure_info.outputs.security_failed == 'true'
-        run: npm run security-check
+        run: pnpm run security-check
 
       - name: 重跑单元测试
         id: retry_test
         if: steps.failure_info.outputs.need_heal == 'true' && steps.failure_info.outputs.test_failed == 'true'
-        run: npm test
+        run: pnpm test
 
       - name: 重新构建
         id: retry_build
         if: steps.failure_info.outputs.need_heal == 'true' && steps.failure_info.outputs.build_failed == 'true'
-        run: npm run build
+        run: pnpm run build
 
       - name: 汇总修复结果
         if: steps.failure_info.outputs.need_heal == 'true'

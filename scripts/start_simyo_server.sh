@@ -24,13 +24,13 @@ fi
 # 检查依赖是否已安装
 if [ ! -d "node_modules" ]; then
     echo "📦 安装依赖包..."
-    npm install
-    
+    pnpm install
+
     if [ $? -ne 0 ]; then
-        echo "❌ 依赖安装失败，请检查网络连接或npm配置"
+        echo "❌ 依赖安装失败，请检查网络连接或pnpm配置"
         exit 1
     fi
-    
+
     echo "✅ 依赖安装完成"
 else
     echo "✅ 依赖包已存在"

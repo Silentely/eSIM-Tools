@@ -17,37 +17,36 @@ jobs:
       - name: 拉取仓库代码
         uses: actions/checkout@v4
 
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+
       - name: 安装 Node.js 环境
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: 安装依赖
-        run: |
-          if ! npm ci; then
-            echo '检测到锁文件与环境不一致，改用 npm install 同步依赖～'
-            npm install
-          fi
+        run: pnpm install --frozen-lockfile
 
       - name: 运行质量检查脚本
         id: quality
-        run: npm run quality-check
+        run: pnpm run quality-check
         continue-on-error: true
 
       - name: 运行安全检查脚本
         id: security
-        run: npm run security-check
+        run: pnpm run security-check
         continue-on-error: true
 
       - name: 单元测试
         id: test
-        run: npm test
+        run: pnpm test
         continue-on-error: true
 
       - name: 构建生产产物
         id: build
-        run: npm run build
+        run: pnpm run build
         continue-on-error: true
 
       - name: 汇总质量评分
@@ -138,24 +137,20 @@ jobs:
 
       - name: 若质量检查失败则终止
         if: steps.quality.outcome == 'failure'
-        run: |
-          echo 'quality-check 未通过，请修复后重试。'
+        run: pnpm install --frozen-lockfile
           exit 1
 
       - name: 若安全检查失败则终止
         if: steps.security.outcome == 'failure'
-        run: |
-          echo 'security-check 未通过，请修复后重试。'
+        run: pnpm install --frozen-lockfile
           exit 1
 
       - name: 若测试失败则终止
         if: steps.test.outcome == 'failure'
-        run: |
-          echo 'Jest 测试未通过，请修复后重试。'
+        run: pnpm install --frozen-lockfile
           exit 1
 
       - name: 若构建失败则终止
         if: steps.build.outcome == 'failure'
-        run: |
-          echo '构建失败，请查看日志。'
+        run: pnpm install --frozen-lockfile
           exit 1

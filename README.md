@@ -194,14 +194,14 @@ git clone https://github.com/Silentely/eSIM-Tools.git
 cd eSIM-Tools
 
 # 2. 安装依赖
-npm install
+pnpm install
 
 # 3. 配置环境变量
 cp env.example .env
 # 编辑 .env 填写必要配置
 
 # 4. 启动开发服务器
-npm run dev
+pnpm run dev
 
 # 5. 访问 http://localhost:3000
 ```
@@ -217,7 +217,7 @@ npm run dev
 1. Fork 此仓库到你的 GitHub 账户
 2. 在 [Netlify](https://app.netlify.com) 中连接 GitHub 仓库
 3. 构建设置：
-   - Build command: `npm run build`
+   - Build command: `pnpm run build`
    - Publish directory: `dist`
 4. 配置环境变量（参考 `env.example`）
 5. 部署完成
@@ -272,10 +272,10 @@ npm run dev
 
 **可用命令**：
 
-- `npm run hooks:install` - 安装 Git 钩子
+- `pnpm run hooks:install` - 安装 Git 钩子
 - `npm test` - 运行测试
-- `npm run quality-check` - 代码质量检查
-- `npm run security-check` - 安全扫描
+- `pnpm run quality-check` - 代码质量检查
+- `pnpm run security-check` - 安全扫描
 
 ---
 

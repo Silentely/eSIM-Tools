@@ -1,6 +1,6 @@
 [build]
   # 构建命令
-  command = "npm run build --silent"
+  command = "pnpm run build --silent"
   # 发布目录：仅暴露构建后的 dist 输出
   publish = "dist"
   # Functions目录
@@ -12,7 +12,7 @@
 # 固定 Node 版本，避免二进制依赖（如 sharp）在 Node 22 下编译耗时
   NODE_VERSION = "20.12.2"
 # 安装时减少无关输出与提示
-  NPM_FLAGS = "--no-audit --no-fund --omit=optional"
+  PNPM_FLAGS = "--reporter=append-only"
   
 # 重定向和重写规则
 [[redirects]]

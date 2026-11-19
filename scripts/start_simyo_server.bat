@@ -27,10 +27,10 @@ if not exist "package.json" (
 REM 检查依赖是否已安装
 if not exist "node_modules" (
     echo 📦 安装依赖包...
-    npm install
+    pnpm install
     
     if errorlevel 1 (
-        echo ❌ 依赖安装失败，请检查网络连接或npm配置
+        echo ❌ 依赖安装失败，请检查网络连接或pnpm配置
         pause
         exit /b 1
     )

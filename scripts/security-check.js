@@ -51,27 +51,41 @@ function isVulnerable(version, vulnerableVersions) {
   return vulnerableVersions.some(range => semver.satisfies(version, range));
 }
 
-// 解析package-lock.json
-function parsePackageLock() {
+// 解析 pnpm-lock.yaml 的 packages 段，得到全部 name/version 组合
+function parsePnpmLock() {
   try {
-    const packageLockPath = path.join(__dirname, '../package-lock.json');
-    const packageLock = JSON.parse(fs.readFileSync(packageLockPath, 'utf8'));
-    return packageLock.dependencies || {};
+    const lockPath = path.join(__dirname, '../pnpm-lock.yaml');
+    const lock = fs.readFileSync(lockPath, 'utf8');
+    const entries = [];
+    let inPackages = false;
+    for (const line of lock.split('\n')) {
+      if (/^packages:\s*$/.test(line)) {
+        inPackages = true;
+        continue;
+      }
+      if (inPackages && /^\S/.test(line)) {
+        inPackages = false;
+      }
+      if (!inPackages) continue;
+      // 形如 "  '@scope/name@1.2.3':" 或 "  name@1.2.3(peer@1.0.0):"
+      const match = line.match(/^ {2}'?((?:@[^/\s]+\/)?[^@\s]+)@([^():\s]+)(?:\([^)]*\))?'?:\s*$/);
+      if (match) {
+        entries.push({ name: match[1], version: match[2] });
+      }
+    }
+    return entries;
   } catch (error) {
-    console.error('Error reading package-lock.json:', error.message);
-    return {};
+    console.error('Error reading pnpm-lock.yaml:', error.message);
+    return [];
   }
 }
 
 // 检查依赖包的安全状态
 function checkDependencies() {
-  const dependencies = parsePackageLock();
+  const dependencies = parsePnpmLock();
   const vulnerabilities = [];
 
-  Object.keys(dependencies).forEach(pkgName => {
-    const pkg = dependencies[pkgName];
-    const version = pkg.version;
-    
+  dependencies.forEach(({ name: pkgName, version }) => {
     if (knownVulnerabilities[pkgName]) {
       const vuln = knownVulnerabilities[pkgName];
       if (isVulnerable(version, vuln.versions)) {
@@ -92,16 +106,16 @@ function checkDependencies() {
 // 生成安全报告
 function generateSecurityReport() {
   BuildLogger.log('🔒 安全检查报告\n');
-  
+
   const vulnerabilities = checkDependencies();
-  
+
   if (vulnerabilities.length === 0) {
     BuildLogger.success(' 未发现已知的安全漏洞');
     return;
   }
 
   BuildLogger.warn(`  发现 ${vulnerabilities.length} 个潜在安全漏洞:\n`);
-  
+
   vulnerabilities.forEach((vuln, index) => {
     BuildLogger.log(`${index + 1}. ${vuln.package}@${vuln.version}`);
     BuildLogger.log(`   严重程度: ${vuln.severity}`);
@@ -110,15 +124,15 @@ function generateSecurityReport() {
   });
 
   BuildLogger.log('🔧 修复建议:');
-  BuildLogger.log('1. 运行 npm update 更新所有依赖');
-  BuildLogger.log('2. 运行 npm audit fix 自动修复');
+  BuildLogger.log('1. 运行 pnpm update 更新所有依赖');
+  BuildLogger.log('2. 运行 pnpm audit --fix 自动修复');
   BuildLogger.log('3. 手动更新特定包到最新版本');
 }
 
 // 检查开发环境安全配置
 function checkSecurityConfig() {
   BuildLogger.log('\n🔧 安全配置检查:\n');
-  
+
   // 检查Helmet配置
   const serverPath = path.join(__dirname, '../server.js');
   if (fs.existsSync(serverPath)) {
@@ -164,10 +178,10 @@ function checkSecurityConfig() {
 function main() {
   generateSecurityReport();
   checkSecurityConfig();
-  
+
   BuildLogger.log('\n📋 安全最佳实践:');
   BuildLogger.log('1. 定期更新依赖包');
-  BuildLogger.log('2. 使用npm audit检查安全漏洞');
+  BuildLogger.log('2. 使用 pnpm audit 检查安全漏洞');
   BuildLogger.log('3. 配置适当的安全头');
   BuildLogger.log('4. 实施内容安全策略(CSP)');
   BuildLogger.log('5. 使用HTTPS部署');
@@ -177,4 +191,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { checkDependencies, generateSecurityReport }; 
+module.exports = { checkDependencies, generateSecurityReport };
